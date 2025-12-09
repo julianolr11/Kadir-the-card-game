@@ -14,6 +14,7 @@ import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
+import { setupResolutionIPC } from './ipcResolution';
 
 class AppUpdater {
   constructor() {
@@ -65,21 +66,29 @@ const createWindow = async () => {
     ? path.join(process.resourcesPath, 'assets')
     : path.join(__dirname, '../../assets');
 
+  // Caminho do novo ícone
   const getAssetPath = (...paths: string[]): string => {
     return path.join(RESOURCES_PATH, ...paths);
   };
 
+  // Ícone customizado para Windows
+  const iconPath = path.join(__dirname, '../../src/assets/img/icons/iconlive.png');
+
   mainWindow = new BrowserWindow({
     show: false,
-    width: 1024,
-    height: 728,
-    icon: getAssetPath('icon.png'),
+    width: 1280,
+    height: 720,
+    resizable: true,
+    frame: false, // Remove barra de ferramentas e botões
+    icon: iconPath,
     webPreferences: {
       preload: app.isPackaged
         ? path.join(__dirname, 'preload.js')
         : path.join(__dirname, '../../.erb/dll/preload.js'),
     },
   });
+
+  setupResolutionIPC(mainWindow);
 
   mainWindow.loadURL(resolveHtmlPath('index.html'));
 
@@ -98,8 +107,8 @@ const createWindow = async () => {
     mainWindow = null;
   });
 
-  const menuBuilder = new MenuBuilder(mainWindow);
-  menuBuilder.buildMenu();
+  // Remove barra de menu padrão
+  // Menu.setApplicationMenu(null);
 
   // Open urls in the user's browser
   mainWindow.webContents.setWindowOpenHandler((edata) => {

@@ -1,0 +1,140 @@
+.card-flip.expanded {
+  animation: cardExpand 0.4s cubic-bezier(.7,-0.2,.3,1.4);
+}
+@keyframes cardExpand {
+  0% {
+    width: 110px;
+    height: 160px;
+    box-shadow: 0 4px 24px #000a;
+    z-index: 2201;
+  }
+  60% {
+    width: 240px;
+    height: 340px;
+    box-shadow: 0 12px 48px #ffb34799;
+    z-index: 3000;
+  }
+  100% {
+    width: 220px;
+    height: 308px;
+    box-shadow: 0 8px 32px #ffb34799, 0 0 0 2px #ffb347cc;
+    z-index: 3000;
+  }
+}
+.fire-front-face .card-fire-texture {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #ff3c00cc 0%, #ffb34799 100%), url('../assets/img/card/texture-background.jpg');
+  background-blend-mode: overlay, multiply;
+  opacity: 0.82;
+  filter: contrast(1.1) brightness(1.08) saturate(1.2);
+  border-radius: 12px;
+  mix-blend-mode: lighten;
+}
+.fire-front-face {
+  position: relative;
+  overflow: hidden;
+}
+.card-flip.flipped {
+  transform: rotateY(180deg) scale(1.08);
+  box-shadow: 0 8px 32px #ffb34799, 0 0 0 2px #ffb347cc;
+  z-index: 2201;
+}
+/* Flip de carta para preview */
+.card-flip {
+  position: relative;
+  width: 220px;
+  height: 308px;
+  transition: transform 0.7s cubic-bezier(.7,-0.2,.3,1.4);
+  transform-style: preserve-3d;
+  cursor: pointer;
+}
+.card-flip.flipped {
+  transform: rotateY(180deg);
+}
+.card-front-face {
+  pointer-events: none;
+}
+.startflow-dialog {
+  background: rgba(30, 22, 40, 0.92);
+  color: rgb(255, 230, 176);
+  border-radius: 18px;
+  box-shadow: rgba(0, 0, 0, 0.667) 0px 4px 32px;
+  font-size: 20px;
+  font-weight: 500;
+  padding: 32px 32px 24px;
+  margin: 32px 0px;
+  height: 120px;
+  width: 800px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start !important;
+  align-items: start !important;
+  text-align: left !important;
+  letter-spacing: 0.2px;
+  transition: height 0.2s, opacity 0.4s;
+  animation: fadeInDialogLeftDown 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+  opacity: 1;
+}
+
+.startflow-dialog.fadeout {
+  opacity: 0;
+}
+
+
+@keyframes fadeInDialogLeftDown {
+  0% {
+    opacity: 0;
+    transform: translate(-60px, -40px) scale(0.98);
+  }
+  80% {
+    opacity: 1;
+    transform: translate(8px, 6px) scale(1.01);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+.startflow-cards {
+  display: flex;
+  gap: 32px;
+  justify-content: center;
+  align-items: center;
+}
+
+
+.startflow-card {
+  width: 110px;
+  height: 160px;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px #000a;
+  animation: floatCard 3.5s ease-in-out infinite;
+  will-change: transform;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+/* Animação reversa para cartas aleatórias */
+.startflow-card.float-reverse {
+  animation-name: floatCardReverse;
+  animation-duration: 3.5s;
+}
+
+@keyframes floatCardReverse {
+  0%   { transform: translateY(0px) scale(1.04); }
+  50%  { transform: translateY(18px) scale(1.08); }
+  100% { transform: translateY(0px) scale(1.04); }
+}
+
+.startflow-card:hover {
+  box-shadow: 0 8px 32px #ffe6b0cc, 0 4px 24px #000a;
+  transform: scale(1.08) translateY(-10px);
+  z-index: 2;
+}
+
+@keyframes floatCard {
+  0%   { transform: translateY(0px) scale(1.04); }
+  50%  { transform: translateY(-18px) scale(1.08); }
+  100% { transform: translateY(0px) scale(1.04); }
+}

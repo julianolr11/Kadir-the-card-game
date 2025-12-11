@@ -7,6 +7,7 @@ import '../styles/vinheta.css';
 import wallpaper from '../assets/img/wallpaper/wallpaper.png';
 import OptionsModal from './OptionsModal';
 import ExitModal from './ExitModal';
+import StartFlow from './StartFlow';
 
 const translations = {
   ptbr: {
@@ -23,6 +24,7 @@ const translations = {
 
 const LoadingScreen = ({ onFinish }) => {
   const [showMenu, setShowMenu] = useState(false);
+  const [showStart, setShowStart] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
   const [showExit, setShowExit] = useState(false);
   const audioRef = useRef(null);
@@ -52,10 +54,11 @@ const LoadingScreen = ({ onFinish }) => {
       {showMenu && (
         <>
           <div style={{ position: 'absolute', bottom: 60, left: 0, right: 0, textAlign: 'center' }} className="fade-in">
-            <button style={btnStyle}>{t.start}</button>
+            <button style={btnStyle} onClick={() => setShowStart(true)}>{t.start}</button>
             <button style={btnStyle} onClick={() => setShowOptions(true)}>{t.options}</button>
             <button style={btnStyle} onClick={() => setShowExit(true)}>{t.exit}</button>
           </div>
+          {showStart && <StartFlow onFinish={() => setShowStart(false)} />}
           {showOptions && <OptionsModal visible={showOptions} onClose={() => setShowOptions(false)} />}
           {showExit && <ExitModal visible={showExit} onConfirm={() => window.close()} onCancel={() => setShowExit(false)} />}
         </>

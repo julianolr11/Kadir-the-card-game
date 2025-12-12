@@ -7,8 +7,8 @@ import fogo from '../assets/img/elements/fogo.png';
 import puro from '../assets/img/elements/puro.png';
 import terra from '../assets/img/elements/terra.png';
 import '../styles/startflow.css';
-import CreatureCardPreview from './CreatureCardPreview';
-import { creatures } from '../assets/creaturesData';
+import CreatureCardPreview from './CreatureCardPreview.jsx';
+import { creatures } from '../assets/creaturesData.js';
 
 const dialogos = {
   ptbr: [

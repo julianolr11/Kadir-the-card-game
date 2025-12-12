@@ -1,3 +1,12 @@
+/* Fade-in e fade-out para elemento do diálogo */
+.element-fadein {
+  opacity: 1;
+  transition: opacity 0.35s cubic-bezier(.7,-0.2,.3,1.4);
+}
+.element-fadeout {
+  opacity: 0;
+  transition: opacity 0.35s cubic-bezier(.7,-0.2,.3,1.4);
+}
 .card-flip.expanded {
   animation: cardExpand 0.4s cubic-bezier(.7,-0.2,.3,1.4);
 }
@@ -163,8 +172,13 @@
   align-items: center;
   justify-content: flex-end;
   margin-left: auto;
-  transition: filter 0.2s;
+  transition: box-shadow 0.35s cubic-bezier(.7,-0.2,.3,1.4), filter 0.2s;
 }
+
+  .startflow-next-btn:hover {
+    background: none !important;
+    box-shadow: 0 0 2px 0px rgba(255, 179, 71, 0.5333333333), 0 0 32px 8px rgba(255, 255, 255, 0.5333333333) !important;
+  }
 
 .startflow-next-icon {
   transition: stroke 0.2s, filter 0.2s;

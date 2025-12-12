@@ -58,6 +58,82 @@
   animation: cardPreviewOpen 0.45s cubic-bezier(.7,-0.2,.3,1.4);
 }
 
+  /* CARD PREVIEW WATER - fundo com textura e degradê azul */
+  .card-preview.card-preview-water {
+    width: 370px;
+    min-height: 540px;
+    border-radius: 18px;
+    box-shadow: 0 8px 48px #000c, 0 0 0 3px #5ecbff66;
+    background: linear-gradient(120deg, #183a3a 0%, #2c6ca8 60%, #00aaff 90%, #182a2a 100%), url('../assets/img/card/texture-background.jpg');
+    background-blend-mode: multiply, darken;
+    position: relative;
+    padding: 22px 14px 18px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-family: 'Poppins', Arial, sans-serif;
+    color: #fff;
+    overflow: hidden;
+    animation: cardPreviewOpen 0.45s cubic-bezier(.7,-0.2,.3,1.4);
+  }
+
+  /* CARD PREVIEW EARTH - fundo com textura e degradê verde */
+  .card-preview.card-preview-earth {
+    width: 370px;
+    min-height: 540px;
+    border-radius: 18px;
+    box-shadow: 0 8px 48px #000c, 0 0 0 3px #a6ffb066;
+    background: linear-gradient(120deg, #183a18 0%, #2ca86c 60%, #00ff3c 90%, #182a18 100%), url('../assets/img/card/texture-background.jpg');
+    background-blend-mode: multiply, darken;
+    position: relative;
+    padding: 22px 14px 18px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-family: 'Poppins', Arial, sans-serif;
+    color: #fff;
+    overflow: hidden;
+    animation: cardPreviewOpen 0.45s cubic-bezier(.7,-0.2,.3,1.4);
+  }
+
+  /* CARD PREVIEW AIR - fundo com textura e degradê roxo claro */
+  .card-preview.card-preview-air {
+    width: 370px;
+    min-height: 540px;
+    border-radius: 18px;
+    box-shadow: 0 8px 48px #000c, 0 0 0 3px #d6b0ff66;
+    background: linear-gradient(120deg, #2a183a 0%, #a86ca8 60%, #d6b0ff 90%, #18182a 100%), url('../assets/img/card/texture-background.jpg');
+    background-blend-mode: multiply, darken;
+    position: relative;
+    padding: 22px 14px 18px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-family: 'Poppins', Arial, sans-serif;
+    color: #fff;
+    overflow: hidden;
+    animation: cardPreviewOpen 0.45s cubic-bezier(.7,-0.2,.3,1.4);
+  }
+
+  /* CARD PREVIEW PURE - fundo com textura e degradê branco */
+  .card-preview.card-preview-pure {
+    width: 370px;
+    min-height: 540px;
+    border-radius: 18px;
+    box-shadow: 0 8px 48px #000c, 0 0 0 3px #ffffff66;
+    background: linear-gradient(120deg, #e0e0ff 0%, #b0b0e6 60%, #ffffff 90%, #d6d6ff 100%), url('../assets/img/card/texture-background.jpg');
+    background-blend-mode: multiply, lighten;
+    position: relative;
+    padding: 22px 14px 18px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-family: 'Poppins', Arial, sans-serif;
+    color: #222;
+    overflow: hidden;
+    animation: cardPreviewOpen 0.45s cubic-bezier(.7,-0.2,.3,1.4);
+  }
+
 .card-preview-fire::after {
   content: '';
   position: absolute;
@@ -279,8 +355,8 @@
 }
 
 .card-preview-element{
-  width: 25px;
-  height: 25px;
+     width: 23px;
+    height: 23px;
 }
 
 .card-preview-descs-inline {
@@ -312,7 +388,7 @@
 }
 
 .desc-value {
-  font-size: 1.08rem;
+  font-size: 13px;
   color: #fff;
   font-weight: 700;
   display: flex;

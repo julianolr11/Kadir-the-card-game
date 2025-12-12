@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
+import { AppContext } from '../context/AppContext';
 import verso from '../assets/img/card/verso.png';
 import agua from '../assets/img/elements/agua.png';
 import ar from '../assets/img/elements/ar.png';
@@ -6,14 +7,23 @@ import fogo from '../assets/img/elements/fogo.png';
 import puro from '../assets/img/elements/puro.png';
 import terra from '../assets/img/elements/terra.png';
 import '../styles/startflow.css';
-import CardPreview from './CardPreview'; // Importe o componente CardPreview
+import CreatureCardPreview from './CreatureCardPreview';
+import { creatures } from '../assets/creaturesData';
 
-const dialogos = [
-  'Olá viajante, vejo que você busca um novo tipo de magia, algo que você não encontra nas jogatinas comuns',
-  'De que vale suas ambições se não pode desfrutar da glória de conquistar mais uma vitória nesse card game, correto?',
-  'Bom, chega de conversa, afinal, você está aqui para uma jogatina, não é?',
-  'Escolha um elemento para te guiar'
-];
+const dialogos = {
+  ptbr: [
+    'Olá viajante, vejo que você busca um novo tipo de magia, algo que você não encontra nas jogatinas comuns',
+    'De que vale suas ambições se não pode desfrutar da glória de conquistar mais uma vitória nesse card game, correto?',
+    'Bom, chega de conversa, afinal, você está aqui para uma jogatina, não é?',
+    'Escolha um elemento para te guiar'
+  ],
+  en: [
+    'Hello traveler, I see you seek a new kind of magic, something you won’t find in ordinary games',
+    'What good are your ambitions if you can’t enjoy the glory of conquering another victory in this card game, right?',
+    'Well, enough talk, after all, you’re here for a game, aren’t you?',
+    'Choose an element to guide you'
+  ]
+};
 
 const btnStyle = {
   background: 'linear-gradient(90deg, #a87e2d 0%, #ffe6b0 100%)',
@@ -31,12 +41,14 @@ const btnStyle = {
 };
 
 const StartFlow = ({ onFinish }) => {
+  const { lang } = useContext(AppContext);
   const [step, setStep] = useState(0);
   const [showModal, setShowModal] = useState(false);
   const [displayedText, setDisplayedText] = useState('');
   const [typing, setTyping] = useState(true);
-  const [fade, setFade] = useState('fadein');
+  const [fade, setFade] = useState('fadein-up');
   const [showPreview, setShowPreview] = useState(false);
+  const [previewCreature, setPreviewCreature] = useState(null);
   const typingTimeout = useRef();
   const cardAnims = useRef(
     Array.from({ length: 5 }, () => ({
@@ -48,11 +60,11 @@ const StartFlow = ({ onFinish }) => {
   useEffect(() => {
     setDisplayedText('');
     setTyping(true);
-    setFade('fadein');
+    setFade('fadein-up');
     let idx = 0;
     function typeNext() {
-      setDisplayedText(dialogos[step].slice(0, idx));
-      if (idx < dialogos[step].length) {
+      setDisplayedText(dialogos[lang][step].slice(0, idx));
+      if (idx < dialogos[lang][step].length) {
         typingTimeout.current = setTimeout(() => {
           idx++;
           typeNext();
@@ -63,14 +75,14 @@ const StartFlow = ({ onFinish }) => {
     }
     typeNext();
     return () => clearTimeout(typingTimeout.current);
-  }, [step]);
+  }, [step, lang]);
 
   const handleNext = () => {
     setFade('fadeout');
     setTimeout(() => {
-      if (step < dialogos.length - 1) {
+      if (step < dialogos[lang].length - 1) {
         setStep(step + 1);
-        if (step === dialogos.length - 2) setShowModal(true);
+        if (step === dialogos[lang].length - 2) setShowModal(true);
       } else if (onFinish) {
         onFinish();
       }
@@ -78,7 +90,9 @@ const StartFlow = ({ onFinish }) => {
   };
 
   const elementos = [agua, ar, fogo, terra, puro];
-  const nomes = ['Água', 'Ar', 'Fogo', 'Terra', 'Puro'];
+  const nomes = lang === 'en'
+    ? ['Water', 'Air', 'Fire', 'Earth', 'Pure']
+    : ['Água', 'Ar', 'Fogo', 'Terra', 'Puro'];
   const [hovered, setHovered] = useState(null);
   const [selected, setSelected] = useState(null); // índice da carta selecionada
 
@@ -103,8 +117,13 @@ const StartFlow = ({ onFinish }) => {
                   className={`card-flip${selected === i ? ' flipped expanded' : ''}`}
                   style={{ width: selected === i ? 220 : 110, height: selected === i ? 308 : 160, transition: selected === i ? 'transform 0.7s cubic-bezier(.7,-0.2,.3,1.4), width 0.4s, height 0.4s' : 'transform 0.6s', transformStyle: 'preserve-3d', zIndex: selected === i ? 3000 : 'auto' }}
                   onClick={() => {
-                    if (i === 2) {
-                      setSelected(i);
+                    // Ao clicar em qualquer elemento, sorteia uma criatura daquele elemento
+                    setSelected(i);
+                    const elementoSelecionado = ['agua', 'ar', 'fogo', 'terra', 'puro'][i];
+                    const criaturasDoElemento = creatures.filter(c => c.element === elementoSelecionado);
+                    if (criaturasDoElemento.length > 0) {
+                      const sorteada = criaturasDoElemento[Math.floor(Math.random() * criaturasDoElemento.length)];
+                      setPreviewCreature(sorteada);
                       setShowPreview(true);
                     }
                   }}
@@ -145,26 +164,6 @@ const StartFlow = ({ onFinish }) => {
                     </div>
                   )}
                 </div>
-                {hovered === i && (
-                  <img
-                    src={elementos[i]}
-                    alt={nomes[i]}
-                    style={{
-                      position: 'absolute',
-                      left: '50%',
-                      top: '-90px',
-                      transform: 'translateX(-50%)',
-                      width: 64,
-                      height: 64,
-                      filter: 'drop-shadow(0 2px 12px #000a)',
-                      zIndex: 10,
-                      background: 'rgba(30,22,40,0.92)',
-                      borderRadius: 12,
-                      padding: 6,
-                      transition: 'opacity 0.2s',
-                    }}
-                  />
-                )}
               </div>
             ))}
           </div>
@@ -182,7 +181,7 @@ const StartFlow = ({ onFinish }) => {
           alignItems: 'center',
           justifyContent: 'center',
         }}>
-          <CardPreview onClose={() => { setShowPreview(false); setSelected(null); }} />
+          <CreatureCardPreview creature={previewCreature} onClose={() => { setShowPreview(false); setSelected(null); setPreviewCreature(null); }} />
         </div>
       )}
       {/* Diálogo só aparece se o preview não estiver aberto */}
@@ -220,10 +219,57 @@ const StartFlow = ({ onFinish }) => {
           letterSpacing: 0.2,
           transition: 'height 0.2s',
         }}>
-          <span style={{ width: '100%', display: 'block', minHeight: 32 }}>{displayedText}<span style={{ opacity: typing ? 1 : 0, color: '#ffe6b0', fontWeight: 700 }}>|</span></span>
+          <span style={{ width: '100%', display: 'block', minHeight: 32 }}>
+            {displayedText}
+            <span style={{ opacity: typing ? 1 : 0, color: '#ffe6b0', fontWeight: 700 }}>|</span>
+            <span
+              className={hovered !== null ? 'element-fadein' : 'element-fadeout'}
+              style={{
+                display: hovered !== null ? 'flex' : 'none',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginTop: 12,
+                transition: 'opacity 0.35s',
+                opacity: hovered !== null ? 1 : 0
+              }}
+            >
+              {hovered !== null && (
+                <>
+                  <img src={elementos[hovered]} alt={nomes[hovered]} style={{ width: 48, height: 48, margin: '0 auto', filter: 'drop-shadow(0 2px 12px #000a)', background: 'rgba(30,22,40,0.92)', borderRadius: 12, padding: 4 }} />
+                  <span style={{ color: '#ffe6b0', fontWeight: 600, fontSize: 18, marginTop: 4 }}>{nomes[hovered]}</span>
+                </>
+              )}
+            </span>
+          </span>
           <div style={{ marginTop: 28, textAlign: 'right', width: '100%' }}>
-            {step < dialogos.length - 1 && !typing && (
-              <button onClick={handleNext} style={btnStyle}>Próximo &gt;</button>
+            {step < dialogos[lang].length - 1 && !typing && (
+              <button
+                onClick={handleNext}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  borderRadius: 50,
+                  padding: 0,
+                  cursor: 'pointer',
+                  boxShadow: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-end',
+                  transition: 'background 0.2s',
+                  outline: 'none',
+                  minWidth: 0,
+                  minHeight: 0,
+                  marginLeft: 'auto',
+                }}
+                aria-label={lang === 'en' ? 'Next' : 'Próximo'}
+                className="startflow-next-btn"
+              >
+                <svg className="startflow-next-icon" width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="16" cy="16" r="15" fill="none" stroke="#ffe6b0" strokeWidth="2" />
+                  <path d="M12 16H20M20 16L16 12M20 16L16 20" stroke="#ffe6b0" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
             )}
           </div>
         </div>

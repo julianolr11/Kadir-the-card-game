@@ -134,7 +134,7 @@ const OptionsModal = ({ visible, onClose, onApply, initialLang = 'ptbr', initial
                 onChange={handleVolumeChange}
                 style={{ ...rangeStyle, width: 270 }}
               />
-              <span style={{ minWidth: 32, textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: '#ffe6b0', fontWeight: 600 }}>{volume}</span>
+              <span style={{ minWidth: 32, textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: '#ffe6b0', fontWeight: 600 }}>{localVolume}</span>
             </div>
           </div>
           <div>

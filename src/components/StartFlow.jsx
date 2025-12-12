@@ -9,6 +9,7 @@ import terra from '../assets/img/elements/terra.png';
 import '../styles/startflow.css';
 import CreatureCardPreview from './CreatureCardPreview.jsx';
 import { creatures } from '../assets/creaturesData.js';
+import flipcardSound from '../assets/sounds/flipcard.mp3';
 
 const dialogos = {
   ptbr: [
@@ -56,6 +57,8 @@ const StartFlow = ({ onFinish }) => {
       reverse: Math.random() > 0.5
     }))
   );
+  // Ref para o áudio do flipcard
+  const flipAudioRef = useRef(null);
 
   useEffect(() => {
     setDisplayedText('');
@@ -125,6 +128,11 @@ const StartFlow = ({ onFinish }) => {
                       const sorteada = criaturasDoElemento[Math.floor(Math.random() * criaturasDoElemento.length)];
                       setPreviewCreature(sorteada);
                       setShowPreview(true);
+                    }
+                    // Toca o som de flipcard
+                    if (flipAudioRef.current) {
+                      flipAudioRef.current.currentTime = 0;
+                      flipAudioRef.current.play();
                     }
                   }}
                 >
@@ -274,6 +282,8 @@ const StartFlow = ({ onFinish }) => {
           </div>
         </div>
       </div>
+      {/* Áudio do flipcard */}
+      <audio ref={flipAudioRef} src={flipcardSound} preload="auto" />
     </div>
   );
 };

@@ -31,37 +31,52 @@ const translations = {
   }
 };
 
-const OptionsModal = ({ visible, onClose, onApply, initialLang = 'ptbr', initialVolume = 50, initialFullscreen = false, initialResolution = '1280x720' }) => {
+
+const OptionsModal = ({ visible, onClose, onApply, initialLang = 'ptbr', initialMusicVolume = 50, initialEffectsVolume = 50, initialFullscreen = false, initialResolution = '1280x720' }) => {
   // Carregar do localStorage se existir
   const getInitial = (key, fallback) => {
     if (typeof window !== 'undefined') {
       const value = localStorage.getItem(key);
       if (value !== null) {
         if (key === 'fullscreen') return value === 'true';
-        if (key === 'volume') return Number(value);
+        if (key === 'musicVolume' || key === 'effectsVolume') return Number(value);
         return value;
       }
     }
     return fallback;
   };
 
-  const { lang, setLang, volume, setVolume } = useContext(AppContext);
+  const { lang, setLang, musicVolume, setMusicVolume, effectsVolume, setEffectsVolume } = useContext(AppContext);
   const [localLang, setLocalLang] = useState(() => getInitial('lang', initialLang));
-  const [localVolume, setLocalVolume] = useState(() => getInitial('volume', initialVolume));
+  const [localMusicVolume, setLocalMusicVolume] = useState(() => getInitial('musicVolume', initialMusicVolume));
+  const [localEffectsVolume, setLocalEffectsVolume] = useState(() => getInitial('effectsVolume', initialEffectsVolume));
   const [fullscreen, setFullscreen] = useState(() => getInitial('fullscreen', initialFullscreen));
   const [resolution, setResolution] = useState(() => getInitial('resolution', initialResolution));
 
   const handleLangChange = (e) => setLocalLang(e.target.value);
-  const handleVolumeChange = (e) => setLocalVolume(Number(e.target.value));
+  const handleMusicVolumeChange = (e) => {
+    const value = Number(e.target.value);
+    setLocalMusicVolume(value);
+    setMusicVolume(value);
+    localStorage.setItem('musicVolume', value);
+  };
+  const handleEffectsVolumeChange = (e) => {
+    const value = Number(e.target.value);
+    setLocalEffectsVolume(value);
+    setEffectsVolume(value);
+    localStorage.setItem('effectsVolume', value);
+  };
 
   const handleApply = () => {
     localStorage.setItem('lang', localLang);
-    localStorage.setItem('volume', localVolume);
+    localStorage.setItem('musicVolume', localMusicVolume);
+    localStorage.setItem('effectsVolume', localEffectsVolume);
     localStorage.setItem('fullscreen', fullscreen);
     localStorage.setItem('resolution', resolution);
     setLang(localLang);
-    setVolume(Number(localVolume));
-    if (onApply) onApply({ lang: localLang, volume: localVolume, fullscreen, resolution });
+    setMusicVolume(Number(localMusicVolume));
+    setEffectsVolume(Number(localEffectsVolume));
+    if (onApply) onApply({ lang: localLang, musicVolume: localMusicVolume, effectsVolume: localEffectsVolume, fullscreen, resolution });
     if (onClose) onClose();
   };
 
@@ -124,17 +139,31 @@ const OptionsModal = ({ visible, onClose, onApply, initialLang = 'ptbr', initial
             </select>
           </div>
           <div>
-            <label style={labelStyle}>{t.volume}</label>
+            <label style={labelStyle}>Volume da Música</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <input
                 type="range"
                 min={0}
                 max={100}
-                value={localVolume}
-                onChange={handleVolumeChange}
+                value={localMusicVolume}
+                onChange={handleMusicVolumeChange}
                 style={{ ...rangeStyle, width: 270 }}
               />
-              <span style={{ minWidth: 32, textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: '#ffe6b0', fontWeight: 600 }}>{localVolume}</span>
+              <span style={{ minWidth: 32, textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: '#ffe6b0', fontWeight: 600 }}>{localMusicVolume}</span>
+            </div>
+          </div>
+          <div>
+            <label style={labelStyle}>Volume dos Efeitos</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                value={localEffectsVolume}
+                onChange={handleEffectsVolumeChange}
+                style={{ ...rangeStyle, width: 270 }}
+              />
+              <span style={{ minWidth: 32, textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: '#ffe6b0', fontWeight: 600 }}>{localEffectsVolume}</span>
             </div>
           </div>
           <div>

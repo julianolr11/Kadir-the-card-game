@@ -308,32 +308,7 @@ function StartFlow({ onFinish }) {
                     }}
                     onMouseLeave={() => setHovered(null)}
                   />
-                  {/* Face da frente só para carta de fogo */}
-                  {i === 2 && selected === i && (
-                    <div
-                      className="card-front-face fire-front-face"
-                      style={{
-                        width: 220,
-                        height: 308,
-                        background: 'none',
-                        borderRadius: 18,
-                        boxShadow: '0 4px 24px #000a',
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        backfaceVisibility: 'hidden',
-                        transform: 'rotateY(180deg)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexDirection: 'column',
-                        overflow: 'hidden',
-                        zIndex: 2
-                      }}
-                    >
-                      {/* CardPreview removido daqui */}
-                    </div>
-                  )}
+                  {/* Face da frente removida, pois o modal já exibe a carta sorteada corretamente */}
                 </div>
               </div>
             ))}

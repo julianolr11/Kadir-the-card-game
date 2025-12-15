@@ -53,20 +53,10 @@ const CardPreview = ({ onClose }) => {
   const [swipeAnim, setSwipeAnim] = useState(false);
   const { lang } = useContext(AppContext);
   const t = translations[lang] || translations.ptbr;
-  useEffect(() => {
-    if (showStory) {
-      setSwipeAnim(true);
-      // Toca o som apenas ao abrir (não ao fechar)
-      if (swipeAudioRef.current) {
-        swipeAudioRef.current.currentTime = 0;
-        swipeAudioRef.current.play();
-      }
-      const timeout = setTimeout(() => setSwipeAnim(false), 400);
-      return () => clearTimeout(timeout);
-    }
-  }, [showStory]);
-
-  return (
+  // Efeito 3D
+  const artWrapperRef = useRef(null);
+  const artImgRef = useRef(null);
+  // Refs removidos pois o efeito 3D foi desativado
     <div style={{ position: 'relative', display: 'flex' }}>
       {/* Áudio do swipe sempre presente no DOM */}
       <audio ref={swipeAudioRef} src={swipeSound} preload="auto" />
@@ -93,7 +83,12 @@ const CardPreview = ({ onClose }) => {
           </div>
           {/* Arte principal */}
           <div className="card-preview-art-wrapper">
-            <img src={ashfangImg} alt="Ashfang" className="card-preview-art" />
+            <img
+              src={ashfangImg}
+              alt="Ashfang"
+              className="card-preview-art"
+              draggable={false}
+            />
           </div>
           {/* Habilidades */}
           <div className="card-preview-abilities">

@@ -29,6 +29,7 @@ const colorClass = {
 
 const CreatureCardPreview = ({ creature, onClose }) => {
   const swipeAudioRef = React.useRef(null);
+  // Efeito 3D removido
     const labelTranslations = {
       pt: {
         type: 'Tipo',
@@ -82,7 +83,12 @@ const CreatureCardPreview = ({ creature, onClose }) => {
             {/* Áudio do swipe */}
             <audio ref={swipeAudioRef} src={swipeSound} preload="auto" />
           <div className="card-preview-art-wrapper">
-            <img src={creature.img} alt={typeof creature.name === 'object' ? creature.name[langKey] : creature.name} className="card-preview-art" />
+            <img
+              src={creature.img}
+              alt={typeof creature.name === 'object' ? creature.name[langKey] : creature.name}
+              className="card-preview-art"
+              draggable={false}
+            />
           </div>
           <div className="card-preview-abilities">
             {creature.abilities.map((ab, idx) => (

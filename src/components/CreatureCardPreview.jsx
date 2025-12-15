@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useRef } from 'react';
 import { AppContext } from '../context/AppContext';
 import soulEssence from '../assets/img/icons/soul-essence.png';
 import lvlIcon from '../assets/img/icons/lvlicon.png';
@@ -9,6 +9,8 @@ import terra from '../assets/img/elements/terra.png';
 import puro from '../assets/img/elements/puro.png';
 import ar from '../assets/img/elements/ar.png';
 import '../styles/cardpreview.css';
+
+import swipeSound from '../assets/sounds/effects/swipe.MP3';
 
 const elementIcons = {
   fogo,
@@ -26,6 +28,7 @@ const colorClass = {
 };
 
 const CreatureCardPreview = ({ creature, onClose }) => {
+  const swipeAudioRef = React.useRef(null);
     const labelTranslations = {
       pt: {
         type: 'Tipo',
@@ -48,7 +51,13 @@ const CreatureCardPreview = ({ creature, onClose }) => {
         <button
           className={`card-preview-arrow${showStory ? ' card-preview-arrow-rotated' : ''}`}
           style={{ position: 'absolute', top: 0, right: -50, zIndex: 100 }}
-          onClick={() => setShowStory(s => !s)}
+          onClick={() => {
+            if (swipeAudioRef.current) {
+              swipeAudioRef.current.currentTime = 0;
+              swipeAudioRef.current.play();
+            }
+            setShowStory(s => !s);
+          }}
           aria-label={showStory ? 'Fechar história da criatura' : 'Ver história da criatura'}
         >
           <span style={{ fontSize: 28, color: '#ffe6b0', filter: 'drop-shadow(0 2px 8px #000a)', display: 'inline-block', transition: 'transform 0.3s' }}>
@@ -70,6 +79,8 @@ const CreatureCardPreview = ({ creature, onClose }) => {
               #{String(creature.num).padStart(3, '0')}
             </span>
           </div>
+            {/* Áudio do swipe */}
+            <audio ref={swipeAudioRef} src={swipeSound} preload="auto" />
           <div className="card-preview-art-wrapper">
             <img src={creature.img} alt={typeof creature.name === 'object' ? creature.name[langKey] : creature.name} className="card-preview-art" />
           </div>

@@ -1,4 +1,6 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useRef, useEffect } from 'react';
+import swipeSound from '../assets/sounds/effects/swipe.mp3';
+import '../styles/swipe.css';
 import { AppContext } from '../context/AppContext';
 import fogo from '../assets/img/elements/fogo.png';
 import agua from '../assets/img/elements/agua.png';
@@ -47,10 +49,27 @@ const translations = {
 
 const CardPreview = ({ onClose }) => {
   const [showStory, setShowStory] = useState(false);
+  const swipeAudioRef = useRef(null);
+  const [swipeAnim, setSwipeAnim] = useState(false);
   const { lang } = useContext(AppContext);
   const t = translations[lang] || translations.ptbr;
+  useEffect(() => {
+    if (showStory) {
+      setSwipeAnim(true);
+      // Toca o som apenas ao abrir (não ao fechar)
+      if (swipeAudioRef.current) {
+        swipeAudioRef.current.currentTime = 0;
+        swipeAudioRef.current.play();
+      }
+      const timeout = setTimeout(() => setSwipeAnim(false), 400);
+      return () => clearTimeout(timeout);
+    }
+  }, [showStory]);
+
   return (
     <div style={{ position: 'relative', display: 'flex' }}>
+      {/* Áudio do swipe sempre presente no DOM */}
+      <audio ref={swipeAudioRef} src={swipeSound} preload="auto" />
       {/* Card + seta sempre juntos na mesma div */}
       <div style={{ position: 'relative', display: 'inline-block' }}>
         <button
@@ -130,7 +149,7 @@ const CardPreview = ({ onClose }) => {
       </div>
       {/* Centralização card + painel quando história aberta */}
       {showStory && (
-        <div className="card-preview-story-panel">
+        <div className={`card-preview-story-panel${swipeAnim ? ' swipe-in' : ''}`}>
           <h3 className="card-preview-story-title">{t.storyTitle}</h3>
           <div className="card-preview-story-content">
             <p>{t.story1}</p>

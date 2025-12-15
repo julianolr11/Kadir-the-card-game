@@ -1,6 +1,8 @@
 
 
 import React, { useEffect, useState, useRef, useContext } from 'react';
+import keyClickSound from '../assets/sounds/effects/key_click.MP3';
+import menuMusic from '../assets/sounds/music/menu.mp3';
 import { AppContext } from '../context/AppContext';
 import '../styles/animations.css';
 import '../styles/vinheta.css';
@@ -28,12 +30,14 @@ const LoadingScreen = ({ onFinish }) => {
   const [showOptions, setShowOptions] = useState(false);
   const [showExit, setShowExit] = useState(false);
   const audioRef = useRef(null);
-  const { volume, lang } = useContext(AppContext);
+  const menuAudioRef = useRef(null);
+  const keyClickAudioRef = useRef(null);
+  const { musicVolume, lang } = useContext(AppContext);
   const t = translations[lang] || translations.ptbr;
 
   useEffect(() => {
     if (audioRef.current) {
-      audioRef.current.volume = volume / 100;
+      audioRef.current.volume = musicVolume / 100;
       audioRef.current.play();
     }
     const timer = setTimeout(() => {
@@ -43,20 +47,54 @@ const LoadingScreen = ({ onFinish }) => {
     return () => {
       clearTimeout(timer);
       if (audioRef.current) audioRef.current.pause();
+      if (menuAudioRef.current) menuAudioRef.current.pause();
     };
-  }, [onFinish, volume]);
+  }, [onFinish, musicVolume]);
+
+  const playClick = () => {
+    if (keyClickAudioRef.current) {
+      keyClickAudioRef.current.currentTime = 0;
+      keyClickAudioRef.current.volume = musicVolume / 100;
+      keyClickAudioRef.current.play();
+    }
+  };
+
+  const handleStart = () => {
+    playClick();
+    setShowStart(true);
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    if (menuAudioRef.current) {
+      menuAudioRef.current.currentTime = 0;
+      menuAudioRef.current.volume = musicVolume / 100;
+      menuAudioRef.current.play();
+    }
+  };
+  const handleOptions = () => {
+    playClick();
+    setShowOptions(true);
+  };
+  const handleExit = () => {
+    playClick();
+    setShowExit(true);
+  };
 
   return (
     <div style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', overflow: 'hidden' }}>
       <audio ref={audioRef} src={'/assets/sounds/intro.mp3'} autoPlay loop />
+      <audio ref={menuAudioRef} src={menuMusic} loop />
       <img src={wallpaper} alt="Loading" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.9)' }} className="fade-in" />
       <div className="vinheta" />
       {showMenu && (
         <>
           <div style={{ position: 'absolute', bottom: 60, left: 0, right: 0, textAlign: 'center' }} className="fade-in">
-            <button style={btnStyle} onClick={() => setShowStart(true)}>{t.start}</button>
-            <button style={btnStyle} onClick={() => setShowOptions(true)}>{t.options}</button>
-            <button style={btnStyle} onClick={() => setShowExit(true)}>{t.exit}</button>
+            <button style={btnStyle} onClick={handleStart}>{t.start}</button>
+            <button style={btnStyle} onClick={handleOptions}>{t.options}</button>
+            <button style={btnStyle} onClick={handleExit}>{t.exit}</button>
+            {/* Áudio do click dos botões do menu */}
+            <audio ref={keyClickAudioRef} src={keyClickSound} preload="auto" />
           </div>
           {showStart && <StartFlow onFinish={() => setShowStart(false)} />}
           {showOptions && <OptionsModal visible={showOptions} onClose={() => setShowOptions(false)} />}

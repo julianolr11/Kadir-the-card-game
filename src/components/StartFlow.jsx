@@ -9,40 +9,37 @@ import terra from '../assets/img/elements/terra.png';
 import '../styles/startflow.css';
 import CreatureCardPreview from './CreatureCardPreview.jsx';
 import { creatures } from '../assets/creaturesData.js';
-import flipcardSound from '../assets/sounds/flipcard.mp3';
+import flipcardSound from '../assets/sounds/effects/flipcard.MP3';
+import popSound from '../assets/sounds/effects/pop.MP3';
+import swipeSound from '../assets/sounds/effects/swipe.MP3';
+import typingSound from '../assets/sounds/effects/typing.MP3';
+import keyClickSound from '../assets/sounds/effects/key_click.MP3';
+import waterSound from '../assets/sounds/effects/elements/water.MP3';
+import airSound from '../assets/sounds/effects/elements/air.MP3';
+import fireSound from '../assets/sounds/effects/elements/fire.MP3';
+import earthSound from '../assets/sounds/effects/elements/earth.MP3';
+import pureSound from '../assets/sounds/effects/elements/pure.MP3';
+import '../styles/pop.css';
 
 const dialogos = {
   ptbr: [
     'Olá viajante, vejo que você busca um novo tipo de magia, algo que você não encontra nas jogatinas comuns',
     'De que vale suas ambições se não pode desfrutar da glória de conquistar mais uma vitória nesse card game, correto?',
     'Bom, chega de conversa, afinal, você está aqui para uma jogatina, não é?',
-    'Escolha um elemento para te guiar'
+    'Escolha um elemento para te guiar',
   ],
   en: [
     'Hello traveler, I see you seek a new kind of magic, something you won’t find in ordinary games',
     'What good are your ambitions if you can’t enjoy the glory of conquering another victory in this card game, right?',
     'Well, enough talk, after all, you’re here for a game, aren’t you?',
-    'Choose an element to guide you'
-  ]
+    'Choose an element to guide you',
+  ],
 };
 
-const btnStyle = {
-  background: 'linear-gradient(90deg, #a87e2d 0%, #ffe6b0 100%)',
-  color: '#3a2c4a',
-  border: 'none',
-  borderRadius: 8,
-  fontWeight: 600,
-  fontSize: 18,
-  padding: '10px 32px',
-  cursor: 'pointer',
-  boxShadow: '0 2px 12px #000a',
-  marginLeft: 12,
-  letterSpacing: 0.2,
-  transition: 'background 0.2s, color 0.2s',
-};
+// btnStyle não utilizado
 
-const StartFlow = ({ onFinish }) => {
-  const { lang } = useContext(AppContext);
+function StartFlow({ onFinish }) {
+  const { lang, effectsVolume } = useContext(AppContext);
   const [step, setStep] = useState(0);
   const [showModal, setShowModal] = useState(false);
   const [displayedText, setDisplayedText] = useState('');
@@ -54,17 +51,64 @@ const StartFlow = ({ onFinish }) => {
   const cardAnims = useRef(
     Array.from({ length: 5 }, () => ({
       delay: (Math.random() * 1.2).toFixed(2),
-      reverse: Math.random() > 0.5
-    }))
+      reverse: Math.random() > 0.5,
+    })),
   );
   // Ref para o áudio do flipcard
   const flipAudioRef = useRef(null);
+  const popAudioRef = useRef(null);
+  const swipeAudioRef = useRef(null);
+  const typingAudioRef = useRef(null);
+  const keyClickAudioRef = useRef(null);
+  const elementAudioRefs = [
+    useRef(null), // água
+    useRef(null), // ar
+    useRef(null), // fogo
+    useRef(null), // terra
+    useRef(null), // puro
+  ];
+  const [cardsVisible, setCardsVisible] = useState([
+    false,
+    false,
+    false,
+    false,
+    false,
+  ]);
+  // Efeito: cartas surgem uma a uma com pop
+  useEffect(() => {
+    function showNextCard(i) {
+      setCardsVisible((prev) => {
+        const arr = [...prev];
+        arr[i] = true;
+        return arr;
+      });
+      // Toca o som pop
+      if (popAudioRef.current) {
+        popAudioRef.current.currentTime = 0;
+        popAudioRef.current.play();
+      }
+      if (i < 4) setTimeout(() => showNextCard(i + 1), 180);
+    }
+    if (showModal) {
+      setCardsVisible([false, false, false, false, false]);
+      setTimeout(() => showNextCard(0), 350);
+    } else {
+      setCardsVisible([false, false, false, false, false]);
+    }
+  }, [showModal]);
 
   useEffect(() => {
     setDisplayedText('');
     setTyping(true);
     setFade('fadein-up');
     let idx = 0;
+    // Inicia o som de typing
+    if (typingAudioRef.current) {
+      typingAudioRef.current.currentTime = 0;
+      typingAudioRef.current.volume = (effectsVolume ?? 50) / 100;
+      typingAudioRef.current.loop = true;
+      typingAudioRef.current.play();
+    }
     function typeNext() {
       setDisplayedText(dialogos[lang][step].slice(0, idx));
       if (idx < dialogos[lang][step].length) {
@@ -74,13 +118,31 @@ const StartFlow = ({ onFinish }) => {
         }, 38);
       } else {
         setTyping(false);
+        // Para o som de typing
+        if (typingAudioRef.current) {
+          typingAudioRef.current.pause();
+          typingAudioRef.current.currentTime = 0;
+        }
       }
     }
     typeNext();
-    return () => clearTimeout(typingTimeout.current);
-  }, [step, lang]);
+    return () => {
+      clearTimeout(typingTimeout.current);
+      if (typingAudioRef.current) {
+        typingAudioRef.current.pause();
+        typingAudioRef.current.currentTime = 0;
+      }
+    };
+  }, [step, lang, effectsVolume]);
 
   const handleNext = () => {
+        // Toca o som de click ao avançar o diálogo
+        if (keyClickAudioRef.current) {
+          keyClickAudioRef.current.currentTime = 0;
+          keyClickAudioRef.current.volume = (effectsVolume ?? 50) / 100;
+          keyClickAudioRef.current.play();
+        }
+    // Não tocar som ao avançar o diálogo
     setFade('fadeout');
     setTimeout(() => {
       if (step < dialogos[lang].length - 1) {
@@ -94,55 +156,156 @@ const StartFlow = ({ onFinish }) => {
 
   const elementos = [agua, ar, fogo, terra, puro];
   const nomes = lang === 'en'
-    ? ['Water', 'Air', 'Fire', 'Earth', 'Pure']
-    : ['Água', 'Ar', 'Fogo', 'Terra', 'Puro'];
+    ? [
+        'Water',
+        'Air',
+        'Fire',
+        'Earth',
+        'Pure',
+      ]
+    : [
+        'Água',
+        'Ar',
+        'Fogo',
+        'Terra',
+        'Puro',
+      ];
   const [hovered, setHovered] = useState(null);
   const [selected, setSelected] = useState(null); // índice da carta selecionada
+
+  // Atualiza o volume do efeito em tempo real
+  useEffect(() => {
+    if (flipAudioRef.current) {
+      flipAudioRef.current.volume = (effectsVolume ?? 50) / 100;
+    }
+  }, [effectsVolume]);
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: '#111', zIndex: 2000 }}>
       {/* Modal de escolha de elemento (filtro/blur) */}
       {showModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(30,22,40,0.72)',
-          zIndex: 2100,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          backdropFilter: 'blur(8px)'
-        }}>
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(30,22,40,0.72)',
+            zIndex: 2100,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backdropFilter: 'blur(8px)',
+          }}
+        >
           <div className="startflow-cards" style={{ position: 'relative' }}>
             {cardAnims.current.map((anim, i) => (
-              <div key={i} style={{ position: 'relative', display: 'inline-block', perspective: 800 }}>
+              <div
+                key={`card-${i}`}
+                style={{
+                  position: 'relative',
+                  display: 'inline-block',
+                  perspective: 800,
+                }}
+              >
                 <div
-                  className={`card-flip${selected === i ? ' flipped expanded' : ''}`}
-                  style={{ width: selected === i ? 220 : 110, height: selected === i ? 308 : 160, transition: selected === i ? 'transform 0.7s cubic-bezier(.7,-0.2,.3,1.4), width 0.4s, height 0.4s' : 'transform 0.6s', transformStyle: 'preserve-3d', zIndex: selected === i ? 3000 : 'auto' }}
+                  className={`card-flip${selected === i ? ' flipped expanded' : ''} ${cardsVisible[i] ? 'pop-appear' : ''}`}
+                  style={{
+                    width: selected === i ? 220 : 110,
+                    height: selected === i ? 308 : 160,
+                    transition:
+                      selected === i
+                        ? 'transform 0.7s cubic-bezier(.7,-0.2,.3,1.4), width 0.4s, height 0.4s'
+                        : 'transform 0.6s',
+                    transformStyle: 'preserve-3d',
+                    zIndex: selected === i ? 3000 : 'auto',
+                    opacity: cardsVisible[i] ? 1 : 0,
+                    pointerEvents: cardsVisible[i] ? 'auto' : 'none',
+                  }}
                   onClick={() => {
-                    // Ao clicar em qualquer elemento, sorteia uma criatura daquele elemento
+                    if (!cardsVisible[i]) return;
                     setSelected(i);
-                    const elementoSelecionado = ['agua', 'ar', 'fogo', 'terra', 'puro'][i];
-                    const criaturasDoElemento = creatures.filter(c => c.element === elementoSelecionado);
+                    const elementoSelecionado = [
+                      'agua',
+                      'ar',
+                      'fogo',
+                      'terra',
+                      'puro',
+                    ][i];
+                    const criaturasDoElemento = creatures.filter(
+                      (c) => c.element === elementoSelecionado,
+                    );
                     if (criaturasDoElemento.length > 0) {
-                      const sorteada = criaturasDoElemento[Math.floor(Math.random() * criaturasDoElemento.length)];
+                      const sorteada =
+                        criaturasDoElemento[
+                          Math.floor(Math.random() * criaturasDoElemento.length)
+                        ];
                       setPreviewCreature(sorteada);
                       setShowPreview(true);
                     }
-                    // Toca o som de flipcard
+                    // Toca o som de flipcard ao virar a carta
                     if (flipAudioRef.current) {
                       flipAudioRef.current.currentTime = 0;
                       flipAudioRef.current.play();
                     }
                   }}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if ((e.key === 'Enter' || e.key === ' ') && cardsVisible[i]) {
+                      setSelected(i);
+                      const elementoSelecionado = [
+                        'agua',
+                        'ar',
+                        'fogo',
+                        'terra',
+                        'puro',
+                      ][i];
+                      const criaturasDoElemento = creatures.filter(
+                        (c) => c.element === elementoSelecionado,
+                      );
+                      if (criaturasDoElemento.length > 0) {
+                        const sorteada =
+                          criaturasDoElemento[
+                            Math.floor(Math.random() * criaturasDoElemento.length)
+                          ];
+                        setPreviewCreature(sorteada);
+                        setShowPreview(true);
+                      }
+                      if (flipAudioRef.current) {
+                        flipAudioRef.current.currentTime = 0;
+                        flipAudioRef.current.play();
+                      }
+                    }
+                  }}
+                  aria-label={nomes[i]}
                 >
                   {/* Face de trás (verso) para todas as cartas */}
                   <img
                     src={verso}
                     alt={`Carta elemento ${nomes[i]}`}
                     className={`startflow-card${anim.reverse ? ' float-reverse' : ''}`}
-                    style={{ animationDelay: `${anim.delay}s`, backfaceVisibility: 'hidden', position: 'absolute', top: 0, left: 0, width: selected === i ? 220 : 110, height: selected === i ? 308 : 160, borderRadius: 18 }}
-                    onMouseEnter={() => setHovered(i)}
+                    style={{
+                      animationDelay: `${anim.delay}s`,
+                      backfaceVisibility: 'hidden',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: selected === i ? 220 : 110,
+                      height: selected === i ? 308 : 160,
+                      borderRadius: 18,
+                    }}
+                    onMouseEnter={() => {
+                      setHovered(i);
+                      // Toca o som do elemento correspondente
+                      const ref = elementAudioRefs[i];
+                      if (ref.current) {
+                        ref.current.currentTime = 0;
+                        ref.current.volume = (effectsVolume ?? 50) / 100;
+                        ref.current.play();
+                      }
+                    }}
                     onMouseLeave={() => setHovered(null)}
                   />
                   {/* Face da frente só para carta de fogo */}
@@ -179,17 +342,26 @@ const StartFlow = ({ onFinish }) => {
       )}
       {/* Overlay do CardPreview */}
       {showPreview && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 5000,
-          background: 'rgba(30,22,40,0.72)',
-          backdropFilter: 'blur(8px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}>
-          <CreatureCardPreview creature={previewCreature} onClose={() => { setShowPreview(false); setSelected(null); setPreviewCreature(null); }} />
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 5000,
+            background: 'rgba(30,22,40,0.72)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <CreatureCardPreview
+            creature={previewCreature}
+            onClose={() => {
+              setShowPreview(false);
+              setSelected(null);
+              setPreviewCreature(null);
+            }}
+          />
         </div>
       )}
       {/* Diálogo só aparece se o preview não estiver aberto */}
@@ -284,6 +456,20 @@ const StartFlow = ({ onFinish }) => {
       </div>
       {/* Áudio do flipcard */}
       <audio ref={flipAudioRef} src={flipcardSound} preload="auto" />
+      {/* Áudio do pop */}
+      <audio ref={popAudioRef} src={popSound} preload="auto" />
+      {/* Áudio do swipe */}
+      <audio ref={swipeAudioRef} src={swipeSound} preload="auto" />
+      {/* Áudio do typing */}
+      <audio ref={typingAudioRef} src={typingSound} preload="auto" />
+      {/* Áudio do click do diálogo */}
+      <audio ref={keyClickAudioRef} src={keyClickSound} preload="auto" />
+      {/* Áudios dos elementos */}
+      <audio ref={elementAudioRefs[0]} src={waterSound} preload="auto" />
+      <audio ref={elementAudioRefs[1]} src={airSound} preload="auto" />
+      <audio ref={elementAudioRefs[2]} src={fireSound} preload="auto" />
+      <audio ref={elementAudioRefs[3]} src={earthSound} preload="auto" />
+      <audio ref={elementAudioRefs[4]} src={pureSound} preload="auto" />
     </div>
   );
 };

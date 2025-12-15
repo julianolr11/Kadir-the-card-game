@@ -1,0 +1,20 @@
+.pop-appear {
+  animation: popAppear 0.32s cubic-bezier(.7,-0.2,.3,1.4);
+}
+@keyframes popAppear {
+  0% {
+    transform: scale(0.2);
+    opacity: 0.2;
+  }
+  60% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+  80% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

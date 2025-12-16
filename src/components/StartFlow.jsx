@@ -40,7 +40,8 @@ const dialogos = {
 
 // btnStyle não utilizado
 
-function StartFlow({ onFinish, onGoHome }) {
+function StartFlow({ onFinish, onGoHome, menuMusicRef }) {
+  // menuMusicRef: ref global para controle da música do menu
     const candleAudioRef = useRef(null);
 
     useEffect(() => {
@@ -165,8 +166,14 @@ function StartFlow({ onFinish, onGoHome }) {
       if (step < dialogos[lang].length - 1) {
         setStep(step + 1);
         if (step === dialogos[lang].length - 2) setShowModal(true);
-      } else if (onFinish) {
-        onFinish();
+      } else {
+        // Ao finalizar o fluxo, para a intro e inicia o menu
+        if (introAudioRef?.current) {
+          introAudioRef.current.pause();
+          introAudioRef.current.currentTime = 0;
+        }
+        if (menuMusicRef?.current) menuMusicRef.current.play();
+        if (onFinish) onFinish();
       }
     }, 350);
   };

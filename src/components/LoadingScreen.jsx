@@ -24,13 +24,14 @@ const translations = {
   }
 };
 
-const LoadingScreen = ({ onFinish }) => {
+const LoadingScreen = ({ onFinish, menuMusicRef }) => {
+  // menuMusicRef: ref global para controle da música do menu
   const [showMenu, setShowMenu] = useState(false);
   const [showStart, setShowStart] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
   const [showExit, setShowExit] = useState(false);
   const audioRef = useRef(null);
-  const menuAudioRef = useRef(null);
+  // menuAudioRef removido, agora usa menuMusicRef global
   const keyClickAudioRef = useRef(null);
   const { musicVolume, lang } = useContext(AppContext);
   const t = translations[lang] || translations.ptbr;
@@ -47,9 +48,9 @@ const LoadingScreen = ({ onFinish }) => {
     return () => {
       clearTimeout(timer);
       if (audioRef.current) audioRef.current.pause();
-      if (menuAudioRef.current) menuAudioRef.current.pause();
+      if (menuMusicRef?.current) menuMusicRef.current.pause();
     };
-  }, [onFinish, musicVolume]);
+  }, [onFinish, musicVolume, menuMusicRef]);
 
   const playClick = () => {
     if (keyClickAudioRef.current) {
@@ -62,15 +63,6 @@ const LoadingScreen = ({ onFinish }) => {
   const handleStart = () => {
     playClick();
     setShowStart(true);
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-    }
-    if (menuAudioRef.current) {
-      menuAudioRef.current.currentTime = 0;
-      menuAudioRef.current.volume = musicVolume / 100;
-      menuAudioRef.current.play();
-    }
   };
   const handleOptions = () => {
     playClick();
@@ -84,7 +76,7 @@ const LoadingScreen = ({ onFinish }) => {
   return (
     <div style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', overflow: 'hidden' }}>
       <audio ref={audioRef} src={'/assets/sounds/intro.mp3'} autoPlay loop />
-      <audio ref={menuAudioRef} src={menuMusic} loop />
+      {/* menuMusicRef é global, não precisa de <audio> local */}
       <img src={wallpaper} alt="Loading" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.9)' }} className="fade-in" />
       <div className="vinheta" />
       {showMenu && (
@@ -96,7 +88,7 @@ const LoadingScreen = ({ onFinish }) => {
             {/* Áudio do click dos botões do menu */}
             <audio ref={keyClickAudioRef} src={keyClickSound} preload="auto" />
           </div>
-          {showStart && <StartFlow onFinish={() => setShowStart(false)} />}
+          {showStart && <StartFlow onFinish={() => setShowStart(false)} introAudioRef={audioRef} menuAudioRef={menuAudioRef} musicVolume={musicVolume} />}
           {showOptions && <OptionsModal visible={showOptions} onClose={() => setShowOptions(false)} />}
           {showExit && <ExitModal visible={showExit} onConfirm={() => window.close()} onCancel={() => setShowExit(false)} />}
         </>

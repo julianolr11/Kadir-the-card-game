@@ -18,7 +18,8 @@ const BoosterZone = ({ boosters }) => (
   </div>
 );
 
-const HomeScreen = ({ onNavigate }) => {
+const HomeScreen = ({ onNavigate, menuMusicRef }) => {
+  // menuMusicRef: ref global para controle da música do menu
     const candleAudioRef = React.useRef(null);
 
     React.useEffect(() => {
@@ -27,13 +28,14 @@ const HomeScreen = ({ onNavigate }) => {
         candleAudioRef.current.loop = true;
         candleAudioRef.current.play();
       }
+      if (menuMusicRef?.current) menuMusicRef.current.play();
       return () => {
         if (candleAudioRef.current) {
           candleAudioRef.current.pause();
           candleAudioRef.current.currentTime = 0;
         }
       };
-    }, []);
+    }, [menuMusicRef]);
   const { activeGuardian, boosters = 0 } = useContext(AppContext);
 
 

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import MenuMusicPlayer from '../components/MenuMusicPlayer';
 import LoadingScreen from '../components/LoadingScreen';
 import HomeScreen from '../components/HomeScreen';
 import StartFlow from '../components/StartFlow';
@@ -8,6 +9,7 @@ import LoadingMenu from './LoadingMenu';
 
 export default function App() {
   const [screen, setScreen] = useState('loading');
+  const menuMusicRef = useRef(null);
 
   // Navegação central
   const handleNavigate = (route: string) => {
@@ -21,17 +23,18 @@ export default function App() {
 
   return (
     <AppProvider>
+      <MenuMusicPlayer ref={menuMusicRef} />
       {screen === 'loading' && (
-        <LoadingScreen onFinish={() => setScreen('menu')} />
+        <LoadingScreen onFinish={() => setScreen('menu')} menuMusicRef={menuMusicRef} />
       )}
       {screen === 'menu' && (
-        <LoadingMenu onNavigate={handleNavigate} />
+        <LoadingMenu onNavigate={handleNavigate} menuMusicRef={menuMusicRef} />
       )}
       {screen === 'home' && (
-        <HomeScreen onNavigate={handleNavigate} />
+        <HomeScreen onNavigate={handleNavigate} menuMusicRef={menuMusicRef} />
       )}
       {screen === 'startflow' && (
-        <StartFlow onFinish={() => setScreen('home')} onGoHome={() => setScreen('home')} />
+        <StartFlow onFinish={() => setScreen('home')} onGoHome={() => setScreen('home')} menuMusicRef={menuMusicRef} />
       )}
       {/* Adicione outros fluxos conforme necessário */}
     </AppProvider>

@@ -5,9 +5,18 @@ import '../styles/animations.css';
 import '../styles/vinheta.css';
 import wallpaper from '../assets/img/wallpaper/wallpaper.png';
 
-const LoadingMenu = ({ onNavigate }: { onNavigate: (route: string) => void }) => {
+interface LoadingMenuProps {
+  onNavigate: (route: string) => void;
+  menuMusicRef: any;
+}
+
+const LoadingMenu = ({ onNavigate, menuMusicRef }: LoadingMenuProps) => {
   const [showOptions, setShowOptions] = useState(false);
   const [showExit, setShowExit] = useState(false);
+  React.useEffect(() => {
+    if (menuMusicRef?.current) menuMusicRef.current.play();
+  }, [menuMusicRef]);
+
   return (
     <div style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', overflow: 'hidden' }}>
       <img src={wallpaper} alt="Menu" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.9)' }} className="fade-in" />

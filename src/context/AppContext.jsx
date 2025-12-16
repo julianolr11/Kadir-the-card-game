@@ -26,6 +26,41 @@ export function AppProvider({ children }) {
   const [volume, setVolume] = useState(() => getInitial('volume', 50));
   const [musicVolume, setMusicVolume] = useState(() => getInitial('musicVolume', 50));
   const [effectsVolume, setEffectsVolume] = useState(() => getInitial('effectsVolume', 50));
+  // Guardião ativo: { name, img }
+  const [activeGuardian, setActiveGuardian] = useState(() => {
+    // Tenta recuperar do localStorage
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('activeGuardian');
+      if (stored) return JSON.parse(stored);
+    }
+    // Valor padrão
+    return { name: 'draak', img: require('../assets/img/creatures/draak_bio.png') };
+  });
+
+  // Sempre salva no localStorage
+  const updateActiveGuardian = (guardian) => {
+    setActiveGuardian(guardian);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('activeGuardian', JSON.stringify(guardian));
+    }
+  };
+
+  // Boosters: ao entrar no menu pela primeira vez, recebe 2 boosters
+  const [boosters, setBoosters] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('boosters');
+      if (stored !== null) return Number(stored);
+    }
+    return 2; // sempre começa com 2 boosters
+  });
+
+  // Sempre salva boosters no localStorage
+  const updateBoosters = (value) => {
+    setBoosters(value);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('boosters', value);
+    }
+  };
 
   const contextValue = useMemo(
     () => ({
@@ -37,6 +72,10 @@ export function AppProvider({ children }) {
       setMusicVolume,
       effectsVolume,
       setEffectsVolume,
+      activeGuardian,
+      setActiveGuardian: updateActiveGuardian,
+      boosters,
+      setBoosters: updateBoosters,
     }),
     [
       lang,
@@ -47,6 +86,8 @@ export function AppProvider({ children }) {
       setMusicVolume,
       effectsVolume,
       setEffectsVolume,
+      activeGuardian,
+      boosters,
     ],
   );
 

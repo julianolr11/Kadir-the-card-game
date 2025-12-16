@@ -6,3 +6,11 @@
   z-index: 999;
   box-shadow: 0 0 120px 40px rgba(0,0,0,0.7) inset;
 }
+
+.vinheta.fade-in {
+  display: flex;
+  gap: 30px;
+  justify-content: center;
+  align-items: center;
+  pointer-events: auto;
+}

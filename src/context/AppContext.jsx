@@ -26,6 +26,24 @@ export function AppProvider({ children }) {
   const [volume, setVolume] = useState(() => getInitial('volume', 50));
   const [musicVolume, setMusicVolume] = useState(() => getInitial('musicVolume', 50));
   const [effectsVolume, setEffectsVolume] = useState(() => getInitial('effectsVolume', 50));
+  // Guardião ativo: { name, img }
+  const [activeGuardian, setActiveGuardian] = useState(() => {
+    // Tenta recuperar do localStorage
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('activeGuardian');
+      if (stored) return JSON.parse(stored);
+    }
+    // Valor padrão
+    return { name: 'draak', img: require('../assets/img/creatures/draak_bio.png') };
+  });
+
+  // Sempre salva no localStorage
+  const updateActiveGuardian = (guardian) => {
+    setActiveGuardian(guardian);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('activeGuardian', JSON.stringify(guardian));
+    }
+  };
 
   const contextValue = useMemo(
     () => ({
@@ -37,6 +55,8 @@ export function AppProvider({ children }) {
       setMusicVolume,
       effectsVolume,
       setEffectsVolume,
+      activeGuardian,
+      setActiveGuardian: updateActiveGuardian,
     }),
     [
       lang,
@@ -47,6 +67,7 @@ export function AppProvider({ children }) {
       setMusicVolume,
       effectsVolume,
       setEffectsVolume,
+      activeGuardian,
     ],
   );
 

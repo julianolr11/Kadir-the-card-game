@@ -1,0 +1,278 @@
+.deck-btn-label {
+  display: none;
+  color: #fff;
+  font-size: 2.6rem;
+  font-weight: 900;
+  text-shadow:
+    0 0 12px #000,
+    0 2px 16px #fff,
+    0 0 32px #ffb347,
+    0 0 8px #000;
+  pointer-events: none;
+  z-index: 2;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  letter-spacing: 2.5px;
+  text-align: center;
+  text-transform: uppercase;
+}
+.deck-btn-terra:hover {
+  box-shadow: 0 0 48px 16px #a67c52cc, 0 0 32px 8px #e2c290cc inset;
+}
+.deck-btn-puro {
+  box-shadow: 0 4px 32px #fff6b0cc, 0 0 32px 8px #fff6b0a0 inset;
+}
+.deck-btn-puro:hover {
+  box-shadow: 0 0 48px 16px #fff6b0cc, 0 0 32px 8px #fff6b0cc inset;
+}
+
+/* Unificado para garantir brilho sempre visível */
+.deck-btn-fire {
+  box-shadow: 0 0 48px 16px #ff3c00cc, 0 0 32px 8px #ffb347cc inset !important;
+}
+@keyframes fire-glow-btn {
+  0% { filter: blur(2px) brightness(1.1) drop-shadow(0 0 8px #ffb347); }
+  100% { filter: blur(6px) brightness(1.4) drop-shadow(0 0 24px #ff3c00); }
+}
+.deck-btn-fogo {
+  box-shadow: 0 0 48px 16px #ff3c00cc, 0 0 32px 8px #ffb347cc inset !important;
+}
+.deck-btn-agua {
+  box-shadow: 0 0 48px 16px #00cfffcc, 0 0 32px 8px #00eaffcc inset !important;
+}
+
+.deck-btn-terra {
+  box-shadow: 0 0 48px 16px #a67c52cc, 0 0 32px 8px #e2c290cc inset !important;
+}
+
+.deck-btn-puro {
+  box-shadow: 0 0 48px 16px #fff6b0cc, 0 0 32px 8px #fff6b0cc inset !important;
+}
+
+.deck-btn-ar {
+  box-shadow: 0 0 48px 16px #a088e0cc, 0 0 32px 8px #b0e6ffcc inset !important;
+}
+.deck-btn-center-group {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100vw;
+  height: 200px;
+  z-index: 2;
+}
+
+.home-btn-group-bottom {
+  position: absolute;
+  bottom: 60px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 45px;
+}
+
+.deck-btn-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.deck-btn {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  border: none;
+  background: center/cover no-repeat;
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: box-shadow 0.3s, filter 0.3s;
+  /* Remove o box-shadow padrão, pois será sobrescrito pelas classes de elemento */
+}
+.deck-btn[style] {
+  background-size: cover !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+}
+
+/* As classes de elemento abaixo garantem prioridade sobre o box-shadow */
+.deck-btn-fire {
+  box-shadow: 0 4px 32px #ff3c00cc, 0 0 32px 8px #ffb347a0 inset !important;
+}
+.deck-btn-fire:hover {
+  box-shadow: 0 0 48px 16px #ff3c00cc, 0 0 32px 8px #ffb347cc inset !important;
+  filter: brightness(1.2) contrast(1.2) saturate(1.5) drop-shadow(0 0 24px #ff6a00);
+  animation: fire-glow-btn 0.7s linear infinite alternate;
+}
+@keyframes fire-glow-btn {
+  0% { filter: blur(2px) brightness(1.1) drop-shadow(0 0 8px #ffb347); }
+  100% { filter: blur(6px) brightness(1.4) drop-shadow(0 0 24px #ff3c00); }
+}
+
+.deck-btn-agua {
+  box-shadow: 0 4px 32px #012ef7cc, 0 0 32px 8px #00eaffb0 inset !important;
+}
+.deck-btn-agua:hover {
+  box-shadow: 0 0 48px 16px #0059ff62, 0 0 32px 8px #00eaffcc inset !important;
+  filter: brightness(1.2) contrast(1.2) saturate(1.5) drop-shadow(0 0 24px #00eaff);
+}
+
+.deck-btn-terra {
+  box-shadow: 0 4px 32px #52a660cc, 0 0 32px 8px #e2c290a0 inset !important;
+}
+
+.deck-btn-terra:hover {
+  box-shadow: 0 0 48px 16px #52a678cc, 0 0 32px 8px #e2c290cc inset !important;
+  filter: brightness(1.2) contrast(1.2) saturate(1.5) drop-shadow(0 0 24px #e2c290);
+}
+
+.deck-btn-puro {
+  box-shadow: 0 4px 32px #fff6b0cc, 0 0 32px 8px #fff6b0a0 inset !important;
+}
+.deck-btn-puro:hover {
+  box-shadow: 0 0 48px 16px #fff6b0cc, 0 0 32px 8px #fff6b0cc inset !important;
+  filter: brightness(1.2) contrast(1.2) saturate(1.5) drop-shadow(0 0 24px #fff6b0);
+}
+
+
+
+
+.deck-btn:hover .deck-btn-label {
+  display: block;
+  animation: holographic-fade-in 0.4s;
+}
+
+@keyframes holographic-fade-in {
+  from { opacity: 0; filter: blur(8px) brightness(2); }
+  to { opacity: 1; filter: blur(0) brightness(1.2); }
+}
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.home-screen {
+  min-height: 100vh;
+  height: 100vh;
+  width: 100vw;
+  margin: 0;
+  padding: 0;
+  background: #18121e;
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+.home-main {
+    height: 100vh;
+    width: 100vw;
+    box-shadow: 0 4px 32px rgba(0, 0, 0, 0.6666666667);
+    position: relative;
+    background: #18121e;
+}
+.home-btn-group {
+  position: absolute;
+  bottom: 60px;
+  left: 0px;
+  right: 0px;
+  text-align: center;
+  justify-content: center;
+  display: flex;
+  gap: 45px;
+}
+/* Estilo básico para o menu da HomeScreen */
+.home-btn {
+  margin: 12px 0;
+  padding: 16px 32px;
+  font-size: 1.2rem;
+  border: none;
+  border-radius: 12px;
+  background: #18121e;
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 2px 12px #000a;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.home-btn:hover {
+  color: #fff;
+  background: #2d1a1a;
+  box-shadow: 0 0 24px 6px #ff6a00, 0 2px 12px #000a;
+}
+.home-btn::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  background: radial-gradient(circle, #ffb300 0%, #ff6a00 60%, transparent 100%);
+  opacity: 0.7;
+  transform: translate(-50%, -50%) scale(0.7);
+  transition: width 0.3s, height 0.3s, opacity 0.3s;
+  z-index: 0;
+  pointer-events: none;
+}
+.home-btn:hover::after {
+  width: 180%;
+  height: 400%;
+  opacity: 0.25;
+  animation: fire-glow 0.7s linear infinite alternate;
+}
+@keyframes fire-glow {
+  0% { filter: blur(2px) brightness(1.1); }
+  100% { filter: blur(6px) brightness(1.4); }
+}
+
+.home-title {
+  color: #fff;
+  text-shadow: 0 2px 12px #ff6a00, 0 2px 8px #000a;
+}
+
+
+.home-title {
+  color: #ffe6b0;
+  font-size: 2.2rem;
+  font-weight: 900;
+  margin-bottom: 18px;
+  letter-spacing: 1.5px;
+  text-shadow: 0 2px 12px #000a, 0 0px 8px #ffb34733;
+}
+
+
+.home-btn {
+    min-width: 150px;
+    padding: 8px 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #fff6b0;
+    background: linear-gradient(120deg, #2d1a1a 0%, #18121e 100%);
+    border: none;
+    border-radius: 14px;
+    box-shadow: 0 2px 16px rgba(255, 179, 71, 0.27), 0 0 0 2px rgba(255, 179, 71, 0.27);
+    cursor: pointer;
+    margin-bottom: 6px;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    gap: 13px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.home-btn:hover {
+    background: linear-gradient(120deg, #ffb347 0%, #ff6a00 80%, #ff3c00 100%);
+    color: #fff6b0;
+    box-shadow: 0 0 24px 4px #ffb347cc, 0 0 0 2px #ffb347cc;
+}

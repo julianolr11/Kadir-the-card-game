@@ -8,6 +8,7 @@ import puro from '../assets/img/elements/puro.png';
 import terra from '../assets/img/elements/terra.png';
 import '../styles/startflow.css';
 import CreatureCardPreview from './CreatureCardPreview.jsx';
+import HomeScreen from './HomeScreen.jsx';
 import { creatures } from '../assets/creaturesData.js';
 import flipcardSound from '../assets/sounds/effects/flipcard.MP3';
 import popSound from '../assets/sounds/effects/pop.MP3';
@@ -38,8 +39,8 @@ const dialogos = {
 
 // btnStyle não utilizado
 
-function StartFlow({ onFinish }) {
-  const { lang, effectsVolume } = useContext(AppContext);
+function StartFlow({ onFinish, onGoHome }) {
+  const { lang, effectsVolume, setActiveGuardian } = useContext(AppContext);
   const [step, setStep] = useState(0);
   const [showModal, setShowModal] = useState(false);
   const [displayedText, setDisplayedText] = useState('');
@@ -243,6 +244,13 @@ function StartFlow({ onFinish }) {
                         ];
                       setPreviewCreature(sorteada);
                       setShowPreview(true);
+                      // Salva como guardião ativo
+                      setActiveGuardian({
+                        name: sorteada.name,
+                        img: sorteada.img,
+                        id: sorteada.id,
+                        element: sorteada.element
+                      });
                     }
                     // Toca o som de flipcard ao virar a carta
                     if (flipAudioRef.current) {
@@ -329,14 +337,37 @@ function StartFlow({ onFinish }) {
             justifyContent: 'center',
           }}
         >
-          <CreatureCardPreview
-            creature={previewCreature}
-            onClose={() => {
-              setShowPreview(false);
-              setSelected(null);
-              setPreviewCreature(null);
-            }}
-          />
+          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: 32 }}>
+            <CreatureCardPreview
+              creature={previewCreature}
+              onClose={() => {
+                setShowPreview(false);
+                setSelected(null);
+                setPreviewCreature(null);
+              }}
+            />
+            <button
+              style={{
+                height: 48,
+                alignSelf: 'flex-start',
+                marginLeft: 8,
+                background: '#ffe6b0',
+                color: '#1e1628',
+                border: 'none',
+                borderRadius: 12,
+                fontWeight: 700,
+                fontSize: 18,
+                boxShadow: '0 2px 8px #000a',
+                cursor: 'pointer',
+                padding: '0 18px',
+                transition: 'background 0.2s',
+              }}
+              onClick={onGoHome}
+              aria-label={lang === 'en' ? 'Go to Home Screen' : 'Ir para tela inicial'}
+            >
+              {lang === 'en' ? 'Home' : 'Início'}
+            </button>
+          </div>
         </div>
       )}
       {/* Diálogo só aparece se o preview não estiver aberto */}

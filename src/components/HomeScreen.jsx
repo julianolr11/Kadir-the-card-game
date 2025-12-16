@@ -1,3 +1,4 @@
+import candleSound from '../assets/sounds/effects/candle.mp3';
 import React, { useContext, useRef, useEffect } from 'react';
 import '../styles/homescreen.css';
 
@@ -18,11 +19,28 @@ const BoosterZone = ({ boosters }) => (
 );
 
 const HomeScreen = ({ onNavigate }) => {
+    const candleAudioRef = React.useRef(null);
+
+    React.useEffect(() => {
+      if (candleAudioRef.current) {
+        candleAudioRef.current.volume = 0.5;
+        candleAudioRef.current.loop = true;
+        candleAudioRef.current.play();
+      }
+      return () => {
+        if (candleAudioRef.current) {
+          candleAudioRef.current.pause();
+          candleAudioRef.current.currentTime = 0;
+        }
+      };
+    }, []);
   const { activeGuardian, boosters = 0 } = useContext(AppContext);
 
 
   return (
     <div className="home-screen">
+      {/* Áudio de vela queimando em loop */}
+      <audio ref={candleAudioRef} src={candleSound} preload="auto" loop />
       {/* Background 3D em duas camadas */}
       <div className="main-menu-background">
         <div className="main-menu-bg-base"></div>

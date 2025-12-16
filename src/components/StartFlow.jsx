@@ -1,3 +1,4 @@
+import candleSound from '../assets/sounds/effects/candle.mp3';
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import { AppContext } from '../context/AppContext';
 import verso from '../assets/img/card/verso.png';
@@ -40,6 +41,21 @@ const dialogos = {
 // btnStyle não utilizado
 
 function StartFlow({ onFinish, onGoHome }) {
+    const candleAudioRef = useRef(null);
+
+    useEffect(() => {
+      if (candleAudioRef.current) {
+        candleAudioRef.current.volume = 0.5;
+        candleAudioRef.current.loop = true;
+        candleAudioRef.current.play();
+      }
+      return () => {
+        if (candleAudioRef.current) {
+          candleAudioRef.current.pause();
+          candleAudioRef.current.currentTime = 0;
+        }
+      };
+    }, []);
   const { lang, effectsVolume, setActiveGuardian } = useContext(AppContext);
   const [step, setStep] = useState(0);
   const [showModal, setShowModal] = useState(false);
@@ -183,6 +199,21 @@ function StartFlow({ onFinish, onGoHome }) {
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: '#111', zIndex: 2000 }}>
+      {/* Áudio de vela queimando em loop */}
+      <audio ref={candleAudioRef} src={candleSound} preload="auto" loop />
+      {/* Efeitos de vela animada */}
+      <div className="candle-flame candle-flame-1"></div>
+      <div className="candle-flame candle-flame-2"></div>
+      <div className="candle-flame candle-flame-3"></div>
+      <div className="candle-flame candle-flame-4"></div>
+      <div className="candle-flame candle-flame-5"></div>
+      <div className="candle-flame candle-flame-6"></div>
+      <div className="candle-flame candle-flame-7"></div>
+      {/* Background 3D em duas camadas com overlay */}
+      <div className="main-menu-background">
+        <div className="main-menu-bg-base"></div>
+        <div className="main-menu-bg-overlay"></div>
+      </div>
       {/* Modal de escolha de elemento (filtro/blur) */}
       {showModal && (
         <div
@@ -192,12 +223,11 @@ function StartFlow({ onFinish, onGoHome }) {
             left: 0,
             right: 0,
             bottom: 0,
-            background: 'rgba(30,22,40,0.72)',
             zIndex: 2100,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backdropFilter: 'blur(8px)',
+            backdropFilter: 'blur(2px)',
           }}
         >
           <div className="startflow-cards" style={{ position: 'relative' }}>
@@ -330,8 +360,7 @@ function StartFlow({ onFinish, onGoHome }) {
             position: 'fixed',
             inset: 0,
             zIndex: 5000,
-            background: 'rgba(30,22,40,0.72)',
-            backdropFilter: 'blur(8px)',
+            backdropFilter: 'blur(2px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',

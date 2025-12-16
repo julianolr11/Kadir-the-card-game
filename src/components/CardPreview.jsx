@@ -1,3 +1,4 @@
+import candleSound from '../assets/sounds/effects/candle.mp3';
 import React, { useState, useContext, useRef, useEffect } from 'react';
 import swipeSound from '../assets/sounds/effects/swipe.mp3';
 import '../styles/swipe.css';
@@ -48,6 +49,21 @@ const translations = {
 };
 
 const CardPreview = ({ onClose }) => {
+    const candleAudioRef = useRef(null);
+
+    useEffect(() => {
+      if (candleAudioRef.current) {
+        candleAudioRef.current.volume = 0.5;
+        candleAudioRef.current.loop = true;
+        candleAudioRef.current.play();
+      }
+      return () => {
+        if (candleAudioRef.current) {
+          candleAudioRef.current.pause();
+          candleAudioRef.current.currentTime = 0;
+        }
+      };
+    }, []);
   const [showStory, setShowStory] = useState(false);
   const swipeAudioRef = useRef(null);
   const [swipeAnim, setSwipeAnim] = useState(false);
@@ -57,8 +73,15 @@ const CardPreview = ({ onClose }) => {
   const artWrapperRef = useRef(null);
   const artImgRef = useRef(null);
   // Refs removidos pois o efeito 3D foi desativado
-    <div style={{ position: 'relative', display: 'flex' }}>
-      {/* Áudio do swipe sempre presente no DOM */}
+    return (
+      <div style={{ position: 'relative', display: 'flex' }}>
+        {/* Áudio de vela queimando em loop */}
+        <audio ref={candleAudioRef} src={candleSound} preload="auto" loop />
+        {/* Background 3D em duas camadas com overlay */}
+        <div className="main-menu-background">
+          <div className="main-menu-bg-base"></div>
+          <div className="main-menu-bg-overlay"></div>
+        </div>
       <audio ref={swipeAudioRef} src={swipeSound} preload="auto" />
       {/* Card + seta sempre juntos na mesma div */}
       <div style={{ position: 'relative', display: 'inline-block' }}>

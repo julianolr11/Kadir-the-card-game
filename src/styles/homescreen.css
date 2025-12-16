@@ -1,3 +1,31 @@
+/* Efeito de hover nos itens do dropdown do menu de engrenagem */
+.home-cog-dropdown button {
+  background: none;
+  border: none;
+  color: #ffe6b0;
+  font-size: 18px;
+  font-weight: 500;
+  padding: 12px 24px;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 0;
+  width: 100%;
+  transition: background 0.18s, color 0.18s, filter 0.18s;
+}
+.home-cog-dropdown button:hover {
+  background: #2a1e3a;
+  color: #fffde4;
+  filter: drop-shadow(0 0 6px #ffe6b0cc);
+}
+/* Efeito de hover para o botão de engrenagem */
+.home-cog-btn {
+  transition: filter 0.2s, transform 0.3s;
+}
+.home-cog-btn:hover svg {
+  filter: drop-shadow(0 0 8px #ffe6b0cc) brightness(1.2);
+  transform: rotate(30deg) scale(1.08);
+  transition: filter 0.2s, transform 0.3s;
+}
 .candle-flame-4 {
     left: 571px;
     top: -23px;
@@ -279,6 +307,7 @@ html, body, #root {
   height: 100%;
   margin: 0;
   padding: 0;
+  overflow: hidden !important;
 }
 
 .home-screen {
@@ -292,13 +321,14 @@ html, body, #root {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  overflow: hidden !important;
 }
 .home-main {
-    height: 100vh;
-    width: 100vw;
-    box-shadow: 0 4px 32px rgba(0, 0, 0, 0.6666666667);
-    position: relative;
-    /* background: #18121e; */
+  height: 100%;
+  width: 100%;
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.6666666667);
+  position: relative;
+  /* background: #18121e; */
 }
 .home-btn-group {
   position: absolute;
@@ -429,7 +459,7 @@ html, body, #root {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  text-fill-color: transparent;
+  /* text-fill-color: transparent; */
   letter-spacing: 2px;
   margin-bottom: 8px;
   text-shadow: 0 2px 8px #23243a99, 0 0 2px #fff6b0;
@@ -461,7 +491,7 @@ html, body, #root {
   -webkit-background-clip: unset;
   -webkit-text-fill-color: unset;
   background-clip: unset;
-  text-fill-color: unset;
+  /* text-fill-color: unset; */
   z-index: 5;
   pointer-events: none;
   white-space: nowrap;
@@ -506,7 +536,7 @@ html, body, #root {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  text-fill-color: transparent;
+  /* text-fill-color: transparent; */
   letter-spacing: 2px;
   text-align: center;
   margin-bottom: 8px;

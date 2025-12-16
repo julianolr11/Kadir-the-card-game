@@ -1,9 +1,12 @@
 import candleSound from '../assets/sounds/effects/candle.mp3';
-import React, { useContext, useRef, useEffect } from 'react';
+import React, { useContext, useRef, useEffect, useState } from 'react';
+import OptionsModal from './OptionsModal';
+import CogIcon from './CogIcon';
 import '../styles/homescreen.css';
 
 import { AppContext } from '../context/AppContext';
 import boosterImg from '../assets/img/card/booster.png';
+
 
 const BoosterZone = ({ boosters }) => (
   <div className="booster-zone">
@@ -18,26 +21,45 @@ const BoosterZone = ({ boosters }) => (
   </div>
 );
 
-const HomeScreen = ({ onNavigate, menuMusicRef }) => {
+function HomeScreen({ onNavigate, menuMusicRef }) {
   // menuMusicRef: ref global para controle da música do menu
-    const candleAudioRef = React.useRef(null);
+  const candleAudioRef = React.useRef(null);
 
-    React.useEffect(() => {
+  React.useEffect(() => {
+    if (candleAudioRef.current) {
+      candleAudioRef.current.volume = 0.5;
+      candleAudioRef.current.loop = true;
+      candleAudioRef.current.play();
+    }
+    if (menuMusicRef?.current) menuMusicRef.current.play();
+    return () => {
       if (candleAudioRef.current) {
-        candleAudioRef.current.volume = 0.5;
-        candleAudioRef.current.loop = true;
-        candleAudioRef.current.play();
+        candleAudioRef.current.pause();
+        candleAudioRef.current.currentTime = 0;
       }
-      if (menuMusicRef?.current) menuMusicRef.current.play();
-      return () => {
-        if (candleAudioRef.current) {
-          candleAudioRef.current.pause();
-          candleAudioRef.current.currentTime = 0;
-        }
-      };
-    }, [menuMusicRef]);
+    };
+  }, [menuMusicRef]);
   const { activeGuardian, boosters = 0 } = useContext(AppContext);
 
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [showOptions, setShowOptions] = useState(false);
+
+  // Fecha dropdown ao clicar fora
+  React.useEffect(() => {
+    function handleClickOutside(event) {
+      if (!event.target.closest('.home-cog-btn') && !event.target.closest('.home-cog-dropdown')) {
+        setDropdownOpen(false);
+      }
+    }
+    if (dropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [dropdownOpen]);
 
   return (
     <div className="home-screen">
@@ -57,6 +79,68 @@ const HomeScreen = ({ onNavigate, menuMusicRef }) => {
       <div className="candle-flame candle-flame-5"></div>
       <div className="candle-flame candle-flame-6"></div>
       <div className="candle-flame candle-flame-7"></div>
+      {/* Ícone de engrenagem no canto superior direito */}
+      <div style={{ position: 'absolute', top: 24, right: 32, zIndex: 100 }}>
+        <button
+          className="home-cog-btn"
+          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+          onClick={e => {
+            setDropdownOpen(v => !v);
+          }}
+          aria-label="Abrir menu de opções"
+        >
+          <CogIcon size={32} color="#ffe6b0" />
+        </button>
+        {dropdownOpen && (
+          <div className="home-cog-dropdown" style={{
+            position: 'absolute',
+            top: 40,
+            right: 0,
+            background: 'rgba(30,22,40,0.98)',
+            borderRadius: 12,
+            boxShadow: '0 4px 24px #000a',
+            minWidth: 160,
+            padding: '8px 0',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 0,
+            zIndex: 200
+          }}>
+            <button
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#ffe6b0',
+                fontSize: 18,
+                fontWeight: 500,
+                padding: '12px 24px',
+                textAlign: 'left',
+                cursor: 'pointer',
+                borderRadius: 0,
+                width: '100%',
+                transition: 'background 0.2s',
+              }}
+              onClick={() => { setDropdownOpen(false); setShowOptions(true); }}
+            >Configurações</button>
+            <button
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#ffe6b0',
+                fontSize: 18,
+                fontWeight: 500,
+                padding: '12px 24px',
+                textAlign: 'left',
+                cursor: 'pointer',
+                borderRadius: 0,
+                width: '100%',
+                transition: 'background 0.2s',
+              }}
+              onClick={() => { setDropdownOpen(false); onNavigate('sair'); }}
+            >Sair</button>
+          </div>
+        )}
+      </div>
       <BoosterZone boosters={boosters} />
       <main className="home-main">
         <h1 className="home-title">Kadir Card Game</h1>
@@ -87,12 +171,13 @@ const HomeScreen = ({ onNavigate, menuMusicRef }) => {
         </div>
         <div className="home-btn-group home-btn-group-bottom">
           <button className="home-btn" onClick={() => onNavigate('iniciar')}>Iniciar</button>
-          <button className="home-btn" onClick={() => onNavigate('opcoes')}>Opções</button>
-          <button className="home-btn" onClick={() => onNavigate('sair')}>Sair</button>
         </div>
       </main>
+      {showOptions && (
+        <OptionsModal visible={showOptions} onClose={() => setShowOptions(false)} />
+      )}
     </div>
   );
-};
+}
 
 export default HomeScreen;

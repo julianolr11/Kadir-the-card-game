@@ -45,6 +45,23 @@ export function AppProvider({ children }) {
     }
   };
 
+  // Boosters: ao entrar no menu pela primeira vez, recebe 2 boosters
+  const [boosters, setBoosters] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('boosters');
+      if (stored !== null) return Number(stored);
+    }
+    return 2; // sempre começa com 2 boosters
+  });
+
+  // Sempre salva boosters no localStorage
+  const updateBoosters = (value) => {
+    setBoosters(value);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('boosters', value);
+    }
+  };
+
   const contextValue = useMemo(
     () => ({
       lang,
@@ -57,6 +74,8 @@ export function AppProvider({ children }) {
       setEffectsVolume,
       activeGuardian,
       setActiveGuardian: updateActiveGuardian,
+      boosters,
+      setBoosters: updateBoosters,
     }),
     [
       lang,
@@ -68,6 +87,7 @@ export function AppProvider({ children }) {
       effectsVolume,
       setEffectsVolume,
       activeGuardian,
+      boosters,
     ],
   );
 

@@ -1,12 +1,43 @@
-import React, { useContext } from 'react';
+import React, { useContext, useRef, useEffect } from 'react';
 import '../styles/homescreen.css';
 
 import { AppContext } from '../context/AppContext';
+import boosterImg from '../assets/img/card/booster.png';
+
+const BoosterZone = ({ boosters }) => (
+  <div className="booster-zone">
+    <div className="booster-zone-title">Booster Zone</div>
+    {boosters > 0 && (
+      <div className="booster-img-wrapper">
+        <img src={boosterImg} alt="Booster" className="booster-img" />
+        <span className="booster-qty">x{boosters}</span>
+        <span className="booster-hover-label">Abrir booster</span>
+      </div>
+    )}
+  </div>
+);
 
 const HomeScreen = ({ onNavigate }) => {
-  const { activeGuardian } = useContext(AppContext);
+  const { activeGuardian, boosters = 0 } = useContext(AppContext);
+
+
   return (
     <div className="home-screen">
+      {/* Background 3D em duas camadas */}
+      <div className="main-menu-background">
+        <div className="main-menu-bg-base"></div>
+        <div className="main-menu-bg-overlay"></div>
+      </div>
+      {/* Efeitos de vela animada */}
+      <div className="candle-glow"></div>
+      <div className="candle-flame candle-flame-1"></div>
+      <div className="candle-flame candle-flame-2"></div>
+      <div className="candle-flame candle-flame-3"></div>
+      <div className="candle-flame candle-flame-4"></div>
+      <div className="candle-flame candle-flame-5"></div>
+      <div className="candle-flame candle-flame-6"></div>
+      <div className="candle-flame candle-flame-7"></div>
+      <BoosterZone boosters={boosters} />
       <main className="home-main">
         <h1 className="home-title">Kadir Card Game</h1>
         <div className="deck-btn-center-group">

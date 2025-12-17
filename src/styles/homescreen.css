@@ -73,15 +73,18 @@
 .booster-img.booster-stack {
   transition: transform 0.4s cubic-bezier(.7,1.7,.5,1), box-shadow 0.3s, filter 0.3s;
 }
-.booster-stack-hover {
-  transform: translate(-50%, -50%) rotate(-8deg) scale(1.04) !important;
+
+.booster-stack-0-hover {
+  transform: rotate(8deg) scale(1.04) !important;
 }
-.booster-stack-top-hover {
-  transform: translate(-50%, calc(-50% - 18px)) rotate(12deg) scale(1.04) !important;
-  opacity: 0 !important;
-  left: 200% !important;
-  animation: none !important;
-  transition: opacity 0.2s, left 0s 0.2s;}
+.booster-stack-1-hover {
+  transform: rotate(-8deg) scale(1.04) !important;
+}
+
+
+
+
+
 .home-cog-dropdown button {
   background: none;
   border: none;

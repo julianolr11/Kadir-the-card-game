@@ -1,5 +1,11 @@
+import cogSound from '../assets/sounds/effects/cog.mp3';
 
 import React, { useContext, useRef, useEffect, useState } from 'react';
+// Traduções simples para o menu cog
+const cogTranslations = {
+  ptbr: { settings: 'Configurações', exit: 'Sair' },
+  en: { settings: 'Settings', exit: 'Exit' }
+};
 import candleSound from '../assets/sounds/effects/candle.mp3';
 import sphereMenuSound from '../assets/sounds/effects/sphere-menu.mp3';
 import OptionsModal from './OptionsModal';
@@ -12,9 +18,10 @@ import packageSound from '../assets/sounds/effects/package.mp3';
 
 
 const BoosterZone = ({ boosters }) => {
-  // Mostra até 3 boosters empilhados visualmente
-  const stackCount = Math.min(boosters, 3);
-  const stack = Array.from({ length: stackCount });
+  // Edite este array para controlar manualmente o ângulo de cada booster (em graus)
+  // Exemplo: diferença de 25 graus entre cada booster, do fundo para o topo
+  const boosterAngles = [0, 25, 50, 75, 100];
+  const stackCount = Math.min(boosters, boosterAngles.length);
   const [hover, setHover] = React.useState(false);
   const packageAudioRef = React.useRef(null);
 
@@ -33,7 +40,6 @@ const BoosterZone = ({ boosters }) => {
       packageAudioRef.current.currentTime = 0;
     }
   }
-  const angles = [-12, 0, 12];
   return (
     <div className="booster-zone" style={{ position: 'fixed', bottom: 32, right: 32, zIndex: 30, minWidth: 159, minHeight: 230, width: 159, height: 230 }}>
       {/* Áudio do efeito de pacote */}
@@ -48,39 +54,24 @@ const BoosterZone = ({ boosters }) => {
       >
         {boosters > 0 && (
           <>
-            <img
-              src={boosterImg}
-              alt="Booster"
-              className={`booster-img booster-stack${hover ? ' booster-stack-hover' : ''}`}
-              style={{
-                position: 'absolute',
-                left: '50%',
-                top: '50%',
-                transform: 'translate(-50%, -50%)',
-                zIndex: 12,
-                filter: 'drop-shadow(0 0 0px #000000cc) drop-shadow(0 0 4px #000000ff)',
-                transition: 'transform 0.3s cubic-bezier(.7,1.7,.5,1)',
-                pointerEvents: 'auto',
-                opacity: 1,
-              }}
-            />
-            {/* Booster superior para efeito de empilhamento */}
-            <img
-              src={boosterImg}
-              alt="Booster"
-              className={`booster-img booster-stack booster-stack-top${hover ? ' booster-stack-top-hover' : ''}`}
-              style={{
-                position: 'absolute',
-                left: '50%',
-                top: '50%',
-                transform: 'translate(-50%, -50%)',
-                zIndex: 13,
-                filter: 'drop-shadow(0 0 0px #000000cc) drop-shadow(0 0 4px #000000ff)',
-                transition: 'transform 0.3s cubic-bezier(.7,1.7,.5,1)',
-                pointerEvents: 'none',
-                opacity: boosters > 1 ? 1 : 0,
-              }}
-            />
+            {[...Array(stackCount).keys()].map((i) => (
+              <img
+                key={i}
+                src={boosterImg}
+                alt="Booster"
+                className={`booster-img booster-stack booster-stack-${i}${hover ? ` booster-stack-${i}-hover` : ''}`}
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  top: 0,
+                  zIndex: 12 + i,
+                  filter: 'drop-shadow(0 0 0px #000000cc) drop-shadow(0 0 4px #000000ff)',
+                  transition: 'transform 0.3s cubic-bezier(.7,1.7,.5,1)',
+                  pointerEvents: i === 0 ? 'auto' : 'none',
+                  opacity: boosters > i ? 1 : 0,
+                }}
+              />
+            ))}
           </>
         )}
       </div>
@@ -96,6 +87,14 @@ const BoosterZone = ({ boosters }) => {
 };
 
 function HomeScreen({ onNavigate, menuMusicRef }) {
+      const cogAudioRef = React.useRef(null);
+
+      function handleCogMouseEnter() {
+        if (cogAudioRef.current) {
+          cogAudioRef.current.currentTime = 0;
+          cogAudioRef.current.play();
+        }
+      }
     // Ref e handler para som do deck-btn
     const deckBtnAudioRef = React.useRef(null);
     function handleDeckBtnMouseEnter() {
@@ -108,29 +107,47 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
   const candleAudioRef = React.useRef(null);
 
   React.useEffect(() => {
-    if (candleAudioRef.current) {
-      candleAudioRef.current.volume = 0.5;
-      candleAudioRef.current.loop = false;
-      candleAudioRef.current.currentTime = 0;
-      candleAudioRef.current.play();
+    const candle = candleAudioRef.current;
+    const music = menuMusicRef?.current;
+    if (candle) {
+      candle.volume = 0.5;
+      candle.loop = true;
+      candle.currentTime = 0;
+      candle.play();
+      // Garantir loop manual
+      const handleCandleEnded = () => {
+        candle.currentTime = 0;
+        candle.play();
+      };
+      candle.addEventListener('ended', handleCandleEnded);
+      // Remover listener no cleanup
+      return () => {
+        candle.pause();
+        candle.currentTime = 0;
+        candle.removeEventListener('ended', handleCandleEnded);
+      };
     }
-    if (menuMusicRef?.current) {
-      menuMusicRef.current.loop = false;
-      menuMusicRef.current.currentTime = 0;
-      menuMusicRef.current.play();
+    if (music) {
+      music.loop = true;
+      music.currentTime = 0;
+      music.play();
+      // Garantir loop manual
+      const handleMusicEnded = () => {
+        music.currentTime = 0;
+        music.play();
+      };
+      music.addEventListener('ended', handleMusicEnded);
+      // Remover listener no cleanup
+      return () => {
+        music.pause();
+        music.currentTime = 0;
+        music.removeEventListener('ended', handleMusicEnded);
+      };
     }
-    return () => {
-      if (candleAudioRef.current) {
-        candleAudioRef.current.pause();
-        candleAudioRef.current.currentTime = 0;
-      }
-      if (menuMusicRef?.current) {
-        menuMusicRef.current.pause();
-        menuMusicRef.current.currentTime = 0;
-      }
-    };
+    // Cleanup padrão se nenhum áudio
+    return () => {};
   }, [menuMusicRef]);
-  const { activeGuardian, boosters = 0 } = useContext(AppContext);
+  const { activeGuardian, boosters = 0, lang = 'ptbr' } = useContext(AppContext);
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
@@ -152,6 +169,9 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
     };
   }, [dropdownOpen]);
 
+  // Tradução do menu cog
+  const t = cogTranslations[lang] || cogTranslations.ptbr;
+
   return (
     <div className="home-screen">
       {/* Áudio de vela queimando, sem loop */}
@@ -171,9 +191,11 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
       <div className="candle-flame candle-flame-7"></div>
       {/* Ícone de engrenagem no canto superior direito */}
       <div style={{ position: 'absolute', top: 24, right: 32, zIndex: 100 }}>
+        <audio ref={cogAudioRef} src={cogSound} preload="auto" />
         <button
           className="home-cog-btn"
           style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+          onMouseEnter={handleCogMouseEnter}
           onClick={e => {
             setDropdownOpen(v => !v);
           }}
@@ -211,7 +233,7 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
                 transition: 'background 0.2s',
               }}
               onClick={() => { setDropdownOpen(false); setShowOptions(true); }}
-            >Configurações</button>
+            >{t.settings}</button>
             <button
               style={{
                 background: 'none',
@@ -227,13 +249,13 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
                 transition: 'background 0.2s',
               }}
               onClick={() => { setDropdownOpen(false); onNavigate('sair'); }}
-            >Sair</button>
+            >{t.exit}</button>
           </div>
         )}
       </div>
       <BoosterZone boosters={boosters} />
       <main className="home-main">
-        <h1 className="home-title">Kadir Card Game</h1>
+        {/* Título removido conforme solicitado */}
         <div className="deck-btn-center-group">
           {/* Áudio do efeito sphere-menu */}
           <audio ref={deckBtnAudioRef} src={sphereMenuSound} preload="auto" />

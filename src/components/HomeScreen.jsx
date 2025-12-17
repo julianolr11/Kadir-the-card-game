@@ -108,44 +108,44 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
 
   React.useEffect(() => {
     const candle = candleAudioRef.current;
-    const music = menuMusicRef?.current;
+    // Corrigir acesso ao elemento de áudio real do menuMusicRef
+    const music = menuMusicRef?.current?.getAudio?.();
+    // Funções de cleanup
+    let handleCandleEnded, handleMusicEnded;
     if (candle) {
       candle.volume = 0.5;
       candle.loop = true;
       candle.currentTime = 0;
       candle.play();
-      // Garantir loop manual
-      const handleCandleEnded = () => {
+      handleCandleEnded = () => {
         candle.currentTime = 0;
         candle.play();
       };
       candle.addEventListener('ended', handleCandleEnded);
-      // Remover listener no cleanup
-      return () => {
-        candle.pause();
-        candle.currentTime = 0;
-        candle.removeEventListener('ended', handleCandleEnded);
-      };
     }
     if (music) {
       music.loop = true;
       music.currentTime = 0;
       music.play();
-      // Garantir loop manual
-      const handleMusicEnded = () => {
+      handleMusicEnded = () => {
         music.currentTime = 0;
         music.play();
       };
       music.addEventListener('ended', handleMusicEnded);
-      // Remover listener no cleanup
-      return () => {
+    }
+    // Cleanup para ambos
+    return () => {
+      if (candle) {
+        candle.pause();
+        candle.currentTime = 0;
+        if (handleCandleEnded) candle.removeEventListener('ended', handleCandleEnded);
+      }
+      if (music) {
         music.pause();
         music.currentTime = 0;
-        music.removeEventListener('ended', handleMusicEnded);
-      };
-    }
-    // Cleanup padrão se nenhum áudio
-    return () => {};
+        if (handleMusicEnded) music.removeEventListener('ended', handleMusicEnded);
+      }
+    };
   }, [menuMusicRef]);
   const { activeGuardian, boosters = 0, lang = 'ptbr' } = useContext(AppContext);
 
@@ -180,15 +180,17 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
       <div className="main-menu-background">
         <div className="main-menu-bg-base"></div>
       </div>
-      {/* Efeitos de vela animada */}
-      <div className="candle-glow"></div>
-      <div className="candle-flame candle-flame-1"></div>
-      <div className="candle-flame candle-flame-2"></div>
-      <div className="candle-flame candle-flame-3"></div>
-      <div className="candle-flame candle-flame-4"></div>
-      <div className="candle-flame candle-flame-5"></div>
-      <div className="candle-flame candle-flame-6"></div>
-      <div className="candle-flame candle-flame-7"></div>
+      {/* Efeitos de vela animada dentro de container responsivo */}
+      <div className="candle-container-16x9">
+        <div className="candle-glow"></div>
+        <div className="candle-flame candle-flame-1"></div>
+        <div className="candle-flame candle-flame-2"></div>
+        <div className="candle-flame candle-flame-3"></div>
+        <div className="candle-flame candle-flame-4"></div>
+        <div className="candle-flame candle-flame-5"></div>
+        <div className="candle-flame candle-flame-6"></div>
+        <div className="candle-flame candle-flame-7"></div>
+      </div>
       {/* Ícone de engrenagem no canto superior direito */}
       <div style={{ position: 'absolute', top: 24, right: 32, zIndex: 100 }}>
         <audio ref={cogAudioRef} src={cogSound} preload="auto" />

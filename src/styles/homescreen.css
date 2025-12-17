@@ -1,3 +1,75 @@
+/* Efeito de brilho inspirado no CodePen de jh3y */
+.deck-btn {
+  position: relative;
+  overflow: hidden;
+}
+.deck-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 3;
+  opacity: 0;
+  left: 200%;
+  background:
+    linear-gradient(120deg, rgba(255,255,255,0.0) 0%, rgba(255,255,255,0.7) 40%, rgba(255,255,255,0.95) 50%, rgba(255,255,255,0.7) 60%, rgba(255,255,255,0.0) 100%);
+  transform: rotate(25deg) scale(1.2);
+  transition: opacity 0.2s, left 0s 0.2s;
+  will-change: opacity, left;
+}
+
+.deck-btn:not(:hover)::before {
+  opacity: 0 !important;
+  left: 200% !important;
+  transition: opacity 0.2s, left 0s 0.2s;
+}
+
+.deck-btn:hover::before {
+  opacity: 0;
+  left: 0;
+  animation: deck-btn-glossy-shine 1.1s cubic-bezier(.4,.7,.7,1);
+  animation-fill-mode: none;
+  transition: opacity 0.2s;
+}
+
+.deck-btn::before {
+  /* ...existing code... */
+  opacity: 0;
+  transition: opacity 0.2s, left 0s 0.2s;
+}
+
+.deck-btn:not(:hover)::before {
+  opacity: 0 !important;
+  left: 200% !important;
+  animation: none !important;
+  transition: opacity 0.2s, left 0s 0.2s;
+}
+
+@keyframes deck-btn-glossy-shine {
+  0% {
+    left: -100%;
+    opacity: 0.2;
+  }
+  10% {
+    opacity: 0.7;
+  }
+  50% {
+    left: 100%;
+    opacity: 1;
+  }
+  80% {
+    opacity: 0.7;
+  }
+  99% {
+    left: 140%;
+    opacity: 0;
+  }
+  100% {
+    left: 200%;
+    opacity: 0;}}
 .booster-img.booster-stack {
   transition: transform 0.4s cubic-bezier(.7,1.7,.5,1), box-shadow 0.3s, filter 0.3s;
 }
@@ -6,9 +78,10 @@
 }
 .booster-stack-top-hover {
   transform: translate(-50%, calc(-50% - 18px)) rotate(12deg) scale(1.04) !important;
-  opacity: 1 !important;
-}
-/* Efeito de hover nos itens do dropdown do menu de engrenagem */
+  opacity: 0 !important;
+  left: 200% !important;
+  animation: none !important;
+  transition: opacity 0.2s, left 0s 0.2s;}
 .home-cog-dropdown button {
   background: none;
   border: none;
@@ -29,7 +102,7 @@
 }
 /* Efeito de hover para o botão de engrenagem */
 .home-cog-btn {
-  transition: filter 0.2s, transform 0.3s;
+  /* Efeito vidro por cima */
 }
 .home-cog-btn:hover svg {
   filter: drop-shadow(0 0 8px #ffe6b0cc) brightness(1.2);
@@ -46,8 +119,60 @@
 }
 .candle-flame-6 {
     left: 972px;
-    top: 0px;
 }
+.deck-btn::after {
+  content: '';
+  position: absolute;
+  top: -30%;
+  left: -60%;
+  width: 80%;
+  height: 160%;
+  filter: blur(2px);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 2;
+  transform: skewX(-24deg);
+  transition: opacity 0.2s;
+}
+
+.deck-btn:hover::after {
+  animation: deck-btn-shine-strong 0.9s cubic-bezier(.4,.7,.7,1);
+  opacity: 1;
+}
+
+@keyframes deck-btn-shine-strong {
+  0% {
+    left: -60%;
+    opacity: 0.2;
+  }
+  10% {
+    opacity: 0.7;
+  }
+  50% {
+    left: 110%;
+    opacity: 1;
+  }
+  80% {
+    opacity: 0.7;
+  }
+  100% {
+    left: 110%;
+    opacity: 0;
+  }
+}
+
+@keyframes deck-btn-shine {
+  0% {
+    left: -75%;
+  }
+  60% {
+    left: 110%;
+  }
+  100% {
+    left: 110%;
+  }
+}
+
 .candle-flame-7 {
     left: 977px;
     top: 110px;
@@ -239,7 +364,6 @@
     height: 100%;
     border-radius: 50%;
     pointer-events: none;
-    background: linear-gradient(120deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.10) 100%);
     box-shadow: 0 2px 24px 0 rgba(255,255,255,0.10) inset, 0 1px 18px 0 rgba(255,255,255,0.08);
     opacity: 0.32;
     /* Sem blur, só brilho/transparência sutil para efeito vidro */
@@ -379,19 +503,26 @@ html, body, #root {
   background: #2d1a1a;
   box-shadow: 0 0 24px 6px #ff6a00, 0 2px 12px #000a;
 }
-.home-btn::after {
-  content: '';
+/* Brilho natural e suave com degradê centralizado */
+.deck-btn::after {
+  content: "";
   position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 0;
-  height: 0;
-  background: radial-gradient(circle, #ffb300 0%, #ff6a00 60%, transparent 100%);
-  opacity: 0.7;
-  transform: translate(-50%, -50%) scale(0.7);
-  transition: width 0.3s, height 0.3s, opacity 0.3s;
-  z-index: 0;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
   pointer-events: none;
+  box-shadow: 0 2px 24px 0 rgba(255,255,255,0.13) inset, 0 1px 18px 0 rgba(255,255,255,0.08);
+  opacity: 0.22;
+  z-index: 2;
+  transition: opacity 0.3s, filter 0.3s;
+  filter: blur(0.5px);
+}
+
+.deck-btn:hover::after {
+  opacity: 0.38;
+  filter: blur(1.2px) brightness(1.08);
 }
 .home-btn:hover::after {
   width: 180%;

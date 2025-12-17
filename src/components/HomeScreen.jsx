@@ -1,41 +1,132 @@
-import candleSound from '../assets/sounds/effects/candle.mp3';
+
 import React, { useContext, useRef, useEffect, useState } from 'react';
+import candleSound from '../assets/sounds/effects/candle.mp3';
+import sphereMenuSound from '../assets/sounds/effects/sphere-menu.mp3';
 import OptionsModal from './OptionsModal';
 import CogIcon from './CogIcon';
 import '../styles/homescreen.css';
-
 import { AppContext } from '../context/AppContext';
 import boosterImg from '../assets/img/card/booster.png';
+import packageSound from '../assets/sounds/effects/package.mp3';
 
 
-const BoosterZone = ({ boosters }) => (
-  <div className="booster-zone">
-    <div className="booster-zone-title">Booster Zone</div>
-    {boosters > 0 && (
-      <div className="booster-img-wrapper">
-        <img src={boosterImg} alt="Booster" className="booster-img" />
-        <span className="booster-qty">x{boosters}</span>
-        <span className="booster-hover-label">Abrir booster</span>
+
+const BoosterZone = ({ boosters }) => {
+  // Mostra até 3 boosters empilhados visualmente
+  const stackCount = Math.min(boosters, 3);
+  const stack = Array.from({ length: stackCount });
+  const [hover, setHover] = React.useState(false);
+  const packageAudioRef = React.useRef(null);
+
+  function handleBoosterMouseEnter() {
+    setHover(true);
+    if (packageAudioRef.current) {
+      packageAudioRef.current.currentTime = 0;
+      packageAudioRef.current.play();
+    }
+  }
+
+  function handleBoosterMouseLeave() {
+    setHover(false);
+    if (packageAudioRef.current) {
+      packageAudioRef.current.pause();
+      packageAudioRef.current.currentTime = 0;
+    }
+  }
+  const angles = [-12, 0, 12];
+  return (
+    <div className="booster-zone" style={{ position: 'fixed', bottom: 32, right: 32, zIndex: 30, minWidth: 159, minHeight: 230, width: 159, height: 230 }}>
+      {/* Áudio do efeito de pacote */}
+      <audio ref={packageAudioRef} src={packageSound} preload="auto" />
+      <div className="booster-zone-title">Booster Zone</div>
+      {/* Div para boosters por cima do fundo */}
+      <div
+        className="booster-imgs-layer"
+        style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', zIndex: 20, pointerEvents: 'none' }}
+        onMouseEnter={handleBoosterMouseEnter}
+        onMouseLeave={handleBoosterMouseLeave}
+      >
+        {boosters > 0 && (
+          <>
+            <img
+              src={boosterImg}
+              alt="Booster"
+              className={`booster-img booster-stack${hover ? ' booster-stack-hover' : ''}`}
+              style={{
+                position: 'absolute',
+                left: '50%',
+                top: '50%',
+                transform: 'translate(-50%, -50%)',
+                zIndex: 12,
+                filter: 'drop-shadow(0 0 0px #000000cc) drop-shadow(0 0 4px #000000ff)',
+                transition: 'transform 0.3s cubic-bezier(.7,1.7,.5,1)',
+                pointerEvents: 'auto',
+                opacity: 1,
+              }}
+            />
+            {/* Booster superior para efeito de empilhamento */}
+            <img
+              src={boosterImg}
+              alt="Booster"
+              className={`booster-img booster-stack booster-stack-top${hover ? ' booster-stack-top-hover' : ''}`}
+              style={{
+                position: 'absolute',
+                left: '50%',
+                top: '50%',
+                transform: 'translate(-50%, -50%)',
+                zIndex: 13,
+                filter: 'drop-shadow(0 0 0px #000000cc) drop-shadow(0 0 4px #000000ff)',
+                transition: 'transform 0.3s cubic-bezier(.7,1.7,.5,1)',
+                pointerEvents: 'none',
+                opacity: boosters > 1 ? 1 : 0,
+              }}
+            />
+          </>
+        )}
       </div>
-    )}
-  </div>
-);
+      {/* Quantidade e label continuam acima */}
+      {boosters > 0 && (
+        <>
+          <span className="booster-qty" style={{ zIndex: 30, position: 'absolute', top: 8, right: 12 }}>x{boosters}</span>
+          <span className="booster-hover-label">Abrir booster</span>
+        </>
+      )}
+    </div>
+  );
+};
 
 function HomeScreen({ onNavigate, menuMusicRef }) {
+    // Ref e handler para som do deck-btn
+    const deckBtnAudioRef = React.useRef(null);
+    function handleDeckBtnMouseEnter() {
+      if (deckBtnAudioRef.current) {
+        deckBtnAudioRef.current.currentTime = 0;
+        deckBtnAudioRef.current.play();
+      }
+    }
   // menuMusicRef: ref global para controle da música do menu
   const candleAudioRef = React.useRef(null);
 
   React.useEffect(() => {
     if (candleAudioRef.current) {
       candleAudioRef.current.volume = 0.5;
-      candleAudioRef.current.loop = true;
+      candleAudioRef.current.loop = false;
+      candleAudioRef.current.currentTime = 0;
       candleAudioRef.current.play();
     }
-    if (menuMusicRef?.current) menuMusicRef.current.play();
+    if (menuMusicRef?.current) {
+      menuMusicRef.current.loop = false;
+      menuMusicRef.current.currentTime = 0;
+      menuMusicRef.current.play();
+    }
     return () => {
       if (candleAudioRef.current) {
         candleAudioRef.current.pause();
         candleAudioRef.current.currentTime = 0;
+      }
+      if (menuMusicRef?.current) {
+        menuMusicRef.current.pause();
+        menuMusicRef.current.currentTime = 0;
       }
     };
   }, [menuMusicRef]);
@@ -63,12 +154,11 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
 
   return (
     <div className="home-screen">
-      {/* Áudio de vela queimando em loop */}
-      <audio ref={candleAudioRef} src={candleSound} preload="auto" loop />
+      {/* Áudio de vela queimando, sem loop */}
+      <audio ref={candleAudioRef} src={candleSound} preload="auto" />
       {/* Background 3D em duas camadas */}
       <div className="main-menu-background">
         <div className="main-menu-bg-base"></div>
-        <div className="main-menu-bg-overlay"></div>
       </div>
       {/* Efeitos de vela animada */}
       <div className="candle-glow"></div>
@@ -145,9 +235,12 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
       <main className="home-main">
         <h1 className="home-title">Kadir Card Game</h1>
         <div className="deck-btn-center-group">
+          {/* Áudio do efeito sphere-menu */}
+          <audio ref={deckBtnAudioRef} src={sphereMenuSound} preload="auto" />
           <button
             className={`deck-btn${activeGuardian && activeGuardian.element ? ` deck-btn-${activeGuardian.element}` : ''}`}
             onClick={() => onNavigate('deck')}
+            onMouseEnter={handleDeckBtnMouseEnter}
             style={{
               backgroundImage: activeGuardian?.img ? `url(${activeGuardian.img})` : undefined,
               backgroundSize: 'cover',

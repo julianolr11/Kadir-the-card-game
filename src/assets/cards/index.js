@@ -1,0 +1,25 @@
+// Exporta todas as cartas individualmente
+const creatures = [
+  require('./booster1/draak'),
+  require('./booster1/mawthorn'),
+  require('./booster1/kael'),
+  require('./booster1/leoracal'),
+  require('./booster1/griffor'),
+  require('./booster1/ekeranth'),
+  require('./booster1/ignis'),
+  require('./booster1/drazaq'),
+  require('./booster1/owlberoth'),
+  require('./booster1/digitama'),
+  require('./booster1/virideer'),
+  require('./booster1/ashfang'),
+  require('./booster1/viborom'),
+  require('./booster1/sunburst'),
+  require('./booster1/landor'),
+  require('./booster1/raptauros'),
+  require('./booster1/arguilia'),
+  require('./booster1/faskel'),
+  require('./booster1/lunethal'),
+  require('./booster1/elderox')
+];
+module.exports = creatures;
+module.exports.creatures = creatures;

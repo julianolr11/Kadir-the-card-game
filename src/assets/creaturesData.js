@@ -1,3 +1,2 @@
-// Exporta todas as cartas do novo diretório, mantendo compatibilidade
-const creatures = require('./cards');
-module.exports = { creatures };
+// Exporta todas as criaturas diretamente do index.js de cards
+module.exports = require('./cards');

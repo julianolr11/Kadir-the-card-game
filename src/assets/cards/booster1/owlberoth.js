@@ -5,18 +5,20 @@ module.exports = {
 	height: 3.7,
 	weakness: 'puro',
 	name: { pt: 'Owlberoth', en: 'Owlberoth' },
-	type: { pt: 'Criatura Mística', en: 'Mystic Creature' },
+	type: { pt: 'Mística', en: 'Mystic' },
 	element: 'puro',
-	img: require('../../img/creatures/owlberoth_bio.png'),
+	img: require('../../img/creatures/owlberoth_bio.webp'),
 	color: 'pure',
 	hp: 4,
 	abilities: [
 		{
 			name: { pt: 'Olhar Místico', en: 'Mystic Gaze' },
+			cost: 1,
 			desc: { pt: 'Causa 20 de dano ao inimigo.', en: 'Deals 20 damage to the enemy.' }
 		},
 		{
 			name: { pt: 'Voo Noturno', en: 'Night Flight' },
+			cost: 1,
 			desc: { pt: 'Aliados recebem bônus de esquiva.', en: 'Allies gain an evasion bonus.' }
 		}
 	],

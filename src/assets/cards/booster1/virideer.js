@@ -5,18 +5,20 @@ module.exports = {
 	height: 2.0,
 	weakness: 'fogo',
 	name: { pt: 'Virideer', en: 'Virideer' },
-	type: { pt: 'Criatura Mística', en: 'Mystic Creature' },
+	type: { pt: 'Mística', en: 'Mystic' },
 	element: 'terra',
-	img: require('../../img/creatures/virideer_bio.png'),
+	img: require('../../img/creatures/virideer_bio.webp'),
 	color: 'earth',
 	hp: 4,
 	abilities: [
 		{
 			name: { pt: 'Chifre Protetor', en: 'Protective Horn' },
+			cost: 1,
 			desc: { pt: 'Causa 22 de dano ao inimigo.', en: 'Deals 22 damage to the enemy.' }
 		},
 		{
 			name: { pt: 'Crescimento Rápido', en: 'Rapid Growth' },
+			cost: 1,
 			desc: { pt: 'Recupera 8 de vida por turno.', en: 'Recovers 8 HP per turn.' }
 		}
 	],

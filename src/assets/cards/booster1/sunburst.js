@@ -5,7 +5,7 @@ module.exports = {
 	height: 1.4,
 	weakness: 'terra',
 	name: { pt: 'Sunburst', en: 'Sunburst' },
-	type: { pt: 'Criatura Sombria', en: 'Shadow Creature' },
+	type: { pt: 'Sombria', en: 'Shadow' },
 	element: 'agua',
 	img: require('../../img/creatures/sunburst_bio.jpeg'),
 	color: 'water',
@@ -13,10 +13,12 @@ module.exports = {
 	abilities: [
 		{
 			name: { pt: 'Explosão Solar', en: 'Solar Burst' },
+			cost: 1,
 			desc: { pt: 'Libera energia acumulada causando 28 de dano.', en: 'Releases stored energy dealing 28 damage.' }
 		},
 		{
 			name: { pt: 'Luz Drenante', en: 'Draining Light' },
+			cost: 1,
 			desc: { pt: 'Drena 10 de vida do inimigo à noite.', en: 'Drains 10 HP from the enemy at night.' }
 		}
 	],

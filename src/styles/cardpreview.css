@@ -19,8 +19,8 @@
   position: relative;
 }
 
-/* Efeito holográfico animado */
-.card-preview::after {
+/* Efeito holográfico animado - APENAS para cartas holográficas */
+.card-preview-holo::after {
   content: '';
   pointer-events: none;
   position: absolute;

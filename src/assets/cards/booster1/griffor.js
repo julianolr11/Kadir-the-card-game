@@ -7,12 +7,12 @@ module.exports = {
 	name: { pt: 'Griffor', en: 'Griffor' },
 	type: { pt: 'Ave', en: 'Bird' },
 	element: 'puro',
-	img: require('../../img/creatures/griffor_bio.png'),
+	img: require('../../img/creatures/griffor_bio.webp'),
 	color: 'pure',
 	hp: 4,
 	abilities: [
-		{ name: { pt: 'Voo Sagrado', en: 'Sacred Flight' }, desc: { pt: 'Causa 22 de dano ao inimigo.', en: 'Deals 22 damage to the enemy.' } },
-		{ name: { pt: 'Proteção Celestial', en: 'Celestial Protection' }, desc: { pt: 'Aliados recebem escudo de luz.', en: 'Allies receive a light shield.' } }
+		{ name: { pt: 'Voo Sagrado', en: 'Sacred Flight' }, cost: 1, desc: { pt: 'Causa 22 de dano ao inimigo.', en: 'Deals 22 damage to the enemy.' } },
+		{ name: { pt: 'Proteção Celestial', en: 'Celestial Protection' }, cost: 1, desc: { pt: 'Aliados recebem escudo de luz.', en: 'Allies receive a light shield.' } }
 	],
 	field: { pt: 'Céu Imaculado', en: 'Immaculate Sky' },
 	fielddesc: { pt: 'Aliados recebem 6% menos dano enquanto Griffor estiver em campo.', en: 'Allies take 6% less damage while Griffor is on the field.' },

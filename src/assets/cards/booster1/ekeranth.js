@@ -12,8 +12,8 @@ module.exports = {
 	color: 'fire',
 	hp: 4,
 	abilities: [
-		{ name: { pt: 'Fúria Flamejante', en: 'Flaming Fury' }, desc: { pt: 'Causa 30 de dano ao inimigo.', en: 'Deals 30 damage to the enemy.' } },
-		{ name: { pt: 'Chamas Vivas', en: 'Living Flames' }, desc: { pt: 'Causa 10 de dano extra por 2 turnos.', en: 'Deals 10 extra damage for 2 turns.' } }
+		{ name: { pt: 'Fúria Flamejante', en: 'Flaming Fury' }, cost: 1, desc: { pt: 'Causa 30 de dano ao inimigo.', en: 'Deals 30 damage to the enemy.' } },
+		{ name: { pt: 'Chamas Vivas', en: 'Living Flames' }, cost: 1, desc: { pt: 'Causa 10 de dano extra por 2 turnos.', en: 'Deals 10 extra damage for 2 turns.' } }
 	],
 	field: { pt: 'Solo Vulcânico', en: 'Volcanic Soil' },
 	fielddesc: { pt: 'Aumenta dano de fogo em 12% enquanto Ekeranth estiver em campo.', en: 'Increases fire damage by 12% while Ekeranth is on the field.' },

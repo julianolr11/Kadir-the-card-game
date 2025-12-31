@@ -8,12 +8,13 @@ module.exports = {
 	name: { pt: 'Lunethal', en: 'Lunethal' },
 	type: { pt: 'Draconídeo', en: 'Draconic' },
 	element: 'agua',
-	img: require('../../img/creatures/lunethal_bio.png'),
+	img: require('../../img/creatures/lunethal_bio.webp'),
 	color: 'water',
 	hp: 6,
 	abilities: [
 		{
 			name: { pt: 'Maré Crescente', en: 'Rising Tide' },
+			cost: 1,
 			desc: {
 				pt: 'Causa 22 de dano ao inimigo e aumenta a defesa de Lunethal em 1 ponto.',
 				en: 'Deals 22 damage to the enemy and increases Lunethal’s defense by 1.'
@@ -21,6 +22,7 @@ module.exports = {
 		},
 		{
 			name: { pt: 'Sopro Lunar', en: 'Lunar Breath' },
+			cost: 1,
 			desc: {
 				pt: 'Causa 18 de dano e tem chance de reduzir o ataque do inimigo.',
 				en: 'Deals 18 damage and has a chance to reduce the enemy’s attack.'

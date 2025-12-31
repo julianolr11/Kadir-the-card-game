@@ -7,16 +7,18 @@ module.exports = {
 	name: { pt: 'Viborom', en: 'Viborom' },
 	type: { pt: 'Reptiloide', en: 'Reptiloid' },
 	element: 'agua',
-	img: require('../../img/creatures/viborom_bio.png'),
+	img: require('../../img/creatures/viborom_bio.webp'),
 	color: 'water',
 	hp: 5,
 	abilities: [
 		{
 			name: { pt: 'Espreita Abissal', en: 'Abyssal Lurk' },
+			cost: 1,
 			desc: { pt: 'Causa 26 de dano ao inimigo ao emergir das águas.', en: 'Deals 26 damage to the enemy by emerging from the water.' }
 		},
 		{
 			name: { pt: 'Veneno Líquido', en: 'Liquid Venom' },
+			cost: 1,
 			desc: { pt: 'Aplica veneno que causa 6 de dano por turno durante 3 turnos.', en: 'Applies poison that deals 6 damage per turn for 3 turns.' }
 		}
 	],

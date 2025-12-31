@@ -8,16 +8,18 @@ module.exports = {
 	name: { pt: 'Kael', en: 'Kael' },
 	type: { pt: 'Fera', en: 'Beast' },
 	element: 'agua',
-	img: require('../../img/creatures/kael_bio.png'),
+	img: require('../../img/creatures/kael_bio.webp'),
 	color: 'water',
 	hp: 4,
 	abilities: [
 		{
 			name: { pt: 'Mordida Gélida', en: 'Frost Bite' },
+			cost: 1,
 			desc: { pt: 'Causa 24 de dano ao inimigo.', en: 'Deals 24 damage to the enemy.' }
 		},
 		{
 			name: { pt: 'Pele Escorregadia', en: 'Slippery Hide' },
+			cost: 1,
 			desc: { pt: 'Reduz dano recebido em 8%.', en: 'Reduces damage taken by 8%.' }
 		}
 	],

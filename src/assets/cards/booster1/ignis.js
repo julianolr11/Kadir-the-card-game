@@ -7,12 +7,12 @@ module.exports = {
 	name: { pt: 'Ignis', en: 'Ignis' },
 	type: { pt: 'Ave', en: 'Bird' },
 	element: 'fogo',
-	img: require('../../img/creatures/ignis_bio.png'),
+	img: require('../../img/creatures/ignis_bio.webp'),
 	color: 'fire',
 	hp: 3,
 	abilities: [
-		{ name: { pt: 'Chama Alada', en: 'Winged Flame' }, desc: { pt: 'Causa 20 de dano ao inimigo.', en: 'Deals 20 damage to the enemy.' } },
-		{ name: { pt: 'Voo Flamejante', en: 'Flaming Flight' }, desc: { pt: 'Causa 10 de dano extra ao atacar.', en: 'Deals 10 extra damage when attacking.' } }
+		{ name: { pt: 'Chama Alada', en: 'Winged Flame' }, cost: 1, desc: { pt: 'Causa 20 de dano ao inimigo.', en: 'Deals 20 damage to the enemy.' } },
+		{ name: { pt: 'Voo Flamejante', en: 'Flaming Flight' }, cost: 1, desc: { pt: 'Causa 10 de dano extra ao atacar.', en: 'Deals 10 extra damage when attacking.' } }
 	],
 	field: { pt: 'Céu Flamejante', en: 'Flaming Sky' },
 	fielddesc: { pt: 'Aumenta dano de fogo em 6% enquanto Ignis estiver em campo.', en: 'Increases fire damage by 6% while Ignis is on the field.' },

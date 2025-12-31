@@ -7,16 +7,18 @@ module.exports = {
 	name: { pt: 'Drazraq', en: 'Drazraq' },
 	type: { pt: 'Draconídeo', en: 'Draconid' },
 	element: 'puro',
-	img: require('../../img/creatures/drazraq_bio.png'),
+	img: require('../../img/creatures/drazraq_bio.webp'),
 	color: 'pure',
 	hp: 5,
 	abilities: [
 		{
 			name: { pt: 'Impacto Bestial', en: 'Beast Strike' },
+			cost: 1,
 			desc: { pt: 'Causa 30 de dano ao inimigo.', en: 'Deals 30 damage to the enemy.' }
 		},
 		{
 			name: { pt: 'Fúria Vulcânica', en: 'Volcanic Rage' },
+			cost: 1,
 			desc: { pt: 'Aumenta seu ataque em 10% por 3 turnos.', en: 'Increases its attack by 10% for 3 turns.' }
 		}
 	],

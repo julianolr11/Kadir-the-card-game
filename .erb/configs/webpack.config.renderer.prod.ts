@@ -66,7 +66,7 @@ const configuration: webpack.Configuration = {
       },
       // Images
       {
-        test: /\.(png|jpg|jpeg|gif)$/i,
+        test: /\.(png|jpg|jpeg|gif|webp)$/i,
         type: 'asset/resource',
       },
       // SVG
@@ -91,6 +91,11 @@ const configuration: webpack.Configuration = {
       // Áudio
       {
         test: /\.(mp3|wav|ogg|mpe?g)$/i,
+        type: 'asset/resource',
+      },
+      // Vídeo (animação de booster)
+      {
+        test: /\.(mp4|webm|ogg)$/i,
         type: 'asset/resource',
       },
     ],

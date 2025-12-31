@@ -6,14 +6,15 @@ module.exports = {
 	height: 2.1,
 	weakness: 'terra',
 	name: { pt: 'Faskel', en: 'Faskel' },
-	type: { pt: 'Criatura Mística', en: 'Mystic Creature' },
+	type: { pt: 'Mística', en: 'Mystic' },
 	element: 'ar',
-	img: require('../../img/creatures/faskel_bio.png'),
+	img: require('../../img/creatures/faskel_bio.webp'),
 	color: 'air',
 	hp: 5,
 	abilities: [
 		{
 			name: { pt: 'Galope Celeste', en: 'Celestial Gallop' },
+			cost: 1,
 			desc: {
 				pt: 'Causa 20 de dano e aumenta a velocidade das criaturas de ar aliadas.',
 				en: 'Deals 20 damage and increases the speed of allied air creatures.'
@@ -21,6 +22,7 @@ module.exports = {
 		},
 		{
 			name: { pt: 'Asas do Zéfiro', en: 'Zephyr Wings' },
+			cost: 1,
 			desc: {
 				pt: 'Evita o próximo ataque recebido ao se envolver em correntes de vento.',
 				en: 'Evades the next incoming attack by wrapping itself in wind currents.'

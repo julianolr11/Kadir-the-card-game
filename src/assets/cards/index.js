@@ -19,7 +19,10 @@ const creatures = [
   require('./booster1/arguilia'),
   require('./booster1/faskel'),
   require('./booster1/lunethal'),
-  require('./booster1/elderox')
+  require('./booster1/elderox'),
+  require('./booster1/pawferion'),
+  require('./booster1/alatoy'),
+  require('./booster1/whalar')
 ];
 module.exports = creatures;
 module.exports.creatures = creatures;

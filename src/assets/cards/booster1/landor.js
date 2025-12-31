@@ -8,12 +8,13 @@ module.exports = {
 	name: { pt: 'Landor', en: 'Landor' },
 	type: { pt: 'Ave', en: 'Bird' },
 	element: 'ar',
-	img: require('../../img/creatures/landor_bio.png'),
+	img: require('../../img/creatures/landor_bio.webp'),
 	color: 'air',
 	hp: 4,
 	abilities: [
 		{
 			name: { pt: 'Lâmina do Norte', en: 'Northern Blade' },
+			cost: 1,
 			desc: {
 				pt: 'Causa 22 de dano ao inimigo com ventos cortantes.',
 				en: 'Deals 22 damage to the enemy with cutting winds.'
@@ -21,6 +22,7 @@ module.exports = {
 		},
 		{
 			name: { pt: 'Rajada Ascendente', en: 'Updraft Gust' },
+			cost: 1,
 			desc: {
 				pt: 'Causa 14 de dano e empurra o inimigo, reduzindo sua eficácia no próximo turno.',
 				en: 'Deals 14 damage and disrupts the enemy, reducing its effectiveness next turn.'

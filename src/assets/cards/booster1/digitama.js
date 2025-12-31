@@ -6,14 +6,14 @@ module.exports = {
 	height: 1.23,
 	weakness: 'agua',
 	name: { pt: 'Digitama', en: 'Digitama' },
-	type: { pt: 'Criatura Mística', en: 'Mystic Creature' },
+	type: { pt: 'Mística', en: 'Mystic' },
 	element: 'fogo',
-	img: require('../../img/creatures/digitama_bio.png'),
+	img: require('../../img/creatures/digitama_bio.webp'),
 	color: 'fire',
 	hp: 4,
 	abilities: [
-		{ name: { pt: 'Chama Mística', en: 'Mystic Flame' }, desc: { pt: 'Causa 25 de dano ao inimigo.', en: 'Deals 25 damage to the enemy.' } },
-		{ name: { pt: 'Explosão Arcana', en: 'Arcane Explosion' }, desc: { pt: 'Causa 15 de dano em todos os inimigos.', en: 'Deals 15 damage to all enemies.' } }
+		{ name: { pt: 'Chama Mística', en: 'Mystic Flame' }, cost: 1, desc: { pt: 'Causa 25 de dano ao inimigo.', en: 'Deals 25 damage to the enemy.' } },
+		{ name: { pt: 'Explosão Arcana', en: 'Arcane Explosion' }, cost: 1, desc: { pt: 'Causa 15 de dano em todos os inimigos.', en: 'Deals 15 damage to all enemies.' } }
 	],
 	field: { pt: 'Aura Flamejante', en: 'Flaming Aura' },
 	fielddesc: { pt: 'Aumenta o dano de fogo em 8% enquanto Digitama estiver em campo.', en: 'Increases fire damage by 8% while Digitama is on the field.' },

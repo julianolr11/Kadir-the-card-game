@@ -8,12 +8,13 @@ module.exports = {
 	name: { pt: 'Arguilia', en: 'Arguilia' },
 	type: { pt: 'Ave', en: 'Bird' },
 	element: 'agua',
-	img: require('../../img/creatures/arguilia_bio.png'),
+	img: require('../../img/creatures/arguilia_bio.webp'),
 	color: 'water',
 	hp: 5,
 	abilities: [
 		{
 			name: { pt: 'Asas do Fluxo', en: 'Wings of Flow' },
+			cost: 1,
 			desc: {
 				pt: 'Causa 20 de dano e concede esquiva aumentada neste turno.',
 				en: 'Deals 20 damage and grants increased evasion this turn.'
@@ -21,6 +22,7 @@ module.exports = {
 		},
 		{
 			name: { pt: 'Véu das Águas', en: 'Veil of Waters' },
+			cost: 1,
 			desc: {
 				pt: 'Aliados recebem redução de dano por 1 turno.',
 				en: 'Allies receive damage reduction for 1 turn.'

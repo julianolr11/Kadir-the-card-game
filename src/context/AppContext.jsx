@@ -34,7 +34,7 @@ export function AppProvider({ children }) {
       if (stored) return JSON.parse(stored);
     }
     // Valor padrão
-    return { name: 'draak', img: require('../assets/img/creatures/draak_bio.png') };
+    return { name: 'draak', img: require('../assets/img/creatures/draak_bio.webp') };
   });
 
   // Sempre salva no localStorage

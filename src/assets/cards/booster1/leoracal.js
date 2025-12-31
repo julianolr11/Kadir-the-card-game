@@ -7,16 +7,18 @@ module.exports = {
 	name: { pt: 'Leoracal', en: 'Leoracal' },
 	type: { pt: 'Fera', en: 'Beast' },
 	element: 'terra',
-	img: require('../../img/creatures/leoracal_bio.png'),
+	img: require('../../img/creatures/leoracal_bio.webp'),
 	color: 'earth',
 	hp: 5,
 	abilities: [
 		{
 			name: { pt: 'Rugido Sísmico', en: 'Seismic Roar' },
+			cost: 1,
 			desc: { pt: 'Causa 26 de dano ao inimigo.', en: 'Deals 26 damage to the enemy.' }
 		},
 		{
 			name: { pt: 'Pele Rochosa', en: 'Rocky Hide' },
+			cost: 1,
 			desc: { pt: 'Reduz dano recebido em 10%.', en: 'Reduces damage taken by 10%.' }
 		}
 	],

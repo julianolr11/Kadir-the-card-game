@@ -7,16 +7,18 @@ module.exports = {
 	name: { pt: 'Mawthorn', en: 'Mawthorn' },
 	type: { pt: 'Monstro', en: 'Monster' },
 	element: 'agua',
-	img: require('../../img/creatures/mawthorn_bio.png'),
+	img: require('../../img/creatures/mawthorn_bio.webp'),
 	color: 'water',
 	hp: 3,
 	abilities: [
 		{
 			name: { pt: 'Garras Abissais', en: 'Abyssal Claws' },
+			cost: 1,
 			desc: { pt: 'Causa 18 de dano ao inimigo.', en: 'Deals 18 damage to the enemy.' }
 		},
 		{
 			name: { pt: 'Regeneração', en: 'Regeneration' },
+			cost: 1,
 			desc: { pt: 'Recupera 10 de vida por turno.', en: 'Restores 10 HP per turn.' }
 		}
 	],

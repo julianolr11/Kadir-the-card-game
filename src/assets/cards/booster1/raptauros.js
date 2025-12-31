@@ -8,12 +8,13 @@ module.exports = {
 	name: { pt: 'Raptauros', en: 'Raptauros' },
 	type: { pt: 'Draconídeo', en: 'Draconid' },
 	element: 'terra',
-	img: require('../../img/creatures/raptauros_bio.png'),
+	img: require('../../img/creatures/raptauros_bio.webp'),
 	color: 'earth',
 	hp: 5,
 	abilities: [
 		{
 			name: { pt: 'Investida das Dunas', en: 'Dune Charge' },
+			cost: 1,
 			desc: {
 				pt: 'Causa 24 de dano ao inimigo. Causa dano adicional se Raptauros agir primeiro.',
 				en: 'Deals 24 damage. Deals bonus damage if Raptauros acts first.'
@@ -21,6 +22,7 @@ module.exports = {
 		},
 		{
 			name: { pt: 'Ruptura do Solo', en: 'Ground Rupture' },
+			cost: 1,
 			desc: {
 				pt: 'Causa 16 de dano e reduz a defesa do inimigo.',
 				en: 'Deals 16 damage and reduces the enemy defense.'

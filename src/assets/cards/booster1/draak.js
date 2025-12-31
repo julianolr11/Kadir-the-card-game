@@ -8,16 +8,18 @@ module.exports = {
 	name: { pt: 'Draak', en: 'Draak' },
 	type: { pt: 'Draconídeo', en: 'Draconid' },
 	element: 'puro',
-	img: require('../../img/creatures/draak_bio.png'),
+	img: require('../../img/creatures/draak_bio.webp'),
 	color: 'pure',
 	hp: 5,
 	abilities: [
 		{
 			name: { pt: 'Sopro Etéreo', en: 'Ethereal Breath' },
+			cost: 1,
 			desc: { pt: 'Causa 24 de dano ao inimigo.', en: 'Deals 24 damage to the enemy.' }
 		},
 		{
 			name: { pt: 'Escamas Celestes', en: 'Sky Scales' },
+			cost: 1,
 			desc: { pt: 'Reduz dano recebido em 8%.', en: 'Reduces damage taken by 8%.' }
 		}
 	],

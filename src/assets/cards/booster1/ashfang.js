@@ -8,16 +8,18 @@ module.exports = {
 	name: { pt: 'Ashfang', en: 'Ashfang' },
 	type: { pt: 'Fera', en: 'Beast' },
 	element: 'fogo',
-	img: require('../../img/creatures/ashfang_bio.png'),
+	img: require('../../img/creatures/ashfang_bio.webp'),
 	color: 'fire',
 	hp: 4,
 	abilities: [
 		{
 			name: { pt: 'Mordida Vulcânica', en: 'Volcanic Bite' },
+			cost: 1,
 			desc: { pt: 'Causa 22 de dano ao inimigo.', en: 'Deals 22 damage to the enemy.' }
 		},
 		{
 			name: { pt: 'Fúria das Cinzas', en: 'Ashen Fury' },
+			cost: 1,
 			desc: { pt: 'Aumenta o ataque em 10% por 2 turnos.', en: 'Increases attack by 10% for 2 turns.' }
 		}
 	],

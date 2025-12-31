@@ -4,16 +4,17 @@ module.exports = {
   title: { pt: 'Rugido da montanha', en: 'Roar of the Mountain' },
   num: 20,
   height: 4.2,
-  weakness: 'água',
+  weakness: 'agua',
   name: { pt: 'Elderox', en: 'Elderox' },
   type: { pt: 'Monstro', en: 'Monster' },
   element: 'terra',
-  img: require('../../img/creatures/elderox_bio.png'),
+  img: require('../../img/creatures/elderox_bio.webp'),
   color: 'earth',
   hp: 12,
   abilities: [
     {
       name: { pt: 'Rugido Sísmico', en: 'Seismic Roar' },
+      cost: 1,
       desc: {
         pt: 'Causa dano em área e reduz a velocidade dos inimigos por 1 turno.',
         en: 'Deals area damage and reduces enemies\' speed for 1 turn.'
@@ -21,6 +22,7 @@ module.exports = {
     },
     {
       name: { pt: 'Pele Rochosa', en: 'Rocky Hide' },
+      cost: 1,
       desc: {
         pt: 'Recebe menos dano de ataques físicos por 2 turnos.',
         en: 'Takes less damage from physical attacks for 2 turns.'

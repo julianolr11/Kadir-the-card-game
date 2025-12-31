@@ -5,7 +5,7 @@ import '../styles/swipe.css';
 import { AppContext } from '../context/AppContext';
 import fogo from '../assets/img/elements/fogo.png';
 import agua from '../assets/img/elements/agua.png';
-import ashfangImg from '../assets/img/creatures/ashfang_bio.png';
+import ashfangImg from '../assets/img/creatures/ashfang_bio.webp';
 import soulEssence from '../assets/img/icons/soul-essence.png';
 import lvlIcon from '../assets/img/icons/lvlicon.png';
 import heartIcon from '../assets/img/icons/hearticon.png';

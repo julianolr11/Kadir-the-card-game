@@ -14,10 +14,13 @@ import '../styles/homescreen.css';
 import { AppContext } from '../context/AppContext';
 import boosterImg from '../assets/img/card/booster.png';
 import packageSound from '../assets/sounds/effects/package.mp3';
+import boosterAnimationVideo from '../assets/img/card/animacao-booster.mp4';
+import creatures from '../assets/cards';
+import BoosterResultsSlider from './BoosterResultsSlider';
 
 
 
-const BoosterZone = ({ boosters }) => {
+const BoosterZone = ({ boosters, onOpenBooster, isOpeningBooster }) => {
   // Edite este array para controlar manualmente o ângulo de cada booster (em graus)
   // Exemplo: diferença de 25 graus entre cada booster, do fundo para o topo
   const boosterAngles = [0, 25, 50, 75, 100];
@@ -40,8 +43,17 @@ const BoosterZone = ({ boosters }) => {
       packageAudioRef.current.currentTime = 0;
     }
   }
+  function handleBoosterClick() {
+    if (boosters <= 0 || isOpeningBooster) return;
+    onOpenBooster?.();
+  }
+
   return (
-    <div className="booster-zone" style={{ position: 'fixed', bottom: 32, right: 32, zIndex: 30, minWidth: 159, minHeight: 230, width: 159, height: 230 }}>
+    <div
+      className="booster-zone"
+      style={{ position: 'fixed', bottom: 32, right: 32, zIndex: 30, minWidth: 159, minHeight: 230, width: 159, height: 230 }}
+      onClick={handleBoosterClick}
+    >
       {/* Áudio do efeito de pacote */}
       <audio ref={packageAudioRef} src={packageSound} preload="auto" />
       <div className="booster-zone-title">Booster Zone</div>
@@ -81,6 +93,9 @@ const BoosterZone = ({ boosters }) => {
           <span className="booster-qty" style={{ zIndex: 30, position: 'absolute', top: 8, right: 12 }}>x{boosters}</span>
           <span className="booster-hover-label">Abrir booster</span>
         </>
+      )}
+      {boosters <= 0 && (
+        <span className="booster-empty-label">Sem boosters</span>
       )}
     </div>
   );
@@ -147,10 +162,39 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
       }
     };
   }, [menuMusicRef]);
-  const { activeGuardian, boosters = 0, lang = 'ptbr' } = useContext(AppContext);
+  const { activeGuardian, boosters = 0, lang = 'ptbr', setBoosters } = useContext(AppContext);
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
+  const [isOpeningBooster, setIsOpeningBooster] = useState(false);
+  const [showBoosterVideo, setShowBoosterVideo] = useState(false);
+  const [showBoosterResults, setShowBoosterResults] = useState(false);
+  const [openedBoosterCards, setOpenedBoosterCards] = useState([]);
+  const boosterVideoRef = useRef(null);
+  const [cheatInput, setCheatInput] = useState('');
+
+  // Cheat code detector
+  useEffect(() => {
+    function handleKeyPress(e) {
+      // Ignora se está digitando em um input
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+      setCheatInput(prev => {
+        const updated = (prev + e.key).toLowerCase();
+        // Mantém apenas os últimos 15 caracteres para não consumir muita memória
+        const trimmed = updated.slice(-15);
+
+        if (trimmed.endsWith('kadirbooster')) {
+          setBoosters(Math.max(0, boosters) + 5);
+          return '';
+        }
+        return trimmed;
+      });
+    }
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [boosters, setBoosters]);
 
   // Fecha dropdown ao clicar fora
   React.useEffect(() => {
@@ -171,6 +215,52 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
 
   // Tradução do menu cog
   const t = cogTranslations[lang] || cogTranslations.ptbr;
+
+  function generateBoosterPack() {
+    const pool = Array.isArray(creatures) ? [...creatures] : [];
+    // Embaralha pool simples
+    for (let i = pool.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    const selected = pool.slice(0, 5).map((card) => ({
+      ...card,
+      isHolo: Math.random() < 0.05,
+    }));
+    return selected;
+  }
+
+  function handleOpenBooster() {
+    if (boosters <= 0 || isOpeningBooster) return;
+    setIsOpeningBooster(true);
+    setShowBoosterResults(false);
+    setOpenedBoosterCards(generateBoosterPack());
+    setShowBoosterVideo(true);
+    setBoosters(Math.max(0, boosters - 1));
+  }
+
+  function handleCloseBoosterAnimation() {
+    setShowBoosterVideo(false);
+    setShowBoosterResults(true);
+    if (boosterVideoRef.current) {
+      boosterVideoRef.current.pause();
+      boosterVideoRef.current.currentTime = 0;
+    }
+  }
+
+  function handleCloseBoosterResults() {
+    setShowBoosterResults(false);
+    setIsOpeningBooster(false);
+  }
+
+  useEffect(() => {
+    if (showBoosterVideo && boosterVideoRef.current) {
+      boosterVideoRef.current.currentTime = 0;
+      boosterVideoRef.current.play().catch(() => {
+        // Ignora erros de autoplay; o usuário acabou de clicar para abrir
+      });
+    }
+  }, [showBoosterVideo]);
 
   return (
     <div className="home-screen">
@@ -255,7 +345,7 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
           </div>
         )}
       </div>
-      <BoosterZone boosters={boosters} />
+      <BoosterZone boosters={boosters} onOpenBooster={handleOpenBooster} isOpeningBooster={isOpeningBooster} />
       <main className="home-main">
         {/* Título removido conforme solicitado */}
         <div className="deck-btn-center-group">
@@ -292,6 +382,31 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
       </main>
       {showOptions && (
         <OptionsModal visible={showOptions} onClose={() => setShowOptions(false)} />
+      )}
+      {showBoosterVideo && (
+        <div className="booster-animation-overlay" onClick={handleCloseBoosterAnimation}>
+          <video
+            ref={boosterVideoRef}
+            className="booster-animation-video"
+            src={boosterAnimationVideo}
+            autoPlay
+            playsInline
+            onEnded={handleCloseBoosterAnimation}
+          />
+          <button
+            className="booster-animation-skip"
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleCloseBoosterAnimation();
+            }}
+          >
+            Pular animação
+          </button>
+        </div>
+      )}
+      {showBoosterResults && (
+        <BoosterResultsSlider cards={openedBoosterCards} lang={lang} onClose={handleCloseBoosterResults} />
       )}
     </div>
   );

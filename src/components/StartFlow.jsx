@@ -43,20 +43,39 @@ const dialogos = {
 function StartFlow({ onFinish, onGoHome, menuMusicRef }) {
   // menuMusicRef: ref global para controle da música do menu
     const candleAudioRef = useRef(null);
+    const [candleKey, setCandleKey] = useState(0);
 
     useEffect(() => {
-      if (candleAudioRef.current) {
-        candleAudioRef.current.volume = 0.5;
-        candleAudioRef.current.loop = true;
-        candleAudioRef.current.play();
+      const candleRef = candleAudioRef.current;
+
+      const handleCandleEnded = () => {
+        setTimeout(() => {
+          setCandleKey(prev => prev + 1);
+        }, 100);
+      };
+
+      if (candleRef) {
+        candleRef.addEventListener('ended', handleCandleEnded);
+        candleRef.volume = 0.5;
+        candleRef.currentTime = 0;
+        candleRef.play().catch(() => {});
       }
+
+      // Loop de segurança
+      const intervalId = setInterval(() => {
+        if (candleRef && candleRef.parentNode && (candleRef.paused || candleRef.ended)) {
+          handleCandleEnded();
+        }
+      }, 200);
+
       return () => {
-        if (candleAudioRef.current) {
-          candleAudioRef.current.pause();
-          candleAudioRef.current.currentTime = 0;
+        clearInterval(intervalId);
+        if (candleRef) {
+          candleRef.removeEventListener('ended', handleCandleEnded);
+          candleRef.pause();
         }
       };
-    }, []);
+    }, [candleKey]);
   const { lang, effectsVolume, setActiveGuardian } = useContext(AppContext);
   const [step, setStep] = useState(0);
   const [showModal, setShowModal] = useState(false);
@@ -172,7 +191,10 @@ function StartFlow({ onFinish, onGoHome, menuMusicRef }) {
           introAudioRef.current.pause();
           introAudioRef.current.currentTime = 0;
         }
-        if (menuMusicRef?.current) menuMusicRef.current.play();
+        if (menuMusicRef?.current) {
+          const playPromise = menuMusicRef.current.play();
+          if (playPromise) playPromise.catch(() => {});
+        }
         if (onFinish) onFinish();
       }
     }, 350);
@@ -206,8 +228,8 @@ function StartFlow({ onFinish, onGoHome, menuMusicRef }) {
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: '#111', zIndex: 2000 }}>
-      {/* Áudio de vela queimando em loop */}
-      <audio ref={candleAudioRef} src={candleSound} preload="auto" loop />
+      {/* Áudio de vela queimando em loop - key força recriação */}
+      <audio key={candleKey} ref={candleAudioRef} src={candleSound} preload="auto" />
       {/* Efeitos de vela animada */}
       <div className="candle-flame candle-flame-1"></div>
       <div className="candle-flame candle-flame-2"></div>

@@ -50,20 +50,43 @@ const translations = {
 
 const CardPreview = ({ onClose }) => {
     const candleAudioRef = useRef(null);
+    const [candleKey, setCandleKey] = useState(0);
 
     useEffect(() => {
-      if (candleAudioRef.current) {
-        candleAudioRef.current.volume = 0.5;
-        candleAudioRef.current.loop = true;
-        candleAudioRef.current.play();
+      const candleRef = candleAudioRef.current;
+
+      const handleCandleEnded = () => {
+        setTimeout(() => {
+          setCandleKey(prev => prev + 1);
+        }, 100);
+      };
+
+      if (candleRef) {
+        candleRef.addEventListener('ended', handleCandleEnded);
+        candleRef.volume = 0.5;
+        candleRef.currentTime = 0;
+        candleRef.play().catch(() => {});
       }
+
+      // Loop de segurança
+      const intervalId = setInterval(() => {
+        if (candleRef && candleRef.parentNode && (candleRef.paused || candleRef.ended)) {
+          handleCandleEnded();
+        }
+      }, 200);
+
       return () => {
-        if (candleAudioRef.current) {
-          candleAudioRef.current.pause();
-          candleAudioRef.current.currentTime = 0;
+        clearInterval(intervalId);
+        if (candleRef) {
+          candleRef.removeEventListener('ended', handleCandleEnded);
+          candleRef.pause();
+        }
+      };
+    }, [candleKey]);
         }
       };
     }, []);
+
   const [showStory, setShowStory] = useState(false);
   const swipeAudioRef = useRef(null);
   const [swipeAnim, setSwipeAnim] = useState(false);
@@ -75,8 +98,8 @@ const CardPreview = ({ onClose }) => {
   // Refs removidos pois o efeito 3D foi desativado
     return (
       <div style={{ position: 'relative', display: 'flex' }}>
-        {/* Áudio de vela queimando em loop */}
-        <audio ref={candleAudioRef} src={candleSound} preload="auto" loop />
+        {/* Áudio de vela queimando em loop - key força recriação */}
+        <audio key={candleKey} ref={candleAudioRef} src={candleSound} preload="auto" />
         {/* Background 3D em duas camadas com overlay */}
         <div className="main-menu-background">
           <div className="main-menu-bg-base"></div>

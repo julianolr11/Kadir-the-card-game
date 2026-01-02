@@ -15,6 +15,7 @@ import log from 'electron-log';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
 import { setupResolutionIPC } from './ipcResolution';
+import { setupAudioManager } from './audioManager';
 
 class AppUpdater {
   constructor() {
@@ -85,12 +86,20 @@ const createWindow = async () => {
       preload: app.isPackaged
         ? path.join(__dirname, 'preload.js')
         : path.join(__dirname, '../../.erb/dll/preload.js'),
+      nodeIntegration: false,
+      contextIsolation: true,
+      enableRemoteModule: false,
+      sandbox: true,
     },
   });
 
   setupResolutionIPC(mainWindow);
 
   mainWindow.loadURL(resolveHtmlPath('index.html'));
+
+  // Permitir autoplay de áudio
+  mainWindow.webContents.session.setPermissionCheckHandler(() => true);
+  setupAudioManager(mainWindow);
 
   mainWindow.on('ready-to-show', () => {
     if (!mainWindow) {

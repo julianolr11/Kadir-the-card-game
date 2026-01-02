@@ -14,7 +14,12 @@ const LoadingMenu = ({ onNavigate, menuMusicRef }: LoadingMenuProps) => {
   const [showOptions, setShowOptions] = useState(false);
   const [showExit, setShowExit] = useState(false);
   React.useEffect(() => {
-    if (menuMusicRef?.current) menuMusicRef.current.play();
+    if (menuMusicRef?.current) {
+      const playPromise = menuMusicRef.current.play();
+      if (playPromise) {
+        playPromise.catch(() => {});
+      }
+    }
   }, [menuMusicRef]);
 
   return (

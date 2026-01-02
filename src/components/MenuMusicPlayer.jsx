@@ -12,8 +12,9 @@ const MenuMusicPlayer = React.forwardRef((props, ref) => {
     play: () => {
       if (audioRef.current) {
         audioRef.current.volume = (musicVolume ?? 100) / 100;
-        audioRef.current.play();
+        return audioRef.current.play();
       }
+      return Promise.resolve();
     },
     pause: () => {
       if (audioRef.current) audioRef.current.pause();
@@ -27,11 +28,27 @@ const MenuMusicPlayer = React.forwardRef((props, ref) => {
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = (musicVolume ?? 100) / 100;
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(() => {});
     }
+
+    // Loop agressivo para garantir que a música continue tocando
+    const intervalId = setInterval(() => {
+      if (audioRef.current && audioRef.current.parentNode) {
+        if (audioRef.current.paused || (audioRef.current.duration && audioRef.current.currentTime >= audioRef.current.duration - 0.1)) {
+          audioRef.current.currentTime = 0;
+          audioRef.current.play().catch(() => {});
+        }
+      }
+    }, 100);
+
+    return () => {
+      clearInterval(intervalId);
+    };
   }, [musicVolume]);
 
   return (
-    <audio ref={audioRef} src={menuMusic} loop preload="auto" />
+    <audio ref={audioRef} src={menuMusic} preload="auto" />
   );
 });
 

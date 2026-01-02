@@ -48,9 +48,8 @@ const LoadingScreen = ({ onFinish, menuMusicRef }) => {
     return () => {
       clearTimeout(timer);
       if (audioRef.current) audioRef.current.pause();
-      if (menuMusicRef?.current) menuMusicRef.current.pause();
     };
-  }, [onFinish, musicVolume, menuMusicRef]);
+  }, [onFinish, musicVolume]);
 
   const playClick = () => {
     if (keyClickAudioRef.current) {

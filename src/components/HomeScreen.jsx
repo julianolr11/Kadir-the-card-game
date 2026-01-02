@@ -32,7 +32,7 @@ const BoosterZone = ({ boosters, onOpenBooster, isOpeningBooster }) => {
     setHover(true);
     if (packageAudioRef.current) {
       packageAudioRef.current.currentTime = 0;
-      packageAudioRef.current.play();
+      packageAudioRef.current.play().catch(() => {});
     }
   }
 
@@ -107,7 +107,7 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
       function handleCogMouseEnter() {
         if (cogAudioRef.current) {
           cogAudioRef.current.currentTime = 0;
-          cogAudioRef.current.play();
+          cogAudioRef.current.play().catch(() => {});
         }
       }
     // Ref e handler para som do deck-btn
@@ -115,53 +115,71 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
     function handleDeckBtnMouseEnter() {
       if (deckBtnAudioRef.current) {
         deckBtnAudioRef.current.currentTime = 0;
-        deckBtnAudioRef.current.play();
+        deckBtnAudioRef.current.play().catch(() => {});
       }
     }
   // menuMusicRef: ref global para controle da música do menu
   const candleAudioRef = React.useRef(null);
+  const candleContainerRef = React.useRef(null);
+  const [candleKey, setCandleKey] = React.useState(0);
 
   React.useEffect(() => {
-    const candle = candleAudioRef.current;
-    // Corrigir acesso ao elemento de áudio real do menuMusicRef
     const music = menuMusicRef?.current?.getAudio?.();
-    // Funções de cleanup
-    let handleCandleEnded, handleMusicEnded;
-    if (candle) {
-      candle.volume = 0.5;
-      candle.loop = true;
-      candle.currentTime = 0;
-      candle.play();
-      handleCandleEnded = () => {
-        candle.currentTime = 0;
-        candle.play();
-      };
-      candle.addEventListener('ended', handleCandleEnded);
-    }
-    if (music) {
-      music.loop = true;
-      music.currentTime = 0;
-      music.play();
-      handleMusicEnded = () => {
+
+    const playMusic = () => {
+      if (music && music.parentNode) {
         music.currentTime = 0;
-        music.play();
-      };
-      music.addEventListener('ended', handleMusicEnded);
-    }
-    // Cleanup para ambos
-    return () => {
-      if (candle) {
-        candle.pause();
-        candle.currentTime = 0;
-        if (handleCandleEnded) candle.removeEventListener('ended', handleCandleEnded);
-      }
-      if (music) {
-        music.pause();
-        music.currentTime = 0;
-        if (handleMusicEnded) music.removeEventListener('ended', handleMusicEnded);
+        const playPromise = music.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(error => {
+            console.warn('Erro ao reproduzir música:', error);
+          });
+        }
       }
     };
-  }, [menuMusicRef]);
+
+    // Toca a música imediatamente
+    playMusic();
+
+    // Listener para quando o áudio das candles terminar
+    const handleCandleEnded = () => {
+      // Remove e re-adiciona o elemento para forçar recarga
+      setTimeout(() => {
+        setCandleKey(prev => prev + 1);
+      }, 100);
+    };
+
+    const candle = candleAudioRef.current;
+    if (candle) {
+      candle.addEventListener('ended', handleCandleEnded);
+      candle.volume = 0.5;
+      candle.currentTime = 0;
+      const playPromise = candle.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          console.warn('Erro ao reproduzir vela:', error);
+        });
+      }
+    }
+
+    // Loop de segurança: verifica a cada 200ms se os áudios pararam
+    const intervalId = setInterval(() => {
+      if (candle && candle.parentNode && (candle.paused || candle.ended)) {
+        handleCandleEnded();
+      }
+
+      if (music && music.parentNode && (music.paused || music.ended)) {
+        playMusic();
+      }
+    }, 200);
+
+    return () => {
+      clearInterval(intervalId);
+      if (candle) {
+        candle.removeEventListener('ended', handleCandleEnded);
+      }
+    };
+  }, [menuMusicRef, candleKey]);
   const { activeGuardian, boosters = 0, lang = 'ptbr', setBoosters } = useContext(AppContext);
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -264,8 +282,8 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
 
   return (
     <div className="home-screen">
-      {/* Áudio de vela queimando, sem loop */}
-      <audio ref={candleAudioRef} src={candleSound} preload="auto" />
+      {/* Áudio de vela queimando em loop - key força recriação do elemento */}
+      <audio key={candleKey} ref={candleAudioRef} src={candleSound} preload="auto" />
       {/* Background 3D em duas camadas */}
       <div className="main-menu-background">
         <div className="main-menu-bg-base"></div>

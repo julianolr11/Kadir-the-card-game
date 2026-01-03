@@ -22,7 +22,8 @@ const creatures = [
   require('./booster1/elderox'),
   require('./booster1/pawferion'),
   require('./booster1/alatoy'),
-  require('./booster1/whalar')
+  require('./booster1/whalar'),
 ];
+
 module.exports = creatures;
 module.exports.creatures = creatures;

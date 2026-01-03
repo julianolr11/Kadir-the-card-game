@@ -11,12 +11,36 @@ const MOCK_PLAYER_PROGRESS = {
 };
 
 const PERK_DATA = {
-  HP_PLUS_1: { name: { pt: '+1 Vida', en: '+1 HP' }, desc: { pt: 'Inicia com +1 de vida', en: 'Start with +1 HP' } },
-  HP_PLUS_2: { name: { pt: '+2 Vida', en: '+2 HP' }, desc: { pt: 'Inicia com +2 de vida', en: 'Start with +2 HP' } },
-  FIRST_ROUND_SHIELD: { name: { pt: 'Escudo Inicial', en: 'Initial Shield' }, desc: { pt: 'Recebe escudo no 1º turno', en: 'Gain shield on 1st turn' } },
-  GUARDIAN_KILL_XP_BONUS: { name: { pt: '+3% XP', en: '+3% XP' }, desc: { pt: '+3% XP por abate do guardião', en: '+3% XP per guardian kill' } },
-  ARMOR_PLUS_2: { name: { pt: 'Pele Impenetrável', en: 'Impenetrable Skin' }, desc: { pt: 'Ganha 2 de armadura', en: 'Gains 2 armor' } },
-  KILL_XP_BONUS_10: { name: { pt: '+10% XP', en: '+10% XP' }, desc: { pt: '+10% XP por abate do guardião', en: '+10% XP per guardian kill' } },
+  HP_PLUS_1: {
+    name: { pt: '+1 Vida', en: '+1 HP' },
+    desc: { pt: 'Inicia com +1 de vida', en: 'Start with +1 HP' },
+  },
+  HP_PLUS_2: {
+    name: { pt: '+2 Vida', en: '+2 HP' },
+    desc: { pt: 'Inicia com +2 de vida', en: 'Start with +2 HP' },
+  },
+  FIRST_ROUND_SHIELD: {
+    name: { pt: 'Escudo Inicial', en: 'Initial Shield' },
+    desc: { pt: 'Recebe escudo no 1º turno', en: 'Gain shield on 1st turn' },
+  },
+  GUARDIAN_KILL_XP_BONUS: {
+    name: { pt: '+3% XP', en: '+3% XP' },
+    desc: {
+      pt: '+3% XP por abate do guardião',
+      en: '+3% XP per guardian kill',
+    },
+  },
+  ARMOR_PLUS_2: {
+    name: { pt: 'Pele Impenetrável', en: 'Impenetrable Skin' },
+    desc: { pt: 'Ganha 2 de armadura', en: 'Gains 2 armor' },
+  },
+  KILL_XP_BONUS_10: {
+    name: { pt: '+10% XP', en: '+10% XP' },
+    desc: {
+      pt: '+10% XP por abate do guardião',
+      en: '+10% XP per guardian kill',
+    },
+  },
 };
 
 // Função auxiliar para carregar dados da carta
@@ -52,7 +76,7 @@ function GuardianLoadout({ guardian }) {
     const skills = [];
     const perks = [];
 
-    guardianData.unlockTable.forEach(unlock => {
+    guardianData.unlockTable.forEach((unlock) => {
       if (unlock.level <= guardianProgress.level) {
         if (unlock.type === 'skill') {
           skills.push(unlock);
@@ -70,8 +94,12 @@ function GuardianLoadout({ guardian }) {
     guardianData?.defaultSkills?.[0]?.id || null,
     guardianData?.defaultSkills?.[1]?.id || null,
   ]);
-  const [selectedBlessing, setSelectedBlessing] = useState(guardianData?.defaultBlessing || null);
-  const [selectedPerk, setSelectedPerk] = useState(unlockedItems.perks[0] || null);
+  const [selectedBlessing, setSelectedBlessing] = useState(
+    guardianData?.defaultBlessing || null,
+  );
+  const [selectedPerk, setSelectedPerk] = useState(
+    unlockedItems.perks[0] || null,
+  );
   const [editingSlot, setEditingSlot] = useState(null);
 
   const getName = (obj) => {
@@ -100,11 +128,14 @@ function GuardianLoadout({ guardian }) {
     ...unlockedItems.skills,
   ];
 
-  const availablePerks = unlockedItems.perks.map(id => ({ id, ...PERK_DATA[id] }));
+  const availablePerks = unlockedItems.perks.map((id) => ({
+    id,
+    ...PERK_DATA[id],
+  }));
 
   // Helper para pegar skill por ID
   const getSkillById = (skillId) => {
-    return allAvailableSkills.find(s => s.id === skillId);
+    return allAvailableSkills.find((s) => s.id === skillId);
   };
 
   return (
@@ -115,7 +146,9 @@ function GuardianLoadout({ guardian }) {
       </div>
 
       <div className="loadout-section">
-        <div className="loadout-section-title">Habilidades Ativas (2 slots)</div>
+        <div className="loadout-section-title">
+          Habilidades Ativas (2 slots)
+        </div>
         <div className="loadout-slots">
           {[0, 1].map((slotIdx) => {
             const skillId = selectedSkills[slotIdx];
@@ -125,7 +158,9 @@ function GuardianLoadout({ guardian }) {
                 <div className="loadout-slot-label">Slot {slotIdx + 1}</div>
                 {skill ? (
                   <div className="loadout-slot-content">
-                    <div className="loadout-slot-name">{getName(skill.name)}</div>
+                    <div className="loadout-slot-name">
+                      {getName(skill.name)}
+                    </div>
                     <div className="loadout-slot-desc">
                       {getDesc(skill.desc)}
                     </div>
@@ -157,8 +192,13 @@ function GuardianLoadout({ guardian }) {
           {selectedBlessing ? (
             <div className="loadout-slot-content">
               <div className="loadout-slot-name">Benção Padrão</div>
-              <div className="loadout-slot-desc">{getDesc(selectedBlessing)}</div>
-              <button className="loadout-slot-change" onClick={() => setEditingSlot('blessing')}>
+              <div className="loadout-slot-desc">
+                {getDesc(selectedBlessing)}
+              </div>
+              <button
+                className="loadout-slot-change"
+                onClick={() => setEditingSlot('blessing')}
+              >
                 Ver detalhes
               </button>
             </div>
@@ -174,8 +214,12 @@ function GuardianLoadout({ guardian }) {
           <div className="loadout-slot-label">Perk Ativo</div>
           {selectedPerk ? (
             <div className="loadout-slot-content">
-              <div className="loadout-slot-name">{getName(PERK_DATA[selectedPerk].name)}</div>
-              <div className="loadout-slot-desc">{getDesc(PERK_DATA[selectedPerk].desc)}</div>
+              <div className="loadout-slot-name">
+                {getName(PERK_DATA[selectedPerk].name)}
+              </div>
+              <div className="loadout-slot-desc">
+                {getDesc(PERK_DATA[selectedPerk].desc)}
+              </div>
               <button
                 className="loadout-slot-change"
                 onClick={() => setEditingSlot('perk')}
@@ -184,7 +228,10 @@ function GuardianLoadout({ guardian }) {
               </button>
             </div>
           ) : (
-            <button className="loadout-slot-empty" onClick={() => setEditingSlot('perk')}>
+            <button
+              className="loadout-slot-empty"
+              onClick={() => setEditingSlot('perk')}
+            >
               + Selecionar perk
             </button>
           )}
@@ -193,49 +240,67 @@ function GuardianLoadout({ guardian }) {
 
       {/* Modal simples para seleção - melhorar depois */}
       {editingSlot && (
-        <div className="loadout-modal-overlay" onClick={() => setEditingSlot(null)}>
+        <div
+          className="loadout-modal-overlay"
+          onClick={() => setEditingSlot(null)}
+        >
           <div className="loadout-modal" onClick={(e) => e.stopPropagation()}>
             <div className="loadout-modal-header">
               <h4>
-                {editingSlot.startsWith('skill') ? 'Selecionar Habilidade' :
-                 editingSlot === 'perk' ? 'Selecionar Perk' : 'Benção'}
+                {editingSlot.startsWith('skill')
+                  ? 'Selecionar Habilidade'
+                  : editingSlot === 'perk'
+                    ? 'Selecionar Perk'
+                    : 'Benção'}
               </h4>
               <button onClick={() => setEditingSlot(null)}>✕</button>
             </div>
             <div className="loadout-modal-content">
-              {editingSlot.startsWith('skill') && allAvailableSkills.map((skill, idx) => (
-                <button
-                  key={idx}
-                  className="loadout-option"
-                  onClick={() => {
-                    const slotIdx = parseInt(editingSlot.split('-')[1]);
-                    const newSkills = [...selectedSkills];
-                    newSkills[slotIdx] = skill.id;
-                    setSelectedSkills(newSkills);
-                    setEditingSlot(null);
-                  }}
-                >
-                  <div className="loadout-option-name">{getName(skill.name)}</div>
-                  <div className="loadout-option-desc">{getDesc(skill.desc)}</div>
-                </button>
-              ))}
-              {editingSlot === 'perk' && availablePerks.map((perk) => (
-                <button
-                  key={perk.id}
-                  className="loadout-option"
-                  onClick={() => {
-                    setSelectedPerk(perk.id);
-                    setEditingSlot(null);
-                  }}
-                >
-                  <div className="loadout-option-name">{getName(perk.name)}</div>
-                  <div className="loadout-option-desc">{getDesc(perk.desc)}</div>
-                </button>
-              ))}
+              {editingSlot.startsWith('skill') &&
+                allAvailableSkills.map((skill, idx) => (
+                  <button
+                    key={idx}
+                    className="loadout-option"
+                    onClick={() => {
+                      const slotIdx = parseInt(editingSlot.split('-')[1]);
+                      const newSkills = [...selectedSkills];
+                      newSkills[slotIdx] = skill.id;
+                      setSelectedSkills(newSkills);
+                      setEditingSlot(null);
+                    }}
+                  >
+                    <div className="loadout-option-name">
+                      {getName(skill.name)}
+                    </div>
+                    <div className="loadout-option-desc">
+                      {getDesc(skill.desc)}
+                    </div>
+                  </button>
+                ))}
+              {editingSlot === 'perk' &&
+                availablePerks.map((perk) => (
+                  <button
+                    key={perk.id}
+                    className="loadout-option"
+                    onClick={() => {
+                      setSelectedPerk(perk.id);
+                      setEditingSlot(null);
+                    }}
+                  >
+                    <div className="loadout-option-name">
+                      {getName(perk.name)}
+                    </div>
+                    <div className="loadout-option-desc">
+                      {getDesc(perk.desc)}
+                    </div>
+                  </button>
+                ))}
               {editingSlot === 'blessing' && (
                 <div className="loadout-option">
                   <div className="loadout-option-name">Benção Padrão</div>
-                  <div className="loadout-option-desc">{getDesc(selectedBlessing)}</div>
+                  <div className="loadout-option-desc">
+                    {getDesc(selectedBlessing)}
+                  </div>
                 </div>
               )}
             </div>

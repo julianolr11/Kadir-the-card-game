@@ -3,11 +3,13 @@ import { AppContext } from '../context/AppContext';
 import '../styles/homescreen.css';
 
 // Componente que exibe a carta guardião ativa
-const Guardiao = ({ onClick }) => {
+function Guardiao({ onClick }) {
   const { activeGuardian } = useContext(AppContext);
   if (!activeGuardian) return null;
   // Mapeamento de elemento para classe
-  const elementClass = activeGuardian.element ? `deck-btn-${activeGuardian.element}` : '';
+  const elementClass = activeGuardian.element
+    ? `deck-btn-${activeGuardian.element}`
+    : '';
   return (
     <button
       className={`deck-btn ${elementClass}`}
@@ -18,6 +20,6 @@ const Guardiao = ({ onClick }) => {
       <span className="deck-btn-label">Deck</span>
     </button>
   );
-};
+}
 
 export default Guardiao;

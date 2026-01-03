@@ -1,5 +1,3 @@
-
-
 import React, { useEffect, useState, useRef, useContext } from 'react';
 import keyClickSound from '../assets/sounds/effects/key_click.MP3';
 import menuMusic from '../assets/sounds/music/menu.mp3';
@@ -21,10 +19,10 @@ const translations = {
     start: 'Start',
     options: 'Options',
     exit: 'Exit',
-  }
+  },
 };
 
-const LoadingScreen = ({ onFinish, menuMusicRef }) => {
+function LoadingScreen({ onFinish, menuMusicRef }) {
   // menuMusicRef: ref global para controle da música do menu
   const [showMenu, setShowMenu] = useState(false);
   const [showStart, setShowStart] = useState(false);
@@ -73,29 +71,82 @@ const LoadingScreen = ({ onFinish, menuMusicRef }) => {
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', overflow: 'hidden' }}>
-      <audio ref={audioRef} src={'/assets/sounds/intro.mp3'} autoPlay loop />
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        width: '100%',
+        height: '100%',
+        overflow: 'hidden',
+      }}
+    >
+      <audio ref={audioRef} src="/assets/sounds/intro.mp3" autoPlay loop />
       {/* menuMusicRef é global, não precisa de <audio> local */}
-      <img src={wallpaper} alt="Loading" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.9)' }} className="fade-in" />
+      <img
+        src={wallpaper}
+        alt="Loading"
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          filter: 'brightness(0.9)',
+        }}
+        className="fade-in"
+      />
       <div className="vinheta" />
       {showMenu && (
         <>
-          <div style={{ position: 'absolute', bottom: 60, left: 0, right: 0, textAlign: 'center' }} className="fade-in">
-            <button style={btnStyle} onClick={handleStart}>{t.start}</button>
-            <button style={btnStyle} onClick={handleOptions}>{t.options}</button>
-            <button style={btnStyle} onClick={handleExit}>{t.exit}</button>
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 60,
+              left: 0,
+              right: 0,
+              textAlign: 'center',
+            }}
+            className="fade-in"
+          >
+            <button style={btnStyle} onClick={handleStart}>
+              {t.start}
+            </button>
+            <button style={btnStyle} onClick={handleOptions}>
+              {t.options}
+            </button>
+            <button style={btnStyle} onClick={handleExit}>
+              {t.exit}
+            </button>
             {/* Áudio do click dos botões do menu */}
             <audio ref={keyClickAudioRef} src={keyClickSound} preload="auto" />
           </div>
-          {showStart && <StartFlow onFinish={() => setShowStart(false)} introAudioRef={audioRef} menuAudioRef={menuAudioRef} musicVolume={musicVolume} />}
-          {showOptions && <OptionsModal visible={showOptions} onClose={() => setShowOptions(false)} />}
-          {showExit && <ExitModal visible={showExit} onConfirm={() => window.close()} onCancel={() => setShowExit(false)} />}
+          {showStart && (
+            <StartFlow
+              onFinish={() => setShowStart(false)}
+              introAudioRef={audioRef}
+              menuAudioRef={menuAudioRef}
+              musicVolume={musicVolume}
+            />
+          )}
+          {showOptions && (
+            <OptionsModal
+              visible={showOptions}
+              onClose={() => setShowOptions(false)}
+            />
+          )}
+          {showExit && (
+            <ExitModal
+              visible={showExit}
+              onConfirm={() => window.close()}
+              onCancel={() => setShowExit(false)}
+            />
+          )}
         </>
       )}
     </div>
   );
-
-};
+}
 
 const btnStyle = {
   margin: '0 18px',

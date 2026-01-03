@@ -1,13 +1,33 @@
 import React from 'react';
 import '../styles/animations.css';
 
-const MainMenu = ({ onStart, onOptions, onExit }) => (
-  <div style={{ position: 'absolute', display: 'flex', gap: '30px', bottom: 60, left: 0, right: 0, justifyContent: 'center', alignItems: 'center' }} className="fade-in">
-    <button onClick={onStart} style={btnStyle}>Início</button>
-    <button onClick={onOptions} style={btnStyle}>Opções</button>
-    <button onClick={onExit} style={btnStyle}>Sair</button>
-  </div>
-);
+function MainMenu({ onStart, onOptions, onExit }) {
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        display: 'flex',
+        gap: '30px',
+        bottom: 60,
+        left: 0,
+        right: 0,
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}
+      className="fade-in"
+    >
+      <button onClick={onStart} style={btnStyle}>
+        Início
+      </button>
+      <button onClick={onOptions} style={btnStyle}>
+        Opções
+      </button>
+      <button onClick={onExit} style={btnStyle}>
+        Sair
+      </button>
+    </div>
+  );
+}
 
 const btnStyle = {
   margin: '0 16px',

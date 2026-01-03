@@ -9,9 +9,11 @@ import holoEffectSound from '../assets/sounds/effects/holo-effect.mp3';
 
 const getElementImage = (element) => {
   try {
-    if (element === 'agua' || element === 'água') return require('../assets/img/elements/agua.png');
+    if (element === 'agua' || element === 'água')
+      return require('../assets/img/elements/agua.png');
     if (element === 'terra') return require('../assets/img/elements/terra.png');
-    if (element === 'fogo' || element === 'fire') return require('../assets/img/elements/fogo.png');
+    if (element === 'fogo' || element === 'fire')
+      return require('../assets/img/elements/fogo.png');
     if (element === 'ar') return require('../assets/img/elements/ar.png');
     if (element === 'puro') return require('../assets/img/elements/puro.png');
     return null;
@@ -20,7 +22,7 @@ const getElementImage = (element) => {
   }
 };
 
-const BoosterResultsSlider = ({ cards, lang, onClose }) => {
+function BoosterResultsSlider({ cards, lang, onClose }) {
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const currentCard = cards[currentCardIndex] || {};
   const CARD_WIDTH = 360;
@@ -68,7 +70,9 @@ const BoosterResultsSlider = ({ cards, lang, onClose }) => {
 
   function handleMouseDown(e) {
     // Inicia drag apenas se clicar na carta/track, não nos botões
-    const isCard = e.target.closest('.slider-card-wrapper') || e.target.closest('.slider-cards-track');
+    const isCard =
+      e.target.closest('.slider-card-wrapper') ||
+      e.target.closest('.slider-cards-track');
     if (!isCard || e.target.closest('button')) return;
 
     setIsDragging(true);
@@ -104,20 +108,35 @@ const BoosterResultsSlider = ({ cards, lang, onClose }) => {
 
   return (
     <div className="booster-results-overlay" onClick={onClose}>
-      <div className="booster-results-slider-panel" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="booster-results-slider-panel"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="slider-header">
           <h2 className="booster-results-title">Booster aberto</h2>
-          <div className="slider-counter">{currentCardIndex + 1}/{cards.length}</div>
+          <div className="slider-counter">
+            {currentCardIndex + 1}/{cards.length}
+          </div>
         </div>
 
         {/* Slider */}
         <div className="slider-wrapper">
-          <button className="slider-arrow slider-arrow-left" onClick={handlePrevCard} aria-label="Carta anterior">
+          <button
+            className="slider-arrow slider-arrow-left"
+            onClick={handlePrevCard}
+            aria-label="Carta anterior"
+          >
             ‹
           </button>
 
-          <div className="slider-content" onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}>
+          <div
+            className="slider-content"
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+          >
             <div
               ref={trackRef}
               className="slider-cards-track"
@@ -132,33 +151,62 @@ const BoosterResultsSlider = ({ cards, lang, onClose }) => {
                 let wrapperClass = 'slider-card-wrapper';
                 if (idx === currentCardIndex) {
                   wrapperClass += ' active';
-                } else if (idx === currentCardIndex - 1 || (currentCardIndex === 0 && idx === cards.length - 1)) {
+                } else if (
+                  idx === currentCardIndex - 1 ||
+                  (currentCardIndex === 0 && idx === cards.length - 1)
+                ) {
                   wrapperClass += ' prev';
-                } else if (idx === currentCardIndex + 1 || (currentCardIndex === cards.length - 1 && idx === 0)) {
+                } else if (
+                  idx === currentCardIndex + 1 ||
+                  (currentCardIndex === cards.length - 1 && idx === 0)
+                ) {
                   wrapperClass += ' next';
                 }
 
                 return (
-                  <div key={`${card?.id || idx}-${idx}`} className={wrapperClass}>
-                    <div className={`${getCardClassName(card)}${card?.isHolo ? ' card-preview-holo' : ''}`}>
+                  <div
+                    key={`${card?.id || idx}-${idx}`}
+                    className={wrapperClass}
+                  >
+                    <div
+                      className={`${getCardClassName(card)}${card?.isHolo ? ' card-preview-holo' : ''}`}
+                    >
                       {/* Header */}
                       <div className="card-preview-header">
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 6,
+                          }}
+                        >
                           {card?.element && getElementImage(card.element) && (
-                            <img src={getElementImage(card.element)} alt={card.element} className="card-preview-element" />
+                            <img
+                              src={getElementImage(card.element)}
+                              alt={card.element}
+                              className="card-preview-element"
+                            />
                           )}
                           <span className="card-preview-name">
                             {getLocalizedText(card?.name, lang)}
-                            {card?.isHolo && <span className="holo-indicator">✨</span>}
+                            {card?.isHolo && (
+                              <span className="holo-indicator">✨</span>
+                            )}
                           </span>
                         </span>
-                        <span className="card-preview-id">#{card?.num || '?'}</span>
+                        <span className="card-preview-id">
+                          #{card?.num || '?'}
+                        </span>
                       </div>
 
                       {/* Arte */}
                       <div className="card-preview-art-wrapper">
                         {card?.img && (
-                          <img src={card.img} alt={getLocalizedText(card?.name, lang)} className="card-preview-art" />
+                          <img
+                            src={card.img}
+                            alt={getLocalizedText(card?.name, lang)}
+                            className="card-preview-art"
+                          />
                         )}
                       </div>
 
@@ -166,15 +214,28 @@ const BoosterResultsSlider = ({ cards, lang, onClose }) => {
                       {card?.abilities && card.abilities.length > 0 && (
                         <div className="card-preview-abilities">
                           {card.abilities.map((ability, abilityIdx) => (
-                            <div key={abilityIdx} className="card-preview-ability">
+                            <div
+                              key={abilityIdx}
+                              className="card-preview-ability"
+                            >
                               <span className="essence-cost-icons">
-                                {ability.cost && [...Array(ability.cost)].map((_, i) => (
-                                  <img key={i} src={soulEssence} alt="Essência" className="essence-icon" />
-                                ))}
+                                {ability.cost &&
+                                  [...Array(ability.cost)].map((_, i) => (
+                                    <img
+                                      key={i}
+                                      src={soulEssence}
+                                      alt="Essência"
+                                      className="essence-icon"
+                                    />
+                                  ))}
                               </span>
                               <div>
-                                <strong>{getLocalizedText(ability.name, lang)}</strong>
-                                <div className="desc">{getLocalizedText(ability.desc, lang)}</div>
+                                <strong>
+                                  {getLocalizedText(ability.name, lang)}
+                                </strong>
+                                <div className="desc">
+                                  {getLocalizedText(ability.desc, lang)}
+                                </div>
                               </div>
                             </div>
                           ))}
@@ -184,7 +245,8 @@ const BoosterResultsSlider = ({ cards, lang, onClose }) => {
                       {/* Campo */}
                       {card?.field && (
                         <div className="card-preview-field">
-                          <strong>{getLocalizedText(card.field, lang)}:</strong> {getLocalizedText(card.fielddesc, lang)}
+                          <strong>{getLocalizedText(card.field, lang)}:</strong>{' '}
+                          {getLocalizedText(card.fielddesc, lang)}
                         </div>
                       )}
 
@@ -198,7 +260,9 @@ const BoosterResultsSlider = ({ cards, lang, onClose }) => {
                           {card?.type && (
                             <div className="desc-col">
                               <span className="desc-label">Tipo</span>
-                              <span className="desc-value">{getLocalizedText(card.type, lang)}</span>
+                              <span className="desc-value">
+                                {getLocalizedText(card.type, lang)}
+                              </span>
                             </div>
                           )}
                           {card?.height && (
@@ -210,7 +274,13 @@ const BoosterResultsSlider = ({ cards, lang, onClose }) => {
                           {card?.weakness && getElementImage(card.weakness) && (
                             <div className="desc-col">
                               <span className="desc-label">Fraqueza</span>
-                              <span className="desc-value"><img src={getElementImage(card.weakness)} alt={card.weakness} className="fraqueza-icon" /></span>
+                              <span className="desc-value">
+                                <img
+                                  src={getElementImage(card.weakness)}
+                                  alt={card.weakness}
+                                  className="fraqueza-icon"
+                                />
+                              </span>
                             </div>
                           )}
                         </div>
@@ -228,18 +298,26 @@ const BoosterResultsSlider = ({ cards, lang, onClose }) => {
             </div>
           </div>
 
-          <button className="slider-arrow slider-arrow-right" onClick={handleNextCard} aria-label="Próxima carta">
+          <button
+            className="slider-arrow slider-arrow-right"
+            onClick={handleNextCard}
+            aria-label="Próxima carta"
+          >
             ›
           </button>
         </div>
 
         {/* Botão fechar */}
-        <button type="button" onClick={onClose} className="booster-results-close slider-close-btn">
+        <button
+          type="button"
+          onClick={onClose}
+          className="booster-results-close slider-close-btn"
+        >
           Fechar
         </button>
       </div>
     </div>
   );
-};
+}
 
 export default BoosterResultsSlider;

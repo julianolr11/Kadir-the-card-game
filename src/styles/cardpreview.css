@@ -92,7 +92,7 @@
   padding: 22px 14px 18px 14px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
   font-family: 'Poppins', Arial, sans-serif;
   color: #fff;
   overflow: hidden;
@@ -111,7 +111,7 @@
     padding: 22px 14px 18px 14px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
     font-family: 'Poppins', Arial, sans-serif;
     color: #fff;
     overflow: hidden;
@@ -130,7 +130,7 @@
     padding: 22px 14px 18px 14px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
     font-family: 'Poppins', Arial, sans-serif;
     color: #fff;
     overflow: hidden;
@@ -149,7 +149,7 @@
     padding: 22px 14px 18px 14px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
     font-family: 'Poppins', Arial, sans-serif;
     color: #fff;
     overflow: hidden;
@@ -168,7 +168,7 @@
     padding: 22px 14px 18px 14px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
     font-family: 'Poppins', Arial, sans-serif;
     color: #222;
     overflow: hidden;

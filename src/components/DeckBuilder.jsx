@@ -2,6 +2,7 @@ import React, { useContext, useMemo, useState } from 'react';
 import { AppContext } from '../context/AppContext';
 import CreatureCardPreview from './CreatureCardPreview';
 import DeckEditor from './DeckEditor';
+import GuardianSelectModal from './GuardianSelectModal';
 import lvlIcon from '../assets/img/icons/lvlicon.png';
 import soulEssence from '../assets/img/icons/soul-essence.png';
 import burnIcon from '../assets/img/icons/burn.png';
@@ -24,12 +25,42 @@ const MOCK_PLAYER_PROGRESS = {
 };
 
 const PERK_DATA = {
-  HP_PLUS_1: { name: { pt: '+1 Vida', en: '+1 HP' }, desc: { pt: 'Inicia com +1 de vida', en: 'Start with +1 HP' }, hpBonus: 1 },
-  HP_PLUS_2: { name: { pt: '+2 Vida', en: '+2 HP' }, desc: { pt: 'Inicia com +2 de vida', en: 'Start with +2 HP' }, hpBonus: 2 },
-  FIRST_ROUND_SHIELD: { name: { pt: 'Escudo Inicial', en: 'Initial Shield' }, desc: { pt: 'Recebe escudo no 1º turno', en: 'Gain shield on 1st turn' }, hpBonus: 0 },
-  GUARDIAN_KILL_XP_BONUS: { name: { pt: '+3% XP', en: '+3% XP' }, desc: { pt: '+3% XP por abate do guardião', en: '+3% XP per guardian kill' }, hpBonus: 0 },
-  ARMOR_PLUS_2: { name: { pt: 'Pele Impenetrável', en: 'Impenetrable Skin' }, desc: { pt: 'Ganha 2 de armadura', en: 'Gains 2 armor' }, hpBonus: 0 },
-  KILL_XP_BONUS_10: { name: { pt: '+10% XP', en: '+10% XP' }, desc: { pt: '+10% XP por abate do guardião', en: '+10% XP per guardian kill' }, hpBonus: 0 },
+  HP_PLUS_1: {
+    name: { pt: '+1 Vida', en: '+1 HP' },
+    desc: { pt: 'Inicia com +1 de vida', en: 'Start with +1 HP' },
+    hpBonus: 1,
+  },
+  HP_PLUS_2: {
+    name: { pt: '+2 Vida', en: '+2 HP' },
+    desc: { pt: 'Inicia com +2 de vida', en: 'Start with +2 HP' },
+    hpBonus: 2,
+  },
+  FIRST_ROUND_SHIELD: {
+    name: { pt: 'Escudo Inicial', en: 'Initial Shield' },
+    desc: { pt: 'Recebe escudo no 1º turno', en: 'Gain shield on 1st turn' },
+    hpBonus: 0,
+  },
+  GUARDIAN_KILL_XP_BONUS: {
+    name: { pt: '+3% XP', en: '+3% XP' },
+    desc: {
+      pt: '+3% XP por abate do guardião',
+      en: '+3% XP per guardian kill',
+    },
+    hpBonus: 0,
+  },
+  ARMOR_PLUS_2: {
+    name: { pt: 'Pele Impenetrável', en: 'Impenetrable Skin' },
+    desc: { pt: 'Ganha 2 de armadura', en: 'Gains 2 armor' },
+    hpBonus: 0,
+  },
+  KILL_XP_BONUS_10: {
+    name: { pt: '+10% XP', en: '+10% XP' },
+    desc: {
+      pt: '+10% XP por abate do guardião',
+      en: '+10% XP per guardian kill',
+    },
+    hpBonus: 0,
+  },
 };
 
 // Mapa de ícones de status effects
@@ -57,63 +88,144 @@ const STATUS_COLORS = {
 // Função para renderizar displayText com ícones e cores
 const renderDisplayText = (displayText, langKey = 'pt') => {
   if (!displayText) return null;
-  const text = typeof displayText === 'object' ? displayText[langKey] : displayText;
+  const text =
+    typeof displayText === 'object' ? displayText[langKey] : displayText;
   if (!text) return null;
 
   return (
     <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.4' }}>
-      {text.split('\n').map((line, idx) => {
-        // Pular linhas de essências (números + "essência(s)")
-        if (/^\d+\s+essências?$/i.test(line.trim())) return null;
+      {text
+        .split('\n')
+        .map((line, idx) => {
+          // Pular linhas de essências (números + "essência(s)")
+          if (/^\d+\s+essências?$/i.test(line.trim())) return null;
 
-        // Pular linhas com [habilidade] ou [perk] (já são mostradas no badge)
-        if (/\[habilidade\]|\[ability\]|\[perk\]/i.test(line)) return null;
+          // Pular linhas com [habilidade] ou [perk] (já são mostradas no badge)
+          if (/\[habilidade\]|\[ability\]|\[perk\]/i.test(line)) return null;
 
-        // Pular linhas que começam com "nv X -" ou "Lv X -" (título já exibido)
-        if (/^(nv|lv)\s+\d+\s*-/i.test(line.trim())) return null;
+          // Pular linhas que começam com "nv X -" ou "Lv X -" (título já exibido)
+          if (/^(nv|lv)\s+\d+\s*-/i.test(line.trim())) return null;
 
-        let rendered = line;
+          let rendered = line;
 
-        // Substituir emojis por texto colorido com ícone
-        rendered = rendered.replace(/🔥/g, '<img src="' + burnIcon + '" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ' + STATUS_COLORS.burn + '; font-weight: 600;">queimadura</span>');
-        rendered = rendered.replace(/❄️/g, '<img src="' + freezeIcon + '" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ' + STATUS_COLORS.freeze + '; font-weight: 600;">congelamento</span>');
-        rendered = rendered.replace(/⚡/g, '<img src="' + paralyzeIcon + '" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ' + STATUS_COLORS.paralyze + '; font-weight: 600;">paralisia</span>');
-        rendered = rendered.replace(/☠️/g, '<img src="' + poisonIcon + '" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ' + STATUS_COLORS.poison + '; font-weight: 600;">veneno</span>');
-        rendered = rendered.replace(/😴/g, '<img src="' + sleepIcon + '" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ' + STATUS_COLORS.sleep + '; font-weight: 600;">sono</span>');
-        rendered = rendered.replace(/🩸/g, '<img src="' + bleedIcon + '" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ' + STATUS_COLORS.bleed + '; font-weight: 600;">sangramento</span>');
-        rendered = rendered.replace(/🛡️/g, '<img src="' + shieldIcon + '" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ' + STATUS_COLORS.armor + '; font-weight: 600;">armadura</span>');
+          // Substituir emojis por texto colorido com ícone
+          rendered = rendered.replace(
+            /🔥/g,
+            `<img src="${
+              burnIcon
+            }" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ${
+              STATUS_COLORS.burn
+            }; font-weight: 600;">queimadura</span>`,
+          );
+          rendered = rendered.replace(
+            /❄️/g,
+            `<img src="${
+              freezeIcon
+            }" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ${
+              STATUS_COLORS.freeze
+            }; font-weight: 600;">congelamento</span>`,
+          );
+          rendered = rendered.replace(
+            /⚡/g,
+            `<img src="${
+              paralyzeIcon
+            }" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ${
+              STATUS_COLORS.paralyze
+            }; font-weight: 600;">paralisia</span>`,
+          );
+          rendered = rendered.replace(
+            /☠️/g,
+            `<img src="${
+              poisonIcon
+            }" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ${
+              STATUS_COLORS.poison
+            }; font-weight: 600;">veneno</span>`,
+          );
+          rendered = rendered.replace(
+            /😴/g,
+            `<img src="${
+              sleepIcon
+            }" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ${
+              STATUS_COLORS.sleep
+            }; font-weight: 600;">sono</span>`,
+          );
+          rendered = rendered.replace(
+            /🩸/g,
+            `<img src="${
+              bleedIcon
+            }" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ${
+              STATUS_COLORS.bleed
+            }; font-weight: 600;">sangramento</span>`,
+          );
+          rendered = rendered.replace(
+            /🛡️/g,
+            `<img src="${
+              shieldIcon
+            }" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ${
+              STATUS_COLORS.armor
+            }; font-weight: 600;">armadura</span>`,
+          );
 
-        // Colorir palavras-chave que não foram substituídas por emoji
-        let colored = rendered;
-        if (!rendered.includes('queimadura</span>')) {
-          colored = colored.replace(/queimadura/gi, (match) => `<span style="color: ${STATUS_COLORS.burn}; font-weight: 600;">queimadura</span>`);
-        }
-        if (!rendered.includes('congelamento</span>')) {
-          colored = colored.replace(/congelamento/gi, (match) => `<span style="color: ${STATUS_COLORS.freeze}; font-weight: 600;">congelamento</span>`);
-        }
-        if (!rendered.includes('paralisia</span>')) {
-          colored = colored.replace(/paralisia/gi, (match) => `<span style="color: ${STATUS_COLORS.paralyze}; font-weight: 600;">paralisia</span>`);
-        }
-        if (!rendered.includes('veneno</span>')) {
-          colored = colored.replace(/veneno/gi, (match) => `<span style="color: ${STATUS_COLORS.poison}; font-weight: 600;">veneno</span>`);
-        }
-        if (!rendered.includes('sono</span>')) {
-          colored = colored.replace(/sono/gi, (match) => `<span style="color: ${STATUS_COLORS.sleep}; font-weight: 600;">sono</span>`);
-        }
-        if (!rendered.includes('sangramento</span>')) {
-          colored = colored.replace(/sangramento/gi, (match) => `<span style="color: ${STATUS_COLORS.bleed}; font-weight: 600;">sangramento</span>`);
-        }
-        if (!rendered.includes('armadura</span>')) {
-          colored = colored.replace(/armadura/gi, (match) => `<span style="color: ${STATUS_COLORS.armor}; font-weight: 600;">armadura</span>`);
-        }
+          // Colorir palavras-chave que não foram substituídas por emoji
+          let colored = rendered;
+          if (!rendered.includes('queimadura</span>')) {
+            colored = colored.replace(
+              /queimadura/gi,
+              (match) =>
+                `<span style="color: ${STATUS_COLORS.burn}; font-weight: 600;">queimadura</span>`,
+            );
+          }
+          if (!rendered.includes('congelamento</span>')) {
+            colored = colored.replace(
+              /congelamento/gi,
+              (match) =>
+                `<span style="color: ${STATUS_COLORS.freeze}; font-weight: 600;">congelamento</span>`,
+            );
+          }
+          if (!rendered.includes('paralisia</span>')) {
+            colored = colored.replace(
+              /paralisia/gi,
+              (match) =>
+                `<span style="color: ${STATUS_COLORS.paralyze}; font-weight: 600;">paralisia</span>`,
+            );
+          }
+          if (!rendered.includes('veneno</span>')) {
+            colored = colored.replace(
+              /veneno/gi,
+              (match) =>
+                `<span style="color: ${STATUS_COLORS.poison}; font-weight: 600;">veneno</span>`,
+            );
+          }
+          if (!rendered.includes('sono</span>')) {
+            colored = colored.replace(
+              /sono/gi,
+              (match) =>
+                `<span style="color: ${STATUS_COLORS.sleep}; font-weight: 600;">sono</span>`,
+            );
+          }
+          if (!rendered.includes('sangramento</span>')) {
+            colored = colored.replace(
+              /sangramento/gi,
+              (match) =>
+                `<span style="color: ${STATUS_COLORS.bleed}; font-weight: 600;">sangramento</span>`,
+            );
+          }
+          if (!rendered.includes('armadura</span>')) {
+            colored = colored.replace(
+              /armadura/gi,
+              (match) =>
+                `<span style="color: ${STATUS_COLORS.armor}; font-weight: 600;">armadura</span>`,
+            );
+          }
 
-        // Remover linhas vazias após filtros
-        if (!colored.trim()) return null;
+          // Remover linhas vazias após filtros
+          if (!colored.trim()) return null;
 
-        return (
-          <div key={idx} dangerouslySetInnerHTML={{ __html: colored }} />
-        );
-      }).filter(Boolean)}
+          return (
+            <div key={idx} dangerouslySetInnerHTML={{ __html: colored }} />
+          );
+        })
+        .filter(Boolean)}
     </div>
   );
 };
@@ -129,7 +241,15 @@ const getGuardianData = (guardianId) => {
 };
 
 function DeckBuilder({ onNavigate }) {
-  const { activeGuardian, lang = 'ptbr', saveDeck, getDeck } = useContext(AppContext) || {};
+  const {
+    activeGuardian,
+    lang = 'ptbr',
+    saveDeck,
+    getDeck,
+    saveGuardianLoadout,
+    loadGuardianLoadout,
+    setActiveGuardian,
+  } = useContext(AppContext) || {};
   const [slots, setSlots] = useState(Array(MAX_DECKS).fill(null));
   const [openingSlotId, setOpeningSlotId] = useState(null);
   const [showLoadoutModal, setShowLoadoutModal] = useState(false);
@@ -142,6 +262,7 @@ function DeckBuilder({ onNavigate }) {
   const [showNamePrompt, setShowNamePrompt] = useState(false);
   const [promptSlotIndex, setPromptSlotIndex] = useState(null);
   const [deckNameInput, setDeckNameInput] = useState('');
+  const [showGuardianSelectModal, setShowGuardianSelectModal] = useState(false);
 
   // Abrir editor quando slot pendente for criado
   React.useEffect(() => {
@@ -222,8 +343,36 @@ function DeckBuilder({ onNavigate }) {
   }
 
   function handleChangeGuardian() {
-    // TODO: abrir modal/tela de seleção de guardião
-    onNavigate('iniciar');
+    // Salvar o loadout atual do guardião ativo
+    if (activeGuardian?.id) {
+      saveGuardianLoadout(activeGuardian.id, {
+        selectedSkills,
+        selectedPerk,
+      });
+    }
+    // Abrir modal de seleção de guardião
+    setShowGuardianSelectModal(true);
+  }
+
+  function handleSelectGuardian(newGuardian) {
+    // Atualizar o guardião ativo
+    if (setActiveGuardian) {
+      setActiveGuardian(newGuardian);
+    }
+
+    // Carregar o loadout do novo guardião (se existir)
+    const loadedLoadout = loadGuardianLoadout(newGuardian.id);
+    if (loadedLoadout) {
+      setSelectedSkills(loadedLoadout.selectedSkills || [null, null]);
+      setSelectedPerk(loadedLoadout.selectedPerk || null);
+    } else {
+      // Se não houver loadout salvo, resetar para padrão
+      setSelectedSkills([null, null]);
+      setSelectedPerk(null);
+    }
+
+    setGuardianLoadout(null);
+    setShowGuardianSelectModal(false);
   }
 
   // Pegar dados estendidos do guardião
@@ -260,7 +409,7 @@ function DeckBuilder({ onNavigate }) {
     const unlocks = [];
 
     // Adicionar itens da unlock table (que já inclui as habilidades padrão do nível 0)
-    guardianData.unlockTable.forEach(unlock => {
+    guardianData.unlockTable.forEach((unlock) => {
       // Pular items de tipo 'none'
       if (unlock.type === 'none') return;
 
@@ -281,7 +430,8 @@ function DeckBuilder({ onNavigate }) {
           level: unlock.level,
           type: 'perk',
           id: unlock.id,
-          name: PERK_DATA[unlock.id]?.name || unlock.name || { pt: 'Perk', en: 'Perk' },
+          name: PERK_DATA[unlock.id]?.name ||
+            unlock.name || { pt: 'Perk', en: 'Perk' },
           desc: PERK_DATA[unlock.id]?.desc || unlock.desc || { pt: '', en: '' },
           displayText: unlock.displayText,
           isDefault: false,
@@ -336,9 +486,9 @@ function DeckBuilder({ onNavigate }) {
 
     // Encontrar os dados completos das skills selecionadas
     const selectedAbilities = selectedSkills
-      .filter(skillId => skillId)
-      .map(skillId => {
-        const unlock = allUnlocks.find(u => u.id === skillId);
+      .filter((skillId) => skillId)
+      .map((skillId) => {
+        const unlock = allUnlocks.find((u) => u.id === skillId);
         if (unlock && unlock.type === 'skill') {
           return {
             name: unlock.name,
@@ -363,16 +513,22 @@ function DeckBuilder({ onNavigate }) {
       ...guardianWithBonusHp,
       abilities: selectedAbilities,
     };
-  }, [activeGuardian, guardianWithBonusHp, selectedSkills, allUnlocks, guardianData]);
+  }, [
+    activeGuardian,
+    guardianWithBonusHp,
+    selectedSkills,
+    allUnlocks,
+    guardianData,
+  ]);
 
   // Função para salvar configuração
   const handleSaveLoadout = () => {
     setGuardianLoadout({
       guardianId: activeGuardian?.id,
-      selectedSkills: selectedSkills,
-      selectedPerk: selectedPerk,
-      hpBonus: hpBonus,
-      armorValue: armorValue,
+      selectedSkills,
+      selectedPerk,
+      hpBonus,
+      armorValue,
     });
     setShowLoadoutModal(false);
   };
@@ -384,9 +540,9 @@ function DeckBuilder({ onNavigate }) {
       if (!activeGuardian || !allUnlocks) return activeGuardian;
 
       const selectedAbilities = guardianLoadout.selectedSkills
-        .filter(skillId => skillId)
-        .map(skillId => {
-          const unlock = allUnlocks.find(u => u.id === skillId);
+        .filter((skillId) => skillId)
+        .map((skillId) => {
+          const unlock = allUnlocks.find((u) => u.id === skillId);
           if (unlock && unlock.type === 'skill') {
             return {
               name: unlock.name,
@@ -431,50 +587,58 @@ function DeckBuilder({ onNavigate }) {
       <div className="deckbuilder-body">
         <div className="deckbuilder-guardian">
           {activeGuardian ? (
-            <>
+            <div
+              className="guardian-card-wrapper"
+              onMouseEnter={() => setHovering(true)}
+              onMouseLeave={() => setHovering(false)}
+              onClick={() => setShowLoadoutModal(true)}
+              style={{ position: 'relative', cursor: 'pointer' }}
+            >
               <div
-                className="guardian-card-wrapper"
-                onMouseEnter={() => setHovering(true)}
-                onMouseLeave={() => setHovering(false)}
-                onClick={() => setShowLoadoutModal(true)}
-                style={{ position: 'relative', cursor: 'pointer' }}
-              >
-                <div style={{
+                style={{
                   transform: 'scale(0.92)',
                   transformOrigin: 'top center',
                   marginBottom: '-44px',
                   filter: hovering ? 'blur(4px)' : 'blur(0)',
                   transition: 'filter 200ms ease',
-                }}>
-                  <CreatureCardPreview creature={currentGuardianForDisplay} onClose={null} level={guardianProgress.level} allowFlip={false} />
-                </div>
-                <button
-                  className="guardian-loadout-btn"
-                  style={{
-                    opacity: hovering ? 1 : 0,
-                    visibility: hovering ? 'visible' : 'hidden',
-                    transition: 'opacity 200ms ease, visibility 200ms ease',
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    zIndex: 10,
-                  }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowLoadoutModal(true);
-                  }}
-                >
-                  Mudar habilidades
-                </button>
+                }}
+              >
+                <CreatureCardPreview
+                  creature={currentGuardianForDisplay}
+                  onClose={null}
+                  level={guardianProgress.level}
+                  allowFlip={false}
+                />
               </div>
-            </>
+              <button
+                className="guardian-loadout-btn"
+                style={{
+                  opacity: hovering ? 1 : 0,
+                  visibility: hovering ? 'visible' : 'hidden',
+                  transition: 'opacity 200ms ease, visibility 200ms ease',
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  zIndex: 10,
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowLoadoutModal(true);
+                }}
+              >
+                Mudar habilidades
+              </button>
+            </div>
           ) : (
             <div className="guardian-card-empty">
               <div className="guardian-empty-text">Nenhum guardião ativo</div>
             </div>
           )}
-          <button className="guardian-change-btn" onClick={handleChangeGuardian}>
+          <button
+            className="guardian-change-btn"
+            onClick={handleChangeGuardian}
+          >
             Trocar guardião
           </button>
         </div>
@@ -490,15 +654,22 @@ function DeckBuilder({ onNavigate }) {
                 className={`deck-slot${slot ? ' deck-slot-filled' : ' deck-slot-empty'}${isOpening ? ' deck-slot-opening' : ''}`}
               >
                 <div className="deck-slot-top">
-                  <div className="deck-slot-title">{slot ? slot.name : `Deck ${idx + 1}`}</div>
-                  <div className="deck-slot-status">{slot ? 'Pronto para editar' : 'Vazio'}</div>
+                  <div className="deck-slot-title">
+                    {slot ? slot.name : `Deck ${idx + 1}`}
+                  </div>
+                  <div className="deck-slot-status">
+                    {slot ? 'Pronto para editar' : 'Vazio'}
+                  </div>
                 </div>
 
                 {!slot && (
-                  <button className="deck-slot-cta" onClick={() => {
-                    console.log('Botão Criar Deck clicado! idx:', idx);
-                    handleCreate(idx);
-                  }}>
+                  <button
+                    className="deck-slot-cta"
+                    onClick={() => {
+                      console.log('Botão Criar Deck clicado! idx:', idx);
+                      handleCreate(idx);
+                    }}
+                  >
                     <span className="deck-slot-plus">+</span>
                     Criar deck
                   </button>
@@ -506,10 +677,16 @@ function DeckBuilder({ onNavigate }) {
 
                 {slot && (
                   <div className="deck-slot-actions">
-                    <button className="deck-slot-btn" onClick={() => handleEdit(idx)}>
+                    <button
+                      className="deck-slot-btn"
+                      onClick={() => handleEdit(idx)}
+                    >
                       Editar
                     </button>
-                    <button className="deck-slot-btn danger" onClick={() => handleDelete(idx)}>
+                    <button
+                      className="deck-slot-btn danger"
+                      onClick={() => handleDelete(idx)}
+                    >
                       Apagar
                     </button>
                   </div>
@@ -522,9 +699,20 @@ function DeckBuilder({ onNavigate }) {
 
       {/* Modal de Loadout */}
       {showLoadoutModal && (
-        <div className="loadout-modal-overlay" onClick={() => setShowLoadoutModal(false)}>
-          <div className="loadout-modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="loadout-modal-close" onClick={() => setShowLoadoutModal(false)}>✕</button>
+        <div
+          className="loadout-modal-overlay"
+          onClick={() => setShowLoadoutModal(false)}
+        >
+          <div
+            className="loadout-modal-content"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="loadout-modal-close"
+              onClick={() => setShowLoadoutModal(false)}
+            >
+              ✕
+            </button>
 
             <div className="loadout-modal-body">
               {/* Carta à esquerda */}
@@ -535,7 +723,7 @@ function DeckBuilder({ onNavigate }) {
                       creature={guardianWithSelectedSkills}
                       onClose={null}
                       level={guardianProgress.level}
-                      allowFlip={true}
+                      allowFlip
                       armor={armorValue}
                       burn={statusEffects.burn}
                       freeze={statusEffects.freeze}
@@ -551,9 +739,14 @@ function DeckBuilder({ onNavigate }) {
                     <span>Progresso para o próximo nível</span>
                   </div>
                   <div className="guardian-progress-bar">
-                    <div className="guardian-progress-fill" style={{ width: `${progressPct}%` }} />
+                    <div
+                      className="guardian-progress-fill"
+                      style={{ width: `${progressPct}%` }}
+                    />
                     <div className="guardian-progress-xp">
-                      {guardianProgress.level >= 10 ? 'Nível máximo' : `${guardianProgress.xp}/${nextLevelXp} XP`}
+                      {guardianProgress.level >= 10
+                        ? 'Nível máximo'
+                        : `${guardianProgress.xp}/${nextLevelXp} XP`}
                     </div>
                     <div className="guardian-progress-level-badge">
                       <img src={lvlIcon} alt="Nível" />
@@ -574,18 +767,24 @@ function DeckBuilder({ onNavigate }) {
                     {/* Lista unificada de habilidades e perks */}
                     <div className="loadout-section">
                       <div className="loadout-section-header">
-                        <div className="loadout-section-label">Habilidades e Perks (Escolha 2 habilidades + 1 perk)</div>
+                        <div className="loadout-section-label">
+                          Habilidades e Perks (Escolha 2 habilidades + 1 perk)
+                        </div>
                         <div className="loadout-selected-count">
-                          Habilidades: {selectedSkills.filter(s => s).length}/2 | Perk: {selectedPerk ? '1/1' : '0/1'}
+                          Habilidades: {selectedSkills.filter((s) => s).length}
+                          /2 | Perk: {selectedPerk ? '1/1' : '0/1'}
                         </div>
                       </div>
                       <div className="loadout-skill-scroll">
                         {allUnlocks.map((unlock, idx) => {
-                          const isUnlocked = unlock.level <= guardianProgress.level;
+                          const isUnlocked =
+                            unlock.level <= guardianProgress.level;
                           const isSkill = unlock.type === 'skill';
                           const isPerk = unlock.type === 'perk';
-                          const isSkillSelected = isSkill && selectedSkills.includes(unlock.id);
-                          const isPerkSelected = isPerk && selectedPerk === unlock.id;
+                          const isSkillSelected =
+                            isSkill && selectedSkills.includes(unlock.id);
+                          const isPerkSelected =
+                            isPerk && selectedPerk === unlock.id;
                           const isSelected = isSkillSelected || isPerkSelected;
 
                           return (
@@ -598,51 +797,95 @@ function DeckBuilder({ onNavigate }) {
                                 if (isSkill) {
                                   // Lógica para habilidades
                                   if (isSkillSelected) {
-                                    setSelectedSkills(selectedSkills.map(s => s === unlock.id ? null : s));
-                                  } else if (selectedSkills.filter(s => s).length < 2) {
+                                    setSelectedSkills(
+                                      selectedSkills.map((s) =>
+                                        s === unlock.id ? null : s,
+                                      ),
+                                    );
+                                  } else if (
+                                    selectedSkills.filter((s) => s).length < 2
+                                  ) {
                                     const newSkills = [...selectedSkills];
-                                    const emptyIdx = newSkills.findIndex(s => !s);
+                                    const emptyIdx = newSkills.findIndex(
+                                      (s) => !s,
+                                    );
                                     newSkills[emptyIdx] = unlock.id;
                                     setSelectedSkills(newSkills);
                                   }
                                 } else if (isPerk) {
                                   // Lógica para perks
-                                  setSelectedPerk(isPerkSelected ? null : unlock.id);
+                                  setSelectedPerk(
+                                    isPerkSelected ? null : unlock.id,
+                                  );
                                 }
                               }}
                             >
-                              <div className="loadout-skill-level">Nv. {unlock.level}</div>
+                              <div className="loadout-skill-level">
+                                Nv. {unlock.level}
+                              </div>
                               <div className="loadout-skill-name">
                                 {getName(unlock.name)}
-                                {isSkill && <span className="loadout-skill-badge"> [HABILIDADE]</span>}
-                                {isPerk && <span className="loadout-perk-badge"> [PERK]</span>}
+                                {isSkill && (
+                                  <span className="loadout-skill-badge">
+                                    {' '}
+                                    [HABILIDADE]
+                                  </span>
+                                )}
+                                {isPerk && (
+                                  <span className="loadout-perk-badge">
+                                    {' '}
+                                    [PERK]
+                                  </span>
+                                )}
                               </div>
                               <div className="loadout-skill-desc">
-                                {unlock.displayText ? renderDisplayText(unlock.displayText, langKey) : getName(unlock.desc)}
+                                {unlock.displayText
+                                  ? renderDisplayText(
+                                      unlock.displayText,
+                                      langKey,
+                                    )
+                                  : getName(unlock.desc)}
                               </div>
                               {isSkill && unlock.cost && (
                                 <div className="loadout-skill-cost">
                                   {[...Array(unlock.cost)].map((_, i) => (
-                                    <img key={i} src={soulEssence} alt="Essência" className="loadout-essence-icon" />
+                                    <img
+                                      key={i}
+                                      src={soulEssence}
+                                      alt="Essência"
+                                      className="loadout-essence-icon"
+                                    />
                                   ))}
                                 </div>
                               )}
-                              {!isUnlocked && <div className="loadout-skill-locked">🔒</div>}
-                              {isSelected && <div className="loadout-skill-check">✓</div>}
+                              {!isUnlocked && (
+                                <div className="loadout-skill-locked">🔒</div>
+                              )}
+                              {isSelected && (
+                                <div className="loadout-skill-check">✓</div>
+                              )}
                             </div>
                           );
                         })}
                       </div>
                     </div>
 
-                    <button className="loadout-save-btn" onClick={handleSaveLoadout}>
+                    <button
+                      className="loadout-save-btn"
+                      onClick={handleSaveLoadout}
+                    >
                       Salvar Configuração
                     </button>
                   </>
                 ) : (
                   <div className="loadout-section">
-                    <div className="loadout-section-label">Dados do guardião não encontrados</div>
-                    <div className="loadout-selection-info">Adicione este guardião em guardiansData.js para configurar habilidades.</div>
+                    <div className="loadout-section-label">
+                      Dados do guardião não encontrados
+                    </div>
+                    <div className="loadout-selection-info">
+                      Adicione este guardião em guardiansData.js para configurar
+                      habilidades.
+                    </div>
                   </div>
                 )}
               </div>
@@ -653,29 +896,45 @@ function DeckBuilder({ onNavigate }) {
 
       {/* Modal de Nome do Deck */}
       {showNamePrompt && (
-        <div className="loadout-modal-overlay" onClick={() => setShowNamePrompt(false)}>
-          <div className="loadout-modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '480px', padding: '32px' }}>
-            <button className="loadout-modal-close" onClick={() => setShowNamePrompt(false)}>✕</button>
+        <div
+          className="loadout-modal-overlay"
+          onClick={() => setShowNamePrompt(false)}
+        >
+          <div
+            className="loadout-modal-content"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: '480px', padding: '32px' }}
+          >
+            <button
+              className="loadout-modal-close"
+              onClick={() => setShowNamePrompt(false)}
+            >
+              ✕
+            </button>
 
-            <h2 style={{
-              color: '#f6e8ff',
-              marginBottom: '28px',
-              marginTop: '4px',
-              fontSize: '24px',
-              fontWeight: '700',
-              textAlign: 'center'
-            }}>
+            <h2
+              style={{
+                color: '#f6e8ff',
+                marginBottom: '28px',
+                marginTop: '4px',
+                fontSize: '24px',
+                fontWeight: '700',
+                textAlign: 'center',
+              }}
+            >
               Criar Novo Deck
             </h2>
 
             <div style={{ marginBottom: '28px' }}>
-              <label style={{
-                display: 'block',
-                color: '#cbb9f2',
-                marginBottom: '12px',
-                fontSize: '15px',
-                fontWeight: '500'
-              }}>
+              <label
+                style={{
+                  display: 'block',
+                  color: '#cbb9f2',
+                  marginBottom: '12px',
+                  fontSize: '15px',
+                  fontWeight: '500',
+                }}
+              >
                 Nome do Deck:
               </label>
               <input
@@ -695,10 +954,14 @@ function DeckBuilder({ onNavigate }) {
                   fontFamily: 'Poppins, Arial, sans-serif',
                   outline: 'none',
                   transition: 'all 0.2s',
-                  boxSizing: 'border-box'
+                  boxSizing: 'border-box',
                 }}
-                onFocus={(e) => e.target.style.borderColor = 'rgba(144, 97, 249, 0.8)'}
-                onBlur={(e) => e.target.style.borderColor = 'rgba(144, 97, 249, 0.5)'}
+                onFocus={(e) =>
+                  (e.target.style.borderColor = 'rgba(144, 97, 249, 0.8)')
+                }
+                onBlur={(e) =>
+                  (e.target.style.borderColor = 'rgba(144, 97, 249, 0.5)')
+                }
               />
             </div>
 
@@ -715,10 +978,14 @@ function DeckBuilder({ onNavigate }) {
                   fontSize: '15px',
                   fontWeight: 700,
                   cursor: 'pointer',
-                  transition: 'all 0.2s'
+                  transition: 'all 0.2s',
                 }}
-                onMouseEnter={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.15)'}
-                onMouseLeave={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.08)'}
+                onMouseEnter={(e) =>
+                  (e.target.style.background = 'rgba(255, 255, 255, 0.15)')
+                }
+                onMouseLeave={(e) =>
+                  (e.target.style.background = 'rgba(255, 255, 255, 0.08)')
+                }
               >
                 Cancelar
               </button>
@@ -729,19 +996,22 @@ function DeckBuilder({ onNavigate }) {
                   padding: '14px 20px',
                   borderRadius: '10px',
                   border: '2px solid rgba(144, 97, 249, 0.8)',
-                  background: 'linear-gradient(135deg, rgba(144, 97, 249, 0.3), rgba(122, 90, 248, 0.25))',
+                  background:
+                    'linear-gradient(135deg, rgba(144, 97, 249, 0.3), rgba(122, 90, 248, 0.25))',
                   color: '#fff',
                   fontSize: '15px',
                   fontWeight: 700,
                   cursor: 'pointer',
-                  transition: 'all 0.2s'
+                  transition: 'all 0.2s',
                 }}
                 onMouseEnter={(e) => {
-                  e.target.style.background = 'linear-gradient(135deg, rgba(144, 97, 249, 0.5), rgba(122, 90, 248, 0.4))';
+                  e.target.style.background =
+                    'linear-gradient(135deg, rgba(144, 97, 249, 0.5), rgba(122, 90, 248, 0.4))';
                   e.target.style.transform = 'translateY(-1px)';
                 }}
                 onMouseLeave={(e) => {
-                  e.target.style.background = 'linear-gradient(135deg, rgba(144, 97, 249, 0.3), rgba(122, 90, 248, 0.25))';
+                  e.target.style.background =
+                    'linear-gradient(135deg, rgba(144, 97, 249, 0.3), rgba(122, 90, 248, 0.25))';
                   e.target.style.transform = 'translateY(0)';
                 }}
               >
@@ -758,17 +1028,30 @@ function DeckBuilder({ onNavigate }) {
           deckId={slots[editingDeckIndex].id}
           deckName={slots[editingDeckIndex].name}
           guardianId={activeGuardian?.id || activeGuardian?.name}
-          initialCards={getDeck?.(slots[editingDeckIndex].id)?.cards || Array(20).fill(null)}
+          initialCards={
+            getDeck?.(slots[editingDeckIndex].id)?.cards || Array(20).fill(null)
+          }
           onClose={() => setEditingDeckIndex(null)}
           onSave={(deckData) => {
             if (saveDeck) saveDeck(deckData);
             // Atualizar nome do deck se mudou
             if (deckData.name !== slots[editingDeckIndex].name) {
               const next = [...slots];
-              next[editingDeckIndex] = { ...slots[editingDeckIndex], name: deckData.name };
+              next[editingDeckIndex] = {
+                ...slots[editingDeckIndex],
+                name: deckData.name,
+              };
               setSlots(next);
             }
           }}
+        />
+      )}
+
+      {/* Guardian Select Modal */}
+      {showGuardianSelectModal && (
+        <GuardianSelectModal
+          onSelectGuardian={handleSelectGuardian}
+          onClose={() => setShowGuardianSelectModal(false)}
         />
       )}
     </div>

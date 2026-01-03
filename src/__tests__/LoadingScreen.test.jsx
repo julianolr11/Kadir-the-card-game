@@ -9,8 +9,8 @@ describe('LoadingScreen', () => {
       render(
         <AppProvider>
           <LoadingScreen onFinish={() => {}} />
-        </AppProvider>
-      )
+        </AppProvider>,
+      ),
     ).toBeTruthy();
   });
 });

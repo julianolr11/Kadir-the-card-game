@@ -1,5 +1,3 @@
-
-
 import React, { useContext } from 'react';
 import { AppContext } from '../context/AppContext';
 import '../styles/animations.css';
@@ -14,7 +12,7 @@ const translations = {
     confirm: 'Do you really want to exit the game?',
     yes: 'Yes',
     no: 'No',
-  }
+  },
 };
 
 const modalStyle = {
@@ -28,10 +26,10 @@ const modalStyle = {
   border: '1.5px solid rgba(255,255,255,0.18)',
   textShadow: '0 2px 8px #0007',
   backdropFilter: 'blur(14px)',
-  WebkitBackdropFilter: 'blur(14px)'
+  WebkitBackdropFilter: 'blur(14px)',
 };
 
-const ExitModal = ({ visible, onConfirm, onCancel }) => {
+function ExitModal({ visible, onConfirm, onCancel }) {
   const { lang } = useContext(AppContext);
   const t = translations[lang] || translations.ptbr;
   const [closing, setClosing] = React.useState(false);
@@ -44,30 +42,56 @@ const ExitModal = ({ visible, onConfirm, onCancel }) => {
   };
   if (!visible) return null;
   return (
-    <div style={modalBgStyle} className={closing ? 'modal-zoom-out' : 'modal-zoom-in'}>
+    <div
+      style={modalBgStyle}
+      className={closing ? 'modal-zoom-out' : 'modal-zoom-in'}
+    >
       <div style={modalStyle}>
-        <h2 style={{ color: '#ffe6b0', fontWeight: 700, fontSize: 22, marginBottom: 24, textAlign: 'center', letterSpacing: 0.5 }}>
+        <h2
+          style={{
+            color: '#ffe6b0',
+            fontWeight: 700,
+            fontSize: 22,
+            marginBottom: 24,
+            textAlign: 'center',
+            letterSpacing: 0.5,
+          }}
+        >
           {t.confirm}
         </h2>
-        <div style={{ marginTop: 24, display: 'flex', justifyContent: 'center', gap: 18 }}>
-          <button onClick={() => onConfirm()} style={btnStyle}>{t.yes}</button>
-          <button onClick={() => handleClose(onCancel)} style={btnStyle}>{t.no}</button>
+        <div
+          style={{
+            marginTop: 24,
+            display: 'flex',
+            justifyContent: 'center',
+            gap: 18,
+          }}
+        >
+          <button onClick={() => onConfirm()} style={btnStyle}>
+            {t.yes}
+          </button>
+          <button onClick={() => handleClose(onCancel)} style={btnStyle}>
+            {t.no}
+          </button>
         </div>
       </div>
     </div>
   );
-};
+}
 
 const modalBgStyle = {
   position: 'fixed',
-  top: 0, left: 0, right: 0, bottom: 0,
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
   background: 'rgba(30,22,40,0.32)',
   zIndex: 1000,
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
   backdropFilter: 'blur(10px)',
-  WebkitBackdropFilter: 'blur(10px)'
+  WebkitBackdropFilter: 'blur(10px)',
 };
 
 const btnStyle = {
@@ -83,7 +107,7 @@ const btnStyle = {
   boxShadow: '0 2px 12px #000a',
   textShadow: '0 1px 4px #000a',
   transition: 'background 0.2s, color 0.2s',
-  fontWeight: 600
+  fontWeight: 600,
 };
 
 export default ExitModal;

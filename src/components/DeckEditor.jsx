@@ -12,10 +12,29 @@ import '../styles/deckbuilder.css';
 
 // Lista de todas as cartas disponíveis (23 cartas do booster1)
 const ALL_CARD_IDS = [
-  'alatoy', 'arguilia', 'ashfang', 'digitama', 'draak', 'drazaq', 'ekeranth',
-  'elderox', 'faskel', 'griffor', 'ignis', 'kael', 'landor', 'leoracal',
-  'lunethal', 'mawthorn', 'owlberoth', 'pawferion', 'raptauros', 'sunburst',
-  'viborom', 'virideer', 'whalar'
+  'alatoy',
+  'arguilia',
+  'ashfang',
+  'digitama',
+  'draak',
+  'drazaq',
+  'ekeranth',
+  'elderox',
+  'faskel',
+  'griffor',
+  'ignis',
+  'kael',
+  'landor',
+  'leoracal',
+  'lunethal',
+  'mawthorn',
+  'owlberoth',
+  'pawferion',
+  'raptauros',
+  'sunburst',
+  'viborom',
+  'virideer',
+  'whalar',
 ];
 
 // Função para carregar dados da carta
@@ -28,7 +47,14 @@ const getCardData = (cardId) => {
   }
 };
 
-function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCards = [], onClose, onSave }) {
+function DeckEditor({
+  deckId,
+  deckName: initialDeckName,
+  guardianId,
+  initialCards = [],
+  onClose,
+  onSave,
+}) {
   const { lang = 'ptbr' } = React.useContext(AppContext) || {};
   const langKey = lang === 'en' ? 'en' : 'pt';
 
@@ -46,11 +72,14 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
   const successSoundRef = useRef(null);
   const errorSoundRef = useRef(null);
   const isFirstRender = useRef(true);
-  const lastSavedRef = useRef({ name: initialDeckName || `Deck ${deckId}`, cards: initialCards });
+  const lastSavedRef = useRef({
+    name: initialDeckName || `Deck ${deckId}`,
+    cards: initialCards,
+  });
 
   // Contar quantas vezes uma carta aparece no deck
   const countCardInDeck = (cardId) => {
-    return deckCards.filter(id => id === cardId).length;
+    return deckCards.filter((id) => id === cardId).length;
   };
 
   // Verificar se pode adicionar carta (máximo 2 cópias)
@@ -74,7 +103,7 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
       newDeck[slotIndex] = cardId;
     } else {
       // Encontrar primeiro slot vazio
-      const emptyIndex = newDeck.findIndex(id => !id);
+      const emptyIndex = newDeck.findIndex((id) => !id);
       if (emptyIndex !== -1) {
         newDeck[emptyIndex] = cardId;
       } else {
@@ -121,39 +150,45 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
 
   const resolveType = (data) => {
     if (!data || data.type === undefined) return '';
-    const raw = typeof data.type === 'object' ? (data.type[langKey] || data.type.pt || data.type.en || '') : data.type;
+    const raw =
+      typeof data.type === 'object'
+        ? data.type[langKey] || data.type.pt || data.type.en || ''
+        : data.type;
     return normalizeType(raw);
   };
 
   // Filtrar e ordenar cartas da biblioteca
   const libraryCards = useMemo(() => {
-    let cards = ALL_CARD_IDS.map(id => {
+    let cards = ALL_CARD_IDS.map((id) => {
       const data = getCardData(id);
       return { id, data };
-    }).filter(c => c.data);
+    }).filter((c) => c.data);
 
     // Filtrar por busca
     if (searchTerm) {
-      cards = cards.filter(c => {
-        const name = typeof c.data.name === 'object' ? c.data.name[langKey] : c.data.name;
+      cards = cards.filter((c) => {
+        const name =
+          typeof c.data.name === 'object' ? c.data.name[langKey] : c.data.name;
         return name.toLowerCase().includes(searchTerm.toLowerCase());
       });
     }
 
     // Filtrar por elemento
     if (elementFilter !== 'all') {
-      cards = cards.filter(c => c.data.element === elementFilter);
+      cards = cards.filter((c) => c.data.element === elementFilter);
     }
 
     // Filtrar por tipo
     if (typeFilter !== 'all') {
-      cards = cards.filter(c => resolveType(c.data) === typeFilter);
+      cards = cards.filter((c) => resolveType(c.data) === typeFilter);
     }
 
     // Ordenar
     cards.sort((a, b) => {
-      const aName = typeof a.data.name === 'object' ? a.data.name[langKey] : a.data.name;
-      const bName = typeof b.data.name === 'object' ? b.data.name[langKey] : b.data.name;
+      const aName =
+        typeof a.data.name === 'object' ? a.data.name[langKey] : a.data.name;
+      const bName =
+        typeof b.data.name === 'object' ? b.data.name[langKey] : b.data.name;
 
       switch (sortBy) {
         case 'name-asc':
@@ -198,7 +233,7 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
           id: deckId,
           name: deckName,
           guardianId,
-          cards: deckCards
+          cards: deckCards,
         });
         lastSavedRef.current = { name: deckName, cards: deckCards };
         setShowSavedToast(true);
@@ -233,7 +268,7 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
 
     if (fromSlot) {
       // Reordenar dentro do deck
-      const fromIndex = deckCards.findIndex(id => id === cardId);
+      const fromIndex = deckCards.findIndex((id) => id === cardId);
       if (fromIndex !== -1) {
         moveCard(fromIndex, slotIndex);
       }
@@ -251,7 +286,7 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
     setDragOverSlot(null);
   };
 
-  const cardCount = deckCards.filter(id => id).length;
+  const cardCount = deckCards.filter((id) => id).length;
 
   return (
     <div className="deck-editor-overlay" onClick={onClose}>
@@ -269,10 +304,10 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
             onChange={(e) => setDeckName(e.target.value)}
             placeholder="Nome do Deck"
           />
-          <div className="deck-editor-counter">
-            {cardCount}/20 cartas
-          </div>
-          <button className="deck-editor-close" onClick={onClose}>✕</button>
+          <div className="deck-editor-counter">{cardCount}/20 cartas</div>
+          <button className="deck-editor-close" onClick={onClose}>
+            ✕
+          </button>
         </div>
 
         {/* Grid de Slots */}
@@ -282,7 +317,10 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
               const cardId = deckCards[idx];
               const cardData = cardId ? getCardData(cardId) : null;
               const isDragOver = dragOverSlot === idx;
-              const canDrop = draggedCardId && (canAddCard(draggedCardId) || deckCards.includes(draggedCardId));
+              const canDrop =
+                draggedCardId &&
+                (canAddCard(draggedCardId) ||
+                  deckCards.includes(draggedCardId));
 
               return (
                 <div
@@ -300,8 +338,19 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
                       onDragEnd={handleDragEnd}
                       onClick={() => removeCardFromDeck(idx)}
                     >
-                      <div style={{ transform: 'scale(0.27)', transformOrigin: 'center', pointerEvents: 'none' }}>
-                        <CreatureCardPreview creature={cardData} onClose={null} level={1} allowFlip={false} />
+                      <div
+                        style={{
+                          transform: 'scale(0.27)',
+                          transformOrigin: 'center',
+                          pointerEvents: 'none',
+                        }}
+                      >
+                        <CreatureCardPreview
+                          creature={cardData}
+                          onClose={null}
+                          level={1}
+                          allowFlip={false}
+                        />
                       </div>
                     </div>
                   ) : (
@@ -403,19 +452,30 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
                 key={card.id}
                 className={`deck-library-card ${isDisabled ? 'disabled' : ''} ${draggedCardId === card.id ? 'dragging' : ''}`}
                 draggable={!isDisabled}
-                onDragStart={(e) => !isDisabled && handleDragStart(e, card.id, false)}
+                onDragStart={(e) =>
+                  !isDisabled && handleDragStart(e, card.id, false)
+                }
                 onDragEnd={handleDragEnd}
                 onMouseEnter={() => setHoveredCard(card.data)}
                 onMouseLeave={() => setHoveredCard(null)}
                 onClick={() => !isDisabled && addCardToDeck(card.id)}
                 style={{ animationDelay: `${idx * 50}ms` }}
               >
-                <div style={{ transform: 'scale(0.25)', transformOrigin: 'top left', pointerEvents: 'none' }}>
-                  <CreatureCardPreview creature={card.data} onClose={null} level={1} allowFlip={false} />
+                <div
+                  style={{
+                    transform: 'scale(0.25)',
+                    transformOrigin: 'top left',
+                    pointerEvents: 'none',
+                  }}
+                >
+                  <CreatureCardPreview
+                    creature={card.data}
+                    onClose={null}
+                    level={1}
+                    allowFlip={false}
+                  />
                 </div>
-                <div className="deck-library-card-count">
-                  {countInDeck}/2
-                </div>
+                <div className="deck-library-card-count">{countInDeck}/2</div>
               </div>
             );
           })}
@@ -424,16 +484,17 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
         {/* Preview em Hover */}
         {hoveredCard && (
           <div className="deck-card-preview-hover">
-            <CreatureCardPreview creature={hoveredCard} onClose={null} level={1} allowFlip={false} />
+            <CreatureCardPreview
+              creature={hoveredCard}
+              onClose={null}
+              level={1}
+              allowFlip={false}
+            />
           </div>
         )}
 
         {/* Toast de Salvo */}
-        {showSavedToast && (
-          <div className="deck-saved-toast">
-            ✓ Salvo
-          </div>
-        )}
+        {showSavedToast && <div className="deck-saved-toast">✓ Salvo</div>}
       </div>
     </div>
   );

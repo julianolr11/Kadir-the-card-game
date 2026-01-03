@@ -5,7 +5,9 @@ import CardPreview from '../components/CardPreview';
 describe('CardPreview', () => {
   it('should render and open story panel', () => {
     const onClose = jest.fn();
-    const { getByLabelText, getByText } = render(<CardPreview onClose={onClose} />);
+    const { getByLabelText, getByText } = render(
+      <CardPreview onClose={onClose} />,
+    );
     // Seta para abrir história
     const arrowBtn = getByLabelText('Ver história da criatura');
     fireEvent.click(arrowBtn);

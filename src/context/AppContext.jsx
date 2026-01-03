@@ -2,7 +2,6 @@ import React, { createContext, useState, useMemo } from 'react';
 
 export const AppContext = createContext();
 
-
 const getInitial = (key, fallback) => {
   if (typeof window !== 'undefined') {
     const value = localStorage.getItem(key);
@@ -24,8 +23,12 @@ export function AppProvider({ children }) {
   const [lang, setLang] = useState(() => getInitial('lang', 'ptbr'));
   // volume antigo para compatibilidade
   const [volume, setVolume] = useState(() => getInitial('volume', 50));
-  const [musicVolume, setMusicVolume] = useState(() => getInitial('musicVolume', 50));
-  const [effectsVolume, setEffectsVolume] = useState(() => getInitial('effectsVolume', 50));
+  const [musicVolume, setMusicVolume] = useState(() =>
+    getInitial('musicVolume', 50),
+  );
+  const [effectsVolume, setEffectsVolume] = useState(() =>
+    getInitial('effectsVolume', 50),
+  );
   // Guardião ativo: { name, img }
   const [activeGuardian, setActiveGuardian] = useState(() => {
     // Tenta recuperar do localStorage
@@ -34,7 +37,10 @@ export function AppProvider({ children }) {
       if (stored) return JSON.parse(stored);
     }
     // Valor padrão
-    return { name: 'draak', img: require('../assets/img/creatures/draak_bio.webp') };
+    return {
+      name: 'draak',
+      img: require('../assets/img/creatures/draak_bio.webp'),
+    };
   });
 
   // Sempre salva no localStorage
@@ -82,7 +88,7 @@ export function AppProvider({ children }) {
   // Adicionar cartas de um booster aberto
   const addCardsFromBooster = (cardIds) => {
     const newCollection = { ...cardCollection };
-    cardIds.forEach(id => {
+    cardIds.forEach((id) => {
       newCollection[id] = (newCollection[id] || 0) + 1;
     });
     updateCardCollection(newCollection);
@@ -117,8 +123,8 @@ export function AppProvider({ children }) {
       [deckData.id]: {
         name: deckData.name,
         guardianId: deckData.guardianId,
-        cards: deckData.cards
-      }
+        cards: deckData.cards,
+      },
     };
     updateDecks(newDecks);
   };
@@ -130,7 +136,7 @@ export function AppProvider({ children }) {
 
   // Contar quantas vezes uma carta aparece em um deck específico
   const countCardInDeck = (deckCards, cardId) => {
-    return deckCards.filter(id => id === cardId).length;
+    return deckCards.filter((id) => id === cardId).length;
   };
 
   // Verificar se pode adicionar carta ao deck (máximo 2 cópias)
@@ -145,6 +151,41 @@ export function AppProvider({ children }) {
     updateDecks(newDecks);
   };
   // ===== END CARD COLLECTION & DECK SYSTEM =====
+
+  // ===== GUARDIAN LOADOUT SYSTEM =====
+  // Guardar configuração de cada guardião: { guardianId: { selectedSkills, selectedPerk } }
+  const [guardianLoadouts, setGuardianLoadouts] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('guardianLoadouts');
+      if (stored) return JSON.parse(stored);
+    }
+    return {};
+  });
+
+  const updateGuardianLoadouts = (newLoadouts) => {
+    setGuardianLoadouts(newLoadouts);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('guardianLoadouts', JSON.stringify(newLoadouts));
+    }
+  };
+
+  // Salvar loadout do guardião atual
+  const saveGuardianLoadout = (guardianId, loadoutData) => {
+    const newLoadouts = {
+      ...guardianLoadouts,
+      [guardianId]: {
+        selectedSkills: loadoutData.selectedSkills || [],
+        selectedPerk: loadoutData.selectedPerk || null,
+      },
+    };
+    updateGuardianLoadouts(newLoadouts);
+  };
+
+  // Carregar loadout de um guardião (retorna null se não existir)
+  const loadGuardianLoadout = (guardianId) => {
+    return guardianLoadouts[guardianId] || null;
+  };
+  // ===== END GUARDIAN LOADOUT SYSTEM =====
 
   const contextValue = useMemo(
     () => ({
@@ -172,6 +213,9 @@ export function AppProvider({ children }) {
       deleteDeck,
       countCardInDeck,
       canAddToDeck,
+      // Guardian Loadout System
+      saveGuardianLoadout,
+      loadGuardianLoadout,
     }),
     [
       lang,
@@ -186,6 +230,7 @@ export function AppProvider({ children }) {
       boosters,
       cardCollection,
       decks,
+      guardianLoadouts,
     ],
   );
 

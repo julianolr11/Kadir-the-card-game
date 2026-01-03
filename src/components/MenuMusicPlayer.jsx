@@ -1,6 +1,5 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useContext } from 'react';
 import menuMusic from '../assets/sounds/music/menu.mp3';
-import { useContext } from 'react';
 import { AppContext } from '../context/AppContext';
 
 const MenuMusicPlayer = React.forwardRef((props, ref) => {
@@ -22,7 +21,7 @@ const MenuMusicPlayer = React.forwardRef((props, ref) => {
     setVolume: (v) => {
       if (audioRef.current) audioRef.current.volume = v;
     },
-    getAudio: () => audioRef.current
+    getAudio: () => audioRef.current,
   }));
 
   useEffect(() => {
@@ -35,7 +34,11 @@ const MenuMusicPlayer = React.forwardRef((props, ref) => {
     // Loop agressivo para garantir que a música continue tocando
     const intervalId = setInterval(() => {
       if (audioRef.current && audioRef.current.parentNode) {
-        if (audioRef.current.paused || (audioRef.current.duration && audioRef.current.currentTime >= audioRef.current.duration - 0.1)) {
+        if (
+          audioRef.current.paused ||
+          (audioRef.current.duration &&
+            audioRef.current.currentTime >= audioRef.current.duration - 0.1)
+        ) {
           audioRef.current.currentTime = 0;
           audioRef.current.play().catch(() => {});
         }
@@ -47,9 +50,7 @@ const MenuMusicPlayer = React.forwardRef((props, ref) => {
     };
   }, [musicVolume]);
 
-  return (
-    <audio ref={audioRef} src={menuMusic} preload="auto" />
-  );
+  return <audio ref={audioRef} src={menuMusic} preload="auto" />;
 });
 
 export default MenuMusicPlayer;

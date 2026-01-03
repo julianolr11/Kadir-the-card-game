@@ -1,5 +1,5 @@
-import candleSound from '../assets/sounds/effects/candle.mp3';
 import React, { useState, useEffect, useRef, useContext } from 'react';
+import candleSound from '../assets/sounds/effects/candle.mp3';
 import { AppContext } from '../context/AppContext';
 import verso from '../assets/img/card/verso.png';
 import agua from '../assets/img/elements/agua.png';
@@ -42,40 +42,44 @@ const dialogos = {
 
 function StartFlow({ onFinish, onGoHome, menuMusicRef }) {
   // menuMusicRef: ref global para controle da música do menu
-    const candleAudioRef = useRef(null);
-    const [candleKey, setCandleKey] = useState(0);
+  const candleAudioRef = useRef(null);
+  const [candleKey, setCandleKey] = useState(0);
 
-    useEffect(() => {
-      const candleRef = candleAudioRef.current;
+  useEffect(() => {
+    const candleRef = candleAudioRef.current;
 
-      const handleCandleEnded = () => {
-        setTimeout(() => {
-          setCandleKey(prev => prev + 1);
-        }, 100);
-      };
+    const handleCandleEnded = () => {
+      setTimeout(() => {
+        setCandleKey((prev) => prev + 1);
+      }, 100);
+    };
 
-      if (candleRef) {
-        candleRef.addEventListener('ended', handleCandleEnded);
-        candleRef.volume = 0.5;
-        candleRef.currentTime = 0;
-        candleRef.play().catch(() => {});
+    if (candleRef) {
+      candleRef.addEventListener('ended', handleCandleEnded);
+      candleRef.volume = 0.5;
+      candleRef.currentTime = 0;
+      candleRef.play().catch(() => {});
+    }
+
+    // Loop de segurança
+    const intervalId = setInterval(() => {
+      if (
+        candleRef &&
+        candleRef.parentNode &&
+        (candleRef.paused || candleRef.ended)
+      ) {
+        handleCandleEnded();
       }
+    }, 200);
 
-      // Loop de segurança
-      const intervalId = setInterval(() => {
-        if (candleRef && candleRef.parentNode && (candleRef.paused || candleRef.ended)) {
-          handleCandleEnded();
-        }
-      }, 200);
-
-      return () => {
-        clearInterval(intervalId);
-        if (candleRef) {
-          candleRef.removeEventListener('ended', handleCandleEnded);
-          candleRef.pause();
-        }
-      };
-    }, [candleKey]);
+    return () => {
+      clearInterval(intervalId);
+      if (candleRef) {
+        candleRef.removeEventListener('ended', handleCandleEnded);
+        candleRef.pause();
+      }
+    };
+  }, [candleKey]);
   const { lang, effectsVolume, setActiveGuardian } = useContext(AppContext);
   const [step, setStep] = useState(0);
   const [showModal, setShowModal] = useState(false);
@@ -173,12 +177,12 @@ function StartFlow({ onFinish, onGoHome, menuMusicRef }) {
   }, [step, lang, effectsVolume]);
 
   const handleNext = () => {
-        // Toca o som de click ao avançar o diálogo
-        if (keyClickAudioRef.current) {
-          keyClickAudioRef.current.currentTime = 0;
-          keyClickAudioRef.current.volume = (effectsVolume ?? 50) / 100;
-          keyClickAudioRef.current.play();
-        }
+    // Toca o som de click ao avançar o diálogo
+    if (keyClickAudioRef.current) {
+      keyClickAudioRef.current.currentTime = 0;
+      keyClickAudioRef.current.volume = (effectsVolume ?? 50) / 100;
+      keyClickAudioRef.current.play();
+    }
     // Não tocar som ao avançar o diálogo
     setFade('fadeout');
     setTimeout(() => {
@@ -201,21 +205,10 @@ function StartFlow({ onFinish, onGoHome, menuMusicRef }) {
   };
 
   const elementos = [agua, ar, fogo, terra, puro];
-  const nomes = lang === 'en'
-    ? [
-        'Water',
-        'Air',
-        'Fire',
-        'Earth',
-        'Pure',
-      ]
-    : [
-        'Água',
-        'Ar',
-        'Fogo',
-        'Terra',
-        'Puro',
-      ];
+  const nomes =
+    lang === 'en'
+      ? ['Water', 'Air', 'Fire', 'Earth', 'Pure']
+      : ['Água', 'Ar', 'Fogo', 'Terra', 'Puro'];
   const [hovered, setHovered] = useState(null);
   const [selected, setSelected] = useState(null); // índice da carta selecionada
 
@@ -227,21 +220,28 @@ function StartFlow({ onFinish, onGoHome, menuMusicRef }) {
   }, [effectsVolume]);
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: '#111', zIndex: 2000 }}>
+    <div
+      style={{ position: 'fixed', inset: 0, background: '#111', zIndex: 2000 }}
+    >
       {/* Áudio de vela queimando em loop - key força recriação */}
-      <audio key={candleKey} ref={candleAudioRef} src={candleSound} preload="auto" />
+      <audio
+        key={candleKey}
+        ref={candleAudioRef}
+        src={candleSound}
+        preload="auto"
+      />
       {/* Efeitos de vela animada */}
-      <div className="candle-flame candle-flame-1"></div>
-      <div className="candle-flame candle-flame-2"></div>
-      <div className="candle-flame candle-flame-3"></div>
-      <div className="candle-flame candle-flame-4"></div>
-      <div className="candle-flame candle-flame-5"></div>
-      <div className="candle-flame candle-flame-6"></div>
-      <div className="candle-flame candle-flame-7"></div>
+      <div className="candle-flame candle-flame-1" />
+      <div className="candle-flame candle-flame-2" />
+      <div className="candle-flame candle-flame-3" />
+      <div className="candle-flame candle-flame-4" />
+      <div className="candle-flame candle-flame-5" />
+      <div className="candle-flame candle-flame-6" />
+      <div className="candle-flame candle-flame-7" />
       {/* Background 3D em duas camadas com overlay */}
       <div className="main-menu-background">
-        <div className="main-menu-bg-base"></div>
-        <div className="main-menu-bg-overlay"></div>
+        <div className="main-menu-bg-base" />
+        <div className="main-menu-bg-overlay" />
       </div>
       {/* Modal de escolha de elemento (filtro/blur) */}
       {showModal && (
@@ -315,7 +315,10 @@ function StartFlow({ onFinish, onGoHome, menuMusicRef }) {
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => {
-                    if ((e.key === 'Enter' || e.key === ' ') && cardsVisible[i]) {
+                    if (
+                      (e.key === 'Enter' || e.key === ' ') &&
+                      cardsVisible[i]
+                    ) {
                       setSelected(i);
                       const elementoSelecionado = [
                         'agua',
@@ -330,7 +333,9 @@ function StartFlow({ onFinish, onGoHome, menuMusicRef }) {
                       if (criaturasDoElemento.length > 0) {
                         const sorteada =
                           criaturasDoElemento[
-                            Math.floor(Math.random() * criaturasDoElemento.length)
+                            Math.floor(
+                              Math.random() * criaturasDoElemento.length,
+                            )
                           ];
                         setPreviewCreature(sorteada);
                         setShowPreview(true);
@@ -390,7 +395,14 @@ function StartFlow({ onFinish, onGoHome, menuMusicRef }) {
             justifyContent: 'center',
           }}
         >
-          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: 32 }}>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'flex-start',
+              gap: 32,
+            }}
+          >
             <CreatureCardPreview
               creature={previewCreature}
               onClose={() => {
@@ -416,7 +428,9 @@ function StartFlow({ onFinish, onGoHome, menuMusicRef }) {
                 transition: 'background 0.2s',
               }}
               onClick={onGoHome}
-              aria-label={lang === 'en' ? 'Go to Home Screen' : 'Ir para tela inicial'}
+              aria-label={
+                lang === 'en' ? 'Go to Home Screen' : 'Ir para tela inicial'
+              }
             >
               {lang === 'en' ? 'Home' : 'Início'}
             </button>
@@ -424,45 +438,60 @@ function StartFlow({ onFinish, onGoHome, menuMusicRef }) {
         </div>
       )}
       {/* Diálogo só aparece se o preview não estiver aberto */}
-      <div style={{
-        width: '100%',
-        padding: 0,
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'flex-end',
-        minHeight: 180,
-        position: 'fixed',
-        left: 0,
-        right: 0,
-        bottom: 0,
-        zIndex: 2150 // Fica acima das cartas viradas (zIndex padrão), mas abaixo do CardPreview (zIndex 3000)
-      }}>
-        <div className={`startflow-dialog ${fade}`} style={{
-          background: 'rgba(30,22,40,0.92)',
-          color: '#ffe6b0',
-          borderRadius: 18,
-          boxShadow: '0 4px 32px #000a',
-          fontSize: 20,
-          fontWeight: 500,
-          padding: '32px 32px 24px 32px',
-          margin: '32px 0',
-          minWidth: 420,
-          maxWidth: 600,
-          minHeight: 120,
-          height: 120,
+      <div
+        style={{
+          width: '100%',
+          padding: 0,
           display: 'flex',
-          flexDirection: 'column',
           justifyContent: 'center',
-          alignItems: 'center',
-          textAlign: 'center',
-          letterSpacing: 0.2,
-          transition: 'height 0.2s',
-        }}>
+          alignItems: 'flex-end',
+          minHeight: 180,
+          position: 'fixed',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 2150, // Fica acima das cartas viradas (zIndex padrão), mas abaixo do CardPreview (zIndex 3000)
+        }}
+      >
+        <div
+          className={`startflow-dialog ${fade}`}
+          style={{
+            background: 'rgba(30,22,40,0.92)',
+            color: '#ffe6b0',
+            borderRadius: 18,
+            boxShadow: '0 4px 32px #000a',
+            fontSize: 20,
+            fontWeight: 500,
+            padding: '32px 32px 24px 32px',
+            margin: '32px 0',
+            minWidth: 420,
+            maxWidth: 600,
+            minHeight: 120,
+            height: 120,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            textAlign: 'center',
+            letterSpacing: 0.2,
+            transition: 'height 0.2s',
+          }}
+        >
           <span style={{ width: '100%', display: 'block', minHeight: 32 }}>
             {displayedText}
-            <span style={{ opacity: typing ? 1 : 0, color: '#ffe6b0', fontWeight: 700 }}>|</span>
             <span
-              className={hovered !== null ? 'element-fadein' : 'element-fadeout'}
+              style={{
+                opacity: typing ? 1 : 0,
+                color: '#ffe6b0',
+                fontWeight: 700,
+              }}
+            >
+              |
+            </span>
+            <span
+              className={
+                hovered !== null ? 'element-fadein' : 'element-fadeout'
+              }
               style={{
                 display: hovered !== null ? 'flex' : 'none',
                 flexDirection: 'column',
@@ -470,13 +499,34 @@ function StartFlow({ onFinish, onGoHome, menuMusicRef }) {
                 justifyContent: 'center',
                 marginTop: 12,
                 transition: 'opacity 0.35s',
-                opacity: hovered !== null ? 1 : 0
+                opacity: hovered !== null ? 1 : 0,
               }}
             >
               {hovered !== null && (
                 <>
-                  <img src={elementos[hovered]} alt={nomes[hovered]} style={{ width: 48, height: 48, margin: '0 auto', filter: 'drop-shadow(0 2px 12px #000a)', background: 'rgba(30,22,40,0.92)', borderRadius: 12, padding: 4 }} />
-                  <span style={{ color: '#ffe6b0', fontWeight: 600, fontSize: 18, marginTop: 4 }}>{nomes[hovered]}</span>
+                  <img
+                    src={elementos[hovered]}
+                    alt={nomes[hovered]}
+                    style={{
+                      width: 48,
+                      height: 48,
+                      margin: '0 auto',
+                      filter: 'drop-shadow(0 2px 12px #000a)',
+                      background: 'rgba(30,22,40,0.92)',
+                      borderRadius: 12,
+                      padding: 4,
+                    }}
+                  />
+                  <span
+                    style={{
+                      color: '#ffe6b0',
+                      fontWeight: 600,
+                      fontSize: 18,
+                      marginTop: 4,
+                    }}
+                  >
+                    {nomes[hovered]}
+                  </span>
                 </>
               )}
             </span>
@@ -504,9 +554,29 @@ function StartFlow({ onFinish, onGoHome, menuMusicRef }) {
                 aria-label={lang === 'en' ? 'Next' : 'Próximo'}
                 className="startflow-next-btn"
               >
-                <svg className="startflow-next-icon" width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="16" cy="16" r="15" fill="none" stroke="#ffe6b0" strokeWidth="2" />
-                  <path d="M12 16H20M20 16L16 12M20 16L16 20" stroke="#ffe6b0" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                <svg
+                  className="startflow-next-icon"
+                  width="32"
+                  height="32"
+                  viewBox="0 0 32 32"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle
+                    cx="16"
+                    cy="16"
+                    r="15"
+                    fill="none"
+                    stroke="#ffe6b0"
+                    strokeWidth="2"
+                  />
+                  <path
+                    d="M12 16H20M20 16L16 12M20 16L16 20"
+                    stroke="#ffe6b0"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               </button>
             )}
@@ -531,6 +601,6 @@ function StartFlow({ onFinish, onGoHome, menuMusicRef }) {
       <audio ref={elementAudioRefs[4]} src={pureSound} preload="auto" />
     </div>
   );
-};
+}
 
 export default StartFlow;

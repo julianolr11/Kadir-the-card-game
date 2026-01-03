@@ -26,7 +26,10 @@ export default function App() {
     <AppProvider>
       <MenuMusicPlayer ref={menuMusicRef} />
       {screen === 'loading' && (
-        <LoadingScreen onFinish={() => setScreen('menu')} menuMusicRef={menuMusicRef} />
+        <LoadingScreen
+          onFinish={() => setScreen('menu')}
+          menuMusicRef={menuMusicRef}
+        />
       )}
       {screen === 'menu' && (
         <LoadingMenu onNavigate={handleNavigate} menuMusicRef={menuMusicRef} />
@@ -35,7 +38,11 @@ export default function App() {
         <HomeScreen onNavigate={handleNavigate} menuMusicRef={menuMusicRef} />
       )}
       {screen === 'startflow' && (
-        <StartFlow onFinish={() => setScreen('home')} onGoHome={() => setScreen('home')} menuMusicRef={menuMusicRef} />
+        <StartFlow
+          onFinish={() => setScreen('home')}
+          onGoHome={() => setScreen('home')}
+          menuMusicRef={menuMusicRef}
+        />
       )}
       {screen === 'deck' && (
         <DeckBuilder onNavigate={handleNavigate} menuMusicRef={menuMusicRef} />

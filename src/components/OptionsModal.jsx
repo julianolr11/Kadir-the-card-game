@@ -28,30 +28,56 @@ const translations = {
     english: 'English',
     res1: '1280x720',
     res2: '1920x1080',
-  }
+  },
 };
 
-
-const OptionsModal = ({ visible, onClose, onApply, initialLang = 'ptbr', initialMusicVolume = 50, initialEffectsVolume = 50, initialFullscreen = false, initialResolution = '1280x720' }) => {
+function OptionsModal({
+  visible,
+  onClose,
+  onApply,
+  initialLang = 'ptbr',
+  initialMusicVolume = 50,
+  initialEffectsVolume = 50,
+  initialFullscreen = false,
+  initialResolution = '1280x720',
+}) {
   // Carregar do localStorage se existir
   const getInitial = (key, fallback) => {
     if (typeof window !== 'undefined') {
       const value = localStorage.getItem(key);
       if (value !== null) {
         if (key === 'fullscreen') return value === 'true';
-        if (key === 'musicVolume' || key === 'effectsVolume') return Number(value);
+        if (key === 'musicVolume' || key === 'effectsVolume')
+          return Number(value);
         return value;
       }
     }
     return fallback;
   };
 
-  const { lang, setLang, musicVolume, setMusicVolume, effectsVolume, setEffectsVolume } = useContext(AppContext);
-  const [localLang, setLocalLang] = useState(() => getInitial('lang', initialLang));
-  const [localMusicVolume, setLocalMusicVolume] = useState(() => getInitial('musicVolume', initialMusicVolume));
-  const [localEffectsVolume, setLocalEffectsVolume] = useState(() => getInitial('effectsVolume', initialEffectsVolume));
-  const [fullscreen, setFullscreen] = useState(() => getInitial('fullscreen', initialFullscreen));
-  const [resolution, setResolution] = useState(() => getInitial('resolution', initialResolution));
+  const {
+    lang,
+    setLang,
+    musicVolume,
+    setMusicVolume,
+    effectsVolume,
+    setEffectsVolume,
+  } = useContext(AppContext);
+  const [localLang, setLocalLang] = useState(() =>
+    getInitial('lang', initialLang),
+  );
+  const [localMusicVolume, setLocalMusicVolume] = useState(() =>
+    getInitial('musicVolume', initialMusicVolume),
+  );
+  const [localEffectsVolume, setLocalEffectsVolume] = useState(() =>
+    getInitial('effectsVolume', initialEffectsVolume),
+  );
+  const [fullscreen, setFullscreen] = useState(() =>
+    getInitial('fullscreen', initialFullscreen),
+  );
+  const [resolution, setResolution] = useState(() =>
+    getInitial('resolution', initialResolution),
+  );
 
   const handleLangChange = (e) => setLocalLang(e.target.value);
   const handleMusicVolumeChange = (e) => {
@@ -76,7 +102,14 @@ const OptionsModal = ({ visible, onClose, onApply, initialLang = 'ptbr', initial
     setLang(localLang);
     setMusicVolume(Number(localMusicVolume));
     setEffectsVolume(Number(localEffectsVolume));
-    if (onApply) onApply({ lang: localLang, musicVolume: localMusicVolume, effectsVolume: localEffectsVolume, fullscreen, resolution });
+    if (onApply)
+      onApply({
+        lang: localLang,
+        musicVolume: localMusicVolume,
+        effectsVolume: localEffectsVolume,
+        fullscreen,
+        resolution,
+      });
     if (onClose) onClose();
   };
 
@@ -85,9 +118,13 @@ const OptionsModal = ({ visible, onClose, onApply, initialLang = 'ptbr', initial
   useEffect(() => {
     if (didMountFullscreen.current) {
       if (window.electron && window.electron.ipcRenderer) {
-        let width = resolution === '1920x1080' ? 1920 : 1280;
-        let height = resolution === '1920x1080' ? 1080 : 720;
-        window.electron.ipcRenderer.sendMessage('set-resolution', { width, height, fullscreen });
+        const width = resolution === '1920x1080' ? 1920 : 1280;
+        const height = resolution === '1920x1080' ? 1080 : 720;
+        window.electron.ipcRenderer.sendMessage('set-resolution', {
+          width,
+          height,
+          fullscreen,
+        });
       }
       if (onApply) onApply({ lang, volume, fullscreen, resolution });
     } else {
@@ -99,9 +136,13 @@ const OptionsModal = ({ visible, onClose, onApply, initialLang = 'ptbr', initial
   useEffect(() => {
     if (didMountResolution.current) {
       if (window.electron && window.electron.ipcRenderer) {
-        let width = resolution === '1920x1080' ? 1920 : 1280;
-        let height = resolution === '1920x1080' ? 1080 : 720;
-        window.electron.ipcRenderer.sendMessage('set-resolution', { width, height, fullscreen });
+        const width = resolution === '1920x1080' ? 1920 : 1280;
+        const height = resolution === '1920x1080' ? 1080 : 720;
+        window.electron.ipcRenderer.sendMessage('set-resolution', {
+          width,
+          height,
+          fullscreen,
+        });
       }
       if (onApply) onApply({ lang, volume, fullscreen, resolution });
     } else {
@@ -122,20 +163,38 @@ const OptionsModal = ({ visible, onClose, onApply, initialLang = 'ptbr', initial
     if (onClose) onClose();
   };
 
-
   if (!visible) return null;
 
   const t = translations[lang] || translations.ptbr;
   return (
     <div style={modalBgStyle}>
       <div style={modalStyle} className="modal-zoom-in">
-        <h2 style={{ color: '#ffe6b0', fontWeight: 700, fontSize: 24, marginBottom: 24, textAlign: 'center', letterSpacing: 0.5 }}>{t.options}</h2>
+        <h2
+          style={{
+            color: '#ffe6b0',
+            fontWeight: 700,
+            fontSize: 24,
+            marginBottom: 24,
+            textAlign: 'center',
+            letterSpacing: 0.5,
+          }}
+        >
+          {t.options}
+        </h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
           <div>
             <label style={labelStyle}>{t.language}</label>
-            <select value={localLang} onChange={handleLangChange} style={selectStyle}>
-              <option value="ptbr" style={optionStyle}>{t.portuguese}</option>
-              <option value="en" style={optionStyle}>{t.english}</option>
+            <select
+              value={localLang}
+              onChange={handleLangChange}
+              style={selectStyle}
+            >
+              <option value="ptbr" style={optionStyle}>
+                {t.portuguese}
+              </option>
+              <option value="en" style={optionStyle}>
+                {t.english}
+              </option>
             </select>
           </div>
           <div>
@@ -149,7 +208,17 @@ const OptionsModal = ({ visible, onClose, onApply, initialLang = 'ptbr', initial
                 onChange={handleMusicVolumeChange}
                 style={{ ...rangeStyle, width: 270 }}
               />
-              <span style={{ minWidth: 32, textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: '#ffe6b0', fontWeight: 600 }}>{localMusicVolume}</span>
+              <span
+                style={{
+                  minWidth: 32,
+                  textAlign: 'right',
+                  fontVariantNumeric: 'tabular-nums',
+                  color: '#ffe6b0',
+                  fontWeight: 600,
+                }}
+              >
+                {localMusicVolume}
+              </span>
             </div>
           </div>
           <div>
@@ -163,67 +232,132 @@ const OptionsModal = ({ visible, onClose, onApply, initialLang = 'ptbr', initial
                 onChange={handleEffectsVolumeChange}
                 style={{ ...rangeStyle, width: 270 }}
               />
-              <span style={{ minWidth: 32, textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: '#ffe6b0', fontWeight: 600 }}>{localEffectsVolume}</span>
+              <span
+                style={{
+                  minWidth: 32,
+                  textAlign: 'right',
+                  fontVariantNumeric: 'tabular-nums',
+                  color: '#ffe6b0',
+                  fontWeight: 600,
+                }}
+              >
+                {localEffectsVolume}
+              </span>
             </div>
           </div>
           <div>
             <label style={labelStyle}>{t.resolution}</label>
-            <select value={resolution} onChange={e => setResolution(e.target.value)} style={selectStyle}>
-              <option value="1280x720" style={optionStyle}>{t.res1}</option>
-              <option value="1920x1080" style={optionStyle}>{t.res2}</option>
+            <select
+              value={resolution}
+              onChange={(e) => setResolution(e.target.value)}
+              style={selectStyle}
+            >
+              <option value="1280x720" style={optionStyle}>
+                {t.res1}
+              </option>
+              <option value="1920x1080" style={optionStyle}>
+                {t.res2}
+              </option>
             </select>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontWeight: 500, color: '#ffe6b0' }}>
-              <span style={{ position: 'relative', width: 44, height: 24, display: 'inline-block' }}>
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                cursor: 'pointer',
+                fontWeight: 500,
+                color: '#ffe6b0',
+              }}
+            >
+              <span
+                style={{
+                  position: 'relative',
+                  width: 44,
+                  height: 24,
+                  display: 'inline-block',
+                }}
+              >
                 <input
                   type="checkbox"
                   checked={fullscreen}
-                  onChange={e => setFullscreen(e.target.checked)}
-                  style={{ opacity: 0, width: 44, height: 24, position: 'absolute', left: 0, top: 0, margin: 0, zIndex: 2, cursor: 'pointer' }}
+                  onChange={(e) => setFullscreen(e.target.checked)}
+                  style={{
+                    opacity: 0,
+                    width: 44,
+                    height: 24,
+                    position: 'absolute',
+                    left: 0,
+                    top: 0,
+                    margin: 0,
+                    zIndex: 2,
+                    cursor: 'pointer',
+                  }}
                   tabIndex={0}
                   aria-checked={fullscreen}
                 />
-                <span style={{
-                  position: 'absolute',
-                  left: 0,
-                  top: 0,
-                  width: 44,
-                  height: 24,
-                  background: fullscreen ? 'linear-gradient(90deg, #a87e2d 0%, #ffe6b0 100%)' : 'rgba(60,50,80,0.5)',
-                  borderRadius: 16,
-                  boxShadow: fullscreen ? '0 0 8px #ffe6b0aa' : '0 0 4px #0006',
-                  transition: 'background 0.2s',
-                  border: fullscreen ? '1.5px solid #ffe6b0' : '1.5px solid #a87e2d',
-                  display: 'block',
-                }} />
-                <span style={{
-                  position: 'absolute',
-                  top: 4,
-                  left: fullscreen ? 24 : 4,
-                  width: 16,
-                  height: 16,
-                  borderRadius: '50%',
-                  background: fullscreen ? '#ffe6b0' : '#a87e2d',
-                  boxShadow: fullscreen ? '0 0 8px #ffe6b0' : '0 0 4px #0006',
-                  transition: 'left 0.2s, background 0.2s',
-                  border: '2px solid #fff2',
-                  display: 'block',
-                  zIndex: 1,
-                }} />
+                <span
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    top: 0,
+                    width: 44,
+                    height: 24,
+                    background: fullscreen
+                      ? 'linear-gradient(90deg, #a87e2d 0%, #ffe6b0 100%)'
+                      : 'rgba(60,50,80,0.5)',
+                    borderRadius: 16,
+                    boxShadow: fullscreen
+                      ? '0 0 8px #ffe6b0aa'
+                      : '0 0 4px #0006',
+                    transition: 'background 0.2s',
+                    border: fullscreen
+                      ? '1.5px solid #ffe6b0'
+                      : '1.5px solid #a87e2d',
+                    display: 'block',
+                  }}
+                />
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: 4,
+                    left: fullscreen ? 24 : 4,
+                    width: 16,
+                    height: 16,
+                    borderRadius: '50%',
+                    background: fullscreen ? '#ffe6b0' : '#a87e2d',
+                    boxShadow: fullscreen ? '0 0 8px #ffe6b0' : '0 0 4px #0006',
+                    transition: 'left 0.2s, background 0.2s',
+                    border: '2px solid #fff2',
+                    display: 'block',
+                    zIndex: 1,
+                  }}
+                />
               </span>
               {t.fullscreen}
             </label>
           </div>
         </div>
-        <div style={{ marginTop: 32, display: 'flex', justifyContent: 'center', gap: 16 }}>
-          <button onClick={handleApply} style={btnStyle}>{t.apply}</button>
-          <button onClick={handleClose} style={btnStyle}>{t.close}</button>
+        <div
+          style={{
+            marginTop: 32,
+            display: 'flex',
+            justifyContent: 'center',
+            gap: 16,
+          }}
+        >
+          <button onClick={handleApply} style={btnStyle}>
+            {t.apply}
+          </button>
+          <button onClick={handleClose} style={btnStyle}>
+            {t.close}
+          </button>
         </div>
       </div>
     </div>
   );
-};
+}
 
 // Estilos customizados para inputs, selects, checkboxes e range
 const inputStyle = {
@@ -267,10 +401,12 @@ const rangeStyle = {
   boxShadow: '0 1px 4px #0003',
 };
 
-
 const modalBgStyle = {
   position: 'fixed',
-  top: 0, left: 0, right: 0, bottom: 0,
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
   background: 'rgba(30,22,40,0.32)',
   zIndex: 1000,
   display: 'flex',

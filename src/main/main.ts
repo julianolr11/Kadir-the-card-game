@@ -73,7 +73,10 @@ const createWindow = async () => {
   };
 
   // Ícone customizado para Windows
-  const iconPath = path.join(__dirname, '../../src/assets/img/icons/iconlive.png');
+  const iconPath = path.join(
+    __dirname,
+    '../../src/assets/img/icons/iconlive.png',
+  );
 
   mainWindow = new BrowserWindow({
     show: false,

@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { AppContext } from '../context/AppContext';
 import CreatureCardPreview from './CreatureCardPreview';
+import CardInstanceSelector from './CardInstanceSelector';
 import sphereMenuSound from '../assets/sounds/effects/sphereMenuSound.js';
 import packageSound from '../assets/sounds/effects/packageSound.js';
 import fogoIcon from '../assets/img/elements/fogo.png';
@@ -55,7 +56,7 @@ function DeckEditor({
   onClose,
   onSave,
 }) {
-  const { lang = 'ptbr' } = React.useContext(AppContext) || {};
+  const { lang = 'ptbr', getCardInstances } = React.useContext(AppContext) || {};
   const langKey = lang === 'en' ? 'en' : 'pt';
 
   const [deckName, setDeckName] = useState(initialDeckName || `Deck ${deckId}`);
@@ -68,6 +69,9 @@ function DeckEditor({
   const [dragOverSlot, setDragOverSlot] = useState(null);
   const [hoveredCard, setHoveredCard] = useState(null);
   const [showSavedToast, setShowSavedToast] = useState(false);
+  const [showInstanceSelector, setShowInstanceSelector] = useState(false);
+  const [selectedCardForInstance, setSelectedCardForInstance] = useState(null);
+  const [instanceSlotIndex, setInstanceSlotIndex] = useState(null);
 
   const successSoundRef = useRef(null);
   const errorSoundRef = useRef(null);
@@ -98,6 +102,22 @@ function DeckEditor({
       return false;
     }
 
+    // Verificar se tem múltiplas instâncias
+    const instances = getCardInstances(cardId);
+    if (instances && instances.length > 1) {
+      // Mostrar seletor de instância
+      setSelectedCardForInstance(cardId);
+      setInstanceSlotIndex(slotIndex);
+      setShowInstanceSelector(true);
+      return false; // Não adiciona ainda, espera seleção
+    }
+
+    // Adicionar normalmente se não tem múltiplas instâncias
+    return finishAddingCardToDeck(cardId, slotIndex);
+  };
+
+  // Finalizar a adição da carta após seleção de instância
+  const finishAddingCardToDeck = (cardId, slotIndex = null) => {
     const newDeck = [...deckCards];
     if (slotIndex !== null && slotIndex < 20) {
       newDeck[slotIndex] = cardId;
@@ -120,6 +140,16 @@ function DeckEditor({
     }
 
     return true;
+  };
+
+  // Handler para quando uma instância é selecionada
+  const handleInstanceSelected = (instanceId) => {
+    if (selectedCardForInstance) {
+      finishAddingCardToDeck(selectedCardForInstance, instanceSlotIndex);
+    }
+    setShowInstanceSelector(false);
+    setSelectedCardForInstance(null);
+    setInstanceSlotIndex(null);
   };
 
   // Remover carta do deck
@@ -495,6 +525,19 @@ function DeckEditor({
 
         {/* Toast de Salvo */}
         {showSavedToast && <div className="deck-saved-toast">✓ Salvo</div>}
+
+        {/* Instance Selector Modal */}
+        {showInstanceSelector && selectedCardForInstance && (
+          <CardInstanceSelector
+            cardId={selectedCardForInstance}
+            cardData={getCardData(selectedCardForInstance)}
+            instances={getCardInstances(selectedCardForInstance)}
+            onSelect={handleInstanceSelected}
+            onClose={() => setShowInstanceSelector(false)}
+            title={lang === 'ptbr' ? 'Selecione uma cópia para o deck' : 'Select a card copy for deck'}
+            lang={lang}
+          />
+        )}
       </div>
     </div>
   );

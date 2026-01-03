@@ -254,7 +254,7 @@ function BoosterResultsSlider({ cards, lang, onClose }) {
                       <div className="card-preview-bottom">
                         <span className="card-preview-level-icon">
                           <img src={lvlIcon} alt="Nível" className="icon-bg" />
-                          <span className="icon-text">0</span>
+                          <span className="icon-text">{card?.level || 0}</span>
                         </span>
                         <div className="card-preview-descs-inline">
                           {card?.type && (

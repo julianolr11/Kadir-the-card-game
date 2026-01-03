@@ -43,12 +43,20 @@ function GuardianSelectModal({ onSelectGuardian, onClose }) {
               }}
             >
               <div className="guardian-select-card">
-                <CreatureCardPreview
-                  creature={guardian}
-                  onClose={null}
-                  allowFlip={false}
-                  level={0}
-                />
+                <div
+                  style={{
+                    transform: 'scale(0.30)',
+                    transformOrigin: 'top left',
+                    pointerEvents: 'none',
+                  }}
+                >
+                  <CreatureCardPreview
+                    creature={guardian}
+                    onClose={null}
+                    allowFlip={false}
+                    level={0}
+                  />
+                </div>
               </div>
               <div className="guardian-select-name">
                 {typeof guardian.name === 'object'

@@ -482,7 +482,7 @@ function DeckBuilder({ onNavigate }) {
 
   // Guardião com habilidades selecionadas para exibição em tempo real
   const guardianWithSelectedSkills = useMemo(() => {
-    if (!activeGuardian || !allUnlocks) return guardianWithBonusHp;
+    if (!activeGuardian || !allUnlocks || !guardianData) return guardianWithBonusHp;
 
     // Encontrar os dados completos das skills selecionadas
     const selectedAbilities = selectedSkills
@@ -537,7 +537,7 @@ function DeckBuilder({ onNavigate }) {
   const currentGuardianForDisplay = useMemo(() => {
     if (guardianLoadout && guardianLoadout.guardianId === activeGuardian?.id) {
       // Recalcular com base no loadout salvo
-      if (!activeGuardian || !allUnlocks) return activeGuardian;
+      if (!activeGuardian || !allUnlocks || !guardianData) return activeGuardian;
 
       const selectedAbilities = guardianLoadout.selectedSkills
         .filter((skillId) => skillId)

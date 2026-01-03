@@ -10,9 +10,9 @@ module.exports = {
   weakness: 'ar',
   name: { pt: 'Whalar', en: 'Whalar' },
   type: { pt: 'Sombria', en: 'Shadow' },
-  element: 'água',
+  element: 'agua',
   img: require('../../img/creatures/whalar_bio.webp'),
-  color: 'shadow',
+  color: 'water',
   hp: 12,
   abilities: [
     {

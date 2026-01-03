@@ -7,7 +7,7 @@ module.exports = {
   weakness: 'fogo',
   name: { pt: 'Pawferion', en: 'Pawferion' },
   type: { pt: 'Sombria', en: 'Shadow' },
-  element: 'pura',
+  element: 'puro',
   img: require('../../img/creatures/pawferion_bio.webp'),
   color: 'pure',
   hp: 10,

@@ -10,9 +10,9 @@ module.exports = {
   weakness: 'ar',
   name: { pt: 'Alatoy', en: 'Alatoy' },
   type: { pt: 'Sombria', en: 'Shadow' },
-  element: 'água',
+  element: 'agua',
   img: require('../../img/creatures/alatoy_bio.webp'),
-  color: 'shadow',
+  color: 'water',
   hp: 8,
   abilities: [
     {

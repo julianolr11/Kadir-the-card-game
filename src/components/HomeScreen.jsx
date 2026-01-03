@@ -246,7 +246,7 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
               }
             }
             keysToRemove.forEach(key => localStorage.removeItem(key));
-            
+
             // Remover especificamente essas chaves importantes
             localStorage.removeItem('decks');
             localStorage.removeItem('kadir_decks');

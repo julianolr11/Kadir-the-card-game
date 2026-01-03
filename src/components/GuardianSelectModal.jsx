@@ -6,12 +6,14 @@ import CardInstanceSelector from './CardInstanceSelector';
 import '../styles/guardian-select-modal.css';
 
 function GuardianSelectModal({ onSelectGuardian, onClose }) {
-  const { lang = 'ptbr', getCardInstances } = useContext(AppContext);
+  const { lang = 'ptbr', getCardInstances, cardCollection } = useContext(AppContext);
   const [showInstanceSelector, setShowInstanceSelector] = useState(false);
   const [selectedGuardianId, setSelectedGuardianId] = useState(null);
 
-  // Filtrar apenas guardiões
-  const guardians = creatures.filter((c) => c.isGuardian === true);
+  // Filtrar apenas guardiões que o jogador possui
+  const guardians = creatures.filter((c) => {
+    return c.isGuardian === true && cardCollection && cardCollection[c.id] && cardCollection[c.id].length > 0;
+  });
 
   const handleGuardianClick = (guardian) => {
     // Verificar se tem múltiplas instâncias desta carta

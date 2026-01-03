@@ -1,6 +1,5 @@
 import React, { useContext, useState, useMemo } from 'react';
 import { AppContext } from '../context/AppContext';
-import guardiansData from '../assets/guardiansData';
 import '../styles/guardian-loadout.css';
 
 // Mock de progressão do jogador - substituir por dados reais/contexto depois
@@ -16,6 +15,18 @@ const PERK_DATA = {
   HP_PLUS_2: { name: { pt: '+2 Vida', en: '+2 HP' }, desc: { pt: 'Inicia com +2 de vida', en: 'Start with +2 HP' } },
   FIRST_ROUND_SHIELD: { name: { pt: 'Escudo Inicial', en: 'Initial Shield' }, desc: { pt: 'Recebe escudo no 1º turno', en: 'Gain shield on 1st turn' } },
   GUARDIAN_KILL_XP_BONUS: { name: { pt: '+3% XP', en: '+3% XP' }, desc: { pt: '+3% XP por abate do guardião', en: '+3% XP per guardian kill' } },
+  ARMOR_PLUS_2: { name: { pt: 'Pele Impenetrável', en: 'Impenetrable Skin' }, desc: { pt: 'Ganha 2 de armadura', en: 'Gains 2 armor' } },
+  KILL_XP_BONUS_10: { name: { pt: '+10% XP', en: '+10% XP' }, desc: { pt: '+10% XP por abate do guardião', en: '+10% XP per guardian kill' } },
+};
+
+// Função auxiliar para carregar dados da carta
+const getGuardianData = (guardianId) => {
+  try {
+    return require(`../assets/cards/booster1/${guardianId}.js`);
+  } catch (error) {
+    console.warn(`Guardião ${guardianId} não encontrado`, error);
+    return null;
+  }
 };
 
 function GuardianLoadout({ guardian }) {
@@ -25,7 +36,7 @@ function GuardianLoadout({ guardian }) {
   // Pegar dados estendidos do guardião
   const guardianData = useMemo(() => {
     if (!guardian?.id) return null;
-    return guardiansData[guardian.id] || null;
+    return getGuardianData(guardian.id);
   }, [guardian?.id]);
 
   // Pegar progresso do jogador para este guardião

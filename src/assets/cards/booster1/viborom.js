@@ -32,8 +32,41 @@ module.exports = {
 		{ pt: 'Viborom habita pântanos ancestrais onde a água nunca está completamente parada.', en: 'Viborom dwells in ancestral swamps where the water is never completely still.' },
 		{ pt: 'Criatura serpentina e silenciosa, seu veneno líquido é temido até mesmo pelos mais poderosos aventureiros.', en: 'A serpentine and silent creature, its liquid venom is feared even by the most powerful adventurers.' }
 	],
-	blessing: {
-		pt: 'Recebe uma bênção genérica.',
-		en: 'Receives a generic blessing.'
-	}
+
+	// ===== DADOS ESTENDIDOS (Guardião) =====
+	isGuardian: true,
+	defaultSkills: [
+		{
+			id: 'viborom_skill_1',
+			name: { pt: 'Veneno Letal', en: 'Lethal Poison' },
+			desc: { pt: 'Causa 20 de dano ao inimigo e o envenena.', en: 'Deals 20 damage to the enemy and poisons it.' },
+			cost: 1,
+			type: 'damage_debuff',
+		},
+		{
+			id: 'viborom_skill_2',
+			name: { pt: 'Espécie Tóxica', en: 'Toxic Cloud' },
+			desc: { pt: 'Envenena o inimigo causando 8 de dano por 3 turnos.', en: 'Poisons the enemy dealing 8 damage for 3 turns.' },
+			cost: 1,
+			type: 'poison_dot',
+		},
+	],
+	defaultBlessing: {
+		id: 'viborom_blessing',
+		name: { pt: 'Miasma Tóxico', en: 'Toxic Miasma' },
+		desc: { pt: 'Criaturas venenosas ganham +7% de resistência enquanto Viborom estiver em campo.', en: 'Poison creatures gain +7% resistance while Viborom is on the field.' },
+	},
+	unlockTable: [
+		{ level: 0, type: 'none' },
+		{ level: 1, type: 'skill', id: 'viborom_skill_3', name: { pt: 'Presas Venenosas', en: 'Venom Fangs' }, desc: { pt: 'Causa 17 de dano com múltiplas feridas envenenadas.', en: 'Deals 17 damage with multiple poison wounds.' }, cost: 1 },
+		{ level: 2, type: 'perk', id: 'HP_PLUS_1' },
+		{ level: 3, type: 'none' },
+		{ level: 4, type: 'skill', id: 'viborom_skill_4', name: { pt: 'Nuvem Tóxica', en: 'Poison Cloud' }, desc: { pt: 'Causa 24 de dano e envenena por 4 turnos.', en: 'Deals 24 damage and poisons for 4 turns.' }, cost: 2 },
+		{ level: 5, type: 'skill', id: 'viborom_skill_5', name: { pt: 'Epidemia', en: 'Epidemic' }, desc: { pt: 'Causa 28 de dano e espalha veneno para aliados inimigos.', en: 'Deals 28 damage and spreads poison to enemy allies.' }, cost: 2 },
+		{ level: 6, type: 'none' },
+		{ level: 7, type: 'perk', id: 'GUARDIAN_KILL_XP_BONUS' },
+		{ level: 8, type: 'perk', id: 'HP_PLUS_2' },
+		{ level: 9, type: 'skill', id: 'viborom_skill_6', name: { pt: 'Corrosão Ácida', en: 'Acid Corrosion' }, desc: { pt: 'Causa 31 de dano e reduz defesa inimiga por 3 turnos.', en: 'Deals 31 damage and reduces enemy defense for 3 turns.' }, cost: 2 },
+		{ level: 10, type: 'skill', id: 'viborom_skill_7', name: { pt: 'Morte Tóxica', en: 'Toxic Death' }, desc: { pt: 'Supremo: 39 de dano e envenena mortalmente por 5 turnos.', en: 'Ultimate: 39 damage and inflicts deadly poison for 5 turns.' }, cost: 3 },
+	],
 };

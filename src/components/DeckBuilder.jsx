@@ -1,9 +1,15 @@
 import React, { useContext, useMemo, useState } from 'react';
 import { AppContext } from '../context/AppContext';
 import CreatureCardPreview from './CreatureCardPreview';
-import guardiansData from '../assets/guardiansData';
 import lvlIcon from '../assets/img/icons/lvlicon.png';
 import soulEssence from '../assets/img/icons/soul-essence.png';
+import burnIcon from '../assets/img/icons/burn.png';
+import freezeIcon from '../assets/img/icons/freeze.png';
+import paralyzeIcon from '../assets/img/icons/paralyze.png';
+import poisonIcon from '../assets/img/icons/poison.png';
+import sleepIcon from '../assets/img/icons/sleep.png';
+import bleedIcon from '../assets/img/icons/bleed.png';
+import shieldIcon from '../assets/img/icons/shield.png';
 import '../styles/deckbuilder.css';
 
 const MAX_DECKS = 3;
@@ -21,6 +27,104 @@ const PERK_DATA = {
   HP_PLUS_2: { name: { pt: '+2 Vida', en: '+2 HP' }, desc: { pt: 'Inicia com +2 de vida', en: 'Start with +2 HP' }, hpBonus: 2 },
   FIRST_ROUND_SHIELD: { name: { pt: 'Escudo Inicial', en: 'Initial Shield' }, desc: { pt: 'Recebe escudo no 1º turno', en: 'Gain shield on 1st turn' }, hpBonus: 0 },
   GUARDIAN_KILL_XP_BONUS: { name: { pt: '+3% XP', en: '+3% XP' }, desc: { pt: '+3% XP por abate do guardião', en: '+3% XP per guardian kill' }, hpBonus: 0 },
+  ARMOR_PLUS_2: { name: { pt: 'Pele Impenetrável', en: 'Impenetrable Skin' }, desc: { pt: 'Ganha 2 de armadura', en: 'Gains 2 armor' }, hpBonus: 0 },
+  KILL_XP_BONUS_10: { name: { pt: '+10% XP', en: '+10% XP' }, desc: { pt: '+10% XP por abate do guardião', en: '+10% XP per guardian kill' }, hpBonus: 0 },
+};
+
+// Mapa de ícones de status effects
+const STATUS_ICONS = {
+  burn: burnIcon,
+  freeze: freezeIcon,
+  paralyze: paralyzeIcon,
+  poison: poisonIcon,
+  sleep: sleepIcon,
+  bleed: bleedIcon,
+  armor: shieldIcon,
+};
+
+// Mapa de cores para status effects
+const STATUS_COLORS = {
+  burn: '#ff6450',
+  freeze: '#64c8ff',
+  paralyze: '#ffff64',
+  poison: '#9664ff',
+  sleep: '#c896ff',
+  bleed: '#ff6464',
+  armor: '#4169e1',
+};
+
+// Função para renderizar displayText com ícones e cores
+const renderDisplayText = (displayText, langKey = 'pt') => {
+  if (!displayText) return null;
+  const text = typeof displayText === 'object' ? displayText[langKey] : displayText;
+  if (!text) return null;
+
+  return (
+    <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.4' }}>
+      {text.split('\n').map((line, idx) => {
+        // Pular linhas de essências (números + "essência(s)")
+        if (/^\d+\s+essências?$/i.test(line.trim())) return null;
+
+        // Pular linhas com [habilidade] ou [perk] (já são mostradas no badge)
+        if (/\[habilidade\]|\[ability\]|\[perk\]/i.test(line)) return null;
+
+        // Pular linhas que começam com "nv X -" ou "Lv X -" (título já exibido)
+        if (/^(nv|lv)\s+\d+\s*-/i.test(line.trim())) return null;
+
+        let rendered = line;
+
+        // Substituir emojis por texto colorido com ícone
+        rendered = rendered.replace(/🔥/g, '<img src="' + burnIcon + '" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ' + STATUS_COLORS.burn + '; font-weight: 600;">queimadura</span>');
+        rendered = rendered.replace(/❄️/g, '<img src="' + freezeIcon + '" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ' + STATUS_COLORS.freeze + '; font-weight: 600;">congelamento</span>');
+        rendered = rendered.replace(/⚡/g, '<img src="' + paralyzeIcon + '" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ' + STATUS_COLORS.paralyze + '; font-weight: 600;">paralisia</span>');
+        rendered = rendered.replace(/☠️/g, '<img src="' + poisonIcon + '" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ' + STATUS_COLORS.poison + '; font-weight: 600;">veneno</span>');
+        rendered = rendered.replace(/😴/g, '<img src="' + sleepIcon + '" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ' + STATUS_COLORS.sleep + '; font-weight: 600;">sono</span>');
+        rendered = rendered.replace(/🩸/g, '<img src="' + bleedIcon + '" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ' + STATUS_COLORS.bleed + '; font-weight: 600;">sangramento</span>');
+        rendered = rendered.replace(/🛡️/g, '<img src="' + shieldIcon + '" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ' + STATUS_COLORS.armor + '; font-weight: 600;">armadura</span>');
+
+        // Colorir palavras-chave que não foram substituídas por emoji
+        let colored = rendered;
+        if (!rendered.includes('queimadura</span>')) {
+          colored = colored.replace(/queimadura/gi, (match) => `<span style="color: ${STATUS_COLORS.burn}; font-weight: 600;">queimadura</span>`);
+        }
+        if (!rendered.includes('congelamento</span>')) {
+          colored = colored.replace(/congelamento/gi, (match) => `<span style="color: ${STATUS_COLORS.freeze}; font-weight: 600;">congelamento</span>`);
+        }
+        if (!rendered.includes('paralisia</span>')) {
+          colored = colored.replace(/paralisia/gi, (match) => `<span style="color: ${STATUS_COLORS.paralyze}; font-weight: 600;">paralisia</span>`);
+        }
+        if (!rendered.includes('veneno</span>')) {
+          colored = colored.replace(/veneno/gi, (match) => `<span style="color: ${STATUS_COLORS.poison}; font-weight: 600;">veneno</span>`);
+        }
+        if (!rendered.includes('sono</span>')) {
+          colored = colored.replace(/sono/gi, (match) => `<span style="color: ${STATUS_COLORS.sleep}; font-weight: 600;">sono</span>`);
+        }
+        if (!rendered.includes('sangramento</span>')) {
+          colored = colored.replace(/sangramento/gi, (match) => `<span style="color: ${STATUS_COLORS.bleed}; font-weight: 600;">sangramento</span>`);
+        }
+        if (!rendered.includes('armadura</span>')) {
+          colored = colored.replace(/armadura/gi, (match) => `<span style="color: ${STATUS_COLORS.armor}; font-weight: 600;">armadura</span>`);
+        }
+
+        // Remover linhas vazias após filtros
+        if (!colored.trim()) return null;
+
+        return (
+          <div key={idx} dangerouslySetInnerHTML={{ __html: colored }} />
+        );
+      }).filter(Boolean)}
+    </div>
+  );
+};
+
+// Função auxiliar para carregar dados da carta
+const getGuardianData = (guardianId) => {
+  try {
+    return require(`../assets/cards/booster1/${guardianId}.js`);
+  } catch (error) {
+    console.warn(`Guardião ${guardianId} não encontrado`, error);
+    return null;
+  }
 };
 
 function DeckBuilder({ onNavigate }) {
@@ -31,6 +135,7 @@ function DeckBuilder({ onNavigate }) {
   const [selectedSkills, setSelectedSkills] = useState([null, null]);
   const [selectedPerk, setSelectedPerk] = useState(null);
   const [hovering, setHovering] = useState(false);
+  const [guardianLoadout, setGuardianLoadout] = useState(null);
 
   const langKey = lang === 'en' ? 'en' : 'pt';
 
@@ -94,7 +199,7 @@ function DeckBuilder({ onNavigate }) {
   // Pegar dados estendidos do guardião
   const guardianData = useMemo(() => {
     if (!activeGuardian?.id) return null;
-    return guardiansData[activeGuardian.id] || null;
+    return getGuardianData(activeGuardian.id);
   }, [activeGuardian?.id]);
 
   // Pegar progresso do jogador
@@ -124,21 +229,11 @@ function DeckBuilder({ onNavigate }) {
 
     const unlocks = [];
 
-    // Adicionar habilidades padrão no nível 0
-    guardianData.defaultSkills.forEach((skill, idx) => {
-      unlocks.push({
-        level: 0,
-        type: 'skill',
-        id: skill.id,
-        name: skill.name,
-        desc: skill.desc,
-        cost: skill.cost || 1,
-        isDefault: true,
-      });
-    });
-
-    // Adicionar itens da unlock table
+    // Adicionar itens da unlock table (que já inclui as habilidades padrão do nível 0)
     guardianData.unlockTable.forEach(unlock => {
+      // Pular items de tipo 'none'
+      if (unlock.type === 'none') return;
+
       if (unlock.type === 'skill') {
         unlocks.push({
           level: unlock.level,
@@ -146,7 +241,9 @@ function DeckBuilder({ onNavigate }) {
           id: unlock.id,
           name: unlock.name,
           desc: unlock.desc,
+          displayText: unlock.displayText,
           cost: unlock.cost || 1,
+          statusEffect: unlock.statusEffect,
           isDefault: false,
         });
       } else if (unlock.type === 'perk') {
@@ -154,8 +251,9 @@ function DeckBuilder({ onNavigate }) {
           level: unlock.level,
           type: 'perk',
           id: unlock.id,
-          name: PERK_DATA[unlock.id]?.name || { pt: 'Perk', en: 'Perk' },
-          desc: PERK_DATA[unlock.id]?.desc || { pt: '', en: '' },
+          name: PERK_DATA[unlock.id]?.name || unlock.name || { pt: 'Perk', en: 'Perk' },
+          desc: PERK_DATA[unlock.id]?.desc || unlock.desc || { pt: '', en: '' },
+          displayText: unlock.displayText,
           isDefault: false,
         });
       }
@@ -172,6 +270,29 @@ function DeckBuilder({ onNavigate }) {
     if (!selectedPerk) return 0;
     return PERK_DATA[selectedPerk]?.hpBonus || 0;
   }, [selectedPerk]);
+
+  // Calcular armadura com base no perk selecionado
+  const armorValue = useMemo(() => {
+    if (!selectedPerk) return 0;
+    if (selectedPerk === 'ARMOR_PLUS_2') return 2;
+    return 0;
+  }, [selectedPerk]);
+
+  // Calcular status effects baseado nas habilidades selecionadas
+  // Nota: Status effects são aplicados aos INIMIGOS, não ao guardião
+  const statusEffects = useMemo(() => {
+    const effects = {
+      burn: 0,
+      freeze: 0,
+      paralyze: 0,
+      poison: 0,
+      sleep: 0,
+      bleed: 0,
+    };
+
+    // Não mostrar status effects no guardião - eles são aplicados nos inimigos
+    return effects;
+  }, [selectedSkills, allUnlocks]);
 
   // Guardião com HP ajustado para exibição no modal
   const guardianWithBonusHp = useMemo(() => {
@@ -191,7 +312,8 @@ function DeckBuilder({ onNavigate }) {
         if (unlock && unlock.type === 'skill') {
           return {
             name: unlock.name,
-            desc: unlock.desc,
+            desc: unlock.displayText || unlock.desc,
+            cost: unlock.cost,
           };
         }
         return null;
@@ -212,6 +334,56 @@ function DeckBuilder({ onNavigate }) {
       abilities: selectedAbilities,
     };
   }, [activeGuardian, guardianWithBonusHp, selectedSkills, allUnlocks, guardianData]);
+
+  // Função para salvar configuração
+  const handleSaveLoadout = () => {
+    setGuardianLoadout({
+      guardianId: activeGuardian?.id,
+      selectedSkills: selectedSkills,
+      selectedPerk: selectedPerk,
+      hpBonus: hpBonus,
+      armorValue: armorValue,
+    });
+    setShowLoadoutModal(false);
+  };
+
+  // Usar loadout salvo se existir, senão usar guardião atual
+  const currentGuardianForDisplay = useMemo(() => {
+    if (guardianLoadout && guardianLoadout.guardianId === activeGuardian?.id) {
+      // Recalcular com base no loadout salvo
+      if (!activeGuardian || !allUnlocks) return activeGuardian;
+
+      const selectedAbilities = guardianLoadout.selectedSkills
+        .filter(skillId => skillId)
+        .map(skillId => {
+          const unlock = allUnlocks.find(u => u.id === skillId);
+          if (unlock && unlock.type === 'skill') {
+            return {
+              name: unlock.name,
+              desc: unlock.displayText || unlock.desc,
+              cost: unlock.cost,
+            };
+          }
+          return null;
+        })
+        .filter(Boolean);
+
+      if (selectedAbilities.length === 0) {
+        return {
+          ...activeGuardian,
+          hp: (activeGuardian.hp || 0) + guardianLoadout.hpBonus,
+          abilities: guardianData.defaultSkills,
+        };
+      }
+
+      return {
+        ...activeGuardian,
+        hp: (activeGuardian.hp || 0) + guardianLoadout.hpBonus,
+        abilities: selectedAbilities,
+      };
+    }
+    return activeGuardian;
+  }, [activeGuardian, guardianLoadout, allUnlocks, guardianData]);
 
   return (
     <div className="deckbuilder-screen">
@@ -236,11 +408,27 @@ function DeckBuilder({ onNavigate }) {
                 onClick={() => setShowLoadoutModal(true)}
                 style={{ position: 'relative', cursor: 'pointer' }}
               >
-                <div style={{ transform: 'scale(0.92)', transformOrigin: 'top center', marginBottom: '-44px' }}>
-                  <CreatureCardPreview creature={activeGuardian} onClose={null} level={guardianProgress.level} allowFlip={false} />
+                <div style={{
+                  transform: 'scale(0.92)',
+                  transformOrigin: 'top center',
+                  marginBottom: '-44px',
+                  filter: hovering ? 'blur(4px)' : 'blur(0)',
+                  transition: 'filter 200ms ease',
+                }}>
+                  <CreatureCardPreview creature={currentGuardianForDisplay} onClose={null} level={guardianProgress.level} allowFlip={false} />
                 </div>
                 <button
                   className="guardian-loadout-btn"
+                  style={{
+                    opacity: hovering ? 1 : 0,
+                    visibility: hovering ? 'visible' : 'hidden',
+                    transition: 'opacity 200ms ease, visibility 200ms ease',
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    zIndex: 10,
+                  }}
                   onClick={(e) => {
                     e.stopPropagation();
                     setShowLoadoutModal(true);
@@ -255,7 +443,9 @@ function DeckBuilder({ onNavigate }) {
               <div className="guardian-empty-text">Nenhum guardião ativo</div>
             </div>
           )}
-          <div className="guardian-helper">Troque o guardião a qualquer hora; o deck só guarda a referência.</div>
+          <button className="guardian-change-btn" onClick={handleChangeGuardian}>
+            Trocar guardião
+          </button>
         </div>
 
         <div className="deckbuilder-slots">
@@ -307,7 +497,19 @@ function DeckBuilder({ onNavigate }) {
               <div className="loadout-modal-left">
                 <div className="loadout-card-block">
                   <div className="loadout-card-scale">
-                    <CreatureCardPreview creature={guardianWithSelectedSkills} onClose={null} level={guardianProgress.level} allowFlip={true} />
+                    <CreatureCardPreview
+                      creature={guardianWithSelectedSkills}
+                      onClose={null}
+                      level={guardianProgress.level}
+                      allowFlip={true}
+                      armor={armorValue}
+                      burn={statusEffects.burn}
+                      freeze={statusEffects.freeze}
+                      paralyze={statusEffects.paralyze}
+                      poison={statusEffects.poison}
+                      sleep={statusEffects.sleep}
+                      bleed={statusEffects.bleed}
+                    />
                   </div>
                 </div>
                 <div className="guardian-progress">
@@ -337,9 +539,11 @@ function DeckBuilder({ onNavigate }) {
                   <>
                     {/* Lista unificada de habilidades e perks */}
                     <div className="loadout-section">
-                      <div className="loadout-section-label">Habilidades e Perks (Escolha 2 habilidades + 1 perk)</div>
-                      <div className="loadout-selected-count">
-                        Habilidades: {selectedSkills.filter(s => s).length}/2 | Perk: {selectedPerk ? '1/1' : '0/1'}
+                      <div className="loadout-section-header">
+                        <div className="loadout-section-label">Habilidades e Perks (Escolha 2 habilidades + 1 perk)</div>
+                        <div className="loadout-selected-count">
+                          Habilidades: {selectedSkills.filter(s => s).length}/2 | Perk: {selectedPerk ? '1/1' : '0/1'}
+                        </div>
                       </div>
                       <div className="loadout-skill-scroll">
                         {allUnlocks.map((unlock, idx) => {
@@ -379,7 +583,9 @@ function DeckBuilder({ onNavigate }) {
                                 {isSkill && <span className="loadout-skill-badge"> [HABILIDADE]</span>}
                                 {isPerk && <span className="loadout-perk-badge"> [PERK]</span>}
                               </div>
-                              <div className="loadout-skill-desc">{getName(unlock.desc)}</div>
+                              <div className="loadout-skill-desc">
+                                {unlock.displayText ? renderDisplayText(unlock.displayText, langKey) : getName(unlock.desc)}
+                              </div>
                               {isSkill && unlock.cost && (
                                 <div className="loadout-skill-cost">
                                   {[...Array(unlock.cost)].map((_, i) => (
@@ -395,7 +601,7 @@ function DeckBuilder({ onNavigate }) {
                       </div>
                     </div>
 
-                    <button className="loadout-save-btn" onClick={() => setShowLoadoutModal(false)}>
+                    <button className="loadout-save-btn" onClick={handleSaveLoadout}>
                       Salvar Configuração
                     </button>
                   </>

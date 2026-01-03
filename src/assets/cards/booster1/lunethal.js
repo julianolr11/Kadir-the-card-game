@@ -45,8 +45,41 @@ module.exports = {
 			en: 'It is said that its scales reflect the full moon, making it nearly invisible on silent nights.'
 		}
 	],
-	blessing: {
-		pt: 'Recebe uma bênção genérica.',
-		en: 'Receives a generic blessing.'
-	}
+
+	// ===== DADOS ESTENDIDOS (Guardião) =====
+	isGuardian: true,
+	defaultSkills: [
+		{
+			id: 'lunethal_skill_1',
+			name: { pt: 'Raio Lunar', en: 'Lunar Ray' },
+			desc: { pt: 'Causa 20 de dano com poder celestial.', en: 'Deals 20 damage with celestial power.' },
+			cost: 1,
+			type: 'damage',
+		},
+		{
+			id: 'lunethal_skill_2',
+			name: { pt: 'Cura Noturna', en: 'Night Heal' },
+			desc: { pt: 'Causa 12 de dano e recupera 8 de vida.', en: 'Deals 12 damage and recovers 8 HP.' },
+			cost: 1,
+			type: 'damage_heal',
+		},
+	],
+	defaultBlessing: {
+		id: 'lunethal_blessing',
+		name: { pt: 'Bênção da Lua', en: 'Moon\'s Blessing' },
+		desc: { pt: 'Criaturas sagradas ganham +7% de velocidade enquanto Lunethal estiver em campo.', en: 'Holy creatures gain +7% speed while Lunethal is on the field.' },
+	},
+	unlockTable: [
+		{ level: 0, type: 'none' },
+		{ level: 1, type: 'skill', id: 'lunethal_skill_3', name: { pt: 'Pulso Celestial', en: 'Celestial Pulse' }, desc: { pt: 'Causa 18 de dano e cura 6 de vida.', en: 'Deals 18 damage and heals 6 HP.' }, cost: 1 },
+		{ level: 2, type: 'perk', id: 'HP_PLUS_1' },
+		{ level: 3, type: 'none' },
+		{ level: 4, type: 'skill', id: 'lunethal_skill_4', name: { pt: 'Manto Protetor', en: 'Protective Mantle' }, desc: { pt: 'Aumenta defesa e cura 12 de vida.', en: 'Increases defense and heals 12 HP.' }, cost: 2 },
+		{ level: 5, type: 'skill', id: 'lunethal_skill_5', name: { pt: 'Graça Divina', en: 'Divine Grace' }, desc: { pt: 'Causa 30 de dano e cura todos os aliados.', en: 'Deals 30 damage and heals all allies.' }, cost: 2 },
+		{ level: 6, type: 'none' },
+		{ level: 7, type: 'perk', id: 'GUARDIAN_KILL_XP_BONUS' },
+		{ level: 8, type: 'perk', id: 'HP_PLUS_2' },
+		{ level: 9, type: 'skill', id: 'lunethal_skill_6', name: { pt: 'Ressurreição Lunar', en: 'Lunar Resurrection' }, desc: { pt: 'Cura 35 de vida em todos os aliados.', en: 'Heals 35 HP to all allies.' }, cost: 2 },
+		{ level: 10, type: 'skill', id: 'lunethal_skill_7', name: { pt: 'Era da Luz Eterna', en: 'Eternal Light Era' }, desc: { pt: 'Supremo: 40 de dano e cura 20 de vida para todos os aliados.', en: 'Ultimate: 40 damage and heals 20 HP to all allies.' }, cost: 3 },
+	],
 };

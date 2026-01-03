@@ -45,8 +45,41 @@ module.exports = {
       en: 'Its roar echoes through valleys and gorges, inspiring allies and terrifying enemies.'
     }
   ],
-  blessing: {
-    pt: 'Abençoado pela rocha eterna, Elderox recebe +2 de defesa ao entrar em campo.',
-    en: 'Blessed by the eternal rock, Elderox gains +2 defense when entering the field.'
-  }
+
+  // ===== DADOS ESTENDIDOS (Guardião) =====
+  isGuardian: true,
+  defaultSkills: [
+    {
+      id: 'elderox_skill_1',
+      name: { pt: 'Sabedoria Ancestral', en: 'Ancestral Wisdom' },
+      desc: { pt: 'Causa 20 de dano ao inimigo com conhecimento antigo.', en: 'Deals 20 damage to the enemy with ancient knowledge.' },
+      cost: 1,
+      type: 'damage',
+    },
+    {
+      id: 'elderox_skill_2',
+      name: { pt: 'Defesa Milenial', en: 'Millennial Defense' },
+      desc: { pt: 'Aumenta a defesa própria e reduz dano recebido em 15% por 2 turnos.', en: 'Increases own defense and reduces damage taken by 15% for 2 turns.' },
+      cost: 1,
+      type: 'buff',
+    },
+  ],
+  defaultBlessing: {
+    id: 'elderox_blessing',
+    name: { pt: 'Aura de Antiguidade', en: 'Aura of Antiquity' },
+    desc: { pt: 'Aliados ganham +8% de defesa enquanto Elderox estiver em campo.', en: 'Allies gain +8% defense while Elderox is on the field.' },
+  },
+  unlockTable: [
+    { level: 0, type: 'none' },
+    { level: 1, type: 'skill', id: 'elderox_skill_3', name: { pt: 'Lição do Passado', en: 'Lesson of the Past' }, desc: { pt: 'Causa 18 de dano e paralisa o inimigo por 1 turno.', en: 'Deals 18 damage and paralyzes the enemy for 1 turn.' }, cost: 1 },
+    { level: 2, type: 'perk', id: 'HP_PLUS_1' },
+    { level: 3, type: 'none' },
+    { level: 4, type: 'skill', id: 'elderox_skill_4', name: { pt: 'Escudo Eterno', en: 'Eternal Shield' }, desc: { pt: 'Cria um escudo absorvendo 25 de dano por 2 turnos.', en: 'Creates a shield absorbing 25 damage for 2 turns.' }, cost: 2 },
+    { level: 5, type: 'skill', id: 'elderox_skill_5', name: { pt: 'Castigo Justo', en: 'Just Punishment' }, desc: { pt: 'Causa 28 de dano e reduz todos os atributos do inimigo por 1 turno.', en: 'Deals 28 damage and reduces all enemy attributes for 1 turn.' }, cost: 2 },
+    { level: 6, type: 'none' },
+    { level: 7, type: 'perk', id: 'FIRST_ROUND_SHIELD' },
+    { level: 8, type: 'perk', id: 'HP_PLUS_2' },
+    { level: 9, type: 'skill', id: 'elderox_skill_6', name: { pt: 'Poder Primordial', en: 'Primordial Power' }, desc: { pt: 'Causa 35 de dano e restaura 10 de vida.', en: 'Deals 35 damage and restores 10 HP.' }, cost: 2 },
+    { level: 10, type: 'skill', id: 'elderox_skill_7', name: { pt: 'Verdade Eterna', en: 'Eternal Truth' }, desc: { pt: 'Supremo: 41 de dano e aumenta defesa de todos os aliados por 3 turnos.', en: 'Ultimate: 41 damage and increases defense of all allies for 3 turns.' }, cost: 3 },
+  ],
 };

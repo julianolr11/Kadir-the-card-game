@@ -40,5 +40,42 @@ module.exports = {
       pt: 'Alatoy desliza silenciosamente pelas águas profundas, suas barbatanas iluminando o caminho para o desconhecido.',
       en: 'Alatoy glides silently through the deep waters, its fins lighting the way to the unknown.'
     }
-  ]
+  ],
+
+  // ===== DADOS ESTENDIDOS (Guardião) =====
+  isGuardian: true,
+  defaultSkills: [
+    {
+      id: 'alatoy_skill_1',
+      name: { pt: 'Golpe da Profundeza', en: 'Depth Strike' },
+      desc: { pt: 'Causa 20 de dano ao inimigo com pressão abissal.', en: 'Deals 20 damage to the enemy with abyssal pressure.' },
+      cost: 1,
+      type: 'damage',
+    },
+    {
+      id: 'alatoy_skill_2',
+      name: { pt: 'Corrente Gelada', en: 'Frozen Current' },
+      desc: { pt: 'Causa 15 de dano e reduz a velocidade do inimigo.', en: 'Deals 15 damage and reduces enemy speed.' },
+      cost: 1,
+      type: 'damage_debuff',
+    },
+  ],
+  defaultBlessing: {
+    id: 'alatoy_blessing',
+    name: { pt: 'Proteção Aquática', en: 'Aquatic Protection' },
+    desc: { pt: 'Criaturas de água recebem +6% de defesa enquanto Alatoy estiver em campo.', en: 'Water creatures gain +6% defense while Alatoy is on the field.' },
+  },
+  unlockTable: [
+    { level: 0, type: 'none' },
+    { level: 1, type: 'skill', id: 'alatoy_skill_3', name: { pt: 'Onda Congelante', en: 'Freezing Wave' }, desc: { pt: 'Causa 19 de dano e congela o inimigo por 1 turno.', en: 'Deals 19 damage and freezes the enemy for 1 turn.' }, cost: 1 },
+    { level: 2, type: 'perk', id: 'HP_PLUS_1' },
+    { level: 3, type: 'skill', id: 'alatoy_skill_4', name: { pt: 'Implosão Aquática', en: 'Aquatic Implosion' }, desc: { pt: 'Causa 27 de dano e reduz defesa do inimigo.', en: 'Deals 27 damage and reduces enemy defense.' }, cost: 2 },
+    { level: 4, type: 'perk', id: 'WATER_RESISTANCE' },
+    { level: 5, type: 'skill', id: 'alatoy_skill_5', name: { pt: 'Maremoto', en: 'Tidal Wave' }, desc: { pt: 'Causa 34 de dano e afeta todos os inimigos em área.', en: 'Deals 34 damage and affects all enemies in area.' }, cost: 2 },
+    { level: 6, type: 'perk', id: 'HP_PLUS_1' },
+    { level: 7, type: 'skill', id: 'alatoy_skill_6', name: { pt: 'Abismo Gélido', en: 'Glacial Abyss' }, desc: { pt: 'Causa 30 de dano e congela o campo por 2 turnos.', en: 'Deals 30 damage and freezes the field for 2 turns.' }, cost: 2 },
+    { level: 8, type: 'perk', id: 'FIRST_ROUND_SHIELD' },
+    { level: 9, type: 'perk', id: 'HP_PLUS_2' },
+    { level: 10, type: 'skill', id: 'alatoy_skill_7', name: { pt: 'Fúria Oceânica', en: 'Ocean Fury' }, desc: { pt: 'Supremo: 42 de dano e restaura 8 de vida.', en: 'Ultimate: 42 damage and restores 8 HP.' }, cost: 3 },
+  ],
 };

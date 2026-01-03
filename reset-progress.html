@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reset Kadir Progress</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #4a90e2;
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 500px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+        h1 {
+            margin: 0 0 20px 0;
+            color: #4a90e2;
+            text-align: center;
+        }
+        .info {
+            background: rgba(74, 144, 226, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .status {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        .status-label {
+            color: #cbd5e0;
+        }
+        .status-value {
+            color: #4a90e2;
+            font-weight: 600;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(220, 38, 38, 0.4);
+        }
+        button.success {
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+        }
+        button.success:hover {
+            box-shadow: 0 6px 16px rgba(22, 163, 74, 0.4);
+        }
+        .message {
+            text-align: center;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-weight: 600;
+            display: none;
+        }
+        .message.show {
+            display: block;
+        }
+        .message.success {
+            background: rgba(22, 163, 74, 0.3);
+            color: #86efac;
+        }
+        .message.info {
+            background: rgba(74, 144, 226, 0.3);
+            color: #7ab8ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Reset do Progresso</h1>
+        
+        <div class="info">
+            <strong>⚠️ Atenção!</strong><br>
+            Este botão irá resetar completamente seu progresso:<br>
+            • Remover todas as cartas da coleção<br>
+            • Limpar todos os decks<br>
+            • Resetar guardião ativo<br>
+            • Definir 5 boosters<br>
+            • Limpar loadouts de guardião
+        </div>
+
+        <div class="status" id="currentStatus">
+            <div class="status-item">
+                <span class="status-label">Boosters:</span>
+                <span class="status-value" id="boostersCount">-</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Cartas na coleção:</span>
+                <span class="status-value" id="cardsCount">-</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Instâncias totais:</span>
+                <span class="status-value" id="instancesCount">-</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Decks salvos:</span>
+                <span class="status-value" id="decksCount">-</span>
+            </div>
+        </div>
+
+        <button onclick="checkStatus()">🔍 Verificar Status Atual</button>
+        <button onclick="resetProgress()">🗑️ RESETAR PROGRESSO</button>
+
+        <div class="message" id="message"></div>
+    </div>
+
+    <script>
+        function checkStatus() {
+            const boosters = localStorage.getItem('boosters') || '0';
+            const cardCollection = localStorage.getItem('cardCollection');
+            const decks = localStorage.getItem('kadir_decks');
+            
+            let cardsCount = 0;
+            let instancesCount = 0;
+            
+            if (cardCollection) {
+                try {
+                    const collection = JSON.parse(cardCollection);
+                    cardsCount = Object.keys(collection).length;
+                    Object.values(collection).forEach(instances => {
+                        if (Array.isArray(instances)) {
+                            instancesCount += instances.length;
+                        }
+                    });
+                } catch (e) {
+                    cardsCount = 'Error';
+                }
+            }
+
+            let decksCount = 0;
+            if (decks) {
+                try {
+                    const decksObj = JSON.parse(decks);
+                    decksCount = Object.keys(decksObj).length;
+                } catch (e) {
+                    decksCount = 'Error';
+                }
+            }
+
+            document.getElementById('boostersCount').textContent = boosters;
+            document.getElementById('cardsCount').textContent = cardsCount;
+            document.getElementById('instancesCount').textContent = instancesCount;
+            document.getElementById('decksCount').textContent = decksCount;
+
+            showMessage('Status atualizado!', 'info');
+        }
+
+        function resetProgress() {
+            if (!confirm('Tem certeza que deseja RESETAR TODO o progresso? Esta ação não pode ser desfeita!')) {
+                return;
+            }
+
+            // Resetar tudo
+            localStorage.setItem('boosters', '5');
+            localStorage.setItem('cardCollection', '{}');
+            localStorage.removeItem('kadir_decks');
+            localStorage.removeItem('guardianLoadouts');
+            localStorage.setItem('activeGuardian', JSON.stringify({
+                name: 'draak',
+                img: '../assets/img/creatures/draak_bio.webp'
+            }));
+
+            showMessage('✅ Progresso resetado com sucesso! Recarregue a aplicação.', 'success');
+            
+            // Atualizar status
+            setTimeout(() => {
+                checkStatus();
+            }, 500);
+        }
+
+        function showMessage(text, type) {
+            const msg = document.getElementById('message');
+            msg.textContent = text;
+            msg.className = 'message show ' + type;
+            
+            setTimeout(() => {
+                msg.classList.remove('show');
+            }, 5000);
+        }
+
+        // Carregar status ao iniciar
+        checkStatus();
+    </script>
+</body>
+</html>

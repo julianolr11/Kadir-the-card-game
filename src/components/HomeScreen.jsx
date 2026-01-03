@@ -234,6 +234,18 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
           setBoosters(Math.max(0, boosters) + 5);
           return '';
         }
+        
+        if (trimmed.endsWith('kadirreset')) {
+          if (confirm('⚠️ Resetar todo o progresso?\n\n• Limpar coleção\n• Resetar decks\n• 5 boosters')) {
+            localStorage.setItem('boosters', '5');
+            localStorage.setItem('cardCollection', '{}');
+            localStorage.removeItem('kadir_decks');
+            localStorage.removeItem('guardianLoadouts');
+            window.location.reload();
+          }
+          return '';
+        }
+        
         return trimmed;
       });
     }

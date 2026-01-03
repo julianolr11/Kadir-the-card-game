@@ -1037,7 +1037,15 @@ function DeckBuilder({ onNavigate }) {
           deckName={slots[editingDeckIndex].name}
           guardianId={activeGuardian?.id || activeGuardian?.name}
           initialCards={
-            getDeck?.(slots[editingDeckIndex].id)?.cards || Array(20).fill(null)
+            getDeck?.(slots[editingDeckIndex].id)?.cards || (() => {
+              // Novo deck: adicionar guardião no primeiro slot
+              const newDeck = Array(20).fill(null);
+              const guardianCardId = activeGuardian?.id || activeGuardian?.name;
+              if (guardianCardId) {
+                newDeck[0] = guardianCardId;
+              }
+              return newDeck;
+            })()
           }
           onClose={() => setEditingDeckIndex(null)}
           onSave={(deckData) => {

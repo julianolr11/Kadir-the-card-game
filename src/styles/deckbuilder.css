@@ -113,19 +113,21 @@
 }
 
 .guardian-change-btn {
-  width: 100%;
+  width: auto;
+  max-width: 200px;
+  margin: 0 auto;
+  margin-top: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  padding: 12px 16px;
-  margin-top: 0px;
+  padding: 10px 20px;
   border-radius: 12px;
   border: 1px solid rgba(144, 97, 249, 0.5);
   background: linear-gradient(135deg, rgba(122, 90, 248, 0.2), rgba(144, 97, 249, 0.15));
   color: #e8dcff;
   font-weight: 700;
-  font-size: 15px;
+  font-size: 14px;
   cursor: pointer;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
   transition: transform 180ms ease, background 180ms ease, box-shadow 180ms ease, border-color 180ms ease;

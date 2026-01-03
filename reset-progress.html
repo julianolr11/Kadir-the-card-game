@@ -103,7 +103,7 @@
 <body>
     <div class="container">
         <h1>🔄 Reset do Progresso</h1>
-        
+
         <div class="info">
             <strong>⚠️ Atenção!</strong><br>
             Este botão irá resetar completamente seu progresso:<br>
@@ -144,10 +144,10 @@
             const boosters = localStorage.getItem('boosters') || '0';
             const cardCollection = localStorage.getItem('cardCollection');
             const decks = localStorage.getItem('kadir_decks');
-            
+
             let cardsCount = 0;
             let instancesCount = 0;
-            
+
             if (cardCollection) {
                 try {
                     const collection = JSON.parse(cardCollection);
@@ -196,7 +196,7 @@
             }));
 
             showMessage('✅ Progresso resetado com sucesso! Recarregue a aplicação.', 'success');
-            
+
             // Atualizar status
             setTimeout(() => {
                 checkStatus();
@@ -207,7 +207,7 @@
             const msg = document.getElementById('message');
             msg.textContent = text;
             msg.className = 'message show ' + type;
-            
+
             setTimeout(() => {
                 msg.classList.remove('show');
             }, 5000);

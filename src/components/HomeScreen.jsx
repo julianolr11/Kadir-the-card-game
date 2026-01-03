@@ -234,18 +234,34 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
           setBoosters(Math.max(0, boosters) + 5);
           return '';
         }
-        
+
         if (trimmed.endsWith('kadirreset')) {
-          if (confirm('⚠️ Resetar todo o progresso?\n\n• Limpar coleção\n• Resetar decks\n• 5 boosters')) {
+          if (confirm('⚠️ RESETAR TODO O PROGRESSO?\n\n• Limpar coleção de cartas\n• Deletar TODOS os decks\n• Resetar guardiões\n• 5 boosters\n\nEsta ação não pode ser desfeita!')) {
+            // Limpar TUDO relacionado ao jogo
+            const keysToRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+              const key = localStorage.key(i);
+              if (key && (key.startsWith('kadir') || key.includes('deck') || key.includes('guardian') || key.includes('card'))) {
+                keysToRemove.push(key);
+              }
+            }
+            keysToRemove.forEach(key => localStorage.removeItem(key));
+            
+            // Definir valores iniciais
             localStorage.setItem('boosters', '5');
             localStorage.setItem('cardCollection', '{}');
-            localStorage.removeItem('kadir_decks');
-            localStorage.removeItem('guardianLoadouts');
-            window.location.reload();
+            localStorage.setItem('kadir_decks', '{}');
+            localStorage.setItem('activeGuardian', JSON.stringify({
+              name: 'draak',
+              img: '../assets/img/creatures/draak_bio.webp'
+            }));
+            
+            alert('✅ Reset concluído! A página será recarregada.');
+            setTimeout(() => window.location.reload(), 500);
           }
           return '';
         }
-        
+
         return trimmed;
       });
     }

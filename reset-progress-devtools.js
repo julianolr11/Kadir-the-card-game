@@ -1,9 +1,9 @@
 /**
  * Script de Reset de Progresso
- * 
+ *
  * Execute este script no DevTools Console (F12) da aplicação Electron
  * para resetar completamente o progresso do usuário.
- * 
+ *
  * Ctrl+A -> Ctrl+C -> Cole no Console -> Enter
  */
 

@@ -303,13 +303,8 @@ function StartFlow({ onFinish, onGoHome, menuMusicRef }) {
                         ];
                       setPreviewCreature(sorteada);
                       setShowPreview(true);
-                      // Salva como guardião ativo
-                      setActiveGuardian({
-                        name: sorteada.name,
-                        img: sorteada.img,
-                        id: sorteada.id,
-                        element: sorteada.element
-                      });
+                      // Salva como guardião ativo (criatura completa)
+                      setActiveGuardian(sorteada);
                     }
                     // Toca o som de flipcard ao virar a carta
                     if (flipAudioRef.current) {

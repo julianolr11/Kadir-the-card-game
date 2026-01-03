@@ -3,6 +3,7 @@ import MenuMusicPlayer from '../components/MenuMusicPlayer';
 import LoadingScreen from '../components/LoadingScreen';
 import HomeScreen from '../components/HomeScreen';
 import StartFlow from '../components/StartFlow';
+import DeckBuilder from '../components/DeckBuilder';
 import { AppProvider } from '../context/AppContext';
 
 import LoadingMenu from './LoadingMenu';
@@ -35,6 +36,9 @@ export default function App() {
       )}
       {screen === 'startflow' && (
         <StartFlow onFinish={() => setScreen('home')} onGoHome={() => setScreen('home')} menuMusicRef={menuMusicRef} />
+      )}
+      {screen === 'deck' && (
+        <DeckBuilder onNavigate={handleNavigate} menuMusicRef={menuMusicRef} />
       )}
       {/* Adicione outros fluxos conforme necessário */}
     </AppProvider>

@@ -27,46 +27,44 @@ const colorClass = {
   ar: 'card-preview-air',
 };
 
-const CreatureCardPreview = ({ creature, onClose }) => {
+const CreatureCardPreview = ({ creature, onClose, level = 0, allowFlip = false }) => {
   const swipeAudioRef = React.useRef(null);
-  // Efeito 3D removido
-    const labelTranslations = {
-      pt: {
-        type: 'Tipo',
-        height: 'Altura',
-        weakness: 'Fraqueza'
-      },
-      en: {
-        type: 'Type',
-        height: 'Height',
-        weakness: 'Weakness'
-      }
-    };
+  const labelTranslations = {
+    pt: {
+      type: 'Tipo',
+      height: 'Altura',
+      weakness: 'Fraqueza'
+    },
+    en: {
+      type: 'Type',
+      height: 'Height',
+      weakness: 'Weakness'
+    }
+  };
   const [showStory, setShowStory] = useState(false);
   const { lang } = useContext(AppContext);
   const langKey = lang === 'ptbr' ? 'pt' : lang;
   if (!creature) return null;
+
   return (
-    <div style={{ position: 'relative', display: 'flex' }}>
-      <div style={{ position: 'relative', display: 'flex' }}>
-        <button
-          className={`card-preview-arrow${showStory ? ' card-preview-arrow-rotated' : ''}`}
-          style={{ position: 'absolute', top: 0, right: -50, zIndex: 100 }}
-          onClick={() => {
-            if (swipeAudioRef.current) {
-              swipeAudioRef.current.currentTime = 0;
-              swipeAudioRef.current.play();
-            }
-            setShowStory(s => !s);
-          }}
-          aria-label={showStory ? 'Fechar história da criatura' : 'Ver história da criatura'}
-        >
-          <span style={{ fontSize: 28, color: '#ffe6b0', filter: 'drop-shadow(0 2px 8px #000a)', display: 'inline-block', transition: 'transform 0.3s' }}>
-            {showStory ? '\u2190' : '\u2192'}
-          </span>
-        </button>
-        <div className={`card-preview ${colorClass[creature.element] || ''}`}>
-          <div className="card-preview-header">
+    <div style={{ position: 'relative', display: 'flex', perspective: '1000px' }}>
+      {/* Audio */}
+      <audio ref={swipeAudioRef} src={swipeSound} preload="auto" />
+
+      {/* Container com flip 3D */}
+      <div
+        style={{
+          position: 'relative',
+          width: '100%',
+          transformStyle: 'preserve-3d',
+          transform: showStory ? 'rotateY(180deg)' : 'rotateY(0deg)',
+          transition: 'transform 0.6s ease-in-out',
+        }}
+      >
+        {/* FRENTE DA CARTA */}
+        <div style={{ backfaceVisibility: 'hidden' }}>
+          <div className={`card-preview ${colorClass[creature.element] || ''}`}>
+            <div className="card-preview-header">
             <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <img src={elementIcons[creature.element]} alt={creature.element} className="card-preview-element" />
               <span className="card-preview-name" style={{ color: '#fff', fontWeight: 700, fontSize: '1.00rem', textShadow: '0 2px 8px #000a' }}>
@@ -77,9 +75,9 @@ const CreatureCardPreview = ({ creature, onClose }) => {
               </span>
             </span>
             <span className="card-preview-id" style={{ fontWeight: 600, fontSize: '1.05rem', color: '#ffe6b0', marginLeft: 12 }}>
-              #{String(creature.num).padStart(3, '0')}
+              #{creature.num ? String(creature.num).padStart(3, '0') : '???'}
             </span>
-          </div>
+            </div>
             {/* Áudio do swipe */}
             <audio ref={swipeAudioRef} src={swipeSound} preload="auto" />
           <div className="card-preview-art-wrapper">
@@ -91,7 +89,7 @@ const CreatureCardPreview = ({ creature, onClose }) => {
             />
           </div>
           <div className="card-preview-abilities">
-            {creature.abilities.map((ab, idx) => (
+            {creature.abilities && creature.abilities.map((ab, idx) => (
               <div className="card-preview-ability" key={idx}>
                 <span className="essence-cost-icons">
                   {[...Array(idx + 1)].map((_,i)=>(<img key={i} src={soulEssence} alt="Essência" className="essence-icon" />))}
@@ -109,7 +107,7 @@ const CreatureCardPreview = ({ creature, onClose }) => {
           <div className="card-preview-bottom">
             <span className="card-preview-level-icon">
               <img src={lvlIcon} alt="Nível" className="icon-bg" />
-              <span className="icon-text">0</span>
+              <span className="icon-text">{level}</span>
             </span>
             <div className="card-preview-descs-inline">
               <div className="desc-col">
@@ -117,12 +115,14 @@ const CreatureCardPreview = ({ creature, onClose }) => {
                 {(() => {
                   let typeText = typeof creature.type === 'object' ? creature.type[langKey] : creature.type;
                   // Remove "Criatura" e "Creature" antes de Mystic/Mística/Shadow/Sombria
-                  typeText = typeText.replace(/(Criatura\s+)?(Mística|Sombria)/i, '$2')
-                                   .replace(/(Creature\s+)?(Mystic|Shadow)/i, '$2')
-                                   .replace(/Shadow Creature/i, 'Shadow');
+                  if (typeText) {
+                    typeText = typeText.replace(/(Criatura\s+)?(Mística|Sombria)/i, '$2')
+                                     .replace(/(Creature\s+)?(Mystic|Shadow)/i, '$2')
+                                     .replace(/Shadow Creature/i, 'Shadow');
+                  }
                   return (
                     <span className="desc-value" style={{ fontSize: '13px', lineHeight: '16px', whiteSpace: 'normal', wordBreak: 'break-word', display: 'inline-block', maxWidth: 80, textAlign: 'center' }}>
-                      {typeText}
+                      {typeText || 'N/A'}
                     </span>
                   );
                 })()}
@@ -142,17 +142,71 @@ const CreatureCardPreview = ({ creature, onClose }) => {
             </span>
           </div>
         </div>
-        {showStory && (
-          <div className="card-preview-story-panel">
-            <h3 className="card-preview-story-title">{typeof creature.storyTitle === 'object' ? creature.storyTitle[langKey] : creature.storyTitle}</h3>
-            <div className="card-preview-story-content">
-              {creature.story.map((txt, i) => (
-                <p key={i}>{typeof txt === 'object' ? txt[langKey] : txt}</p>
-              ))}
+        </div>
+
+        {/* VERSO DA CARTA (História) */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backfaceVisibility: 'hidden',
+            transform: 'rotateY(180deg)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          {creature.story && (
+            <div className="card-preview-story-panel" style={{ width: '100%', height: '100%' }}>
+              <h3 className="card-preview-story-title">{typeof creature.storyTitle === 'object' ? creature.storyTitle[langKey] : creature.storyTitle}</h3>
+              <div className="card-preview-story-content">
+                {creature.story.map((txt, i) => (
+                  <p key={i}>{typeof txt === 'object' ? txt[langKey] : txt}</p>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
+
+      {/* Botão de flip - apenas no Configurar Guardião */}
+      {allowFlip && (
+      <button
+        style={{
+          position: 'absolute',
+          top: '50%',
+          right: -40,
+          transform: 'translateY(-50%)',
+          zIndex: 100,
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          padding: 8,
+        }}
+        onClick={() => {
+          if (swipeAudioRef.current) {
+            swipeAudioRef.current.currentTime = 0;
+            swipeAudioRef.current.play();
+          }
+          setShowStory(s => !s);
+        }}
+        aria-label={showStory ? 'Ver frente' : 'Ver história'}
+      >
+        <span style={{
+          fontSize: 28,
+          color: '#ffe6b0',
+          filter: 'drop-shadow(0 2px 8px #000a)',
+          display: 'inline-block',
+          transition: 'transform 0.3s',
+          transform: showStory ? 'rotateY(180deg)' : 'rotateY(0deg)',
+        }}>
+          {showStory ? '◀' : '▶'}
+        </span>
+      </button>
+      )}
     </div>
   );
 }

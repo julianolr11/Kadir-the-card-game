@@ -56,7 +56,7 @@ function DeckEditor({
   onClose,
   onSave,
 }) {
-  const { lang = 'ptbr', getCardInstances } = React.useContext(AppContext) || {};
+  const { lang = 'ptbr', getCardInstances, cardCollection } = React.useContext(AppContext) || {};
   const langKey = lang === 'en' ? 'en' : 'pt';
 
   const [deckName, setDeckName] = useState(initialDeckName || `Deck ${deckId}`);
@@ -191,10 +191,15 @@ function DeckEditor({
 
   // Filtrar e ordenar cartas da biblioteca
   const libraryCards = useMemo(() => {
-    let cards = ALL_CARD_IDS.map((id) => {
-      const data = getCardData(id);
-      return { id, data };
-    }).filter((c) => c.data);
+    // Apenas mostrar cartas que o jogador possui na coleção
+    const ownedCardIds = cardCollection ? Object.keys(cardCollection) : [];
+
+    let cards = ownedCardIds
+      .map((id) => {
+        const data = getCardData(id);
+        return { id, data };
+      })
+      .filter((c) => c.data);
 
     // Filtrar por busca
     if (searchTerm) {
@@ -239,7 +244,7 @@ function DeckEditor({
     });
 
     return cards;
-  }, [searchTerm, elementFilter, typeFilter, sortBy, langKey]);
+  }, [cardCollection, searchTerm, elementFilter, typeFilter, sortBy, langKey]);
 
   // Auto-save com debounce
   useEffect(() => {

@@ -69,7 +69,7 @@ export function AppProvider({ children }) {
   };
 
   // ===== CARD COLLECTION SYSTEM =====
-  // Coleção de cartas: { cardId: quantity }
+  // Coleção de cartas: { cardId: [{ instanceId, xp, level, isHolo }, ...] }
   const [cardCollection, setCardCollection] = useState(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('cardCollection');
@@ -78,6 +78,11 @@ export function AppProvider({ children }) {
     return {};
   });
 
+  // Gerar UUID simples
+  const generateInstanceId = () => {
+    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  };
+
   const updateCardCollection = (newCollection) => {
     setCardCollection(newCollection);
     if (typeof window !== 'undefined') {
@@ -85,18 +90,72 @@ export function AppProvider({ children }) {
     }
   };
 
-  // Adicionar cartas de um booster aberto
+  // Criar nova instância de carta
+  const createCardInstance = (cardId, isHolo = false) => {
+    return {
+      instanceId: generateInstanceId(),
+      cardId,
+      xp: 0,
+      level: 0,
+      isHolo,
+      acquiredAt: new Date().toISOString(),
+    };
+  };
+
+  // Adicionar cartas de um booster aberto (cria instâncias individuais)
   const addCardsFromBooster = (cardIds) => {
     const newCollection = { ...cardCollection };
     cardIds.forEach((id) => {
-      newCollection[id] = (newCollection[id] || 0) + 1;
+      const isHolo = Math.random() < 0.1; // 10% chance holo
+      const instance = createCardInstance(id, isHolo);
+      
+      if (!newCollection[id]) {
+        newCollection[id] = [];
+      }
+      newCollection[id].push(instance);
     });
     updateCardCollection(newCollection);
   };
 
   // Pegar quantidade de uma carta na coleção
   const getCardCount = (cardId) => {
-    return cardCollection[cardId] || 0;
+    return (cardCollection[cardId]?.length || 0);
+  };
+
+  // Pegar todas as instâncias de uma carta
+  const getCardInstances = (cardId) => {
+    return cardCollection[cardId] || [];
+  };
+
+  // Atualizar XP de uma instância específica
+  const updateCardInstanceXp = (cardId, instanceId, xpGain) => {
+    const newCollection = { ...cardCollection };
+    if (newCollection[cardId]) {
+      const instance = newCollection[cardId].find((inst) => inst.instanceId === instanceId);
+      if (instance) {
+        instance.xp += xpGain;
+        // Levelup a cada 100 XP
+        if (instance.xp >= 100 && instance.level < 10) {
+          instance.level += 1;
+          instance.xp -= 100;
+        }
+      }
+    }
+    updateCardCollection(newCollection);
+  };
+
+  // Remover instância de carta (quando deletada)
+  const removeCardInstance = (cardId, instanceId) => {
+    const newCollection = { ...cardCollection };
+    if (newCollection[cardId]) {
+      newCollection[cardId] = newCollection[cardId].filter(
+        (inst) => inst.instanceId !== instanceId
+      );
+      if (newCollection[cardId].length === 0) {
+        delete newCollection[cardId];
+      }
+    }
+    updateCardCollection(newCollection);
   };
 
   // ===== DECK SYSTEM =====
@@ -206,6 +265,10 @@ export function AppProvider({ children }) {
       setCardCollection: updateCardCollection,
       addCardsFromBooster,
       getCardCount,
+      getCardInstances,
+      updateCardInstanceXp,
+      removeCardInstance,
+      createCardInstance,
       // Deck System
       decks,
       saveDeck,

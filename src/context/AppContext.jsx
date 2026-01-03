@@ -108,7 +108,7 @@ export function AppProvider({ children }) {
     cardIds.forEach((id) => {
       const isHolo = Math.random() < 0.1; // 10% chance holo
       const instance = createCardInstance(id, isHolo);
-      
+
       if (!newCollection[id]) {
         newCollection[id] = [];
       }

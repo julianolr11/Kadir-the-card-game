@@ -206,6 +206,7 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
     boosters = 0,
     lang = 'ptbr',
     setBoosters,
+    addCardsFromBooster,
   } = useContext(AppContext);
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -297,6 +298,9 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
   }
 
   function handleCloseBoosterResults() {
+    // Adiciona as cartas do booster à coleção como instâncias
+    const cardIds = openedBoosterCards.map(card => card.id);
+    addCardsFromBooster(cardIds);
     setShowBoosterResults(false);
     setIsOpeningBooster(false);
   }

@@ -1155,6 +1155,7 @@
   transition: all 0.2s ease;
   overflow: hidden;
   animation: fadeInUp 0.4s ease both;
+      height: 148px;
 }
 
 @keyframes fadeInUp {

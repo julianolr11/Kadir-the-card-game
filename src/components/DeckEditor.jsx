@@ -88,9 +88,14 @@ function DeckEditor({
     return deckCards.filter((id) => id === cardId).length;
   };
 
-  // Verificar se pode adicionar carta (máximo 2 cópias)
+  // Verificar se pode adicionar carta (baseado no número de instâncias que possui)
   const canAddCard = (cardId) => {
-    return countCardInDeck(cardId) < 2;
+    const instances = getCardInstances(cardId);
+    const instanceCount = instances ? instances.length : 0;
+    const cardCountInDeck = countCardInDeck(cardId);
+    
+    // Só permite adicionar se tiver instâncias disponíveis e não exceder esse limite
+    return cardCountInDeck < instanceCount;
   };
 
   // Adicionar carta ao deck
@@ -481,9 +486,10 @@ function DeckEditor({
         {/* Biblioteca de Cartas */}
         <div className="deck-library-grid">
           {libraryCards.map((card, idx) => {
-            const countInDeck = countCardInDeck(card.id);
-            const isDisabled = countInDeck >= 2;
             const instances = getCardInstances(card.id);
+            const countInDeck = countCardInDeck(card.id);
+            const instanceCount = instances ? instances.length : 0;
+            const isDisabled = countInDeck >= instanceCount;
             const hasMultipleInstances = instances && instances.length > 1;
 
             return (
@@ -524,7 +530,7 @@ function DeckEditor({
                     allowFlip={false}
                   />
                 </div>
-                <div className="deck-library-card-count">{countInDeck}/2</div>
+                <div className="deck-library-card-count">{countInDeck}/{instanceCount}</div>
                 {hasMultipleInstances && (
                   <div className="multiple-instances-indicator" title="Múltiplas cópias disponíveis">
                     {instances.length}x

@@ -246,6 +246,7 @@ function DeckBuilder({ onNavigate }) {
     lang = 'ptbr',
     saveDeck,
     getDeck,
+    deleteDeck,
     saveGuardianLoadout,
     loadGuardianLoadout,
     setActiveGuardian,
@@ -336,6 +337,13 @@ function DeckBuilder({ onNavigate }) {
     if (!current) return;
     const confirmDelete = window.confirm(`Remover ${current.name}?`);
     if (!confirmDelete) return;
+
+    // Remover do localStorage
+    if (deleteDeck) {
+      deleteDeck(current.id);
+    }
+
+    // Remover do estado local
     const next = [...slots];
     next[idx] = null;
     setSlots(next);

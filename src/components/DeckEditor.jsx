@@ -61,6 +61,7 @@ function DeckEditor({
 
   const [deckName, setDeckName] = useState(initialDeckName || `Deck ${deckId}`);
   const [deckCards, setDeckCards] = useState(initialCards); // Array de 20 IDs
+  const [selectedGuardian, setSelectedGuardian] = useState(guardianId); // Guardião selecionado
   const [searchTerm, setSearchTerm] = useState('');
   const [elementFilter, setElementFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
@@ -93,7 +94,7 @@ function DeckEditor({
     const instances = getCardInstances(cardId);
     const instanceCount = instances ? instances.length : 0;
     const cardCountInDeck = countCardInDeck(cardId);
-    
+
     // Permitir até 2 no deck, mas não mais que instâncias disponíveis
     const maxPerDeck = Math.min(instanceCount, 2);
     return cardCountInDeck < maxPerDeck;
@@ -275,7 +276,7 @@ function DeckEditor({
         onSave({
           id: deckId,
           name: deckName,
-          guardianId,
+          guardianId: selectedGuardian,
           cards: deckCards,
         });
         lastSavedRef.current = { name: deckName, cards: deckCards };
@@ -285,7 +286,7 @@ function DeckEditor({
     }, 1500);
 
     return () => clearTimeout(timer);
-  }, [deckCards, deckName, deckId, guardianId, onSave]);
+  }, [deckCards, deckName, deckId, selectedGuardian, onSave]);
 
   // Handlers de drag & drop
   const handleDragStart = (e, cardId, fromSlot = false) => {
@@ -351,6 +352,11 @@ function DeckEditor({
           <button className="deck-editor-close" onClick={onClose}>
             ✕
           </button>
+        </div>
+
+        {/* Seleção de Guardião */}
+        <div className="deck-editor-guardian-section">
+          <span className="guardian-label">Guardião: {selectedGuardian || 'Não selecionado'}</span>
         </div>
 
         {/* Grid de Slots */}

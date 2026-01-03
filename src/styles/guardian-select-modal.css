@@ -4,7 +4,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(10, 8, 21, 0.85);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -22,13 +22,13 @@
 }
 
 .guardian-select-modal-content {
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  border: 2px solid #ffd700;
+  background: radial-gradient(circle at 20% 20%, #2a1b3f 0%, #130d1f 40%, #0a0815 80%);
+  border: 2px solid rgba(144, 97, 249, 0.6);
   border-radius: 12px;
   padding: 24px;
-  max-width: 1200px;
+  max-width: 1400px;
   width: 90vw;
-  max-height: 90vh;
+  max-height: 80vh;
   overflow-y: auto;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   animation: slideUp 0.4s ease-out;
@@ -50,12 +50,12 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
-  border-bottom: 2px solid #ffd700;
+  border-bottom: 2px solid rgba(144, 97, 249, 0.5);
   padding-bottom: 16px;
 }
 
 .guardian-select-header h2 {
-  color: #ffd700;
+  color: #f6e8ff;
   margin: 0;
   font-size: 24px;
   font-weight: bold;
@@ -64,7 +64,7 @@
 .close-btn {
   background: none;
   border: none;
-  color: #ffd700;
+  color: #d7c8ff;
   font-size: 24px;
   cursor: pointer;
   padding: 0;
@@ -78,13 +78,13 @@
 
 .close-btn:hover {
   transform: rotate(90deg);
-  color: #ff4444;
+  color: #ff6b6b;
 }
 
 .guardian-select-grid {
   display: grid;
-  grid-template-columns: repeat(5, 120px);
-  gap: 16px;
+  grid-template-columns: repeat(6, 110px);
+  gap: 14px;
   justify-content: center;
 }
 
@@ -94,7 +94,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 120px;
+  width: 110px;
 }
 
 .guardian-select-item:hover {
@@ -102,32 +102,31 @@
 }
 
 .guardian-select-item:hover .guardian-select-card {
-  box-shadow: 0 8px 24px rgba(255, 215, 0, 0.4);
-  border-color: #ffed4e;
+  box-shadow: 0 8px 24px rgba(144, 97, 249, 0.5);
+  border-color: rgba(144, 97, 249, 0.9);
 }
 
 .guardian-select-card {
-  border: 2px solid #ffd700;
+  border: 2px solid rgba(144, 97, 249, 0.5);
   border-radius: 8px;
   overflow: hidden;
   transition: all 0.3s ease;
   width: 120px;
   min-width: 120px;
-  max-width: 120px;
-  height: 180px;
+  height: 178px;
   flex-shrink: 0;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .guardian-select-name {
-  color: #ffd700;
+  color: #d7c8ff;
   text-align: center;
   margin-top: 8px;
   font-weight: bold;
   font-size: 11px;
   word-break: break-word;
-  width: 120px;
-  max-width: 120px;
+  width: 110px;
+  max-width: 110px;
 }
 
 /* Scrollbar customizada */
@@ -136,21 +135,21 @@
 }
 
 .guardian-select-modal-content::-webkit-scrollbar-track {
-  background: #0f3460;
+  background: #130d1f;
 }
 
 .guardian-select-modal-content::-webkit-scrollbar-thumb {
-  background: #ffd700;
+  background: rgba(144, 97, 249, 0.6);
   border-radius: 4px;
 }
 
 .guardian-select-modal-content::-webkit-scrollbar-thumb:hover {
-  background: #ffed4e;
+  background: rgba(144, 97, 249, 0.8);
 }
 
 @media (max-width: 1400px) {
   .guardian-select-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(6, 1fr);
   }
 }
 

@@ -24,6 +24,7 @@ console.log('✅ localStorage completamente limpo!\n');
 console.log('⚙️ Configurando valores iniciais...');
 localStorage.setItem('boosters', '5');
 localStorage.setItem('cardCollection', '{}');
+localStorage.setItem('decks', '{}');
 localStorage.setItem('kadir_decks', '{}');
 localStorage.setItem('activeGuardian', JSON.stringify({
   name: 'draak',

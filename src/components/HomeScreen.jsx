@@ -247,15 +247,24 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
             }
             keysToRemove.forEach(key => localStorage.removeItem(key));
             
+            // Remover especificamente essas chaves importantes
+            localStorage.removeItem('decks');
+            localStorage.removeItem('kadir_decks');
+            localStorage.removeItem('guardianLoadouts');
+            localStorage.removeItem('activeGuardian');
+            localStorage.removeItem('cardCollection');
+            localStorage.removeItem('boosters');
+
             // Definir valores iniciais
             localStorage.setItem('boosters', '5');
             localStorage.setItem('cardCollection', '{}');
+            localStorage.setItem('decks', '{}');
             localStorage.setItem('kadir_decks', '{}');
             localStorage.setItem('activeGuardian', JSON.stringify({
               name: 'draak',
               img: '../assets/img/creatures/draak_bio.webp'
             }));
-            
+
             alert('✅ Reset concluído! A página será recarregada.');
             setTimeout(() => window.location.reload(), 500);
           }

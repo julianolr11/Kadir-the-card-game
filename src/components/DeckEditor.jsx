@@ -72,6 +72,8 @@ function DeckEditor({
   const [showInstanceSelector, setShowInstanceSelector] = useState(false);
   const [selectedCardForInstance, setSelectedCardForInstance] = useState(null);
   const [instanceSlotIndex, setInstanceSlotIndex] = useState(null);
+  const [hoveredCardForInstances, setHoveredCardForInstances] = useState(null);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
 
   const successSoundRef = useRef(null);
   const errorSoundRef = useRef(null);
@@ -476,18 +478,30 @@ function DeckEditor({
           {libraryCards.map((card, idx) => {
             const countInDeck = countCardInDeck(card.id);
             const isDisabled = countInDeck >= 2;
+            const instances = getCardInstances(card.id);
+            const hasMultipleInstances = instances && instances.length > 1;
 
             return (
               <div
                 key={card.id}
-                className={`deck-library-card ${isDisabled ? 'disabled' : ''} ${draggedCardId === card.id ? 'dragging' : ''}`}
+                className={`deck-library-card ${isDisabled ? 'disabled' : ''} ${draggedCardId === card.id ? 'dragging' : ''} ${hasMultipleInstances ? 'has-multiple-instances' : ''}`}
                 draggable={!isDisabled}
                 onDragStart={(e) =>
                   !isDisabled && handleDragStart(e, card.id, false)
                 }
                 onDragEnd={handleDragEnd}
-                onMouseEnter={() => setHoveredCard(card.data)}
-                onMouseLeave={() => setHoveredCard(null)}
+                onMouseEnter={(e) => {
+                  setHoveredCard(card.data);
+                  if (hasMultipleInstances) {
+                    setHoveredCardForInstances(card.id);
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setTooltipPosition({ x: rect.right + 10, y: rect.top });
+                  }
+                }}
+                onMouseLeave={() => {
+                  setHoveredCard(null);
+                  setHoveredCardForInstances(null);
+                }}
                 onClick={() => !isDisabled && addCardToDeck(card.id)}
                 style={{ animationDelay: `${idx * 50}ms` }}
               >
@@ -506,10 +520,53 @@ function DeckEditor({
                   />
                 </div>
                 <div className="deck-library-card-count">{countInDeck}/2</div>
+                {hasMultipleInstances && (
+                  <div className="multiple-instances-indicator" title="Múltiplas cópias disponíveis">
+                    {instances.length}x
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
+
+        {/* Tooltip de Instâncias */}
+        {hoveredCardForInstances && (
+          <div
+            className="instances-tooltip"
+            style={{
+              position: 'fixed',
+              left: `${tooltipPosition.x}px`,
+              top: `${tooltipPosition.y}px`,
+              zIndex: 9999,
+            }}
+          >
+            <div className="instances-tooltip-header">
+              <strong>Cópias Disponíveis</strong>
+              <span className="instances-tooltip-count">
+                {getCardInstances(hoveredCardForInstances).length} cópias
+              </span>
+            </div>
+            <div className="instances-tooltip-list">
+              {getCardInstances(hoveredCardForInstances)
+                .sort((a, b) => {
+                  if (b.level !== a.level) return b.level - a.level;
+                  return b.xp - a.xp;
+                })
+                .map((instance, idx) => (
+                  <div key={instance.instanceId} className="instances-tooltip-item">
+                    <span className="instance-copy-number">#{idx + 1}</span>
+                    <span className="instance-level">Nv. {instance.level}</span>
+                    <span className="instance-xp">{instance.xp} XP</span>
+                    {instance.isHolo && <span className="instance-holo-badge">✨ Holo</span>}
+                  </div>
+                ))}
+            </div>
+            <div className="instances-tooltip-hint">
+              Clique para selecionar qual usar
+            </div>
+          </div>
+        )}
 
         {/* Preview em Hover */}
         {hoveredCard && (

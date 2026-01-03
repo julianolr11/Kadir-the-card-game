@@ -631,13 +631,13 @@
 
 .deck-slot {
   position: relative;
-  min-height: 160px;
-  padding: 16px;
   border-radius: 14px;
   background: linear-gradient(160deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
   box-shadow: 0 10px 30px #000a, 0 0 0 1px #ffffff10 inset;
   overflow: hidden;
   transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+  display: flex;
+  flex-direction: column;
 }
 
 .deck-slot::after {
@@ -647,6 +647,8 @@
   background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.12), transparent 60%);
   opacity: 0;
   transition: opacity 220ms ease;
+  pointer-events: none;
+  z-index: 1;
 }
 
 .deck-slot:hover {
@@ -675,6 +677,8 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 8px;
+  position: relative;
+  z-index: 5;
 }
 
 .deck-slot-title {
@@ -689,31 +693,42 @@
 }
 
 .deck-slot-cta {
-  margin-top: 24px;
+  margin: auto;
   width: 100%;
-  display: inline-flex;
+  max-width: 200px;
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 14px 16px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.24);
-  background: rgba(255, 255, 255, 0.06);
-  color: #fff;
+  gap: 10px;
+  padding: 18px 24px;
+  border-radius: 14px;
+  border: 2px dashed rgba(144, 97, 249, 0.5);
+  background: linear-gradient(135deg, rgba(144, 97, 249, 0.15), rgba(122, 90, 248, 0.1));
+  color: #f6e8ff;
+  font-size: 15px;
   font-weight: 700;
-  cursor: pointer;
-  transition: transform 200ms ease, box-shadow 200ms ease, background 200ms ease;
+  cursor: pointer !important;
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 16px rgba(144, 97, 249, 0.2);
+  user-select: none;
+  position: relative;
+  z-index: 10;
 }
 
 .deck-slot-cta:hover {
-  transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 10px 24px #0008;
+  transform: translateY(-3px) scale(1.05);
+  background: linear-gradient(135deg, rgba(144, 97, 249, 0.3), rgba(122, 90, 248, 0.25));
+  border-color: rgba(144, 97, 249, 0.8);
+  box-shadow: 0 8px 32px rgba(144, 97, 249, 0.4), 0 0 0 1px rgba(144, 97, 249, 0.3) inset;
+  color: #fff;
+  cursor: pointer !important;
 }
 
 .deck-slot-plus {
-  font-size: 22px;
+  font-size: 26px;
   font-weight: 900;
+  line-height: 1;
+  opacity: 0.9;
 }
 
 .deck-slot-actions {
@@ -788,11 +803,462 @@
   }
 }
 
+/* ===== DECK EDITOR STYLES ===== */
+
+.deck-editor-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease;
+}
+
+.deck-editor-modal {
+  background: radial-gradient(circle at 20% 20%, #2a1b3f 0%, #130d1f 40%, #0a0815 80%);
+  border-radius: 20px;
+  padding: 24px;
+  width: 95vw;
+  max-width: 1400px;
+  height: 90vh;
+  max-height: 900px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 16px 64px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  position: relative;
+  overflow: hidden;
+}
+
+.deck-editor-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.deck-editor-title {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 8px 16px;
+  color: #ffe6b0;
+  font-size: 18px;
+  font-weight: 700;
+  font-family: 'Poppins', Arial, sans-serif;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.deck-editor-title:focus {
+  border-color: #7a5af8;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.deck-editor-counter {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffe6b0;
+  padding: 8px 16px;
+  background: rgba(122, 90, 248, 0.2);
+  border-radius: 8px;
+  border: 1px solid rgba(122, 90, 248, 0.4);
+}
+
+.deck-editor-close {
+  background: rgba(255, 100, 100, 0.2);
+  border: 1px solid rgba(255, 100, 100, 0.4);
+  color: #fff;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 18px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  font-weight: 700;
+}
+
+.deck-editor-close:hover {
+  background: rgba(255, 100, 100, 0.4);
+  transform: scale(1.05);
+}
+
+.deck-editor-slots-container {
+  flex-shrink: 0;
+  padding: 6px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.2);
+  max-height: 24vh;
+  overflow-y: auto;
+}
+
+.deck-editor-slots-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  grid-template-rows: repeat(2, auto);
+  gap: 6px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.deck-editor-slots-container::-webkit-scrollbar {
+  width: 10px;
+}
+
+.deck-editor-slots-container::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+}
+
+.deck-editor-slots-container::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(144, 97, 249, 0.6), rgba(122, 90, 248, 0.6));
+  border-radius: 10px;
+  border: 2px solid rgba(0, 0, 0, 0.3);
+}
+
+.deck-editor-slots-container::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(144, 97, 249, 0.8), rgba(122, 90, 248, 0.8));
+}
+
+.deck-slot {
+  aspect-ratio: 369 / 550;
+  width: 100%;
+  border-radius: 8px;
+  border: 2px dashed rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.02);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.deck-slot.empty:hover {
+  border-color: rgba(122, 90, 248, 0.6);
+  background: rgba(122, 90, 248, 0.05);
+}
+
+.deck-slot.filled {
+  border: 2px solid rgba(255, 230, 176, 0.3);
+  background: rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+}
+
+.deck-slot.filled:hover {
+  border-color: rgba(255, 100, 100, 0.6);
+  transform: scale(0.98);
+}
+
+.deck-slot.drag-over-valid {
+  border-color: rgba(122, 90, 248, 0.8);
+  background: rgba(122, 90, 248, 0.15);
+  animation: pulseGlow 0.6s ease-in-out infinite;
+}
+
+.deck-slot.drag-over-invalid {
+  border-color: rgba(255, 100, 100, 0.8);
+  background: rgba(255, 100, 100, 0.1);
+  animation: shake 0.3s ease;
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 12px rgba(122, 90, 248, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 24px rgba(122, 90, 248, 0.8);
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+.deck-slot-card {
+  cursor: grab;
+}
+
+.deck-slot-card:active {
+  cursor: grabbing;
+}
+
+.deck-slot-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.deck-slot-plus {
+  font-size: 48px;
+  color: rgba(255, 255, 255, 0.2);
+  font-weight: 300;
+}
+
+.deck-library-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+}
+
+.deck-library-search {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 8px 16px;
+  color: #fff;
+  font-size: 14px;
+  font-family: 'Poppins', Arial, sans-serif;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.deck-library-search:focus {
+  border-color: #7a5af8;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.deck-library-search::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.deck-library-element-filters {
+  display: flex;
+  gap: 8px;
+}
+
+.element-filter-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 6px 12px;
+  color: #fff;
+  font-size: 13px;
+  font-family: 'Poppins', Arial, sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.element-filter-btn img {
+  width: 20px;
+  height: 20px;
+  filter: brightness(0.8);
+  transition: filter 0.2s;
+}
+
+.element-filter-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.element-filter-btn:hover img {
+  filter: brightness(1.2);
+}
+
+.element-filter-btn.active {
+  background: rgba(122, 90, 248, 0.3);
+  border-color: rgba(122, 90, 248, 0.6);
+}
+
+.element-filter-btn.active img {
+  filter: brightness(1.3);
+}
+
+.deck-library-sort {
+  background: rgba(0, 0, 0, 0.4);
+  border: 2px solid rgba(122, 90, 248, 0.4);
+  border-radius: 10px;
+  padding: 8px 14px;
+  color: #fff;
+  font-size: 13px;
+  font-family: 'Poppins', Arial, sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.deck-library-sort:hover {
+  border-color: rgba(122, 90, 248, 0.7);
+  background: rgba(122, 90, 248, 0.15);
+  box-shadow: 0 2px 12px rgba(122, 90, 248, 0.3);
+}
+
+.deck-library-sort:focus {
+  border-color: #7a5af8;
+  background: rgba(122, 90, 248, 0.2);
+  box-shadow: 0 0 0 3px rgba(122, 90, 248, 0.2);
+}
+
+.deck-library-sort option {
+  background: rgba(20, 20, 40, 0.98);
+  color: #fff;
+  padding: 10px;
+  font-weight: 500;
+}
+
+.deck-library-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+  gap: 8px;
+  overflow-y: auto;
+  padding: 6px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+}
+
+/* Scrollbar customizada */
+.deck-library-grid::-webkit-scrollbar {
+  width: 10px;
+}
+
+.deck-library-grid::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+}
+
+.deck-library-grid::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(144, 97, 249, 0.6), rgba(122, 90, 248, 0.6));
+  border-radius: 10px;
+  border: 2px solid rgba(0, 0, 0, 0.3);
+}
+
+.deck-library-grid::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(144, 97, 249, 0.8), rgba(122, 90, 248, 0.8));
+}
+
+.deck-library-card {
+  position: relative;
+  aspect-ratio: 369 / 550;
+  border-radius: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  overflow: hidden;
+  animation: fadeInUp 0.4s ease both;
+}
+
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.deck-library-card:hover {
+  border-color: rgba(122, 90, 248, 0.6);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(122, 90, 248, 0.3);
+  z-index: 10;
+}
+
+.deck-library-card.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.deck-library-card.disabled:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: rgba(255, 100, 100, 0.4);
+}
+
+.deck-library-card.dragging {
+  opacity: 0.3;
+}
+
+.deck-library-card-count {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #ffe6b0;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.deck-card-preview-hover {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10000;
+  pointer-events: none;
+  animation: fadeIn 0.2s ease;
+  filter: drop-shadow(0 16px 48px rgba(0, 0, 0, 0.8));
+}
+
+.deck-saved-toast {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  background: rgba(100, 200, 100, 0.95);
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  animation: slideInRight 0.3s ease, fadeOut 0.3s ease 1.7s forwards;
+  z-index: 10001;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  to { opacity: 0; }
+}
+
+/* ===== END DECK EDITOR STYLES ===== */
+
 @media (prefers-reduced-motion: reduce) {
   .deckbuilder-screen,
   .deck-slot,
   .deck-slot-cta,
-  .deck-slot-btn {
+  .deck-slot-btn,
+  .deck-library-card {
     animation: none !important;
     transition: none !important;
   }

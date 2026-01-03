@@ -1,4 +1,4 @@
-import cogSound from '../assets/sounds/effects/cog.mp3';
+import cogSound from '../assets/sounds/effects/cog.MP3';
 
 import React, { useContext, useRef, useEffect, useState } from 'react';
 // Traduções simples para o menu cog
@@ -7,13 +7,13 @@ const cogTranslations = {
   en: { settings: 'Settings', exit: 'Exit' }
 };
 import candleSound from '../assets/sounds/effects/candle.mp3';
-import sphereMenuSound from '../assets/sounds/effects/sphere-menu.mp3';
+import sphereMenuSound from '../assets/sounds/effects/sphere-menu.MP3';
 import OptionsModal from './OptionsModal';
 import CogIcon from './CogIcon';
 import '../styles/homescreen.css';
 import { AppContext } from '../context/AppContext';
 import boosterImg from '../assets/img/card/booster.png';
-import packageSound from '../assets/sounds/effects/package.mp3';
+import packageSound from '../assets/sounds/effects/package.MP3';
 import boosterAnimationVideo from '../assets/img/card/animacao-booster.mp4';
 import creatures from '../assets/cards';
 import BoosterResultsSlider from './BoosterResultsSlider';

@@ -1,2 +1,2 @@
-import packageSound from '../assets/sounds/effects/package.mp3';
+import packageSound from './package.MP3';
 export default packageSound;

@@ -1,6 +1,6 @@
 import candleSound from '../assets/sounds/effects/candle.mp3';
 import React, { useState, useContext, useRef, useEffect } from 'react';
-import swipeSound from '../assets/sounds/effects/swipe.mp3';
+import swipeSound from '../assets/sounds/effects/swipe.MP3';
 import '../styles/swipe.css';
 import { AppContext } from '../context/AppContext';
 import fogo from '../assets/img/elements/fogo.png';

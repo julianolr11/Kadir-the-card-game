@@ -1,6 +1,7 @@
 import React, { useContext, useMemo, useState } from 'react';
 import { AppContext } from '../context/AppContext';
 import CreatureCardPreview from './CreatureCardPreview';
+import DeckEditor from './DeckEditor';
 import lvlIcon from '../assets/img/icons/lvlicon.png';
 import soulEssence from '../assets/img/icons/soul-essence.png';
 import burnIcon from '../assets/img/icons/burn.png';
@@ -128,7 +129,7 @@ const getGuardianData = (guardianId) => {
 };
 
 function DeckBuilder({ onNavigate }) {
-  const { activeGuardian, lang = 'ptbr' } = useContext(AppContext) || {};
+  const { activeGuardian, lang = 'ptbr', saveDeck, getDeck } = useContext(AppContext) || {};
   const [slots, setSlots] = useState(Array(MAX_DECKS).fill(null));
   const [openingSlotId, setOpeningSlotId] = useState(null);
   const [showLoadoutModal, setShowLoadoutModal] = useState(false);
@@ -136,6 +137,20 @@ function DeckBuilder({ onNavigate }) {
   const [selectedPerk, setSelectedPerk] = useState(null);
   const [hovering, setHovering] = useState(false);
   const [guardianLoadout, setGuardianLoadout] = useState(null);
+  const [editingDeckIndex, setEditingDeckIndex] = useState(null);
+  const [pendingEditIndex, setPendingEditIndex] = useState(null);
+  const [showNamePrompt, setShowNamePrompt] = useState(false);
+  const [promptSlotIndex, setPromptSlotIndex] = useState(null);
+  const [deckNameInput, setDeckNameInput] = useState('');
+
+  // Abrir editor quando slot pendente for criado
+  React.useEffect(() => {
+    if (pendingEditIndex !== null && slots[pendingEditIndex]) {
+      console.log('Slot criado! Abrindo editor para índice:', pendingEditIndex);
+      setEditingDeckIndex(pendingEditIndex);
+      setPendingEditIndex(null);
+    }
+  }, [pendingEditIndex, slots]);
 
   const langKey = lang === 'en' ? 'en' : 'pt';
 
@@ -161,23 +176,38 @@ function DeckBuilder({ onNavigate }) {
   }
 
   function handleCreate(idx) {
-    const name = window.prompt('Nome do deck', `Deck ${idx + 1}`);
-    if (!name) return;
+    console.log('🎯 handleCreate chamado! idx:', idx);
+    setPromptSlotIndex(idx);
+    setDeckNameInput(`Deck ${idx + 1}`);
+    setShowNamePrompt(true);
+  }
+
+  function confirmCreateDeck() {
+    const idx = promptSlotIndex;
+    const name = deckNameInput.trim();
+    console.log('📝 Nome digitado:', name);
+    if (!name) {
+      console.log('❌ Cancelado (nome vazio)');
+      setShowNamePrompt(false);
+      return;
+    }
+    const deckId = `deck-${idx + 1}`;
     const next = [...slots];
-    next[idx] = { id: `deck-${idx + 1}`, name: name.trim() || `Deck ${idx + 1}` };
+    next[idx] = { id: deckId, name };
+    console.log('✅ Novo slot criado:', next[idx]);
     setSlots(next);
     triggerOpen(idx);
+    console.log('🔄 setPendingEditIndex:', idx);
+    setShowNamePrompt(false);
+    // Marcar para abrir editor quando slot for criado
+    setPendingEditIndex(idx);
   }
 
   function handleEdit(idx) {
     const current = slots[idx];
     if (!current) return handleCreate(idx);
-    const name = window.prompt('Renomear deck', current.name);
-    if (!name) return;
-    const next = [...slots];
-    next[idx] = { ...current, name: name.trim() || current.name };
-    setSlots(next);
-    triggerOpen(idx);
+    // Abrir editor de deck
+    setEditingDeckIndex(idx);
   }
 
   function handleDelete(idx) {
@@ -391,6 +421,7 @@ function DeckBuilder({ onNavigate }) {
         <button className="deckbuilder-back" onClick={() => onNavigate('home')}>
           Voltar
         </button>
+
         <div className="deckbuilder-titles">
           <h1>Meus Decks</h1>
           <p>Máximo de 3 decks. Cada deck usa 1 guardião + 20 cartas.</p>
@@ -464,7 +495,10 @@ function DeckBuilder({ onNavigate }) {
                 </div>
 
                 {!slot && (
-                  <button className="deck-slot-cta" onClick={() => handleCreate(idx)}>
+                  <button className="deck-slot-cta" onClick={() => {
+                    console.log('Botão Criar Deck clicado! idx:', idx);
+                    handleCreate(idx);
+                  }}>
                     <span className="deck-slot-plus">+</span>
                     Criar deck
                   </button>
@@ -615,6 +649,127 @@ function DeckBuilder({ onNavigate }) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal de Nome do Deck */}
+      {showNamePrompt && (
+        <div className="loadout-modal-overlay" onClick={() => setShowNamePrompt(false)}>
+          <div className="loadout-modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '480px', padding: '32px' }}>
+            <button className="loadout-modal-close" onClick={() => setShowNamePrompt(false)}>✕</button>
+
+            <h2 style={{
+              color: '#f6e8ff',
+              marginBottom: '28px',
+              marginTop: '4px',
+              fontSize: '24px',
+              fontWeight: '700',
+              textAlign: 'center'
+            }}>
+              Criar Novo Deck
+            </h2>
+
+            <div style={{ marginBottom: '28px' }}>
+              <label style={{
+                display: 'block',
+                color: '#cbb9f2',
+                marginBottom: '12px',
+                fontSize: '15px',
+                fontWeight: '500'
+              }}>
+                Nome do Deck:
+              </label>
+              <input
+                type="text"
+                value={deckNameInput}
+                onChange={(e) => setDeckNameInput(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && confirmCreateDeck()}
+                autoFocus
+                style={{
+                  width: '100%',
+                  padding: '14px 18px',
+                  borderRadius: '10px',
+                  border: '2px solid rgba(144, 97, 249, 0.5)',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  color: '#fff',
+                  fontSize: '16px',
+                  fontFamily: 'Poppins, Arial, sans-serif',
+                  outline: 'none',
+                  transition: 'all 0.2s',
+                  boxSizing: 'border-box'
+                }}
+                onFocus={(e) => e.target.style.borderColor = 'rgba(144, 97, 249, 0.8)'}
+                onBlur={(e) => e.target.style.borderColor = 'rgba(144, 97, 249, 0.5)'}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
+              <button
+                onClick={() => setShowNamePrompt(false)}
+                style={{
+                  flex: 1,
+                  padding: '14px 20px',
+                  borderRadius: '10px',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  color: '#fff',
+                  fontSize: '15px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.15)'}
+                onMouseLeave={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.08)'}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmCreateDeck}
+                style={{
+                  flex: 1,
+                  padding: '14px 20px',
+                  borderRadius: '10px',
+                  border: '2px solid rgba(144, 97, 249, 0.8)',
+                  background: 'linear-gradient(135deg, rgba(144, 97, 249, 0.3), rgba(122, 90, 248, 0.25))',
+                  color: '#fff',
+                  fontSize: '15px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.background = 'linear-gradient(135deg, rgba(144, 97, 249, 0.5), rgba(122, 90, 248, 0.4))';
+                  e.target.style.transform = 'translateY(-1px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = 'linear-gradient(135deg, rgba(144, 97, 249, 0.3), rgba(122, 90, 248, 0.25))';
+                  e.target.style.transform = 'translateY(0)';
+                }}
+              >
+                Criar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Deck Editor */}
+      {editingDeckIndex !== null && slots[editingDeckIndex] && (
+        <DeckEditor
+          deckId={slots[editingDeckIndex].id}
+          deckName={slots[editingDeckIndex].name}
+          guardianId={activeGuardian?.id || activeGuardian?.name}
+          initialCards={getDeck?.(slots[editingDeckIndex].id)?.cards || Array(20).fill(null)}
+          onClose={() => setEditingDeckIndex(null)}
+          onSave={(deckData) => {
+            if (saveDeck) saveDeck(deckData);
+            // Atualizar nome do deck se mudou
+            if (deckData.name !== slots[editingDeckIndex].name) {
+              const next = [...slots];
+              next[editingDeckIndex] = { ...slots[editingDeckIndex], name: deckData.name };
+              setSlots(next);
+            }
+          }}
+        />
       )}
     </div>
   );

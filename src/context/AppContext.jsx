@@ -62,6 +62,90 @@ export function AppProvider({ children }) {
     }
   };
 
+  // ===== CARD COLLECTION SYSTEM =====
+  // Coleção de cartas: { cardId: quantity }
+  const [cardCollection, setCardCollection] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('cardCollection');
+      if (stored) return JSON.parse(stored);
+    }
+    return {};
+  });
+
+  const updateCardCollection = (newCollection) => {
+    setCardCollection(newCollection);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('cardCollection', JSON.stringify(newCollection));
+    }
+  };
+
+  // Adicionar cartas de um booster aberto
+  const addCardsFromBooster = (cardIds) => {
+    const newCollection = { ...cardCollection };
+    cardIds.forEach(id => {
+      newCollection[id] = (newCollection[id] || 0) + 1;
+    });
+    updateCardCollection(newCollection);
+  };
+
+  // Pegar quantidade de uma carta na coleção
+  const getCardCount = (cardId) => {
+    return cardCollection[cardId] || 0;
+  };
+
+  // ===== DECK SYSTEM =====
+  // Decks: { deckId: { name, guardianId, cards: [cardId, cardId, ...] } }
+  const [decks, setDecks] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('decks');
+      if (stored) return JSON.parse(stored);
+    }
+    return {};
+  });
+
+  const updateDecks = (newDecks) => {
+    setDecks(newDecks);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('decks', JSON.stringify(newDecks));
+    }
+  };
+
+  // Salvar ou atualizar um deck
+  const saveDeck = (deckData) => {
+    const newDecks = {
+      ...decks,
+      [deckData.id]: {
+        name: deckData.name,
+        guardianId: deckData.guardianId,
+        cards: deckData.cards
+      }
+    };
+    updateDecks(newDecks);
+  };
+
+  // Pegar dados de um deck
+  const getDeck = (deckId) => {
+    return decks[deckId] || null;
+  };
+
+  // Contar quantas vezes uma carta aparece em um deck específico
+  const countCardInDeck = (deckCards, cardId) => {
+    return deckCards.filter(id => id === cardId).length;
+  };
+
+  // Verificar se pode adicionar carta ao deck (máximo 2 cópias)
+  const canAddToDeck = (deckCards, cardId) => {
+    return countCardInDeck(deckCards, cardId) < 2;
+  };
+
+  // Deletar um deck
+  const deleteDeck = (deckId) => {
+    const newDecks = { ...decks };
+    delete newDecks[deckId];
+    updateDecks(newDecks);
+  };
+  // ===== END CARD COLLECTION & DECK SYSTEM =====
+
   const contextValue = useMemo(
     () => ({
       lang,
@@ -76,6 +160,18 @@ export function AppProvider({ children }) {
       setActiveGuardian: updateActiveGuardian,
       boosters,
       setBoosters: updateBoosters,
+      // Card Collection
+      cardCollection,
+      setCardCollection: updateCardCollection,
+      addCardsFromBooster,
+      getCardCount,
+      // Deck System
+      decks,
+      saveDeck,
+      getDeck,
+      deleteDeck,
+      countCardInDeck,
+      canAddToDeck,
     }),
     [
       lang,
@@ -88,6 +184,8 @@ export function AppProvider({ children }) {
       setEffectsVolume,
       activeGuardian,
       boosters,
+      cardCollection,
+      decks,
     ],
   );
 

@@ -94,6 +94,19 @@ function DeckEditor({
     return null;
   };
 
+  // Helper para obter a melhor instância de uma carta (prioriza holo, depois maior level)
+  const getBestInstance = (cardId) => {
+    const instances = getCardInstances(cardId);
+    if (!instances || instances.length === 0) return null;
+    
+    // Priorizar: holo > maior level > primeira instância
+    const holoInstance = instances.find(inst => inst.isHolo);
+    if (holoInstance) return holoInstance;
+    
+    const sorted = [...instances].sort((a, b) => b.level - a.level);
+    return sorted[0];
+  };
+
   // Contar quantas vezes uma carta (cardId) aparece no deck
   const countCardInDeck = (cardId) => {
     return deckCards.filter((instanceId) => {
@@ -529,6 +542,11 @@ function DeckEditor({
             const maxPerDeck = Math.min(instanceCount, 2);
             const isDisabled = countInDeck >= maxPerDeck;
             const hasMultipleInstances = instances && instances.length > 1;
+            
+            // Obter melhor instância para exibição na biblioteca (prioriza holo)
+            const bestInstance = getBestInstance(card.id);
+            const displayLevel = bestInstance?.level || 1;
+            const displayIsHolo = bestInstance?.isHolo || false;
 
             return (
               <div
@@ -564,7 +582,8 @@ function DeckEditor({
                   <CreatureCardPreview
                     creature={card.data}
                     onClose={null}
-                    level={1}
+                    level={displayLevel}
+                    isHolo={displayIsHolo}
                     allowFlip={false}
                   />
                 </div>

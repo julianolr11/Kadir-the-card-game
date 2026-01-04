@@ -60,7 +60,7 @@ function DeckEditor({
   const langKey = lang === 'en' ? 'en' : 'pt';
 
   const [deckName, setDeckName] = useState(initialDeckName || `Deck ${deckId}`);
-  const [deckCards, setDeckCards] = useState(initialCards); // Array de 20 IDs
+  const [deckCards, setDeckCards] = useState(initialCards); // Array de 20 instanceIds
   const [selectedGuardian, setSelectedGuardian] = useState(guardianId); // Guardião selecionado
   const [searchTerm, setSearchTerm] = useState('');
   const [elementFilter, setElementFilter] = useState('all');
@@ -84,9 +84,22 @@ function DeckEditor({
     cards: initialCards,
   });
 
-  // Contar quantas vezes uma carta aparece no deck
+  // Helper para obter instância completa pelo instanceId
+  const getInstanceById = (instanceId) => {
+    if (!instanceId || !cardCollection) return null;
+    for (const cardId in cardCollection) {
+      const instance = cardCollection[cardId].find(inst => inst.instanceId === instanceId);
+      if (instance) return instance;
+    }
+    return null;
+  };
+
+  // Contar quantas vezes uma carta (cardId) aparece no deck
   const countCardInDeck = (cardId) => {
-    return deckCards.filter((id) => id === cardId).length;
+    return deckCards.filter((instanceId) => {
+      const instance = getInstanceById(instanceId);
+      return instance && instance.cardId === cardId;
+    }).length;
   };
 
   // Verificar se pode adicionar carta (máximo 2 por carta no deck)
@@ -121,20 +134,23 @@ function DeckEditor({
       return false; // Não adiciona ainda, espera seleção
     }
 
-    // Adicionar normalmente se não tem múltiplas instâncias
-    return finishAddingCardToDeck(cardId, slotIndex);
+    // Se tem apenas 1 instância, pegar automaticamente
+    const instanceId = instances && instances.length === 1 ? instances[0].instanceId : null;
+    return finishAddingCardToDeck(instanceId, slotIndex);
   };
 
   // Finalizar a adição da carta após seleção de instância
-  const finishAddingCardToDeck = (cardId, slotIndex = null) => {
+  const finishAddingCardToDeck = (instanceId, slotIndex = null) => {
+    if (!instanceId) return false;
+
     const newDeck = [...deckCards];
     if (slotIndex !== null && slotIndex < 20) {
-      newDeck[slotIndex] = cardId;
+      newDeck[slotIndex] = instanceId;
     } else {
       // Encontrar primeiro slot vazio
       const emptyIndex = newDeck.findIndex((id) => !id);
       if (emptyIndex !== -1) {
-        newDeck[emptyIndex] = cardId;
+        newDeck[emptyIndex] = instanceId;
       } else {
         return false; // Deck cheio
       }
@@ -153,8 +169,8 @@ function DeckEditor({
 
   // Handler para quando uma instância é selecionada
   const handleInstanceSelected = (instanceId) => {
-    if (selectedCardForInstance) {
-      finishAddingCardToDeck(selectedCardForInstance, instanceSlotIndex);
+    if (selectedCardForInstance && instanceId) {
+      finishAddingCardToDeck(instanceId, instanceSlotIndex);
     }
     setShowInstanceSelector(false);
     setSelectedCardForInstance(null);
@@ -289,12 +305,20 @@ function DeckEditor({
   }, [deckCards, deckName, deckId, selectedGuardian, onSave]);
 
   // Handlers de drag & drop
-  const handleDragStart = (e, cardId, fromSlot = false) => {
-    if (fromSlot || canAddCard(cardId)) {
-      setDraggedCardId(cardId);
+  const handleDragStart = (e, cardIdOrInstanceId, fromSlot = false, instanceId = null) => {
+    if (fromSlot) {
+      // Arrastando do deck - usar instanceId
+      setDraggedCardId(cardIdOrInstanceId);
       e.dataTransfer.effectAllowed = 'copy';
-      e.dataTransfer.setData('cardId', cardId);
-      e.dataTransfer.setData('fromSlot', fromSlot ? 'true' : 'false');
+      e.dataTransfer.setData('cardId', cardIdOrInstanceId);
+      e.dataTransfer.setData('instanceId', instanceId || cardIdOrInstanceId);
+      e.dataTransfer.setData('fromSlot', 'true');
+    } else if (canAddCard(cardIdOrInstanceId)) {
+      // Arrastando da biblioteca - usar cardId
+      setDraggedCardId(cardIdOrInstanceId);
+      e.dataTransfer.effectAllowed = 'copy';
+      e.dataTransfer.setData('cardId', cardIdOrInstanceId);
+      e.dataTransfer.setData('fromSlot', 'false');
     } else {
       e.preventDefault();
     }
@@ -308,15 +332,16 @@ function DeckEditor({
   const handleDrop = (e, slotIndex) => {
     e.preventDefault();
     const cardId = e.dataTransfer.getData('cardId');
+    const instanceId = e.dataTransfer.getData('instanceId');
     const fromSlot = e.dataTransfer.getData('fromSlot') === 'true';
 
-    if (fromSlot) {
-      // Reordenar dentro do deck
-      const fromIndex = deckCards.findIndex((id) => id === cardId);
+    if (fromSlot && instanceId) {
+      // Reordenar dentro do deck usando instanceId
+      const fromIndex = deckCards.findIndex((id) => id === instanceId);
       if (fromIndex !== -1) {
         moveCard(fromIndex, slotIndex);
       }
-    } else {
+    } else if (!fromSlot && cardId) {
       // Adicionar da biblioteca
       addCardToDeck(cardId, slotIndex);
     }
@@ -363,13 +388,17 @@ function DeckEditor({
         <div className="deck-editor-slots-container">
           <div className="deck-editor-slots-grid">
             {Array.from({ length: 20 }).map((_, idx) => {
-              const cardId = deckCards[idx];
-              const cardData = cardId ? getCardData(cardId) : null;
+              const instanceId = deckCards[idx];
+              const instance = instanceId ? getInstanceById(instanceId) : null;
+              const cardData = instance ? getCardData(instance.cardId) : null;
               const isDragOver = dragOverSlot === idx;
               const canDrop =
                 draggedCardId &&
                 (canAddCard(draggedCardId) ||
-                  deckCards.includes(draggedCardId));
+                  deckCards.some(id => {
+                    const inst = getInstanceById(id);
+                    return inst && inst.cardId === draggedCardId;
+                  }));
 
               return (
                 <div
@@ -383,7 +412,7 @@ function DeckEditor({
                     <div
                       className="deck-slot-card"
                       draggable
-                      onDragStart={(e) => handleDragStart(e, cardId, true)}
+                      onDragStart={(e) => handleDragStart(e, instance.cardId, true, instanceId)}
                       onDragEnd={handleDragEnd}
                       onClick={() => removeCardFromDeck(idx)}
                     >
@@ -397,7 +426,8 @@ function DeckEditor({
                         <CreatureCardPreview
                           creature={cardData}
                           onClose={null}
-                          level={1}
+                          level={instance.level || 1}
+                          isHolo={instance.isHolo || false}
                           allowFlip={false}
                         />
                       </div>

@@ -250,6 +250,7 @@ function DeckBuilder({ onNavigate }) {
     saveGuardianLoadout,
     loadGuardianLoadout,
     setActiveGuardian,
+    getCardInstances,
   } = useContext(AppContext) || {};
   const [slots, setSlots] = useState(Array(MAX_DECKS).fill(null));
   const [openingSlotId, setOpeningSlotId] = useState(null);
@@ -1041,8 +1042,12 @@ function DeckBuilder({ onNavigate }) {
               // Novo deck: adicionar guardião no primeiro slot
               const newDeck = Array(20).fill(null);
               const guardianCardId = activeGuardian?.id || activeGuardian?.name;
-              if (guardianCardId) {
-                newDeck[0] = guardianCardId;
+              if (guardianCardId && getCardInstances) {
+                const guardianInstances = getCardInstances(guardianCardId);
+                if (guardianInstances && guardianInstances.length > 0) {
+                  // Usar a primeira instância do guardião
+                  newDeck[0] = guardianInstances[0].instanceId;
+                }
               }
               return newDeck;
             })()

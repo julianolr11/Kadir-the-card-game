@@ -335,9 +335,8 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
   }
 
   function handleCloseBoosterResults() {
-    // Adiciona as cartas do booster à coleção como instâncias
-    const cardIds = openedBoosterCards.map(card => card.id);
-    addCardsFromBooster(cardIds);
+    // Adiciona as cartas do booster à coleção, preservando status holo
+    addCardsFromBooster(openedBoosterCards);
     setShowBoosterResults(false);
     setIsOpeningBooster(false);
   }

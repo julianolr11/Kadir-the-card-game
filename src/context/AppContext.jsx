@@ -103,16 +103,18 @@ export function AppProvider({ children }) {
   };
 
   // Adicionar cartas de um booster aberto (cria instâncias individuais)
-  const addCardsFromBooster = (cardIds) => {
+  // Pode receber: array de cardIds (string) ou array de objetos {id, isHolo}
+  const addCardsFromBooster = (cards) => {
     const newCollection = { ...cardCollection };
-    cardIds.forEach((id) => {
-      const isHolo = Math.random() < 0.1; // 10% chance holo
-      const instance = createCardInstance(id, isHolo);
+    cards.forEach((card) => {
+      const cardId = typeof card === 'string' ? card : card.id;
+      const isHolo = typeof card === 'string' ? (Math.random() < 0.1) : (card.isHolo || false);
+      const instance = createCardInstance(cardId, isHolo);
 
-      if (!newCollection[id]) {
-        newCollection[id] = [];
+      if (!newCollection[cardId]) {
+        newCollection[cardId] = [];
       }
-      newCollection[id].push(instance);
+      newCollection[cardId].push(instance);
     });
     updateCardCollection(newCollection);
   };

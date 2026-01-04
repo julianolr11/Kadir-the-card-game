@@ -108,6 +108,31 @@ function DeckEditor({
     return sorted[0];
   };
 
+  // Helper para obter instâncias disponíveis (não usadas no deck)
+  const getAvailableInstances = (cardId) => {
+    const instances = getCardInstances(cardId);
+    if (!instances || instances.length === 0) return [];
+
+    // Coletar todos os instanceIds no deck
+    const instancesInDeck = deckCards.filter(id => id !== null);
+
+    // Retornar instâncias que não estão no deck
+    return instances.filter(inst => !instancesInDeck.includes(inst.instanceId));
+  };
+
+  // Helper para obter melhor instância disponível
+  const getBestAvailableInstance = (cardId) => {
+    const availableInstances = getAvailableInstances(cardId);
+    if (!availableInstances || availableInstances.length === 0) return null;
+
+    // Priorizar: holo > maior level > primeira instância
+    const holoInstance = availableInstances.find(inst => inst.isHolo);
+    if (holoInstance) return holoInstance;
+
+    const sorted = [...availableInstances].sort((a, b) => b.level - a.level);
+    return sorted[0];
+  };
+
   // Contar quantas vezes uma carta (cardId) aparece no deck
   const countCardInDeck = (cardId) => {
     return deckCards.filter((instanceId) => {
@@ -116,15 +141,15 @@ function DeckEditor({
     }).length;
   };
 
-  // Verificar se pode adicionar carta (máximo 2 por carta no deck)
+  // Verificar se pode adicionar carta (máximo 2 por carta no deck, limitado a instâncias disponíveis)
   const canAddCard = (cardId) => {
-    const instances = getCardInstances(cardId);
-    const instanceCount = instances ? instances.length : 0;
+    const availableInstances = getAvailableInstances(cardId);
+    const availableCount = availableInstances ? availableInstances.length : 0;
     const cardCountInDeck = countCardInDeck(cardId);
 
     // Permitir até 2 no deck, mas não mais que instâncias disponíveis
-    const maxPerDeck = Math.min(instanceCount, 2);
-    return cardCountInDeck < maxPerDeck;
+    const maxPerDeck = Math.min(availableCount + cardCountInDeck, 2);
+    return cardCountInDeck < maxPerDeck && availableCount > 0;
   };
 
   // Adicionar carta ao deck
@@ -538,16 +563,24 @@ function DeckEditor({
         <div className="deck-library-grid">
           {libraryCards.map((card, idx) => {
             const instances = getCardInstances(card.id);
+            const availableInstances = getAvailableInstances(card.id);
             const countInDeck = countCardInDeck(card.id);
             const instanceCount = instances ? instances.length : 0;
+            const availableCount = availableInstances ? availableInstances.length : 0;
             const maxPerDeck = Math.min(instanceCount, 2);
-            const isDisabled = countInDeck >= maxPerDeck;
+            const isDisabled = countInDeck >= maxPerDeck || availableCount === 0;
             const hasMultipleInstances = instances && instances.length > 1;
 
-            // Obter melhor instância para exibição na biblioteca (prioriza holo)
-            const bestInstance = getBestInstance(card.id);
-            const displayLevel = bestInstance?.level || 1;
-            const displayIsHolo = bestInstance?.isHolo || false;
+            // Obter melhor instância disponível para exibição na biblioteca
+            const bestAvailableInstance = getBestAvailableInstance(card.id);
+
+            // Se não houver instâncias disponíveis, não mostrar a carta
+            if (!bestAvailableInstance) {
+              return null;
+            }
+
+            const displayLevel = bestAvailableInstance?.level || 1;
+            const displayIsHolo = bestAvailableInstance?.isHolo || false;
 
             return (
               <div
@@ -590,10 +623,10 @@ function DeckEditor({
                     allowFlip={false}
                   />
                 </div>
-                <div className="deck-library-card-count">{countInDeck}/{maxPerDeck}</div>
-                {hasMultipleInstances && (
+                <div className="deck-library-card-count">{countInDeck}/{availableCount + countInDeck}</div>
+                {hasMultipleInstances && availableCount > 0 && (
                   <div className="multiple-instances-indicator" title="Múltiplas cópias disponíveis">
-                    {instances.length}x
+                    {availableCount}x
                   </div>
                 )}
               </div>

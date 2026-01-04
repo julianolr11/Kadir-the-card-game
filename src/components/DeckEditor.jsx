@@ -698,7 +698,7 @@ function DeckEditor({
           <CardInstanceSelector
             cardId={selectedCardForInstance}
             cardData={getCardData(selectedCardForInstance)}
-            instances={getCardInstances(selectedCardForInstance)}
+            instances={getAvailableInstances(selectedCardForInstance)}
             onSelect={handleInstanceSelected}
             onClose={() => setShowInstanceSelector(false)}
             title={lang === 'ptbr' ? 'Selecione uma cópia para o deck' : 'Select a card copy for deck'}

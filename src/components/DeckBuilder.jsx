@@ -293,6 +293,21 @@ function DeckBuilder({ onNavigate }) {
     return {};
   }, [activeGuardian]);
 
+  // Helper para obter a melhor instância do guardião (prioriza holo)
+  const getBestGuardianInstance = () => {
+    if (!activeGuardian?.id) return { isHolo: false, level: 0 };
+
+    const instances = getCardInstances(activeGuardian.id);
+    if (!instances || instances.length === 0) return { isHolo: false, level: 0 };
+
+    // Priorizar: holo > maior level > primeira instância
+    const holoInstance = instances.find(inst => inst.isHolo);
+    if (holoInstance) return { isHolo: holoInstance.isHolo, level: holoInstance.level };
+
+    const sorted = [...instances].sort((a, b) => b.level - a.level);
+    return { isHolo: sorted[0]?.isHolo || false, level: sorted[0]?.level || 0 };
+  };
+
   function triggerOpen(slotId) {
     setOpeningSlotId(slotId);
     setTimeout(() => setOpeningSlotId(null), 320);
@@ -616,6 +631,7 @@ function DeckBuilder({ onNavigate }) {
                   creature={currentGuardianForDisplay}
                   onClose={null}
                   level={guardianProgress.level}
+                  isHolo={getBestGuardianInstance().isHolo}
                   allowFlip={false}
                 />
               </div>
@@ -732,6 +748,7 @@ function DeckBuilder({ onNavigate }) {
                       creature={guardianWithSelectedSkills}
                       onClose={null}
                       level={guardianProgress.level}
+                      isHolo={getBestGuardianInstance().isHolo}
                       allowFlip
                       armor={armorValue}
                       burn={statusEffects.burn}
@@ -1039,14 +1056,16 @@ function DeckBuilder({ onNavigate }) {
           guardianId={activeGuardian?.id || activeGuardian?.name}
           initialCards={
             getDeck?.(slots[editingDeckIndex].id)?.cards || (() => {
-              // Novo deck: adicionar guardião no primeiro slot
+              // Novo deck: adicionar guardião no primeiro slot (melhor instância)
               const newDeck = Array(20).fill(null);
               const guardianCardId = activeGuardian?.id || activeGuardian?.name;
               if (guardianCardId && getCardInstances) {
                 const guardianInstances = getCardInstances(guardianCardId);
                 if (guardianInstances && guardianInstances.length > 0) {
-                  // Usar a primeira instância do guardião
-                  newDeck[0] = guardianInstances[0].instanceId;
+                  // Usar a melhor instância (prioriza holo)
+                  const holoInstance = guardianInstances.find(inst => inst.isHolo);
+                  const bestInstance = holoInstance || guardianInstances[0];
+                  newDeck[0] = bestInstance.instanceId;
                 }
               }
               return newDeck;

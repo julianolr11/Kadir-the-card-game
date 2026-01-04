@@ -69,6 +69,7 @@ function DeckEditor({
   const [draggedCardId, setDraggedCardId] = useState(null);
   const [dragOverSlot, setDragOverSlot] = useState(null);
   const [hoveredCard, setHoveredCard] = useState(null);
+  const [hoveredCardId, setHoveredCardId] = useState(null);
   const [showSavedToast, setShowSavedToast] = useState(false);
   const [showInstanceSelector, setShowInstanceSelector] = useState(false);
   const [selectedCardForInstance, setSelectedCardForInstance] = useState(null);
@@ -98,11 +99,11 @@ function DeckEditor({
   const getBestInstance = (cardId) => {
     const instances = getCardInstances(cardId);
     if (!instances || instances.length === 0) return null;
-    
+
     // Priorizar: holo > maior level > primeira instância
     const holoInstance = instances.find(inst => inst.isHolo);
     if (holoInstance) return holoInstance;
-    
+
     const sorted = [...instances].sort((a, b) => b.level - a.level);
     return sorted[0];
   };
@@ -542,7 +543,7 @@ function DeckEditor({
             const maxPerDeck = Math.min(instanceCount, 2);
             const isDisabled = countInDeck >= maxPerDeck;
             const hasMultipleInstances = instances && instances.length > 1;
-            
+
             // Obter melhor instância para exibição na biblioteca (prioriza holo)
             const bestInstance = getBestInstance(card.id);
             const displayLevel = bestInstance?.level || 1;
@@ -559,6 +560,7 @@ function DeckEditor({
                 onDragEnd={handleDragEnd}
                 onMouseEnter={(e) => {
                   setHoveredCard(card.data);
+                  setHoveredCardId(card.id);
                   if (hasMultipleInstances) {
                     setHoveredCardForInstances(card.id);
                     const rect = e.currentTarget.getBoundingClientRect();
@@ -567,6 +569,7 @@ function DeckEditor({
                 }}
                 onMouseLeave={() => {
                   setHoveredCard(null);
+                  setHoveredCardId(null);
                   setHoveredCardForInstances(null);
                 }}
                 onClick={() => !isDisabled && addCardToDeck(card.id)}
@@ -637,14 +640,20 @@ function DeckEditor({
         )}
 
         {/* Preview em Hover */}
-        {hoveredCard && (
+        {hoveredCard && hoveredCardId && (
           <div className="deck-card-preview-hover">
-            <CreatureCardPreview
-              creature={hoveredCard}
-              onClose={null}
-              level={1}
-              allowFlip={false}
-            />
+            {(() => {
+              const bestInstance = getBestInstance(hoveredCardId);
+              return (
+                <CreatureCardPreview
+                  creature={hoveredCard}
+                  onClose={null}
+                  level={bestInstance?.level || 1}
+                  isHolo={bestInstance?.isHolo || false}
+                  allowFlip={false}
+                />
+              );
+            })()}
           </div>
         )}
 

@@ -121,6 +121,7 @@ function CreatureCardPreview({
   onClose,
   level = 0,
   allowFlip = false,
+  isHolo = false,
   armor = 0,
   burn = 0,
   freeze = 0,
@@ -166,7 +167,7 @@ function CreatureCardPreview({
       >
         {/* FRENTE DA CARTA */}
         <div style={{ backfaceVisibility: 'hidden' }}>
-          <div className={`card-preview ${colorClass[creature.element] || ''}`}>
+          <div className={`card-preview ${colorClass[creature.element] || ''} ${isHolo ? 'card-preview-holo' : ''}`}>
             <div className="card-preview-header">
               <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <img

@@ -108,7 +108,7 @@ export function AppProvider({ children }) {
     const newCollection = { ...cardCollection };
     cards.forEach((card) => {
       const cardId = typeof card === 'string' ? card : card.id;
-      const isHolo = typeof card === 'string' ? (Math.random() < 0.1) : (card.isHolo || false);
+      const isHolo = typeof card === 'string' ? (Math.random() < 0.02) : (card.isHolo || false);
       const instance = createCardInstance(cardId, isHolo);
 
       if (!newCollection[cardId]) {

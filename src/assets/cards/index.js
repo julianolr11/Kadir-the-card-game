@@ -23,6 +23,12 @@ const creatures = [
   require('./booster1/pawferion'),
   require('./booster1/alatoy'),
   require('./booster1/whalar'),
+  require('./booster1/elythra'),
+  require('./booster1/agolir'),
+  require('./booster1/beoxyr'),
+  require('./booster1/zephyron'),
+  require('./booster1/ekonos'),
+  require('./booster1/terrakhal'),
 ];
 
 module.exports = creatures;

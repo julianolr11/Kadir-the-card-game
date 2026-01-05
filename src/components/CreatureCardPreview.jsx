@@ -182,11 +182,15 @@ function CreatureCardPreview({
                     fontWeight: 700,
                     fontSize: '1.00rem',
                     textShadow: '0 2px 8px #000a',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
                   }}
                 >
                   {typeof creature.name === 'object'
                     ? creature.name[langKey]
                     : creature.name}
+                  {isHolo && <span className="holo-indicator">✨</span>}
                 </span>
                 <span
                   className="card-preview-title"

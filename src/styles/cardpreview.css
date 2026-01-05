@@ -19,6 +19,23 @@
   position: relative;
 }
 
+/* Indicador de carta holográfica (inline no nome) */
+.holo-indicator {
+  font-size: 14px;
+  margin-left: 4px;
+  animation: holo-pulse 2s ease-in-out infinite;
+  filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.6));
+}
+
+@keyframes holo-pulse {
+  0%, 100% {
+    opacity: 0.65;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 /* Efeito holográfico animado - APENAS para cartas holográficas */
 .card-preview-holo::after {
   content: '';
@@ -137,13 +154,13 @@
     animation: cardPreviewOpen 0.45s cubic-bezier(.7,-0.2,.3,1.4);
   }
 
-  /* CARD PREVIEW AIR - fundo com textura e degradê roxo claro */
+  /* CARD PREVIEW AIR - fundo com textura e degradê amarelo dourado */
   .card-preview.card-preview-air {
     width: 370px;
     min-height: 540px;
     border-radius: 18px;
-    box-shadow: 0 8px 48px #000c, 0 0 0 3px #d6b0ff66;
-    background: linear-gradient(120deg, #2a183a 0%, #a86ca8 60%, #d6b0ff 90%, #18182a 100%), url('../assets/img/card/texture-background.jpg');
+    box-shadow: 0 8px 48px #000c, 0 0 0 3px #ffd76a66;
+    background: linear-gradient(120deg, #3a2a18 0%, #d08b2a 55%, #ffd76a 88%, #2a1a0f 100%), url('../assets/img/card/texture-background.jpg');
     background-blend-mode: multiply, darken;
     position: relative;
     padding: 22px 14px 18px 14px;

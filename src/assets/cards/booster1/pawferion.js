@@ -1,6 +1,6 @@
 // Card data for Pawferion
 module.exports = {
-  id: 21,
+  id: 'pawferion',
   title: { pt: 'O elemental corrompido', en: 'The Corrupted Elemental' },
   num: 21,
   height: 3.8,

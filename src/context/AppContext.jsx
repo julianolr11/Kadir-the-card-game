@@ -73,7 +73,22 @@ export function AppProvider({ children }) {
   const [cardCollection, setCardCollection] = useState(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('cardCollection');
-      if (stored) return JSON.parse(stored);
+      if (stored) {
+        const collection = JSON.parse(stored);
+        // Remover IDs numéricos antigos (migração)
+        const cleaned = {};
+        Object.keys(collection).forEach(key => {
+          // Apenas manter IDs que são strings não-numéricas
+          if (isNaN(key)) {
+            cleaned[key] = collection[key];
+          }
+        });
+        // Salvar versão limpa
+        if (Object.keys(cleaned).length !== Object.keys(collection).length) {
+          localStorage.setItem('cardCollection', JSON.stringify(cleaned));
+        }
+        return cleaned;
+      }
     }
     return {};
   });

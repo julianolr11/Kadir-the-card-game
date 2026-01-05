@@ -467,7 +467,7 @@ function CreatureCardPreview({
           onClick={() => {
             if (swipeAudioRef.current) {
               swipeAudioRef.current.currentTime = 0;
-              swipeAudioRef.current.play();
+              swipeAudioRef.current.play().catch(() => {});
             }
             setShowStory((s) => !s);
           }}

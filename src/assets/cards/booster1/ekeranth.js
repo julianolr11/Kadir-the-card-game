@@ -9,7 +9,7 @@ module.exports = {
   name: { pt: 'Ekeranth', en: 'Ekeranth' },
   type: { pt: 'Draconídeo', en: 'Draconid' },
   element: 'fogo',
-  img: require('../../img/creatures/ekeranth_bio.jpg'),
+  img: require('../../img/creatures/ekeranth_bio.webp'),
   color: 'fire',
   hp: 6,
 

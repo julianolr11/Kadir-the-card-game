@@ -1,6 +1,6 @@
 // Card data for Alatoy
 module.exports = {
-  id: 22,
+  id: 'alatoy',
   title: {
     pt: 'A Enguia das Profundezas Sombrias',
     en: 'The Eel of Shadow Depths',

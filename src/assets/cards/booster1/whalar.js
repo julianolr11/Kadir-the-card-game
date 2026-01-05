@@ -1,6 +1,6 @@
 // Card data for Whalar
 module.exports = {
-  id: 23,
+  id: 'whalar',
   title: {
     pt: 'O Predador Noturno das Marés',
     en: 'The Nocturnal Tide Predator',

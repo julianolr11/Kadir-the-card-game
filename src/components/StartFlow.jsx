@@ -126,7 +126,7 @@ function StartFlow({ onFinish, onGoHome, menuMusicRef }) {
       // Toca o som pop
       if (popAudioRef.current) {
         popAudioRef.current.currentTime = 0;
-        popAudioRef.current.play();
+        popAudioRef.current.play().catch(() => {});
       }
       if (i < 4) setTimeout(() => showNextCard(i + 1), 180);
     }
@@ -148,7 +148,7 @@ function StartFlow({ onFinish, onGoHome, menuMusicRef }) {
       typingAudioRef.current.currentTime = 0;
       typingAudioRef.current.volume = (effectsVolume ?? 50) / 100;
       typingAudioRef.current.loop = true;
-      typingAudioRef.current.play();
+      typingAudioRef.current.play().catch(() => {});
     }
     function typeNext() {
       setDisplayedText(dialogos[lang][step].slice(0, idx));
@@ -181,7 +181,7 @@ function StartFlow({ onFinish, onGoHome, menuMusicRef }) {
     if (keyClickAudioRef.current) {
       keyClickAudioRef.current.currentTime = 0;
       keyClickAudioRef.current.volume = (effectsVolume ?? 50) / 100;
-      keyClickAudioRef.current.play();
+      keyClickAudioRef.current.play().catch(() => {});
     }
     // Não tocar som ao avançar o diálogo
     setFade('fadeout');
@@ -309,7 +309,7 @@ function StartFlow({ onFinish, onGoHome, menuMusicRef }) {
                     // Toca o som de flipcard ao virar a carta
                     if (flipAudioRef.current) {
                       flipAudioRef.current.currentTime = 0;
-                      flipAudioRef.current.play();
+                      flipAudioRef.current.play().catch(() => {});
                     }
                   }}
                   role="button"
@@ -342,7 +342,7 @@ function StartFlow({ onFinish, onGoHome, menuMusicRef }) {
                       }
                       if (flipAudioRef.current) {
                         flipAudioRef.current.currentTime = 0;
-                        flipAudioRef.current.play();
+                        flipAudioRef.current.play().catch(() => {});
                       }
                     }
                   }}
@@ -370,7 +370,7 @@ function StartFlow({ onFinish, onGoHome, menuMusicRef }) {
                       if (ref.current) {
                         ref.current.currentTime = 0;
                         ref.current.volume = (effectsVolume ?? 50) / 100;
-                        ref.current.play();
+                        ref.current.play().catch(() => {});
                       }
                     }}
                     onMouseLeave={() => setHovered(null)}

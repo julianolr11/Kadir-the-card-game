@@ -1,6 +1,6 @@
 // Card data for Elderox
 module.exports = {
-  id: 20,
+  id: 'elderox',
   title: { pt: 'Rugido da montanha', en: 'Roar of the Mountain' },
   num: 20,
   height: 4.2,

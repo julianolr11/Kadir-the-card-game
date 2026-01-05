@@ -37,7 +37,7 @@ function LoadingScreen({ onFinish, menuMusicRef }) {
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = musicVolume / 100;
-      audioRef.current.play();
+      audioRef.current.play().catch(() => {});
     }
     const timer = setTimeout(() => {
       setShowMenu(true);
@@ -53,7 +53,7 @@ function LoadingScreen({ onFinish, menuMusicRef }) {
     if (keyClickAudioRef.current) {
       keyClickAudioRef.current.currentTime = 0;
       keyClickAudioRef.current.volume = musicVolume / 100;
-      keyClickAudioRef.current.play();
+      keyClickAudioRef.current.play().catch(() => {});
     }
   };
 

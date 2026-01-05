@@ -8,7 +8,7 @@ module.exports = {
   name: { pt: 'Ekonos', en: 'Ekonos' },
   type: { pt: 'Ave', en: 'Bird' },
   element: 'puro',
-  img: require('../../img/creatures/ekonos_bio.webp'),
+  img: require('../../img/creatures/Ekonos_bio.webp'),
   color: 'pure',
   hp: 5,
   abilities: [

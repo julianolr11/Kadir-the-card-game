@@ -7,7 +7,7 @@ module.exports = {
   name: { pt: 'Sunburst', en: 'Sunburst' },
   type: { pt: 'Sombria', en: 'Shadow' },
   element: 'agua',
-  img: require('../../img/creatures/sunburst_bio.jpeg'),
+  img: require('../../img/creatures/sunburst_bio.webp'),
   color: 'water',
   hp: 5,
   abilities: [

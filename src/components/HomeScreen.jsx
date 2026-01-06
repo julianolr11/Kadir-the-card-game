@@ -116,7 +116,7 @@ function BoosterZone({ boosters, onOpenBooster, isOpeningBooster }) {
         </>
       )}
       {boosters <= 0 && (
-        <span className="booster-empty-label">Sem boosters</span>
+        <span className="booster-empty-label">Sem<br />Boosters</span>
       )}
     </div>
   );

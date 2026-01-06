@@ -513,6 +513,9 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
           <button className="home-btn" onClick={() => onNavigate('iniciar')}>
             Iniciar
           </button>
+          <button className="home-btn" onClick={() => onNavigate('battle')}>
+            Batalha (MVP)
+          </button>
         </div>
       </main>
       {showOptions && (

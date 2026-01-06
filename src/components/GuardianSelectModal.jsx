@@ -24,8 +24,14 @@ function GuardianSelectModal({ onSelectGuardian, onClose }) {
       setSelectedGuardianId(guardian.id);
       setShowInstanceSelector(true);
     } else {
-      // Selecionar direto
-      onSelectGuardian(guardian);
+      // Selecionar direto (sem múltiplas instâncias)
+      const firstInstanceId = instances?.[0]?.instanceId || null;
+      onSelectGuardian({
+        id: guardian.id,
+        name: guardian.name?.pt || guardian.name?.ptbr || guardian.id,
+        img: guardian.img,
+        selectedInstanceId: firstInstanceId,
+      });
       onClose();
     }
   };
@@ -34,7 +40,9 @@ function GuardianSelectModal({ onSelectGuardian, onClose }) {
     const guardian = guardians.find(g => g.id === selectedGuardianId);
     if (guardian) {
       onSelectGuardian({
-        ...guardian,
+        id: guardian.id,
+        name: guardian.name?.pt || guardian.name?.ptbr || guardian.id,
+        img: guardian.img,
         selectedInstanceId: instanceId, // Passar a instância selecionada
       });
       onClose();

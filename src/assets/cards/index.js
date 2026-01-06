@@ -29,6 +29,7 @@ const creatures = [
   require('./booster1/zephyron'),
   require('./booster1/ekonos'),
   require('./booster1/terrakhal'),
+  require('./booster1/seract'),
 ];
 
 module.exports = creatures;

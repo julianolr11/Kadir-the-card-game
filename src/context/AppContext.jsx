@@ -29,7 +29,7 @@ export function AppProvider({ children }) {
   const [effectsVolume, setEffectsVolume] = useState(() =>
     getInitial('effectsVolume', 50),
   );
-  // Guardião ativo: { name, img }
+  // Guardião ativo: { id, name, img, selectedInstanceId }
   const [activeGuardian, setActiveGuardian] = useState(() => {
     // Tenta recuperar do localStorage
     if (typeof window !== 'undefined') {
@@ -38,8 +38,10 @@ export function AppProvider({ children }) {
     }
     // Valor padrão
     return {
+      id: 'draak',
       name: 'draak',
       img: require('../assets/img/creatures/draak_bio.webp'),
+      selectedInstanceId: null,
     };
   });
 

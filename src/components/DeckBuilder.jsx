@@ -293,14 +293,20 @@ function DeckBuilder({ onNavigate }) {
     return {};
   }, [activeGuardian]);
 
-  // Helper para obter a melhor instância do guardião (prioriza holo)
-  const getBestGuardianInstance = () => {
+  // Helper para obter a instância selecionada do guardião
+  const getSelectedGuardianInstance = () => {
     if (!activeGuardian?.id) return { isHolo: false, level: 0 };
 
     const instances = getCardInstances(activeGuardian.id);
     if (!instances || instances.length === 0) return { isHolo: false, level: 0 };
 
-    // Priorizar: holo > maior level > primeira instância
+    // Se tem selectedInstanceId, usar essa
+    if (activeGuardian.selectedInstanceId) {
+      const selected = instances.find(inst => inst.instanceId === activeGuardian.selectedInstanceId);
+      if (selected) return { isHolo: selected.isHolo, level: selected.level };
+    }
+
+    // Fallback: priorizar holo > maior level > primeira instância
     const holoInstance = instances.find(inst => inst.isHolo);
     if (holoInstance) return { isHolo: holoInstance.isHolo, level: holoInstance.level };
 
@@ -631,7 +637,7 @@ function DeckBuilder({ onNavigate }) {
                   creature={currentGuardianForDisplay}
                   onClose={null}
                   level={guardianProgress.level}
-                  isHolo={getBestGuardianInstance().isHolo}
+                  isHolo={getSelectedGuardianInstance().isHolo}
                   allowFlip={false}
                 />
               </div>
@@ -748,7 +754,7 @@ function DeckBuilder({ onNavigate }) {
                       creature={guardianWithSelectedSkills}
                       onClose={null}
                       level={guardianProgress.level}
-                      isHolo={getBestGuardianInstance().isHolo}
+                      isHolo={getSelectedGuardianInstance().isHolo}
                       allowFlip
                       armor={armorValue}
                       burn={statusEffects.burn}

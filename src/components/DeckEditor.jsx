@@ -11,16 +11,20 @@ import arIcon from '../assets/img/elements/ar.png';
 import puroIcon from '../assets/img/elements/puro.png';
 import '../styles/deckbuilder.css';
 
-// Lista de todas as cartas disponíveis (23 cartas do booster1)
+// Lista de todas as cartas disponíveis (31 cartas do booster1)
 const ALL_CARD_IDS = [
+  'agolir',
   'alatoy',
   'arguilia',
   'ashfang',
+  'beoxyr',
   'digitama',
   'draak',
   'drazaq',
   'ekeranth',
+  'ekonos',
   'elderox',
+  'elythra',
   'faskel',
   'griffor',
   'ignis',
@@ -32,10 +36,13 @@ const ALL_CARD_IDS = [
   'owlberoth',
   'pawferion',
   'raptauros',
+  'seract',
   'sunburst',
+  'terrakhal',
   'viborom',
   'virideer',
   'whalar',
+  'zephyron',
 ];
 
 // Função para carregar dados da carta

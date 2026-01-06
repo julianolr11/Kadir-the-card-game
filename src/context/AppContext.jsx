@@ -34,7 +34,14 @@ export function AppProvider({ children }) {
     // Tenta recuperar do localStorage
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('activeGuardian');
-      if (stored) return JSON.parse(stored);
+      if (stored) {
+        const guardian = JSON.parse(stored);
+        // Migração: garantir que tem a propriedade 'id'
+        if (!guardian.id && guardian.name) {
+          guardian.id = guardian.name;
+        }
+        return guardian;
+      }
     }
     // Valor padrão
     return {

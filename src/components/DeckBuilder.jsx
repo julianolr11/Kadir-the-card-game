@@ -567,7 +567,7 @@ function DeckBuilder({ onNavigate }) {
   const currentGuardianForDisplay = useMemo(() => {
     if (guardianLoadout && guardianLoadout.guardianId === activeGuardian?.id) {
       // Recalcular com base no loadout salvo
-      if (!activeGuardian || !allUnlocks || !guardianData) return activeGuardian;
+      if (!activeGuardian || !allUnlocks || !guardianData) return guardianData || activeGuardian;
 
       const selectedAbilities = guardianLoadout.selectedSkills
         .filter((skillId) => skillId)
@@ -586,19 +586,19 @@ function DeckBuilder({ onNavigate }) {
 
       if (selectedAbilities.length === 0) {
         return {
-          ...activeGuardian,
-          hp: (activeGuardian.hp || 0) + guardianLoadout.hpBonus,
+          ...guardianData,
+          hp: (guardianData.hp || 0) + guardianLoadout.hpBonus,
           abilities: guardianData.defaultSkills,
         };
       }
 
       return {
-        ...activeGuardian,
-        hp: (activeGuardian.hp || 0) + guardianLoadout.hpBonus,
+        ...guardianData,
+        hp: (guardianData.hp || 0) + guardianLoadout.hpBonus,
         abilities: selectedAbilities,
       };
     }
-    return activeGuardian;
+    return guardianData || activeGuardian;
   }, [activeGuardian, guardianLoadout, allUnlocks, guardianData]);
 
   return (

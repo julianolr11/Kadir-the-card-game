@@ -12,6 +12,15 @@ import boosterAnimationVideo from '../assets/img/card/animacao-booster.mp4';
 import creatures from '../assets/cards';
 import BoosterResultsSlider from './BoosterResultsSlider';
 
+// Função para carregar dados da carta do guardião
+const getGuardianCardData = (guardianId) => {
+  try {
+    return require(`../assets/cards/booster1/${guardianId}.js`);
+  } catch (error) {
+    return null;
+  }
+};
+
 // Traduções simples para o menu cog
 const cogTranslations = {
   ptbr: { settings: 'Configurações', exit: 'Sair' },
@@ -466,32 +475,39 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
         <div className="deck-btn-center-group">
           {/* Áudio do efeito sphere-menu */}
           <audio ref={deckBtnAudioRef} src={sphereMenuSound} preload="auto" />
-          <button
-            className={`deck-btn${activeGuardian && activeGuardian.element ? ` deck-btn-${activeGuardian.element}` : ''}`}
-            onClick={() => onNavigate('deck')}
-            onMouseEnter={handleDeckBtnMouseEnter}
-            style={{
-              backgroundImage: activeGuardian?.img
-                ? `url(${activeGuardian.img})`
-                : undefined,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              boxShadow:
-                activeGuardian?.element === 'agua'
-                  ? '0 0 48px 16px #00cfff, 0 0 32px 8px #00eaff inset, 0 0 0 8px #00eaff80, 0 0 32px 16px #00cfff80, 0 0 64px 24px 8px #00eaff, 0 0 0 12px #00cfff, 0 0 0 0px #00eaff, 0 0 0 0px #00cfff, 0 0 0 0px #00eaff, 0 0 0 0px #00cfff'
-                  : activeGuardian?.element === 'terra'
-                    ? '0 0 48px 16px #4caf50, 0 0 32px 8px #e2c290 inset, 0 0 0 8px #e2c29080, 0 0 32px 16px #4caf5080, 0 0 64px 24px 8px #e2c290, 0 0 0 12px #4caf50, 0 0 0 0px #e2c290, 0 0 0 0px #4caf50, 0 0 0 0px #e2c290, 0 0 0 0px #4caf50'
-                    : activeGuardian?.element === 'fire'
-                      ? '0 0 48px 16px #ff3c00, 0 0 32px 8px #ffb347 inset, 0 0 0 8px #ffb34780, 0 0 32px 16px #ff3c0080, 0 0 64px 24px 8px #ffb347, 0 0 0 12px #ff3c00, 0 0 0 0px #ffb347, 0 0 0 0px #ff3c00, 0 0 0 0px #ffb347, 0 0 0 0px #ff3c00'
-                      : activeGuardian?.element === 'ar'
-                        ? '0 0 48px 16px #b388ff, 0 0 32px 8px #b0e6ff inset, 0 0 0 8px #b388ff80, 0 0 32px 16px #b0e6ff80, 0 0 64px 24px 8px #b388ff, 0 0 0 12px #b0e6ff, 0 0 0 0px #b388ff, 0 0 0 0px #b0e6ff, 0 0 0 0px #b388ff, 0 0 0 0px #b0e6ff'
-                        : activeGuardian?.element === 'puro'
-                          ? '0 0 48px 16px #fff6b0, 0 0 32px 8px #fff6b0 inset, 0 0 0 8px #fff6b080, 0 0 32px 16px #fff6b080, 0 0 64px 24px 8px #fff6b0, 0 0 0 12px #fffde4, 0 0 0 0px #fff6b0, 0 0 0 0px #fffde4, 0 0 0 0px #fff6b0, 0 0 0 0px #fffde4'
-                          : undefined,
-            }}
-          >
-            <span className="deck-btn-label">Deck</span>
-          </button>
+          {(() => {
+            const guardianCardData = activeGuardian ? getGuardianCardData(activeGuardian.id || activeGuardian.name) : null;
+            const guardianElement = guardianCardData?.element || activeGuardian?.element;
+
+            return (
+              <button
+                className={`deck-btn${guardianElement ? ` deck-btn-${guardianElement}` : ''}`}
+                onClick={() => onNavigate('deck')}
+                onMouseEnter={handleDeckBtnMouseEnter}
+                style={{
+                  backgroundImage: activeGuardian?.img
+                    ? `url(${activeGuardian.img})`
+                    : undefined,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  boxShadow:
+                    guardianElement === 'agua'
+                      ? '0 0 48px 16px #00cfff, 0 0 32px 8px #00eaff inset, 0 0 0 8px #00eaff80, 0 0 32px 16px #00cfff80, 0 0 64px 24px 8px #00eaff, 0 0 0 12px #00cfff, 0 0 0 0px #00eaff, 0 0 0 0px #00cfff, 0 0 0 0px #00eaff, 0 0 0 0px #00cfff'
+                      : guardianElement === 'terra'
+                        ? '0 0 48px 16px #4caf50, 0 0 32px 8px #e2c290 inset, 0 0 0 8px #e2c29080, 0 0 32px 16px #4caf5080, 0 0 64px 24px 8px #e2c290, 0 0 0 12px #4caf50, 0 0 0 0px #e2c290, 0 0 0 0px #4caf50, 0 0 0 0px #e2c290, 0 0 0 0px #4caf50'
+                        : guardianElement === 'fogo'
+                          ? '0 0 48px 16px #ff3c00, 0 0 32px 8px #ffb347 inset, 0 0 0 8px #ffb34780, 0 0 32px 16px #ff3c0080, 0 0 64px 24px 8px #ffb347, 0 0 0 12px #ff3c00, 0 0 0 0px #ffb347, 0 0 0 0px #ff3c00, 0 0 0 0px #ffb347, 0 0 0 0px #ff3c00'
+                          : guardianElement === 'ar'
+                            ? '0 0 48px 16px #b388ff, 0 0 32px 8px #b0e6ff inset, 0 0 0 8px #b388ff80, 0 0 32px 16px #b0e6ff80, 0 0 64px 24px 8px #b388ff, 0 0 0 12px #b0e6ff, 0 0 0 0px #b388ff, 0 0 0 0px #b0e6ff, 0 0 0 0px #b388ff, 0 0 0 0px #b0e6ff'
+                            : guardianElement === 'puro'
+                              ? '0 0 48px 16px #fff6b0, 0 0 32px 8px #fff6b0 inset, 0 0 0 8px #fff6b080, 0 0 32px 16px #fff6b080, 0 0 64px 24px 8px #fff6b0, 0 0 0 12px #fffde4, 0 0 0 0px #fff6b0, 0 0 0 0px #fffde4, 0 0 0 0px #fff6b0, 0 0 0 0px #fffde4'
+                              : undefined,
+                }}
+              >
+                <span className="deck-btn-label">Deck</span>
+              </button>
+            );
+          })()}
         </div>
         <div className="home-btn-group home-btn-group-bottom">
           <button className="home-btn" onClick={() => onNavigate('iniciar')}>

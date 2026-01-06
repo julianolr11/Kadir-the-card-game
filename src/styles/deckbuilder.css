@@ -245,6 +245,14 @@
   font-size: 14px;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
   z-index: 2;
+  box-shadow: 0 0 16px rgba(69, 192, 255, 0.6), 0 0 32px rgba(69, 192, 255, 0.3);
+  border-radius: 50%;
+  transition: all 200ms ease;
+}
+
+.guardian-progress-level-badge:hover {
+  box-shadow: 0 0 24px rgba(69, 192, 255, 0.9), 0 0 48px rgba(69, 192, 255, 0.5), inset 0 0 16px rgba(69, 192, 255, 0.3);
+  transform: translateY(-50%) scale(1.1);
 }
 
 .guardian-progress-level-badge img {
@@ -253,6 +261,12 @@
   object-fit: contain;
   position: absolute;
   inset: 0;
+  filter: drop-shadow(0 0 8px rgba(69, 192, 255, 0.5));
+  transition: filter 200ms ease;
+}
+
+.guardian-progress-level-badge:hover img {
+  filter: drop-shadow(0 0 16px rgba(69, 192, 255, 1)) brightness(1.2);
 }
 
 .guardian-progress-level-badge span {
@@ -1169,7 +1183,7 @@
   background: rgba(255, 255, 255, 0.03);
   cursor: pointer;
   transition: all 0.2s ease;
-  overflow: hidden;
+  overflow: visible;
   animation: fadeInUp 0.4s ease both;
       height: 148px;
 }
@@ -1190,6 +1204,20 @@
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(122, 90, 248, 0.3);
   z-index: 10;
+}
+
+.deck-library-card.selected {
+  border-color: rgba(69, 192, 255, 1) !important;
+  background: rgba(69, 192, 255, 0.25) !important;
+  box-shadow: 0 0 30px rgba(69, 192, 255, 0.9), 0 0 60px rgba(69, 192, 255, 0.6), inset 0 0 20px rgba(69, 192, 255, 0.4) !important;
+  transform: scale(1.03) !important;
+  z-index: 15 !important;
+}
+
+.deck-library-card.selected:hover {
+  box-shadow: 0 0 40px rgba(69, 192, 255, 1), 0 0 80px rgba(69, 192, 255, 0.8), inset 0 0 24px rgba(69, 192, 255, 0.5) !important;
+  transform: scale(1.05) translateY(-2px) !important;
+  border-color: rgba(69, 192, 255, 1) !important;
 }
 
 .deck-library-card.disabled {

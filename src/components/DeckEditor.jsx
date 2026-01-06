@@ -313,7 +313,7 @@ function DeckEditor({
     });
 
     return cards;
-  }, [cardCollection, searchTerm, elementFilter, typeFilter, sortBy, langKey]);
+  }, [cardCollection, searchTerm, elementFilter, typeFilter, sortBy, langKey, selectedGuardian]);
 
   // Auto-save com debounce
   useEffect(() => {
@@ -349,6 +349,27 @@ function DeckEditor({
 
     return () => clearTimeout(timer);
   }, [deckCards, deckName, deckId, selectedGuardian, onSave]);
+
+  // Atualizar selectedGuardian quando guardianId prop muda
+  useEffect(() => {
+    if (guardianId !== selectedGuardian) {
+      setSelectedGuardian(guardianId);
+
+      // Quando guardião muda, atualizar o slot do guardião (primeiro slot)
+      if (guardianId && getCardInstances) {
+        const guardianInstances = getCardInstances(guardianId);
+        if (guardianInstances && guardianInstances.length > 0) {
+          const holoInstance = guardianInstances.find(inst => inst.isHolo);
+          const bestInstance = holoInstance || guardianInstances[0];
+          setDeckCards(prevCards => {
+            const newCards = [...prevCards];
+            newCards[0] = bestInstance.instanceId;
+            return newCards;
+          });
+        }
+      }
+    }
+  }, [guardianId, getCardInstances]);
 
   // Handlers de drag & drop
   const handleDragStart = (e, cardIdOrInstanceId, fromSlot = false, instanceId = null) => {
@@ -592,7 +613,7 @@ function DeckEditor({
             return (
               <div
                 key={card.id}
-                className={`deck-library-card ${isDisabled ? 'disabled' : ''} ${draggedCardId === card.id ? 'dragging' : ''} ${hasMultipleInstances ? 'has-multiple-instances' : ''}`}
+                className={`deck-library-card ${isDisabled ? 'disabled' : ''} ${draggedCardId === card.id ? 'dragging' : ''} ${hasMultipleInstances ? 'has-multiple-instances' : ''} ${countInDeck > 0 ? 'selected' : ''}`}
                 draggable={!isDisabled}
                 onDragStart={(e) =>
                   !isDisabled && handleDragStart(e, card.id, false)

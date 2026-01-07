@@ -53,13 +53,22 @@ function BoardInner({ onNavigate, selectedDeck }) {
     }
   }, [state.activePlayer]);
 
-  const renderOrbs = (count) => (
-    <div className="orbs">
-      {Array.from({ length: count }).map((_, i) => (
-        <img key={i} src={heartIcon} alt="orb" className="orb" />
-      ))}
-    </div>
-  );
+  const renderOrbs = (count) => {
+    const remaining = Number.isFinite(count) ? Math.max(0, count) : 0;
+    const total = Math.max(3, remaining);
+    return (
+      <div className="orbs">
+        {Array.from({ length: total }).map((_, i) => (
+          <img
+            key={i}
+            src={heartIcon}
+            alt="orb"
+            className={`orb${i >= remaining ? ' orb-missing' : ''}`}
+          />
+        ))}
+      </div>
+    );
+  };
 
   const renderCardChip = (cardId, variant = 'slot', slotData = null) => {
     const data = getCardData(cardId);
@@ -98,7 +107,7 @@ function BoardInner({ onNavigate, selectedDeck }) {
       const isHolo = instance?.isHolo || false;
       return (
         <div className={`card-chip card-chip-${variant}`}>
-          <div style={{ transform: 'scale(0.43)', transformOrigin: 'left top', pointerEvents: 'none' }}>
+          <div style={{ transform: 'scale(0.464)', transformOrigin: 'left top', pointerEvents: 'none' }}>
             <CreatureCardPreview creature={data} onClose={null} level={level} isHolo={isHolo} allowFlip={false} />
           </div>
         </div>
@@ -111,7 +120,7 @@ function BoardInner({ onNavigate, selectedDeck }) {
     const isHolo = instance?.isHolo || false;
     return (
       <div className="card-slot-preview">
-        <div style={{ transform: 'scale(0.48)', transformOrigin: 'center center', pointerEvents: 'none' }}>
+        <div style={{ transform: 'scale(0.6)', transformOrigin: 'center center', pointerEvents: 'none' }}>
           <CreatureCardPreview creature={data} onClose={null} level={level} isHolo={isHolo} allowFlip={false} />
         </div>
       </div>
@@ -232,8 +241,6 @@ function BoardInner({ onNavigate, selectedDeck }) {
     <div className="battle-root">
       <div className="battle-topbar">
         <button className="battle-exit" onClick={() => onNavigate?.('home')}>Sair</button>
-        <div className="turn-indicator">Turno {state.turn} ÔÇö {state.activePlayer === 'player' ? 'Voc├¬' : 'IA'}</div>
-        <button className="end-turn" onClick={endTurn}>Fim do turno</button>
       </div>
 
       <div className="opponent-hand">
@@ -249,27 +256,44 @@ function BoardInner({ onNavigate, selectedDeck }) {
         </div>
       </div>
 
+      {/* Deck de compra do adversário */}
+      <div className="opponent-deck-draw">
+        <div style={{ position: 'relative', display: 'inline-block' }}>
+          <div
+            className="opponent-deck-card-back"
+            style={{ backgroundImage: `url(${cardVerso})` }}
+          />
+          <div className="deck-count-pill deck-count-enemy">Cartas: {state.ai.deck.length}</div>
+        </div>
+      </div>
+
       <div className="board">
+        <div className="turn-indicator">Turno {state.turn}</div>
         <div className="side ai-side">
           <div className="side-header">
             <div className="side-left">{renderOrbs(state.ai.orbs)}</div>
             <div className="side-right">
-              <div className="deck-chip">Deck: {state.ai.deck.length}</div>
-              <div className="essence"><img src={essenceIcon} alt="ess├¬ncia" /> {state.ai.essence}</div>
+              {/* deck-chip removido do lado do adversário */}
             </div>
+                {/* Essência do adversário */}
+                <div className="opponent-essence">
+                  <img src={essenceIcon} alt="essência" />
+                  <span>{state.ai.essence}</span>
+                </div>
           </div>
           {renderSlots(state.ai.field.slots, 'ai')}
         </div>
 
+        <div className="board-divider">
+          <hr className="board-divider-line" />
+          <img src={require('../assets/img/icons/jewel.png')} alt="Jóia" className="board-divider-jewel" />
+        </div>
         <div className="shared-field">
           {state.sharedField.active ? <div className="field-active">Campo Ativo</div> : <div className="field-inactive">Campo Inativo</div>}
         </div>
 
         <div className="side player-side">
-          <div className="side-header">
-            <div className="side-left"></div>
-            <div className="side-right"></div>
-          </div>
+          {/* side-header removido */}
           {renderSlots(state.player.field.slots, 'player')}
         </div>
 
@@ -278,25 +302,28 @@ function BoardInner({ onNavigate, selectedDeck }) {
         </div>
 
         <div className="player-essence">
-          <img src={essenceIcon} alt="ess├¬ncia" />
+          <img src={essenceIcon} alt="essência" />
           <span>{state.player.essence}</span>
         </div>
+        <button className="end-turn-btn" onClick={endTurn}>Fim do turno</button>
       </div>
 
       <div className="deck-draw">
-        <div className="deck-count-pill">Deck {state.player.deck.length}</div>
-        <div
-          className={`deck-card-back ${deckCardDrawn ? 'drawn' : ''}`}
-          style={{ backgroundImage: `url(${cardVerso})` }}
-          onClick={() => {
-            if (state.activePlayer !== 'player') return;
-            if (deckCardDrawn) return;
-            if (!state.player.deck?.length) return;
-            if ((state.player.hand?.length || 0) >= 7) return;
-            setDeckCardDrawn(true);
-            drawPlayerCard();
-          }}
-        />
+        <div style={{ position: 'relative', display: 'inline-block' }}>
+          <div
+            className={`deck-card-back ${deckCardDrawn ? 'drawn' : ''}`}
+            style={{ backgroundImage: `url(${cardVerso})` }}
+            onClick={() => {
+              if (state.activePlayer !== 'player') return;
+              if (deckCardDrawn) return;
+              if (!state.player.deck?.length) return;
+              if ((state.player.hand?.length || 0) >= 7) return;
+              setDeckCardDrawn(true);
+              drawPlayerCard();
+            }}
+          />
+          <div className="deck-count-pill deck-count-player">Cartas: {state.player.deck.length}</div>
+        </div>
         {state.activePlayer === 'player' && !deckCardDrawn && (
           <div className="deck-draw-indicator">
             <div className="deck-draw-indicator-text">Comprar</div>

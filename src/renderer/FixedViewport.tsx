@@ -15,7 +15,8 @@ function useViewportScale() {
   }, []);
 
   const { scale, offsetX, offsetY } = useMemo(() => {
-    const scale = Math.min(size.w / TARGET_W, size.h / TARGET_H);
+    // Nunca ampliar acima de 1x; apenas reduzir para caber em resoluções menores
+    const scale = Math.min(1, Math.min(size.w / TARGET_W, size.h / TARGET_H));
     const contentW = TARGET_W * scale;
     const contentH = TARGET_H * scale;
     const offsetX = Math.max(0, (size.w - contentW) / 2);

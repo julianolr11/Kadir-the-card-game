@@ -1,22 +1,13 @@
-/* Container responsivo 16:9 para candles */
+/* Container fixa em 1920x1080 e escala junto com a viewport */
 .candle-container-16x9 {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
-  height: 56.25vw; /* 16:9 ratio (9/16 = 0.5625) */
-  max-height: 100vh;
-  max-width: 177.78vh; /* 16/9 = 1.7778 */
-  margin: 0 auto;
+  height: 100vh;
+  margin: 0;
   z-index: 10;
   pointer-events: none;
-}
-
-@media (min-aspect-ratio: 16/9) {
-  .candle-container-16x9 {
-    width: 177.78vh;
-    height: 100vh;
-  }
 }
 
 /* As candles agora são absolutas dentro do container 16:9 */
@@ -38,27 +29,7 @@
 .candle-flame-6 { left: 75.94%; /* top não definido */ }
 .candle-flame-7 { left: 76.33%; top: 15.28%; }
 
-/* Ajuste exato para 1280x720 */
-@media (min-width: 1270px) and (max-width: 1290px) and (min-height: 710px) and (max-height: 730px) {
-  .candle-flame-1 { left: 90px; top: 380px; }
-  .candle-flame-2 { left: 140px; top: 321px; }
-  .candle-flame-3 { left: 184px; top: 401px; }
-  .candle-flame-4 { left: 571px; top: -23px; }
-  .candle-flame-5 { left: 657px; top: -21px; }
-  .candle-flame-6 { left: 972px; }
-  .candle-flame-7 { left: 977px; top: 110px; }
-}
 
-/* Ajuste exato para 1920x1080 */
-@media (min-width: 1910px) and (max-width: 1930px) and (min-height: 1070px) and (max-height: 1090px) {
-  .candle-flame-1 { left: 153px; top: 592px; }
-  .candle-flame-2 { left: 218px; top: 510px; }
-  .candle-flame-3 { left: 283px; top: 624px; }
-  .candle-flame-4 { left: 870px; top: -14px; }
-  .candle-flame-5 { left: 990px; top: -32px; }
-  .candle-flame-6 { left: 1469px; top: 22px }
-  .candle-flame-7 { left: 1477px; top: 189px; }
-}
 
 /* Efeito de brilho inspirado no CodePen de jh3y */
 .deck-btn {
@@ -353,34 +324,6 @@
   pointer-events: none;
   z-index: 2;
   transform: skewX(-24deg);
-.candle-flame-1 {
-  left: 7.03vw;   /* 90 / 1280 * 100 */
-  top: 52.78vh;   /* 380 / 720 * 100 */
-}
-.candle-flame-2 {
-  left: 10.94vw;  /* 140 / 1280 * 100 */
-  top: 44.58vh;   /* 321 / 720 * 100 */
-}
-.candle-flame-3 {
-  left: 14.38vw;  /* 184 / 1280 * 100 */
-  top: 55.69vh;   /* 401 / 720 * 100 */
-}
-.candle-flame-4 {
-  left: 44.61vw;  /* 571 / 1280 * 100 */
-  top: -3.19vh;   /* -23 / 720 * 100 */
-}
-.candle-flame-5 {
-  left: 51.33vw;  /* 657 / 1280 * 100 */
-  top: -2.92vh;   /* -21 / 720 * 100 */
-}
-.candle-flame-6 {
-  left: 75.94vw;  /* 972 / 1280 * 100 */
-  /* top não definido no original */
-}
-.candle-flame-7 {
-  left: 76.33vw;  /* 977 / 1280 * 100 */
-  top: 15.28vh;   /* 110 / 720 * 100 */
-}
 }
 
 .deck-btn:hover::after {
@@ -484,8 +427,8 @@
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 1920px;
+  height: 1080px;
   z-index: 0;
   pointer-events: none;
 }
@@ -954,13 +897,13 @@ html, body, #root {
 }
 
 /* Sempre proporcional, independente de fullscreen */
-.candle-flame-1 { left: 7.93vw; top: 55.98vh; }
-.candle-flame-2 { left: 11.50vw; top: 48.40vh; }
-.candle-flame-3 { left: 15vw; top: 58.65vh; }
-.candle-flame-4 { left: 45.5vw; top: -0.55vh; }
-.candle-flame-5 { left: 52.10vw; top: 0vh; }
-.candle-flame-6 { left: 76.7vw; top:2.5vh }
-.candle-flame-7 { left: 77.1vw; top: 18.4vh; }
+.candle-flame-1 { left: 7.93%; top: 55.98%; }
+.candle-flame-2 { left: 11.50%; top: 48.40%; }
+.candle-flame-3 { left: 15%; top: 58.65%; }
+.candle-flame-4 { left: 45.5%; top: -0.55%; }
+.candle-flame-5 { left: 52.10%; top: 0%; }
+.candle-flame-6 { left: 76.7%; top: 2.5%; }
+.candle-flame-7 { left: 77.1%; top: 18.4%; }
 
 /* Garantir que o container das candles ocupe toda a tela e fique alinhado no fullscreen, sem deslocamento */
 .candle-container-16x9:fullscreen,

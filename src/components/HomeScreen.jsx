@@ -536,6 +536,16 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
           onClose={() => setShowOptions(false)}
         />
       )}
+      {showDeckModal && (
+        <DeckSelectModal
+          visible={showDeckModal}
+          onClose={() => setShowDeckModal(false)}
+          onSelect={(deck) => {
+            setShowDeckModal(false);
+            onNavigate('battle', { deck });
+          }}
+        />
+      )}
       {showBoosterVideo && (
         <div
           className="booster-animation-overlay"

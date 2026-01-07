@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+﻿import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import creaturesPool from '../assets/cards';
 import { chooseAction } from '../logic/ai';
 import { AppContext } from './AppContext';
@@ -25,9 +25,9 @@ const sampleDeckFromPool = (size = 20) => {
   const pool = Array.isArray(creaturesPool) ? creaturesPool : [];
   const shuffled = shuffle(pool);
   const base = shuffled.slice(0, Math.min(size, shuffled.length));
-  // duplica para formar deck simples de criaturas (efeitos/field virão depois)
+  // duplica para formar deck simples de criaturas (efeitos/field vir├úo depois)
   const cards = base.map((c) => c.id || c.name || 'unknown');
-  // Por enquanto o deck é apenas IDs de criaturas
+  // Por enquanto o deck ├® apenas IDs de criaturas
   return shuffle(cards.concat(cards)).slice(0, size);
 };
 
@@ -69,13 +69,13 @@ export function BattleProvider({ children }) {
   }, [decks]);
 
   const startBattle = useCallback((deckOverride = null) => {
-    // Deck do jogador: selecionado pelo modal; senão primeiro deck salvo; senão amostra aleatória
+    // Deck do jogador: selecionado pelo modal; sen├úo primeiro deck salvo; sen├úo amostra aleat├│ria
     const playerDeck = (Array.isArray(deckOverride) && deckOverride.length > 0)
       ? deckOverride
       : (pickFirstUserDeck() || sampleDeckFromPool(20));
     const aiDeck = sampleDeckFromPool(20);
 
-    // Embaralhar e comprar mão inicial (4 cartas)
+    // Embaralhar e comprar m├úo inicial (4 cartas)
     const pShuffled = shuffle(playerDeck);
     const aShuffled = shuffle(aiDeck);
     let pDeck = [...pShuffled];
@@ -111,7 +111,7 @@ export function BattleProvider({ children }) {
       const hasCreatures = currentSnapshot.field?.slots?.some(Boolean);
       if (!hasCreatures && currentSnapshot.orbs > 0) {
         currentSnapshot.orbs = Math.max(0, (currentSnapshot.orbs || 0) - 1);
-        logEntries.push(`${currentSide === 'player' ? 'Você' : 'IA'} terminou sem criaturas. -1 orbe.`);
+        logEntries.push(`${currentSide === 'player' ? 'Voc├¬' : 'IA'} terminou sem criaturas. -1 orbe.`);
       }
 
       // compra 1 carta (limite de 7; overflow: volta para o deck e embaralha)
@@ -119,17 +119,17 @@ export function BattleProvider({ children }) {
       const sideData = { ...(s[side]) };
       let { deck, hand, essence, field, orbs } = sideData;
 
-      // +1 essência por turno, limite 10 padrão
+      // +1 ess├¬ncia por turno, limite 10 padr├úo
       essence = Math.min(10, (essence || 0) + 1);
 
-      // compra automática apenas para IA; o jogador compra manualmente no deck-draw
+      // compra autom├ítica apenas para IA; o jogador compra manualmente no deck-draw
       if (side === 'ai') {
         const d = drawFromDeck(deck);
         deck = d.nextDeck;
         if (d.card) {
           if ((hand?.length || 0) >= 7) {
             deck = shuffle([d.card, ...deck]);
-            log(`Mão cheia (${side}). Carta devolvida ao baralho.`);
+            log(`M├úo cheia (${side}). Carta devolvida ao baralho.`);
           } else {
             hand = [...hand, d.card];
           }
@@ -168,7 +168,7 @@ export function BattleProvider({ children }) {
           deck: d.nextDeck,
           hand: [...hand, d.card],
         },
-        log: [...s.log, 'Você comprou uma carta.'],
+        log: [...s.log, 'Voc├¬ comprou uma carta.'],
       };
     });
   }, []);
@@ -176,13 +176,13 @@ export function BattleProvider({ children }) {
   const summonFromHand = useCallback((index, slotIndex) => {
     setState((s) => {
       if (s.phase !== 'playing') return s;
-      if (s.activePlayer !== 'player') return s; // por enquanto só jogador manual
+      if (s.activePlayer !== 'player') return s; // por enquanto s├│ jogador manual
       const hand = [...s.player.hand];
       const cardId = hand[index];
       if (!cardId) return s;
       const slots = [...s.player.field.slots];
       if (slots[slotIndex]) return s; // slot ocupado
-      slots[slotIndex] = { id: cardId, hp: 1 }; // HP real virá depois, por enquanto placeholder
+      slots[slotIndex] = { id: cardId, hp: 1 }; // HP real vir├í depois, por enquanto placeholder
       hand.splice(index, 1);
       return {
         ...s,
@@ -233,7 +233,7 @@ export function BattleProvider({ children }) {
         updated = true;
         logEntries = [...logEntries, `IA invocou ${cardId} no slot ${emptyIndex + 1}.`];
       } else {
-        logEntries = [...logEntries, 'IA não fez ação.'];
+        logEntries = [...logEntries, 'IA n├úo fez a├º├úo.'];
       }
 
       if (!updated) {
@@ -251,7 +251,7 @@ export function BattleProvider({ children }) {
       };
     });
 
-    // Entrega o turno de volta para o jogador após a ação da IA
+    // Entrega o turno de volta para o jogador ap├│s a a├º├úo da IA
     endTurn();
   }, [endTurn]);
 

@@ -1,14 +1,24 @@
-// IA mínima: tenta invocar a primeira carta disponível em um slot livre; senão, termina turno
-export function chooseAction(state) {
-  if (!state || state.activePlayer !== 'ai') return { type: 'endTurn' };
-  const hand = state.ai?.hand || [];
-  const slots = state.ai?.field?.slots || [];
-  const handIndex = hand.findIndex(Boolean);
-  const slotIndex = slots.findIndex((slot) => !slot);
+/**
+ * AI logic for battle decisions
+ * This is a placeholder that will be expanded later
+ */
 
-  if (handIndex >= 0 && slotIndex >= 0) {
-    return { type: 'summon', handIndex, slotIndex };
-  }
+export function chooseAction(battleState) {
+  // TODO: Implement AI decision logic
+  // For now, return a simple pass action
+  return {
+    type: 'pass',
+    target: null,
+  };
+}
 
-  return { type: 'endTurn' };
+export function evaluateGameState(state) {
+  // TODO: Implement game state evaluation
+  return 0;
+}
+
+export function calculateBestMove(state, possibleActions) {
+  // TODO: Implement minimax or similar algorithm
+  // For now, return the first action
+  return possibleActions[0] || { type: 'pass', target: null };
 }

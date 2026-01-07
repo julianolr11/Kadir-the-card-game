@@ -1,66 +1,147 @@
-import React from 'react';
+import React, { useContext } from 'react';
+import { AppContext } from '../context/AppContext';
+import '../styles/guardian-select-modal.css';
 
-export default function DeckSelectModal({ visible, decks = [], onClose, onSelect }) {
+function DeckSelectModal({ visible, onClose, onSelect }) {
+  const { decks = {}, lang = 'ptbr' } = useContext(AppContext);
+
   if (!visible) return null;
 
+  const deckList = Object.entries(decks || {}).map(([key, deck]) => ({
+    id: key,
+    name: deck.name || key,
+    cards: deck.cards || [],
+  }));
+
+  const handleDeckClick = (deck) => {
+    onSelect(deck.cards);
+  };
+
   return (
-    <div
-      className="deck-select-overlay"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,0.7)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 999,
-      }}
-      onClick={onClose}
-    >
-      <div
-        className="deck-select-modal"
-        style={{
-          background: 'linear-gradient(180deg, #22162e 0%, #1a1125 100%)',
-          border: '1px solid rgba(255,255,255,0.1)',
-          boxShadow: '0 12px 40px #000',
-          borderRadius: 12,
-          padding: 16,
-          width: '90%',
-          maxWidth: 520,
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <h3 style={{ margin: 0, color: '#ffe6b0' }}>Escolha um deck</h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#ffe6b0', cursor: 'pointer' }}>✕</button>
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>{lang === 'ptbr' ? 'Selecione um Deck' : 'Select a Deck'}</h2>
+          <button className="modal-close-btn" onClick={onClose}>×</button>
         </div>
 
-        {decks.length === 0 && (
-          <div style={{ color: '#fff', opacity: 0.8 }}>Você ainda não tem decks salvos.</div>
-        )}
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 320, overflow: 'auto' }}>
-          {decks.map((deck) => (
-            <button
-              key={deck.id}
-              style={{
-                textAlign: 'left',
-                background: '#2c1d3a',
-                border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: 10,
-                padding: '12px 14px',
-                color: '#ffe6b0',
-                cursor: 'pointer',
-              }}
-              onClick={() => onSelect?.(deck)}
-            >
-              <div style={{ fontWeight: 600 }}>{deck.name || 'Deck sem nome'}</div>
-              <div style={{ fontSize: 13, opacity: 0.8 }}>Guardian: {deck.guardianId || '—'}</div>
-              <div style={{ fontSize: 12, opacity: 0.7 }}>Cartas: {deck.cards?.length || 0}</div>
-            </button>
-          ))}
+        <div className="deck-list">
+          {deckList.length > 0 ? (
+            deckList.map((deck) => (
+              <div key={deck.id} className="deck-item" onClick={() => handleDeckClick(deck)}>
+                <div className="deck-info">
+                  <h3>{deck.name}</h3>
+                  <p>{deck.cards.length} {lang === 'ptbr' ? 'cartas' : 'cards'}</p>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="no-decks-message">
+              {lang === 'ptbr' ? 'Nenhum deck disponível' : 'No decks available'}
+            </p>
+          )}
         </div>
       </div>
+
+      <style>{`
+        .modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.7);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 1000;
+        }
+
+        .modal-content {
+          background: #1a1a1a;
+          border: 2px solid #9b7d5e;
+          border-radius: 10px;
+          padding: 20px;
+          max-width: 500px;
+          max-height: 70vh;
+          overflow-y: auto;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+        }
+
+        .modal-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 20px;
+          border-bottom: 1px solid #9b7d5e;
+          padding-bottom: 10px;
+        }
+
+        .modal-header h2 {
+          margin: 0;
+          color: #e8d5b7;
+          font-size: 24px;
+        }
+
+        .modal-close-btn {
+          background: none;
+          border: none;
+          color: #e8d5b7;
+          font-size: 28px;
+          cursor: pointer;
+          padding: 0;
+          width: 30px;
+          height: 30px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .modal-close-btn:hover {
+          color: #fff;
+        }
+
+        .deck-list {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .deck-item {
+          background: #2a2a2a;
+          border: 1px solid #9b7d5e;
+          border-radius: 5px;
+          padding: 15px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+
+        .deck-item:hover {
+          background: #3a3a3a;
+          border-color: #c9a876;
+          transform: translateX(5px);
+        }
+
+        .deck-info h3 {
+          margin: 0 0 5px 0;
+          color: #e8d5b7;
+          font-size: 16px;
+        }
+
+        .deck-info p {
+          margin: 0;
+          color: #9b7d5e;
+          font-size: 14px;
+        }
+
+        .no-decks-message {
+          color: #9b7d5e;
+          text-align: center;
+          padding: 20px;
+        }
+      `}</style>
     </div>
   );
 }
+
+export default DeckSelectModal;

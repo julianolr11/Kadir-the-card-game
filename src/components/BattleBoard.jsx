@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+﻿import React, { useEffect, useMemo } from 'react';
 import { BattleProvider, useBattle } from '../context/BattleContext';
 import { AppContext } from '../context/AppContext';
 import CreatureCardPreview from './CreatureCardPreview.jsx';
@@ -15,7 +15,7 @@ function BoardInner({ onNavigate, selectedDeck }) {
 
   const cardCache = useMemo(() => ({}), []);
 
-  // Resolve um ID (base ou instância) para { baseId, instance }
+  // Resolve um ID (base ou inst├óncia) para { baseId, instance }
   const resolveCardId = (id) => {
     if (!id) return { baseId: null, instance: null };
     if (id.includes('-')) {
@@ -105,7 +105,7 @@ function BoardInner({ onNavigate, selectedDeck }) {
       );
     }
 
-    // slot — mesma aparência da mão, só que maior
+    // slot ÔÇö mesma apar├¬ncia da m├úo, s├│ que maior
     const { instance } = resolveCardId(cardId);
     const level = instance?.level || 1;
     const isHolo = instance?.isHolo || false;
@@ -189,7 +189,7 @@ function BoardInner({ onNavigate, selectedDeck }) {
           <div className="card-stats">
             <div className="card-stat">
               <div className="stat-label">Tipo</div>
-              <div className="stat-value">{type || 'Mística'}</div>
+              <div className="stat-value">{type || 'M├¡stica'}</div>
             </div>
             <div className="card-stat">
               <div className="stat-label">Altura</div>
@@ -232,7 +232,7 @@ function BoardInner({ onNavigate, selectedDeck }) {
     <div className="battle-root">
       <div className="battle-topbar">
         <button className="battle-exit" onClick={() => onNavigate?.('home')}>Sair</button>
-        <div className="turn-indicator">Turno {state.turn} — {state.activePlayer === 'player' ? 'Você' : 'IA'}</div>
+        <div className="turn-indicator">Turno {state.turn} ÔÇö {state.activePlayer === 'player' ? 'Voc├¬' : 'IA'}</div>
         <button className="end-turn" onClick={endTurn}>Fim do turno</button>
       </div>
 
@@ -255,7 +255,7 @@ function BoardInner({ onNavigate, selectedDeck }) {
             <div className="side-left">{renderOrbs(state.ai.orbs)}</div>
             <div className="side-right">
               <div className="deck-chip">Deck: {state.ai.deck.length}</div>
-              <div className="essence"><img src={essenceIcon} alt="essência" /> {state.ai.essence}</div>
+              <div className="essence"><img src={essenceIcon} alt="ess├¬ncia" /> {state.ai.essence}</div>
             </div>
           </div>
           {renderSlots(state.ai.field.slots, 'ai')}
@@ -278,7 +278,7 @@ function BoardInner({ onNavigate, selectedDeck }) {
         </div>
 
         <div className="player-essence">
-          <img src={essenceIcon} alt="essência" />
+          <img src={essenceIcon} alt="ess├¬ncia" />
           <span>{state.player.essence}</span>
         </div>
       </div>
@@ -300,13 +300,13 @@ function BoardInner({ onNavigate, selectedDeck }) {
         {state.activePlayer === 'player' && !deckCardDrawn && (
           <div className="deck-draw-indicator">
             <div className="deck-draw-indicator-text">Comprar</div>
-            <div className="deck-draw-indicator-arrow">↓</div>
+            <div className="deck-draw-indicator-arrow">&darr;</div>
           </div>
         )}
       </div>
 
       <div className="hand">
-        <div className="hand-title">Sua mão ({state.player.hand.length}/7)</div>
+        <div className="hand-title">Sua m├úo ({state.player.hand.length}/7)</div>
         <div className="hand-cards">
           {state.player.hand.map((cid, i) => {
             const isActive = activeCardIndex === i;

@@ -11,6 +11,7 @@ import packageSound from '../assets/sounds/effects/package.MP3';
 import boosterAnimationVideo from '../assets/img/card/animacao-booster.mp4';
 import creatures from '../assets/cards';
 import BoosterResultsSlider from './BoosterResultsSlider';
+import DeckSelectModal from './DeckSelectModal';
 
 // Função para carregar dados da carta do guardião
 const getGuardianCardData = (guardianId) => {
@@ -226,6 +227,7 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
   const [openedBoosterCards, setOpenedBoosterCards] = useState([]);
   const boosterVideoRef = useRef(null);
   const [cheatInput, setCheatInput] = useState('');
+  const [showDeckModal, setShowDeckModal] = useState(false);
 
   // Cheat code detector
   useEffect(() => {
@@ -513,12 +515,25 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
           <button className="home-btn" onClick={() => onNavigate('iniciar')}>
             Iniciar
           </button>
+          <button className="home-btn" onClick={() => setShowDeckModal(true)}>
+            Batalha (MVP)
+          </button>
         </div>
       </main>
       {showOptions && (
         <OptionsModal
           visible={showOptions}
           onClose={() => setShowOptions(false)}
+        />
+      )}
+      {showDeckModal && (
+        <DeckSelectModal
+          visible={showDeckModal}
+          onClose={() => setShowDeckModal(false)}
+          onSelect={(deck) => {
+            setShowDeckModal(false);
+            onNavigate('battle', { deck });
+          }}
         />
       )}
       {showBoosterVideo && (

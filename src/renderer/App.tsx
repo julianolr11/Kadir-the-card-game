@@ -4,19 +4,26 @@ import LoadingScreen from '../components/LoadingScreen';
 import HomeScreen from '../components/HomeScreen';
 import StartFlow from '../components/StartFlow';
 import DeckBuilder from '../components/DeckBuilder';
+import BattleBoard from '../components/BattleBoard';
 import { AppProvider } from '../context/AppContext';
+import { BattleProvider } from '../context/BattleContext';
 
 import LoadingMenu from './LoadingMenu';
 
 export default function App() {
   const [screen, setScreen] = useState('loading');
+  const [battleDeck, setBattleDeck] = useState(null);
   const menuMusicRef = useRef(null);
 
   // Navegação central
-  const handleNavigate = (route: string) => {
+  const handleNavigate = (route: string, params?: any) => {
     if (route === 'iniciar') setScreen('startflow');
     else if (route === 'home') setScreen('home');
     else if (route === 'deck') setScreen('deck');
+    else if (route === 'battle') {
+      setBattleDeck(params?.deck || null);
+      setScreen('battle');
+    }
     else if (route === 'opcoes') setScreen('opcoes');
     else if (route === 'sair') window.close();
     else setScreen('home');
@@ -47,7 +54,11 @@ export default function App() {
       {screen === 'deck' && (
         <DeckBuilder onNavigate={handleNavigate} menuMusicRef={menuMusicRef} />
       )}
-      {/* Adicione outros fluxos conforme necessário */}
-    </AppProvider>
-  );
-}
+      {screen === 'battle' && (
+        <BattleProvider>
+          <BattleBoard 
+            onNavigate={handleNavigate} 
+            selectedDeck={battleDeck}
+          />
+        </BattleProvider>
+      )}

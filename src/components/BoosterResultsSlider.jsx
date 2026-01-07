@@ -163,6 +163,46 @@ function BoosterResultsSlider({ cards, lang, onClose }) {
                   wrapperClass += ' next';
                 }
 
+                // Exibição especial para cartas de campo
+                if (card?.type === 'field') {
+                  return (
+                    <div key={`${card?.id || idx}-${idx}`} className={wrapperClass}>
+                      <div className="card-preview card-preview-field">
+                        {/* Header */}
+                        <div className="card-preview-header">
+                          <span className="card-preview-name">{getLocalizedText(card?.name, lang)}</span>
+                          <span className="card-preview-id">#{card?.id || '?'}</span>
+                        </div>
+                        {/* Arte */}
+                        <div className="card-preview-art-wrapper">
+                          <img src={require(`../assets/${card.image}`)} alt={getLocalizedText(card?.name, lang)} className="card-preview-art" />
+                        </div>
+                        {/* Descrição e efeitos */}
+                        <div className="card-preview-field-desc">
+                          <strong>Descrição:</strong>
+                          <div style={{ whiteSpace: 'pre-line' }}>{getLocalizedText(card.description, lang)}</div>
+                          <div className="card-preview-field-effects">
+                            <strong>Efeitos:</strong>
+                            <ul>
+                              {card.elementBoosts && Object.entries(card.elementBoosts).map(([el, val]) => (
+                                <li key={el}>Criaturas do elemento <b>{el}</b>: +{val} Dano / +{val} HP</li>
+                              ))}
+                              {card.cardTypeBoosts && Object.entries(card.cardTypeBoosts).map(([type, val]) => (
+                                <li key={type}>Criaturas do tipo <b>{type}</b>: +{val} Dano / +{val} HP</li>
+                              ))}
+                              {card.specialBoosts?.puroAndMonstro && (
+                                <li>
+                                  <b>Puras e Monstros</b>: +{card.specialBoosts.puroAndMonstro.damage} Dano / +{card.specialBoosts.puroAndMonstro.hp} HP
+                                </li>
+                              )}
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+                // ...exibição padrão para outras cartas...
                 return (
                   <div
                     key={`${card?.id || idx}-${idx}`}
@@ -198,7 +238,6 @@ function BoosterResultsSlider({ cards, lang, onClose }) {
                           #{card?.num || '?'}
                         </span>
                       </div>
-
                       {/* Arte */}
                       <div className="card-preview-art-wrapper">
                         {card?.img && (
@@ -209,7 +248,6 @@ function BoosterResultsSlider({ cards, lang, onClose }) {
                           />
                         )}
                       </div>
-
                       {/* Habilidades */}
                       {card?.abilities && card.abilities.length > 0 && (
                         <div className="card-preview-abilities">
@@ -241,7 +279,6 @@ function BoosterResultsSlider({ cards, lang, onClose }) {
                           ))}
                         </div>
                       )}
-
                       {/* Campo */}
                       {card?.field && (
                         <div className="card-preview-field">
@@ -249,7 +286,6 @@ function BoosterResultsSlider({ cards, lang, onClose }) {
                           {getLocalizedText(card.fielddesc, lang)}
                         </div>
                       )}
-
                       {/* Bottom info */}
                       <div className="card-preview-bottom">
                         <span className="card-preview-level-icon">
@@ -289,7 +325,6 @@ function BoosterResultsSlider({ cards, lang, onClose }) {
                           <span className="icon-text">{card?.hp || '0'}</span>
                         </span>
                       </div>
-
                       {/* Holo badge removed - indicator is now inline with name */}
                     </div>
                   </div>

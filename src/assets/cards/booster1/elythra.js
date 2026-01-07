@@ -8,7 +8,7 @@ module.exports = {
   name: { pt: 'Elythra', en: 'Elythra' },
   type: { pt: 'Reptiloide', en: 'Reptiloid' },
   element: 'ar',
-  img: require('../../img/creatures/Elythra_bio.webp'),
+  img: require('../../img/creatures/elythra_bio.webp'),
   color: 'air',
   hp: 6,
   abilities: [

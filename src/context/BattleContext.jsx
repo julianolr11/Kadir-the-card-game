@@ -196,14 +196,43 @@ export function BattleProvider({ children }) {
     });
   }, []);
 
+
+  // Invoca carta de campo (field) para o sharedField
+  const invokeFieldCard = useCallback((handIndex, cardData) => {
+    setState((s) => {
+      if (s.phase !== 'playing') return s;
+      if (s.activePlayer !== 'player') return s;
+      const hand = [...s.player.hand];
+      const cardId = hand[handIndex];
+      if (!cardId) return s;
+      // Remove carta da mão
+      hand.splice(handIndex, 1);
+      return {
+        ...s,
+        player: {
+          ...s.player,
+          hand,
+        },
+        sharedField: {
+          active: true,
+          id: cardData.id,
+          image: cardData.image,
+          turn: s.turn,
+        },
+        log: [...s.log, `Campo ${cardData.name} foi invocado!`],
+      };
+    });
+  }, []);
+
   const value = useMemo(() => ({
     state,
     startBattle,
     endTurn,
     drawPlayerCard,
     summonFromHand,
+    invokeFieldCard,
     log,
-  }), [state, startBattle, endTurn, drawPlayerCard, summonFromHand, log]);
+  }), [state, startBattle, endTurn, drawPlayerCard, summonFromHand, invokeFieldCard, log]);
 
   const performAiTurn = useCallback(() => {
     setState((s) => {

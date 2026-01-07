@@ -1,4 +1,6 @@
 // Exporta todas as cartas individualmente
+const fieldCards = require('./field/exampleFieldCards').default;
+
 const creatures = [
   require('./booster1/draak'),
   require('./booster1/mawthorn'),
@@ -30,7 +32,9 @@ const creatures = [
   require('./booster1/ekonos'),
   require('./booster1/terrakhal'),
   require('./booster1/seract'),
+  ...fieldCards,
 ];
 
 module.exports = creatures;
 module.exports.creatures = creatures;
+module.exports.fieldCards = fieldCards;

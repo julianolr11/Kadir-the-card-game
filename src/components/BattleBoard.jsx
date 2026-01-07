@@ -289,7 +289,30 @@ function BoardInner({ onNavigate, selectedDeck }) {
           <img src={require('../assets/img/icons/jewel.png')} alt="Jóia" className="board-divider-jewel" />
         </div>
         <div className="shared-field">
-          {state.sharedField.active ? <div className="field-active">Campo Ativo</div> : <div className="field-inactive">Campo Inativo</div>}
+          {state.sharedField.active && state.sharedField.id ? (
+            <div className="field-active-info">
+              <div className="field-active-label">Campo Ativo</div>
+              <div className="field-active-content">
+                <img
+                  src={require(`../assets/${state.sharedField.image}`)}
+                  alt={state.sharedField.id}
+                  className="field-active-art"
+                  style={{ width: 120, height: 80, objectFit: 'cover', borderRadius: 8, marginBottom: 6 }}
+                />
+                <div className="field-active-name" style={{ fontWeight: 600, fontSize: 18, color: '#0ff', textShadow: '0 2px 8px #000b' }}>
+                  {state.sharedField.id.replace('field-', 'Campo #')}
+                </div>
+                {/* Efeitos resumidos */}
+                <div className="field-active-effects" style={{ fontSize: 13, color: '#fff', marginTop: 4 }}>
+                  {/* Aqui pode-se exibir um resumo dos efeitos, se desejado */}
+                  {/* Exemplo: "+1 Dano/+1 HP para Puro ou Monstro. +2 para ambos." */}
+                  {/* Para mais detalhes, pode-se buscar os dados da carta pelo id */}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="field-inactive">Campo Inativo</div>
+          )}
         </div>
 
         <div className="side player-side">
@@ -358,12 +381,49 @@ function BoardInner({ onNavigate, selectedDeck }) {
             {(() => {
               const handId = state.player.hand[activeCardIndex];
               const { instance } = resolveCardId(handId);
-              const creatureData = getCardData(handId);
+              const cardData = getCardData(handId);
               const level = instance?.level || 1;
               const isHolo = instance?.isHolo || false;
+              // Se for carta de campo, mostrar preview especial
+              if (cardData?.type === 'field') {
+                return (
+                  <div style={{ width: 370 }}>
+                    <div className="card-preview card-preview-field">
+                      <div className="card-preview-header">
+                        <span className="card-preview-name">{cardData.name}</span>
+                        <span className="card-preview-id">#{cardData.id}</span>
+                      </div>
+                      <div className="card-preview-art-wrapper">
+                        <img src={require(`../assets/${cardData.image}`)} alt={cardData.name} className="card-preview-art" />
+                      </div>
+                      <div className="card-preview-field-desc">
+                        <strong>Descrição:</strong>
+                        <div style={{ whiteSpace: 'pre-line' }}>{cardData.description}</div>
+                        <div className="card-preview-field-effects">
+                          <strong>Efeitos:</strong>
+                          <ul>
+                            {cardData.elementBoosts && Object.entries(cardData.elementBoosts).map(([el, val]) => (
+                              <li key={el}>Criaturas do elemento <b>{el}</b>: +{val} Dano / +{val} HP</li>
+                            ))}
+                            {cardData.cardTypeBoosts && Object.entries(cardData.cardTypeBoosts).map(([type, val]) => (
+                              <li key={type}>Criaturas do tipo <b>{type}</b>: +{val} Dano / +{val} HP</li>
+                            ))}
+                            {cardData.specialBoosts?.puroAndMonstro && (
+                              <li>
+                                <b>Puras e Monstros</b>: +{cardData.specialBoosts.puroAndMonstro.damage} Dano / +{cardData.specialBoosts.puroAndMonstro.hp} HP
+                              </li>
+                            )}
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+              // Preview padrão para outras cartas
               return (
                 <CreatureCardPreview
-                  creature={creatureData}
+                  creature={cardData}
                   onClose={null}
                   level={level}
                   isHolo={isHolo}
@@ -371,20 +431,58 @@ function BoardInner({ onNavigate, selectedDeck }) {
                 />
               );
             })()}
-            {state.activePlayer === 'player' && state.player.field.slots.findIndex((s) => !s) >= 0 && (
-              <div className="card-preview-actions">
-                <button
-                  className="summon-button"
-                  onClick={() => {
-                    const firstFreeSlot = state.player.field.slots.findIndex((s) => !s);
-                    onSummon(activeCardIndex, firstFreeSlot);
-                    setActiveCardIndex(null);
-                  }}
-                >
-                  Invocar
-                </button>
-              </div>
-            )}
+            {/* Botão Invocar para campo */}
+            {(() => {
+              const handId = state.player.hand[activeCardIndex];
+              const cardData = getCardData(handId);
+              // Se for carta de campo
+              if (cardData?.type === 'field') {
+                // Só pode invocar se não houver campo ativo ou se já passou 1 rodada
+                const canInvokeField = !state.sharedField.active || (state.turn > (state.sharedField.turn || 0));
+                return canInvokeField ? (
+                  <div className="card-preview-actions">
+                    <button
+                      className="summon-button"
+                      onClick={() => {
+                        // Invocar campo: mover para sharedField
+                        // Aqui você deve implementar a lógica de atualizar o estado global/sharedField
+                        // Exemplo:
+                        if (typeof window !== 'undefined') {
+                          window.dispatchEvent(new CustomEvent('invokeFieldCard', { detail: { cardIndex: activeCardIndex, cardData } }));
+                        }
+                        setActiveCardIndex(null);
+                      }}
+                    >
+                      Invocar
+                    </button>
+                  </div>
+                ) : (
+                  <div className="card-preview-actions">
+                    <button className="summon-button" disabled>
+                      Invocar (aguarde 1 rodada)
+                    </button>
+                  </div>
+                );
+              }
+              // Botão Invocar padrão para criaturas
+              if (state.activePlayer === 'player' && state.player.field.slots.findIndex((s) => !s) >= 0) {
+                return (
+                  <div className="card-preview-actions">
+                    <button
+                      className="summon-button"
+                      onClick={() => {
+                        const firstFreeSlot = state.player.field.slots.findIndex((s) => !s);
+                        onSummon(activeCardIndex, firstFreeSlot);
+                        setActiveCardIndex(null);
+                      }}
+                    >
+                      Invocar
+                    </button>
+                  </div>
+                );
+              }
+              return null;
+            })()}
           </div>
         </div>
       )}

@@ -56,9 +56,13 @@ export default function App() {
       )}
       {screen === 'battle' && (
         <BattleProvider>
-          <BattleBoard 
-            onNavigate={handleNavigate} 
+          <BattleBoard
+            onNavigate={handleNavigate}
             selectedDeck={battleDeck}
           />
         </BattleProvider>
       )}
+
+    </AppProvider>
+  );
+}

@@ -1,3 +1,30 @@
+/* CARD PREVIEW FIELD - fundo com degradê ciano e textura */
+.card-preview.card-preview-field {
+  width: 370px;
+  min-height: 540px;
+  border-radius: 18px;
+  box-shadow: 0 8px 48px #000c, 0 0 0 3px #00fff766;
+  background: linear-gradient(120deg, #0a1a2a 0%, #0a3a4a 60%, #0088aa 90%, #0a1a2a 100%), url('../assets/img/card/texture-background.jpg');
+  background-blend-mode: multiply, darken;
+  position: relative;
+  padding: 22px 14px 18px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: 'Poppins', Arial, sans-serif;
+  color: #fff;
+  overflow: hidden;
+  filter: saturate(1.08) brightness(1.08) contrast(1.12);
+  animation: cardPreviewOpen 0.45s cubic-bezier(.7,-0.2,.3,1.4);
+}
+.card-preview-field-desc {
+ background: rgba(0, 0, 0, 0.62);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-top: 10px;
+  margin-bottom: 8px;
+  box-shadow: 0 2px 12px #000a;
+}
 .card-preview {
   background: linear-gradient(120deg, #181a2a 0%, #23243a 60%, #181a2a 100%), url('../assets/img/card/texture-background.jpg');
   background-blend-mode: overlay, multiply;
@@ -685,4 +712,16 @@
     transform: scale(1) translateY(0);
     opacity: 1;
   }
+}
+
+.field-desc-full {
+  background: rgba(0, 0, 0, 0.62);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-top: 10px;
+  margin-bottom: 8px;
+  box-shadow: 0 2px 12px #000a;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }

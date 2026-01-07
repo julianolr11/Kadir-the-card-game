@@ -7,7 +7,8 @@ import DeckBuilder from '../components/DeckBuilder';
 import BattleBoard from '../components/BattleBoard';
 import { AppProvider } from '../context/AppContext';
 import { BattleProvider } from '../context/BattleContext';
-
+import BoosterResultsSlider from '../components/BoosterResultsSlider';
+import fieldCards from '../assets/cards/field/exampleFieldCards';
 import LoadingMenu from './LoadingMenu';
 
 export default function App() {
@@ -62,7 +63,6 @@ export default function App() {
           />
         </BattleProvider>
       )}
-
     </AppProvider>
   );
 }

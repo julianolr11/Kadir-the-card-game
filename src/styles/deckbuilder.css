@@ -836,19 +836,19 @@
 }
 
 .deck-editor-modal {
-  background: radial-gradient(circle at 20% 20%, #2a1b3f 0%, #130d1f 40%, #0a0815 80%);
-  border-radius: 20px;
-  padding: 24px;
-  width: 95%;
-  max-width: 1400px;
-  height: 90%;
-  max-height: 900px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  box-shadow: 0 16px 64px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
-  position: relative;
-  overflow: hidden;
+     background: radial-gradient(circle at 20% 20%, #2a1b3f 0%, #130d1f 40%, #0a0815 80%);
+    border-radius: 20px;
+    padding: 24px;
+    width: 95%;
+    max-width: 1400px;
+    height: 93%;
+    max-height: 610px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow: 0 16px 64px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+    position: relative;
+    overflow: hidden;
 }
 
 .deck-editor-header {

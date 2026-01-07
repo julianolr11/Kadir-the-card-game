@@ -1,22 +1,13 @@
-/* Container responsivo 16:9 para candles */
+/* Container fixa em 1920x1080 e escala junto com a viewport */
 .candle-container-16x9 {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 56.25vw; /* 16:9 ratio (9/16 = 0.5625) */
-  max-height: 100vh;
-  max-width: 177.78vh; /* 16/9 = 1.7778 */
-  margin: 0 auto;
+  width: 1920px;
+  height: 1080px;
+  margin: 0;
   z-index: 10;
   pointer-events: none;
-}
-
-@media (min-aspect-ratio: 16/9) {
-  .candle-container-16x9 {
-    width: 177.78vh;
-    height: 100vh;
-  }
 }
 
 /* As candles agora são absolutas dentro do container 16:9 */
@@ -353,34 +344,6 @@
   pointer-events: none;
   z-index: 2;
   transform: skewX(-24deg);
-.candle-flame-1 {
-  left: 7.03vw;   /* 90 / 1280 * 100 */
-  top: 52.78vh;   /* 380 / 720 * 100 */
-}
-.candle-flame-2 {
-  left: 10.94vw;  /* 140 / 1280 * 100 */
-  top: 44.58vh;   /* 321 / 720 * 100 */
-}
-.candle-flame-3 {
-  left: 14.38vw;  /* 184 / 1280 * 100 */
-  top: 55.69vh;   /* 401 / 720 * 100 */
-}
-.candle-flame-4 {
-  left: 44.61vw;  /* 571 / 1280 * 100 */
-  top: -3.19vh;   /* -23 / 720 * 100 */
-}
-.candle-flame-5 {
-  left: 51.33vw;  /* 657 / 1280 * 100 */
-  top: -2.92vh;   /* -21 / 720 * 100 */
-}
-.candle-flame-6 {
-  left: 75.94vw;  /* 972 / 1280 * 100 */
-  /* top não definido no original */
-}
-.candle-flame-7 {
-  left: 76.33vw;  /* 977 / 1280 * 100 */
-  top: 15.28vh;   /* 110 / 720 * 100 */
-}
 }
 
 .deck-btn:hover::after {
@@ -484,8 +447,8 @@
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 1920px;
+  height: 1080px;
   z-index: 0;
   pointer-events: none;
 }
@@ -494,8 +457,8 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 1920px;
+  height: 1080px;
   background: url('../assets/img/wallpaper/3d-menu.png') center center/cover no-repeat;
   z-index: 1;
   opacity: 1;
@@ -954,13 +917,13 @@ html, body, #root {
 }
 
 /* Sempre proporcional, independente de fullscreen */
-.candle-flame-1 { left: 7.93vw; top: 55.98vh; }
-.candle-flame-2 { left: 11.50vw; top: 48.40vh; }
-.candle-flame-3 { left: 15vw; top: 58.65vh; }
-.candle-flame-4 { left: 45.5vw; top: -0.55vh; }
-.candle-flame-5 { left: 52.10vw; top: 0vh; }
-.candle-flame-6 { left: 76.7vw; top:2.5vh }
-.candle-flame-7 { left: 77.1vw; top: 18.4vh; }
+.candle-flame-1 { left: 7.93%; top: 55.98%; }
+.candle-flame-2 { left: 11.50%; top: 48.40%; }
+.candle-flame-3 { left: 15%; top: 58.65%; }
+.candle-flame-4 { left: 45.5%; top: -0.55%; }
+.candle-flame-5 { left: 52.10%; top: 0%; }
+.candle-flame-6 { left: 76.7%; top: 2.5%; }
+.candle-flame-7 { left: 77.1%; top: 18.4%; }
 
 /* Garantir que o container das candles ocupe toda a tela e fique alinhado no fullscreen, sem deslocamento */
 .candle-container-16x9:fullscreen,

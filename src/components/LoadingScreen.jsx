@@ -52,7 +52,7 @@ function LoadingScreen({ onFinish, menuMusicRef }) {
   const playClick = () => {
     if (keyClickAudioRef.current) {
       keyClickAudioRef.current.currentTime = 0;
-      keyClickAudioRef.current.volume = musicVolume / 100;
+      keyClickAudioRef.current.volume = 1;
       keyClickAudioRef.current.play().catch(() => {});
     }
   };

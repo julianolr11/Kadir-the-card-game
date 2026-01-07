@@ -1,5 +1,6 @@
-import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import creaturesPool from '../assets/cards';
+import { chooseAction } from '../logic/ai';
 import { AppContext } from './AppContext';
 
 export const BattleContext = createContext(null);
@@ -67,9 +68,11 @@ export function BattleProvider({ children }) {
     return first.cards;
   }, [decks]);
 
-  const startBattle = useCallback(() => {
-    // Deck do jogador: primeiro deck salvo, senão amostra aleatória
-    const playerDeck = pickFirstUserDeck() || sampleDeckFromPool(20);
+  const startBattle = useCallback((deckOverride = null) => {
+    // Deck do jogador: selecionado pelo modal; senão primeiro deck salvo; senão amostra aleatória
+    const playerDeck = (Array.isArray(deckOverride) && deckOverride.length > 0)
+      ? deckOverride
+      : (pickFirstUserDeck() || sampleDeckFromPool(20));
     const aiDeck = sampleDeckFromPool(20);
 
     // Embaralhar e comprar mão inicial (4 cartas)
@@ -97,8 +100,19 @@ export function BattleProvider({ children }) {
 
   const endTurn = useCallback(() => {
     setState((s) => {
+      const currentSide = s.activePlayer;
       const nextActive = s.activePlayer === 'player' ? 'ai' : 'player';
       const nextTurn = s.turn + (nextActive === 'player' ? 1 : 0);
+
+      let logEntries = [...s.log];
+
+      // penalidade por finalizar turno sem criaturas
+      const currentSnapshot = { ...s[currentSide] };
+      const hasCreatures = currentSnapshot.field?.slots?.some(Boolean);
+      if (!hasCreatures && currentSnapshot.orbs > 0) {
+        currentSnapshot.orbs = Math.max(0, (currentSnapshot.orbs || 0) - 1);
+        logEntries.push(`${currentSide === 'player' ? 'Você' : 'IA'} terminou sem criaturas. -1 orbe.`);
+      }
 
       // compra 1 carta (limite de 7; overflow: volta para o deck e embaralha)
       const side = nextActive;
@@ -108,15 +122,17 @@ export function BattleProvider({ children }) {
       // +1 essência por turno, limite 10 padrão
       essence = Math.min(10, (essence || 0) + 1);
 
-      const d = drawFromDeck(deck);
-      deck = d.nextDeck;
-      if (d.card) {
-        if ((hand?.length || 0) >= 7) {
-          // overflow
-          deck = shuffle([d.card, ...deck]);
-          log(`Mão cheia (${side}). Carta devolvida ao baralho.`);
-        } else {
-          hand = [...hand, d.card];
+      // compra automática apenas para IA; o jogador compra manualmente no deck-draw
+      if (side === 'ai') {
+        const d = drawFromDeck(deck);
+        deck = d.nextDeck;
+        if (d.card) {
+          if ((hand?.length || 0) >= 7) {
+            deck = shuffle([d.card, ...deck]);
+            log(`Mão cheia (${side}). Carta devolvida ao baralho.`);
+          } else {
+            hand = [...hand, d.card];
+          }
         }
       }
 
@@ -124,11 +140,38 @@ export function BattleProvider({ children }) {
         ...s,
         activePlayer: nextActive,
         turn: nextTurn,
+        [currentSide]: { ...currentSnapshot },
         [side]: { ...s[side], deck, hand, essence, field, orbs },
-        log: [...s.log, `Fim do turno de ${s.activePlayer}.`],
+        log: [...logEntries, `Fim do turno de ${s.activePlayer}.`],
       };
     });
   }, [log]);
+
+  const drawPlayerCard = useCallback(() => {
+    setState((s) => {
+      if (s.phase !== 'playing') return s;
+      if (s.activePlayer !== 'player') return s;
+
+      const deck = [...(s.player.deck || [])];
+      const hand = [...(s.player.hand || [])];
+
+      if (deck.length === 0) return s;
+      if (hand.length >= 7) return s;
+
+      const d = drawFromDeck(deck);
+      if (!d.card) return s;
+
+      return {
+        ...s,
+        player: {
+          ...s.player,
+          deck: d.nextDeck,
+          hand: [...hand, d.card],
+        },
+        log: [...s.log, 'Você comprou uma carta.'],
+      };
+    });
+  }, []);
 
   const summonFromHand = useCallback((index, slotIndex) => {
     setState((s) => {
@@ -157,9 +200,66 @@ export function BattleProvider({ children }) {
     state,
     startBattle,
     endTurn,
+    drawPlayerCard,
     summonFromHand,
     log,
-  }), [state, startBattle, endTurn, summonFromHand, log]);
+  }), [state, startBattle, endTurn, drawPlayerCard, summonFromHand, log]);
+
+  const performAiTurn = useCallback(() => {
+    setState((s) => {
+      if (s.phase !== 'playing') return s;
+      if (s.activePlayer !== 'ai') return s;
+
+      const slots = [...s.ai.field.slots];
+      const emptyIndex = slots.findIndex((slot) => !slot);
+      const hand = [...s.ai.hand];
+      let updated = false;
+      let logEntries = [...s.log];
+
+      const action = chooseAction(s);
+
+      if (action?.type === 'summon' && typeof action.handIndex === 'number' && typeof action.slotIndex === 'number') {
+        const { handIndex, slotIndex } = action;
+        if (hand[handIndex] && !slots[slotIndex]) {
+          const cardId = hand[handIndex];
+          hand.splice(handIndex, 1);
+          slots[slotIndex] = { id: cardId, hp: 1 };
+          updated = true;
+          logEntries = [...logEntries, `IA invocou ${cardId} no slot ${slotIndex + 1}.`];
+        }
+      } else if (emptyIndex >= 0 && hand.length > 0) {
+        const cardId = hand.shift();
+        slots[emptyIndex] = { id: cardId, hp: 1 };
+        updated = true;
+        logEntries = [...logEntries, `IA invocou ${cardId} no slot ${emptyIndex + 1}.`];
+      } else {
+        logEntries = [...logEntries, 'IA não fez ação.'];
+      }
+
+      if (!updated) {
+        return { ...s, log: logEntries };
+      }
+
+      return {
+        ...s,
+        ai: {
+          ...s.ai,
+          hand,
+          field: { ...s.ai.field, slots },
+        },
+        log: logEntries,
+      };
+    });
+
+    // Entrega o turno de volta para o jogador após a ação da IA
+    endTurn();
+  }, [endTurn]);
+
+  useEffect(() => {
+    if (state.phase === 'playing' && state.activePlayer === 'ai') {
+      performAiTurn();
+    }
+  }, [state.phase, state.activePlayer, performAiTurn]);
 
   return (
     <BattleContext.Provider value={value}>{children}</BattleContext.Provider>

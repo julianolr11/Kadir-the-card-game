@@ -3,8 +3,8 @@
   position: fixed;
   top: 0;
   left: 0;
-  width: 1920px;
-  height: 1080px;
+  width: 100vw;
+  height: 100vh;
   margin: 0;
   z-index: 10;
   pointer-events: none;
@@ -29,27 +29,7 @@
 .candle-flame-6 { left: 75.94%; /* top não definido */ }
 .candle-flame-7 { left: 76.33%; top: 15.28%; }
 
-/* Ajuste exato para 1280x720 */
-@media (min-width: 1270px) and (max-width: 1290px) and (min-height: 710px) and (max-height: 730px) {
-  .candle-flame-1 { left: 90px; top: 380px; }
-  .candle-flame-2 { left: 140px; top: 321px; }
-  .candle-flame-3 { left: 184px; top: 401px; }
-  .candle-flame-4 { left: 571px; top: -23px; }
-  .candle-flame-5 { left: 657px; top: -21px; }
-  .candle-flame-6 { left: 972px; }
-  .candle-flame-7 { left: 977px; top: 110px; }
-}
 
-/* Ajuste exato para 1920x1080 */
-@media (min-width: 1910px) and (max-width: 1930px) and (min-height: 1070px) and (max-height: 1090px) {
-  .candle-flame-1 { left: 153px; top: 592px; }
-  .candle-flame-2 { left: 218px; top: 510px; }
-  .candle-flame-3 { left: 283px; top: 624px; }
-  .candle-flame-4 { left: 870px; top: -14px; }
-  .candle-flame-5 { left: 990px; top: -32px; }
-  .candle-flame-6 { left: 1469px; top: 22px }
-  .candle-flame-7 { left: 1477px; top: 189px; }
-}
 
 /* Efeito de brilho inspirado no CodePen de jh3y */
 .deck-btn {
@@ -457,8 +437,8 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 1920px;
-  height: 1080px;
+  width: 100vw;
+  height: 100vh;
   background: url('../assets/img/wallpaper/3d-menu.png') center center/cover no-repeat;
   z-index: 1;
   opacity: 1;

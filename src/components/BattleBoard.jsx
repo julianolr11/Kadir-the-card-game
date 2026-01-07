@@ -268,9 +268,7 @@ function BoardInner({ onNavigate, selectedDeck }) {
         <div className="side player-side">
           <div className="side-header">
             <div className="side-left"></div>
-            <div className="side-right">
-              <div className="deck-chip">Deck: {state.player.deck.length}</div>
-            </div>
+            <div className="side-right"></div>
           </div>
           {renderSlots(state.player.field.slots, 'player')}
         </div>
@@ -286,6 +284,7 @@ function BoardInner({ onNavigate, selectedDeck }) {
       </div>
 
       <div className="deck-draw">
+        <div className="deck-count-pill">Deck {state.player.deck.length}</div>
         <div
           className={`deck-card-back ${deckCardDrawn ? 'drawn' : ''}`}
           style={{ backgroundImage: `url(${cardVerso})` }}

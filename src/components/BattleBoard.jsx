@@ -300,7 +300,7 @@ function BoardInner({ onNavigate, selectedDeck }) {
         {state.activePlayer === 'player' && !deckCardDrawn && (
           <div className="deck-draw-indicator">
             <div className="deck-draw-indicator-text">Comprar</div>
-            <div className="deck-draw-indicator-arrow">Ôåô</div>
+            <div className="deck-draw-indicator-arrow">&darr;</div>
           </div>
         )}
       </div>

@@ -1,5 +1,5 @@
 .deckbuilder-screen {
-  min-height: 100vh;
+  min-height: 100%;
   padding: 16px 24px 24px;
   color: #f6e8ff;
   background: radial-gradient(circle at 20% 20%, #2a1b3f 0%, #130d1f 40%, #0a0815 80%);
@@ -316,7 +316,7 @@
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
   max-width: 1200px;
   width: 95%;
-  max-height: 90vh;
+  max-height: 90%;
   overflow: hidden;
   animation: modal-slide-in 300ms ease;
 }
@@ -349,7 +349,7 @@
   display: flex;
   gap: 24px;
   padding: 24px;
-  max-height: 90vh;
+  max-height: 90%;
   align-items: flex-start;
   flex-wrap: wrap;
 }
@@ -925,7 +925,7 @@
   padding: 6px;
   border-radius: 12px;
   background: rgba(0, 0, 0, 0.2);
-  max-height: 24vh;
+  max-height: 24%;
   overflow-y: auto;
 }
 

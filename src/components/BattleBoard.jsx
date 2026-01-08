@@ -297,9 +297,23 @@ function BoardInner({ onNavigate, selectedDeck }) {
   };
 
   // Determina o background do board
-  const boardBg = state.sharedField.active && state.sharedField.cardData && state.sharedField.cardData.img
-    ? `url(${typeof state.sharedField.cardData.img === 'string' ? state.sharedField.cardData.img : (state.sharedField.cardData.img?.default || '')}) center center`
-    : undefined;
+  const boardBg = state.sharedField.active && state.sharedField.id ? (() => {
+    let fieldData = null;
+    try {
+      const fieldCards = require('../assets/cards/field/exampleFieldCards').default;
+      fieldData = fieldCards.find(c => c.id === state.sharedField.id);
+    } catch (e) {
+      fieldData = null;
+    }
+    if (!fieldData) {
+      fieldData = getCardData(state.sharedField.id);
+    }
+    if (fieldData && fieldData.img) {
+      const img = typeof fieldData.img === 'string' ? fieldData.img : (fieldData.img?.default || '');
+      return img ? `url(${img})` : undefined;
+    }
+    return undefined;
+  })() : undefined;
   return (
     <div className="battle-root">
       <div className="battle-topbar">
@@ -333,10 +347,10 @@ function BoardInner({ onNavigate, selectedDeck }) {
       <div
         className="board"
         style={{
-          background: boardBg || undefined,
-          backgroundRepeat: boardBg ? 'no-repeat' : undefined,
-          backgroundSize: boardBg ? 'cover' : undefined,
-          filter: boardBg ? 'saturate(1.25) brightness(1.18)' : undefined,
+          backgroundImage: boardBg,
+          backgroundRepeat: 'no-repeat',
+          backgroundSize: 'cover',
+          boxShadow: '0 0 100px rgba(0, 0, 0, 0.9666666667) inset, 0 12px 28px rgba(0, 0, 0, 0.8)',
           transition: 'background 0.5s',
           position: 'relative',
         }}
@@ -344,9 +358,6 @@ function BoardInner({ onNavigate, selectedDeck }) {
         {state.sharedField.active && state.sharedField.cardData && (
           {/* efeito central removido conforme solicitado */}
         )}
-                {state.sharedField.active && state.sharedField.cardData && (
-                  <div className="vinheta fade-in" />
-                )}
         <div className="turn-indicator">Turno {state.turn}</div>
         <div className="side ai-side">
           <div className="side-header">
@@ -378,18 +389,18 @@ function BoardInner({ onNavigate, selectedDeck }) {
               } catch (e) {
                 fieldData = null;
               }
-              
+
               // Se não encontrar, tenta getCardData
               if (!fieldData) {
                 fieldData = getCardData(state.sharedField.id);
               }
-              
+
               if (!fieldData) return <div className="field-inactive">Campo não encontrado</div>;
-              
+
               const name = typeof fieldData.name === 'object' ? fieldData.name.pt || fieldData.name.en : fieldData.name;
               const description = typeof fieldData.description === 'object' ? fieldData.description.pt || fieldData.description.en : fieldData.description;
               const img = typeof fieldData.img === 'string' ? fieldData.img : (fieldData.img?.default || '');
-              
+
               return (
                 <div className="card-chip card-chip-hand">
                   <div

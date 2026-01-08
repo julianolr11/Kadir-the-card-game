@@ -8,7 +8,7 @@ import cardVerso from '../assets/img/card/verso.png';
 import '../styles/battle.css';
 
 function BoardInner({ onNavigate, selectedDeck }) {
-  const { state, startBattle, endTurn, summonFromHand, drawPlayerCard } = useBattle();
+  const { state, startBattle, endTurn, summonFromHand, drawPlayerCard, invokeFieldCard } = useBattle();
   const { cardCollection } = React.useContext(AppContext);
   const [activeCardIndex, setActiveCardIndex] = React.useState(null);
   const [deckCardDrawn, setDeckCardDrawn] = React.useState(false);
@@ -33,6 +33,20 @@ function BoardInner({ onNavigate, selectedDeck }) {
     const { baseId } = resolveCardId(cardId);
     if (!baseId) return null;
     if (cardCache[baseId]) return cardCache[baseId];
+    // Se for carta de campo, busca no arquivo correto
+    if (baseId.startsWith('f') || baseId === 'field') {
+      try {
+        const fieldCards = require('../assets/cards/field/exampleFieldCards').default;
+        const fieldCard = fieldCards.find(c => c.id === baseId);
+        if (fieldCard) {
+          cardCache[baseId] = fieldCard;
+          return fieldCard;
+        }
+      } catch (e) {
+        console.warn(`Field card not found: ${baseId}`, e);
+        return null;
+      }
+    }
     try {
       const mod = require(`../assets/cards/booster1/${baseId}.js`);
       cardCache[baseId] = mod;
@@ -71,37 +85,83 @@ function BoardInner({ onNavigate, selectedDeck }) {
   };
 
   const renderCardChip = (cardId, variant = 'slot', slotData = null) => {
+    // Se for carta de campo, renderiza usando CreatureCardPreview (padrão visual)
+    if (cardId && (cardId.startsWith('f') || cardId.includes('field'))) {
+      let fieldData = typeof state !== 'undefined' && state.sharedField && state.sharedField.cardData ? state.sharedField.cardData : null;
+      // Se não tiver os dados completos, busca pelo id
+      if (!fieldData) {
+        try {
+          const fieldCards = require('../assets/cards/field/exampleFieldCards').default;
+          fieldData = fieldCards.find(c => c.id === cardId);
+        } catch (e) {
+          fieldData = null;
+        }
+      }
+      if (!fieldData) return <div className={`card-chip card-chip-${variant}`}><div className="card-chip-label">{cardId}</div></div>;
+      return (
+        <div className="slider-card-wrapper active" style={{ transform: variant === 'hand' ? 'scale(0.464)' : 'scale(0.6)', transformOrigin: variant === 'hand' ? 'left top' : 'center', pointerEvents: 'none' }}>
+          <div className="card-preview card-preview-field">
+            <div className="card-preview-header">
+              <span className="card-preview-name">{typeof fieldData.name === 'object' ? fieldData.name.pt : fieldData.name}</span>
+              <span className="card-preview-id">#{fieldData.id}</span>
+            </div>
+            <div className="card-preview-art-wrapper">
+              <img alt={typeof fieldData.name === 'object' ? fieldData.name.pt : fieldData.name} className="card-preview-art" src={typeof fieldData.img === 'string' ? fieldData.img : (fieldData.img?.default || '')} />
+            </div>
+            <div className="card-preview-field-desc">
+              <strong>Descrição:</strong>
+              <div style={{whiteSpace: 'pre-line'}}>{typeof fieldData.description === 'object' ? fieldData.description.pt || fieldData.description.en : fieldData.description}</div>
+              <div className="card-preview-field-effects">
+                <strong>Efeitos:</strong>
+                <ul>
+                  <li>Criaturas do elemento <b>puro</b>: +1 Dano / +1 HP</li>
+                  <li>Criaturas do tipo <b>monstro</b>: +1 Dano / +1 HP</li>
+                  <li><b>Puras e Monstros</b>: +2 Dano / +2 HP</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    // ...código original para criaturas...
     const data = getCardData(cardId);
     if (!data) return <div className={`card-chip card-chip-${variant}`}><div className="card-chip-label">{cardId}</div></div>;
-
-    const name = data?.name?.pt || data?.name?.en || cardId;
-    const title = data?.title?.pt || data?.title?.en || '';
+    const name = typeof data?.name === 'object' ? data?.name?.pt || data?.name?.en : data?.name || cardId;
+    const title = typeof data?.title === 'object' ? data?.title?.pt || data?.title?.en : data?.title || '';
     const num = data?.num ? `#${String(data.num).padStart(3, '0')}` : '';
     const element = data?.element;
     const hp = slotData?.hp ?? data?.hp ?? '?';
     const abilities = data?.abilities || [];
-    const field = data?.field?.pt || data?.field?.en;
-    const fielddesc = data?.fielddesc?.pt || data?.fielddesc?.en;
-    const type = data?.type?.pt || data?.type?.en;
+    const field = typeof data?.field === 'object' ? data?.field?.pt || data?.field?.en : data?.field;
+    const fielddesc = typeof data?.fielddesc === 'object' ? data?.fielddesc?.pt || data?.fielddesc?.en : data?.fielddesc;
+    const type = typeof data?.type === 'object' ? data?.type?.pt || data?.type?.en : data?.type;
     const height = data?.height;
     const weakness = data?.weakness;
     const bg = data?.img ? { backgroundImage: `url(${data.img})` } : {};
-
     let elementIcon = null;
     if (element) {
       try {
         elementIcon = require(`../assets/img/elements/${element}.png`);
       } catch (e) {}
     }
-
     let weaknessIcon = null;
     if (weakness) {
       try {
         weaknessIcon = require(`../assets/img/elements/${weakness}.png`);
       } catch (e) {}
     }
-
     if (variant === 'hand') {
+      // Se for carta de campo, renderiza igual ao slot
+      if (data && data.type === 'field') {
+        return (
+          <div className={`card-chip card-chip-${variant}`}>
+            <div style={{ transform: 'scale(0.464)', transformOrigin: 'left top', pointerEvents: 'none' }}>
+              <CreatureCardPreview creature={data} onClose={null} allowFlip={false} />
+            </div>
+          </div>
+        );
+      }
       const { instance } = resolveCardId(cardId);
       const level = instance?.level || 1;
       const isHolo = instance?.isHolo || false;
@@ -113,8 +173,7 @@ function BoardInner({ onNavigate, selectedDeck }) {
         </div>
       );
     }
-
-    // slot ÔÇö mesma apar├¬ncia da m├úo, s├│ que maior
+    // slot — mesma aparência da mão, só que maior
     const { instance } = resolveCardId(cardId);
     const level = instance?.level || 1;
     const isHolo = instance?.isHolo || false;
@@ -131,15 +190,15 @@ function BoardInner({ onNavigate, selectedDeck }) {
     const data = getCardData(cardId);
     if (!data) return null;
 
-    const name = data?.name?.pt || data?.name?.en || cardId;
-    const title = data?.title?.pt || data?.title?.en || '';
+    const name = typeof data?.name === 'object' ? data?.name?.pt || data?.name?.en : data?.name || cardId;
+    const title = typeof data?.title === 'object' ? data?.title?.pt || data?.title?.en : data?.title || '';
     const num = data?.num ? `#${String(data.num).padStart(3, '0')}` : '';
     const element = data?.element;
     const hp = data?.hp ?? '?';
     const abilities = data?.abilities || [];
-    const field = data?.field?.pt || data?.field?.en;
-    const fielddesc = data?.fielddesc?.pt || data?.fielddesc?.en;
-    const type = data?.type?.pt || data?.type?.en;
+    const field = typeof data?.field === 'object' ? data?.field?.pt || data?.field?.en : data?.field;
+    const fielddesc = typeof data?.fielddesc === 'object' ? data?.fielddesc?.pt || data?.fielddesc?.en : data?.fielddesc;
+    const type = typeof data?.type === 'object' ? data?.type?.pt || data?.type?.en : data?.type;
     const height = data?.height;
     const weakness = data?.weakness;
     const bg = data?.img ? { backgroundImage: `url(${data.img})` } : {};
@@ -237,6 +296,24 @@ function BoardInner({ onNavigate, selectedDeck }) {
     summonFromHand(handIndex, slotIndex);
   };
 
+  // Determina o background do board
+  const boardBg = state.sharedField.active && state.sharedField.id ? (() => {
+    let fieldData = null;
+    try {
+      const fieldCards = require('../assets/cards/field/exampleFieldCards').default;
+      fieldData = fieldCards.find(c => c.id === state.sharedField.id);
+    } catch (e) {
+      fieldData = null;
+    }
+    if (!fieldData) {
+      fieldData = getCardData(state.sharedField.id);
+    }
+    if (fieldData && fieldData.img) {
+      const img = typeof fieldData.img === 'string' ? fieldData.img : (fieldData.img?.default || '');
+      return img ? `url(${img})` : undefined;
+    }
+    return undefined;
+  })() : undefined;
   return (
     <div className="battle-root">
       <div className="battle-topbar">
@@ -267,7 +344,20 @@ function BoardInner({ onNavigate, selectedDeck }) {
         </div>
       </div>
 
-      <div className="board">
+      <div
+        className="board"
+        style={{
+          backgroundImage: boardBg,
+          backgroundRepeat: 'no-repeat',
+          backgroundSize: 'cover',
+          boxShadow: '0 0 100px rgba(0, 0, 0, 0.9666666667) inset, 0 12px 28px rgba(0, 0, 0, 0.8)',
+          transition: 'background 0.5s',
+          position: 'relative',
+        }}
+      >
+        {state.sharedField.active && state.sharedField.cardData && (
+          {/* efeito central removido conforme solicitado */}
+        )}
         <div className="turn-indicator">Turno {state.turn}</div>
         <div className="side ai-side">
           <div className="side-header">
@@ -290,26 +380,55 @@ function BoardInner({ onNavigate, selectedDeck }) {
         </div>
         <div className="shared-field">
           {state.sharedField.active && state.sharedField.id ? (
-            <div className="field-active-info">
-              <div className="field-active-label">Campo Ativo</div>
-              <div className="field-active-content">
-                <img
-                  src={require(`../assets/${state.sharedField.image}`)}
-                  alt={state.sharedField.id}
-                  className="field-active-art"
-                  style={{ width: 120, height: 80, objectFit: 'cover', borderRadius: 8, marginBottom: 6 }}
-                />
-                <div className="field-active-name" style={{ fontWeight: 600, fontSize: 18, color: '#0ff', textShadow: '0 2px 8px #000b' }}>
-                  {state.sharedField.id.replace('field-', 'Campo #')}
+            (() => {
+              // Busca os dados completos da carta de campo
+              let fieldData = null;
+              try {
+                const fieldCards = require('../assets/cards/field/exampleFieldCards').default;
+                fieldData = fieldCards.find(c => c.id === state.sharedField.id);
+              } catch (e) {
+                fieldData = null;
+              }
+
+              // Se não encontrar, tenta getCardData
+              if (!fieldData) {
+                fieldData = getCardData(state.sharedField.id);
+              }
+
+              if (!fieldData) return <div className="field-inactive">Campo não encontrado</div>;
+
+              const name = typeof fieldData.name === 'object' ? fieldData.name.pt || fieldData.name.en : fieldData.name;
+              const description = typeof fieldData.description === 'object' ? fieldData.description.pt || fieldData.description.en : fieldData.description;
+              const img = typeof fieldData.img === 'string' ? fieldData.img : (fieldData.img?.default || '');
+
+              return (
+                <div className="card-chip card-chip-hand">
+                  <div
+                    style={{
+                      transform: 'scale(0.5)',
+                      transformOrigin: 'left top',
+                      pointerEvents: 'none',
+                      background: `linear-gradient(120deg, #0a1a2a 0%, #0a3a4a 60%, #0088aa 90%, #0a1a2a 100%), url(${img})`,
+                      backgroundBlendMode: 'multiply, darken',
+                      borderRadius: 18,
+                    }}
+                  >
+                    <CreatureCardPreview
+                      creature={{
+                        id: fieldData.id,
+                        name: name || 'Campo',
+                        description: description || '',
+                        img: img,
+                        type: 'field',
+                        forceFieldClass: true,
+                      }}
+                      onClose={null}
+                      allowFlip={false}
+                    />
+                  </div>
                 </div>
-                {/* Efeitos resumidos */}
-                <div className="field-active-effects" style={{ fontSize: 13, color: '#fff', marginTop: 4 }}>
-                  {/* Aqui pode-se exibir um resumo dos efeitos, se desejado */}
-                  {/* Exemplo: "+1 Dano/+1 HP para Puro ou Monstro. +2 para ambos." */}
-                  {/* Para mais detalhes, pode-se buscar os dados da carta pelo id */}
-                </div>
-              </div>
-            </div>
+              );
+            })()
           ) : (
             <div className="field-inactive">Campo Inativo</div>
           )}
@@ -390,25 +509,25 @@ function BoardInner({ onNavigate, selectedDeck }) {
                   <div style={{ width: 370 }}>
                     <div className="card-preview card-preview-field">
                       <div className="card-preview-header">
-                        <span className="card-preview-name">{cardData.name}</span>
+                        <span className="card-preview-name">{typeof cardData.name === 'object' ? cardData.name.pt || cardData.name.en : cardData.name}</span>
                         <span className="card-preview-id">#{cardData.id}</span>
                       </div>
                       <div className="card-preview-art-wrapper">
-                        <img src={require(`../assets/${cardData.image}`)} alt={cardData.name} className="card-preview-art" />
+                        <img src={cardData.img} alt={typeof cardData.name === 'object' ? cardData.name.pt || cardData.name.en : cardData.name} className="card-preview-art" />
                       </div>
                       <div className="card-preview-field-desc">
                         <strong>Descrição:</strong>
-                        <div style={{ whiteSpace: 'pre-line' }}>{cardData.description}</div>
+                        <div style={{ whiteSpace: 'pre-line' }}>{typeof cardData.description === 'object' ? cardData.description.pt || cardData.description.en : cardData.description}</div>
                         <div className="card-preview-field-effects">
                           <strong>Efeitos:</strong>
                           <ul>
-                            {cardData.elementBoosts && Object.entries(cardData.elementBoosts).map(([el, val]) => (
+                            {Array.isArray(cardData.elementBoosts) && cardData.elementBoosts.map(([el, val]) => (
                               <li key={el}>Criaturas do elemento <b>{el}</b>: +{val} Dano / +{val} HP</li>
                             ))}
-                            {cardData.cardTypeBoosts && Object.entries(cardData.cardTypeBoosts).map(([type, val]) => (
+                            {Array.isArray(cardData.cardTypeBoosts) && cardData.cardTypeBoosts.map(([type, val]) => (
                               <li key={type}>Criaturas do tipo <b>{type}</b>: +{val} Dano / +{val} HP</li>
                             ))}
-                            {cardData.specialBoosts?.puroAndMonstro && (
+                            {cardData.specialBoosts && cardData.specialBoosts.puroAndMonstro && typeof cardData.specialBoosts.puroAndMonstro === 'object' && (
                               <li>
                                 <b>Puras e Monstros</b>: +{cardData.specialBoosts.puroAndMonstro.damage} Dano / +{cardData.specialBoosts.puroAndMonstro.hp} HP
                               </li>
@@ -437,29 +556,17 @@ function BoardInner({ onNavigate, selectedDeck }) {
               const cardData = getCardData(handId);
               // Se for carta de campo
               if (cardData?.type === 'field') {
-                // Só pode invocar se não houver campo ativo ou se já passou 1 rodada
-                const canInvokeField = !state.sharedField.active || (state.turn > (state.sharedField.turn || 0));
-                return canInvokeField ? (
+                // Mesmo padrão das criaturas: passar apenas index
+                return (
                   <div className="card-preview-actions">
                     <button
                       className="summon-button"
                       onClick={() => {
-                        // Invocar campo: mover para sharedField
-                        // Aqui você deve implementar a lógica de atualizar o estado global/sharedField
-                        // Exemplo:
-                        if (typeof window !== 'undefined') {
-                          window.dispatchEvent(new CustomEvent('invokeFieldCard', { detail: { cardIndex: activeCardIndex, cardData } }));
-                        }
+                        invokeFieldCard(activeCardIndex);
                         setActiveCardIndex(null);
                       }}
                     >
                       Invocar
-                    </button>
-                  </div>
-                ) : (
-                  <div className="card-preview-actions">
-                    <button className="summon-button" disabled>
-                      Invocar (aguarde 1 rodada)
                     </button>
                   </div>
                 );

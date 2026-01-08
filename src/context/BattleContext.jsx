@@ -1,4 +1,5 @@
 ﻿import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import creaturesPool from '../assets/cards';
 import { chooseAction } from '../logic/ai';
 import { AppContext } from './AppContext';
@@ -198,7 +199,8 @@ export function BattleProvider({ children }) {
 
 
   // Invoca carta de campo (field) para o sharedField
-  const invokeFieldCard = useCallback((handIndex, cardData) => {
+
+  const invokeFieldCard = useCallback((handIndex) => {
     setState((s) => {
       if (s.phase !== 'playing') return s;
       if (s.activePlayer !== 'player') return s;
@@ -215,11 +217,9 @@ export function BattleProvider({ children }) {
         },
         sharedField: {
           active: true,
-          id: cardData.id,
-          image: cardData.image,
-          turn: s.turn,
+          id: cardId,
         },
-        log: [...s.log, `Campo ${cardData.name} foi invocado!`],
+        log: [...s.log, `Campo ${cardId} foi invocado!`],
       };
     });
   }, []);

@@ -1,8 +1,10 @@
-﻿import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+﻿import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import creaturesPool from '../assets/cards';
 import { chooseAction } from '../logic/ai';
 import { AppContext } from './AppContext';
 import fieldChangeSfx from '../assets/sounds/effects/field-change.MP3';
+import flipCardSfx from '../assets/sounds/effects/flipcard.MP3';
+import battleMusic from '../assets/sounds/music/battle-music.mp3';
 
 export const BattleContext = createContext(null);
 
@@ -34,6 +36,7 @@ const sampleDeckFromPool = (size = 20) => {
 
 export function BattleProvider({ children }) {
   const { decks } = useContext(AppContext);
+  const battleAudioRef = useRef(null);
 
   const playFieldChangeSound = useCallback(() => {
     try {
@@ -46,19 +49,30 @@ export function BattleProvider({ children }) {
     }
   }, []);
 
+  const playFlipCardSound = useCallback(() => {
+    try {
+      if (!flipCardSfx) return;
+      const audio = new Audio(flipCardSfx);
+      audio.volume = 0.5;
+      audio.play().catch(() => {});
+    } catch (e) {
+      console.warn('Erro ao tocar som de carta:', e);
+    }
+  }, []);
+
   const [state, setState] = useState({
     phase: 'idle',
     turn: 1,
     activePlayer: 'player', // 'player' | 'ai'
     player: {
-      orbs: 3,
+      orbs: 5,
       essence: 0,
       deck: [],
       hand: [],
       field: { slots: [null, null, null], effects: [null, null, null] },
     },
     ai: {
-      orbs: 3,
+      orbs: 5,
       essence: 0,
       deck: [],
       hand: [],
@@ -67,6 +81,30 @@ export function BattleProvider({ children }) {
     sharedField: { active: false, id: null },
     log: [],
   });
+
+  // Controla música de fundo da batalha
+  useEffect(() => {
+    if (state.phase === 'playing') {
+      if (!battleAudioRef.current) {
+        battleAudioRef.current = new Audio(battleMusic);
+        battleAudioRef.current.loop = true;
+        battleAudioRef.current.volume = 0.3;
+      }
+      battleAudioRef.current.play().catch(() => {});
+    } else {
+      if (battleAudioRef.current) {
+        battleAudioRef.current.pause();
+        battleAudioRef.current.currentTime = 0;
+      }
+    }
+
+    return () => {
+      if (battleAudioRef.current) {
+        battleAudioRef.current.pause();
+        battleAudioRef.current = null;
+      }
+    };
+  }, [state.phase]);
 
   const log = useCallback((msg) => {
     setState((s) => ({ ...s, log: [...s.log, msg] }));
@@ -103,8 +141,8 @@ export function BattleProvider({ children }) {
       phase: 'playing',
       turn: 1,
       activePlayer: 'player',
-      player: { orbs: 3, essence: 0, deck: pDeck, hand: pHand, field: { slots: [null, null, null], effects: [null, null, null] } },
-      ai: { orbs: 3, essence: 0, deck: aDeck, hand: aHand, field: { slots: [null, null, null], effects: [null, null, null] } },
+      player: { orbs: 5, essence: 0, deck: pDeck, hand: pHand, field: { slots: [null, null, null], effects: [null, null, null] } },
+      ai: { orbs: 5, essence: 0, deck: aDeck, hand: aHand, field: { slots: [null, null, null], effects: [null, null, null] } },
       sharedField: { active: false, id: null },
       log: ['Batalha iniciada!'],
     });
@@ -160,6 +198,7 @@ export function BattleProvider({ children }) {
   }, [log]);
 
   const drawPlayerCard = useCallback(() => {
+    playFlipCardSound();
     setState((s) => {
       if (s.phase !== 'playing') return s;
       if (s.activePlayer !== 'player') return s;
@@ -186,6 +225,7 @@ export function BattleProvider({ children }) {
   }, []);
 
   const summonFromHand = useCallback((index, slotIndex) => {
+    playFlipCardSound();
     setState((s) => {
       if (s.phase !== 'playing') return s;
       if (s.activePlayer !== 'player') return s; // por enquanto s├│ jogador manual

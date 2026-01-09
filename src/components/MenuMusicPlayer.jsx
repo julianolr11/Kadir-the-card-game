@@ -5,10 +5,12 @@ import { AppContext } from '../context/AppContext';
 const MenuMusicPlayer = React.forwardRef((props, ref) => {
   const audioRef = useRef(null);
   const { musicVolume } = useContext(AppContext);
+  const shouldPlayRef = useRef(true);
 
   // Permite controle externo via ref
   React.useImperativeHandle(ref, () => ({
     play: () => {
+      shouldPlayRef.current = true;
       if (audioRef.current) {
         audioRef.current.volume = (musicVolume ?? 100) / 100;
         return audioRef.current.play();
@@ -16,6 +18,7 @@ const MenuMusicPlayer = React.forwardRef((props, ref) => {
       return Promise.resolve();
     },
     pause: () => {
+      shouldPlayRef.current = false;
       if (audioRef.current) audioRef.current.pause();
     },
     setVolume: (v) => {
@@ -27,13 +30,11 @@ const MenuMusicPlayer = React.forwardRef((props, ref) => {
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = (musicVolume ?? 100) / 100;
-      audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(() => {});
     }
 
     // Loop agressivo para garantir que a música continue tocando
     const intervalId = setInterval(() => {
-      if (audioRef.current && audioRef.current.parentNode) {
+      if (audioRef.current && audioRef.current.parentNode && shouldPlayRef.current) {
         if (
           audioRef.current.paused ||
           (audioRef.current.duration &&

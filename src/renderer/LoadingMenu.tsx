@@ -8,19 +8,28 @@ import wallpaper from '../assets/img/wallpaper/wallpaper.png';
 interface LoadingMenuProps {
   onNavigate: (route: string) => void;
   menuMusicRef: any;
+  introMusicRef: any;
 }
 
-function LoadingMenu({ onNavigate, menuMusicRef }: LoadingMenuProps) {
+function LoadingMenu({ onNavigate, menuMusicRef, introMusicRef }: LoadingMenuProps) {
   const [showOptions, setShowOptions] = useState(false);
   const [showExit, setShowExit] = useState(false);
-  React.useEffect(() => {
+
+  const handleIniciar = () => {
+    // Para a música intro
+    if (introMusicRef?.current) {
+      introMusicRef.current.pause();
+      introMusicRef.current.currentTime = 0;
+    }
+    // Toca a música do menu quando clicar em Iniciar
     if (menuMusicRef?.current) {
       const playPromise = menuMusicRef.current.play();
       if (playPromise) {
         playPromise.catch(() => {});
       }
     }
-  }, [menuMusicRef]);
+    onNavigate('iniciar');
+  };
 
   return (
     <div
@@ -60,7 +69,7 @@ function LoadingMenu({ onNavigate, menuMusicRef }: LoadingMenuProps) {
         }}
         className="fade-in"
       >
-        <button className="home-btn" onClick={() => onNavigate('iniciar')}>
+        <button className="home-btn" onClick={handleIniciar}>
           Iniciar
         </button>
         <button className="home-btn" onClick={() => setShowOptions(true)}>

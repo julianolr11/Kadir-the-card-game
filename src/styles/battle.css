@@ -280,7 +280,7 @@
 }
 @media (min-width: 1920px) and (min-height: 1080px) {
   .battle-root {
-    transform: translateX(-50%) scale(1);
+   transform: translateX(-50%) scale(1.32);
   }
 }
 /* Essência do adversário */
@@ -309,7 +309,7 @@
 .opponent-deck-draw {
   position: absolute;
   top: 40px;
-  right: 120px;
+  right: 170px;
   left: auto;
   z-index: 40;
 }
@@ -521,7 +521,7 @@ position: absolute;
 .hand { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); z-index: 50; padding: 0; margin: 0; }
 .hand-title { display: none; }
 .hand-cards { display: flex; gap: 6px; justify-content: center; align-items: flex-end; }
-.hand-card { position: relative; width: 185px; cursor: pointer; transform: translateY(70%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 12px; box-shadow: 0 12px 24px rgba(0, 0, 0, 0.5333333333); }
+.hand-card { position: relative; width: 185px; cursor: pointer; transform: translateY(70%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 12px; }
 .hand-card:hover { transform: translateY(0); z-index: 10; }
 .hand-card.active { transform: translateY(0); z-index: 15; }
 

@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import MenuMusicPlayer from '../components/MenuMusicPlayer';
+import IntroMusicPlayer from '../components/IntroMusicPlayer';
 import LoadingScreen from '../components/LoadingScreen';
 import HomeScreen from '../components/HomeScreen';
 import StartFlow from '../components/StartFlow';
@@ -15,6 +16,7 @@ export default function App() {
   const [screen, setScreen] = useState('loading');
   const [battleDeck, setBattleDeck] = useState(null);
   const menuMusicRef = useRef(null);
+  const introMusicRef = useRef(null);
 
   // Navegação central
   const handleNavigate = (route: string, params?: any) => {
@@ -32,7 +34,8 @@ export default function App() {
 
   return (
     <AppProvider>
-      <MenuMusicPlayer ref={menuMusicRef} />
+      <IntroMusicPlayer ref={introMusicRef} />
+      {screen !== 'battle' && <MenuMusicPlayer ref={menuMusicRef} />}
       {screen === 'loading' && (
         <LoadingScreen
           onFinish={() => setScreen('menu')}
@@ -40,7 +43,7 @@ export default function App() {
         />
       )}
       {screen === 'menu' && (
-        <LoadingMenu onNavigate={handleNavigate} menuMusicRef={menuMusicRef} />
+        <LoadingMenu onNavigate={handleNavigate} menuMusicRef={menuMusicRef} introMusicRef={introMusicRef} />
       )}
       {screen === 'home' && (
         <HomeScreen onNavigate={handleNavigate} menuMusicRef={menuMusicRef} />

@@ -28,24 +28,19 @@ function LoadingScreen({ onFinish, menuMusicRef }) {
   const [showStart, setShowStart] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
   const [showExit, setShowExit] = useState(false);
-  const audioRef = useRef(null);
+  // audioRef removido - intro agora é global no App
   // menuAudioRef removido, agora usa menuMusicRef global
   const keyClickAudioRef = useRef(null);
   const { musicVolume, lang } = useContext(AppContext);
   const t = translations[lang] || translations.ptbr;
 
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = musicVolume / 100;
-      audioRef.current.play().catch(() => {});
-    }
     const timer = setTimeout(() => {
       setShowMenu(true);
       if (onFinish) onFinish();
     }, 5000); // 5 segundos
     return () => {
       clearTimeout(timer);
-      if (audioRef.current) audioRef.current.pause();
     };
   }, [onFinish, musicVolume]);
 
@@ -80,7 +75,7 @@ function LoadingScreen({ onFinish, menuMusicRef }) {
         overflow: 'hidden',
       }}
     >
-      <audio ref={audioRef} src="/assets/sounds/intro.mp3" autoPlay loop />
+      {/* Áudio da intro agora é global no App.tsx */}
       {/* menuMusicRef é global, não precisa de <audio> local */}
       <img
         src={wallpaper}
@@ -124,8 +119,7 @@ function LoadingScreen({ onFinish, menuMusicRef }) {
           {showStart && (
             <StartFlow
               onFinish={() => setShowStart(false)}
-              introAudioRef={audioRef}
-              menuAudioRef={menuAudioRef}
+              menuMusicRef={menuMusicRef}
               musicVolume={musicVolume}
             />
           )}

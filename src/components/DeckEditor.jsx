@@ -35,6 +35,8 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
   const { lang = 'ptbr', getCardInstances, cardCollection } = React.useContext(AppContext) || {};
   const langKey = lang === 'en' ? 'en' : 'pt';
   const [deckName, setDeckName] = useState(initialDeckName || `Deck ${deckId}`);
+  const [editingName, setEditingName] = useState(false);
+  const nameInputRef = useRef(null);
   const [deckCards, setDeckCards] = useState(initialCards);
   const [selectedGuardian, setSelectedGuardian] = useState(guardianId);
   const [searchTerm, setSearchTerm] = useState('');
@@ -298,14 +300,45 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
 
   const cardCount = deckCards.filter((id) => id).length;
 
+  useEffect(() => {
+    if (editingName && nameInputRef.current) {
+      nameInputRef.current.focus();
+      nameInputRef.current.select?.();
+    }
+  }, [editingName]);
+
+  const handleSaveName = () => {
+    setEditingName(false);
+    if (onSave) {
+      onSave({ id: deckId, name: deckName, guardianId: selectedGuardian, cards: deckCards });
+      lastSavedRef.current = { name: deckName, cards: deckCards };
+      setShowSavedToast(true);
+      setTimeout(() => setShowSavedToast(false), 1500);
+    }
+  };
+
   return (
     <div className="deck-editor-overlay" onClick={onClose}>
       <div className="deck-editor-modal" onClick={(e) => e.stopPropagation()}>
         <audio ref={successSoundRef} src={sphereMenuSound} preload="auto" />
         <audio ref={errorSoundRef} src={packageSound} preload="auto" />
         <div className="deck-editor-header">
-          <input type="text" className="deck-editor-title" value={deckName} onChange={e => setDeckName(e.target.value)} placeholder="Nome do Deck" />
+          <input
+            ref={nameInputRef}
+            type="text"
+            className={`deck-editor-title${editingName ? '' : ' readonly'}`}
+            value={deckName}
+            onChange={e => setDeckName(e.target.value)}
+            onKeyDown={(e) => { if (editingName && e.key === 'Enter') handleSaveName(); }}
+            placeholder="Nome do Deck"
+            readOnly={!editingName}
+          />
           <div className="deck-editor-counter">{cardCount}/20 cartas</div>
+          {!editingName ? (
+            <button className="deck-editor-edit" onClick={() => setEditingName(true)}>Editar</button>
+          ) : (
+            <button className="deck-editor-save" onClick={handleSaveName}>Salvar</button>
+          )}
           <button className="deck-editor-close" onClick={onClose}>✕</button>
         </div>
         <div className="deck-editor-guardian-section">

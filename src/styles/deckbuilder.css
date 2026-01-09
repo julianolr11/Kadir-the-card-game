@@ -873,6 +873,11 @@
   transition: border-color 0.2s, background 0.2s;
 }
 
+.deck-editor-title.readonly {
+  opacity: 0.9;
+  cursor: default;
+}
+
 .deck-editor-title:focus {
   border-color: #7a5af8;
   background: rgba(255, 255, 255, 0.08);
@@ -886,6 +891,23 @@
   background: rgba(122, 90, 248, 0.2);
   border-radius: 8px;
   border: 1px solid rgba(122, 90, 248, 0.4);
+}
+
+.deck-editor-edit,
+.deck-editor-save {
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-family: 'Poppins', Arial, sans-serif;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.06);
+  color: #ffe6b0;
+  cursor: pointer;
+}
+
+.deck-editor-save {
+  background: rgba(90, 248, 122, 0.2);
+  border-color: rgba(90, 248, 122, 0.4);
 }
 
 .deck-editor-close {

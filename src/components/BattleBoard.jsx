@@ -7,7 +7,7 @@ import essenceIcon from '../assets/img/icons/soul-essence.png';
 import cardVerso from '../assets/img/card/verso.png';
 import '../styles/battle.css';
 
-function BoardInner({ onNavigate, selectedDeck }) {
+function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
   const { state, startBattle, endTurn, summonFromHand, drawPlayerCard, invokeFieldCard } = useBattle();
   const { cardCollection } = React.useContext(AppContext);
   const [activeCardIndex, setActiveCardIndex] = React.useState(null);
@@ -68,6 +68,19 @@ function BoardInner({ onNavigate, selectedDeck }) {
   useEffect(() => {
     if (state.phase === 'idle') startBattle(selectedDeck);
   }, [state.phase, startBattle, selectedDeck]);
+
+  // Pausa música do menu quando a batalha começa
+  useEffect(() => {
+    if (state.phase === 'playing' && menuMusicRef?.current) {
+      // Pausa via método do ref
+      menuMusicRef.current.pause();
+      // Também pausa diretamente o elemento de áudio para garantir
+      const audio = menuMusicRef.current.getAudio?.();
+      if (audio) {
+        audio.pause();
+      }
+    }
+  }, [state.phase, menuMusicRef]);
 
   useEffect(() => {
     if (state.activePlayer === 'player') {
@@ -323,7 +336,21 @@ function BoardInner({ onNavigate, selectedDeck }) {
   // Rastreia posicao do mouse para o ghost preview
   useEffect(() => {
     const handleMouseMove = (e) => {
-      setMousePos({ x: e.clientX, y: e.clientY });
+      // Pega a escala e offsets do viewport
+      const appViewport = document.querySelector('.app-viewport');
+      if (appViewport) {
+        const style = getComputedStyle(appViewport);
+        const scale = parseFloat(style.getPropertyValue('--vp-scale')) || 1;
+        const offsetX = parseFloat(style.getPropertyValue('--vp-offset-x')) || 0;
+        const offsetY = parseFloat(style.getPropertyValue('--vp-offset-y')) || 0;
+
+        // Converte coordenadas do mouse para o espaço escalado
+        const x = (e.clientX - offsetX) / scale;
+        const y = (e.clientY - offsetY) / scale;
+        setMousePos({ x, y });
+      } else {
+        setMousePos({ x: e.clientX, y: e.clientY });
+      }
     };
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
@@ -649,9 +676,8 @@ function BoardInner({ onNavigate, selectedDeck }) {
 
       {/* Ghost Preview - aparece ao passar o mouse */}
       {hoveredCard && hoveredCard.cardId && (() => {
-        // Remove ghost preview para cartas de campo na mão
-        const cardData = getCardData(hoveredCard.cardId);
-        if (hoveredCard.source === 'hand' && cardData?.type === 'field') {
+        // Remove ghost preview para todas as cartas na mão
+        if (hoveredCard.source === 'hand') {
           return null;
         }
         return true;
@@ -659,8 +685,8 @@ function BoardInner({ onNavigate, selectedDeck }) {
         <div
           className="ghost-preview"
           style={{
-            left: mousePos.x + 30,
-            top: mousePos.y - 280,
+            left: mousePos.x + 20,
+            top: mousePos.y - 150,
             pointerEvents: 'none',
           }}
         >

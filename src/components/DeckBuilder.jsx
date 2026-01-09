@@ -251,6 +251,7 @@ function DeckBuilder({ onNavigate }) {
     loadGuardianLoadout,
     setActiveGuardian,
     getCardInstances,
+    decks,
   } = useContext(AppContext) || {};
   const [slots, setSlots] = useState(Array(MAX_DECKS).fill(null));
   const [openingSlotId, setOpeningSlotId] = useState(null);
@@ -274,6 +275,32 @@ function DeckBuilder({ onNavigate }) {
       setPendingEditIndex(null);
     }
   }, [pendingEditIndex, slots]);
+
+  // Hidrata os slots a partir dos decks salvos no contexto/localStorage
+  React.useEffect(() => {
+    try {
+      const initial = Array(MAX_DECKS).fill(null);
+      // Preferir IDs canonicos deck-1, deck-2, deck-3 se existirem
+      for (let i = 0; i < MAX_DECKS; i += 1) {
+        const id = `deck-${i + 1}`;
+        const d = decks && decks[id];
+        if (d) {
+          initial[i] = { id, name: d.name || `Deck ${i + 1}` };
+        }
+      }
+      // Caso não existam IDs canonicos, preencher por ordem de chaves
+      if (!initial.some(Boolean) && decks && typeof decks === 'object') {
+        const entries = Object.entries(decks);
+        for (let i = 0; i < Math.min(MAX_DECKS, entries.length); i += 1) {
+          const [id, d] = entries[i];
+          initial[i] = { id, name: d?.name || `Deck ${i + 1}` };
+        }
+      }
+      setSlots(initial);
+    } catch (e) {
+      console.warn('Falha ao hidratar slots de decks:', e);
+    }
+  }, [decks]);
 
   const langKey = lang === 'en' ? 'en' : 'pt';
 

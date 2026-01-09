@@ -12,14 +12,15 @@ import puroIcon from '../assets/img/elements/puro.png';
 import '../styles/deckbuilder.css';
 
 const ALL_CARD_IDS = [
-  'agolir','alatoy','arguilia','ashfang','beoxyr','digitama','draak','drazaq','ekeranth','ekonos','elderox','elythra','faskel','griffor','ignis','kael','landor','leoracal','lunethal','mawthorn','owlberoth','pawferion','raptauros','seract','sunburst','terrakhal','viborom','virideer','whalar','zephyron','f001',
+  'agolir','alatoy','arguilia','ashfang','beoxyr','digitama','draak','drazaq','ekeranth','ekonos','elderox','elythra','faskel','griffor','ignis','kael','landor','leoracal','lunethal','mawthorn','owlberoth','pawferion','raptauros','seract','sunburst','terrakhal','viborom','virideer','whalar','zephyron','field_field','field_aerial','field_beach','field_desert','field_draconic','field_mistic_forest','field_mountain','field_ocean','field_shadow_mountain','field_snow','field_swamp','field_vulcanus',
 ];
 
 const getCardData = (cardId) => {
   try {
-    if (cardId === 'f001') {
+    // Verifica se é uma carta de campo
+    if (cardId.startsWith('field_')) {
       const fieldCards = require('../assets/cards/field/exampleFieldCards').default;
-      return fieldCards.find(c => c.id === 'f001');
+      return fieldCards.find(c => c.id === cardId);
     }
     return require(`../assets/cards/booster1/${cardId}.js`);
   } catch (error) {

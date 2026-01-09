@@ -241,55 +241,60 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
         const updated = (prev + e.key).toLowerCase();
         // Mantém apenas os últimos 15 caracteres para não consumir muita memória
         const trimmed = updated.slice(-15);
-
-        if (trimmed.endsWith('kadirbooster')) {
-          setBoosters(Math.max(0, boosters) + 5);
-          return '';
-        }
-
-        if (trimmed.endsWith('kadirreset')) {
-          if (confirm('⚠️ RESETAR TODO O PROGRESSO?\n\n• Limpar coleção de cartas\n• Deletar TODOS os decks\n• Resetar guardiões\n• 5 boosters\n\nEsta ação não pode ser desfeita!')) {
-            // Limpar TUDO relacionado ao jogo
-            const keysToRemove = [];
-            for (let i = 0; i < localStorage.length; i++) {
-              const key = localStorage.key(i);
-              if (key && (key.startsWith('kadir') || key.includes('deck') || key.includes('guardian') || key.includes('card'))) {
-                keysToRemove.push(key);
-              }
-            }
-            keysToRemove.forEach(key => localStorage.removeItem(key));
-
-            // Remover especificamente essas chaves importantes
-            localStorage.removeItem('decks');
-            localStorage.removeItem('kadir_decks');
-            localStorage.removeItem('guardianLoadouts');
-            localStorage.removeItem('activeGuardian');
-            localStorage.removeItem('cardCollection');
-            localStorage.removeItem('boosters');
-
-            // Definir valores iniciais
-            localStorage.setItem('boosters', '5');
-            localStorage.setItem('cardCollection', '{}');
-            localStorage.setItem('decks', '{}');
-            localStorage.setItem('kadir_decks', '{}');
-            localStorage.setItem('activeGuardian', JSON.stringify({
-              name: 'draak',
-              img: '../assets/img/creatures/draak_bio.webp'
-            }));
-
-            alert('✅ Reset concluído! A página será recarregada.');
-            setTimeout(() => window.location.reload(), 500);
-          }
-          return '';
-        }
-
         return trimmed;
       });
     }
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [boosters, setBoosters]);
+  }, []);
+
+  // Processa cheats detectados
+  useEffect(() => {
+    if (cheatInput.endsWith('kadirbooster')) {
+      setBoosters(Math.max(0, boosters) + 5);
+      setCheatInput('');
+    }
+  }, [cheatInput, boosters, setBoosters]);
+
+  // Processa reset cheat
+  useEffect(() => {
+    if (cheatInput.endsWith('kadirreset')) {
+      if (confirm('⚠️ RESETAR TODO O PROGRESSO?\n\n• Limpar coleção de cartas\n• Deletar TODOS os decks\n• Resetar guardiões\n• 5 boosters\n\nEsta ação não pode ser desfeita!')) {
+        // Limpar TUDO relacionado ao jogo
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && (key.startsWith('kadir') || key.includes('deck') || key.includes('guardian') || key.includes('card'))) {
+            keysToRemove.push(key);
+          }
+        }
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+
+        // Remover especificamente essas chaves importantes
+        localStorage.removeItem('decks');
+        localStorage.removeItem('kadir_decks');
+        localStorage.removeItem('guardianLoadouts');
+        localStorage.removeItem('activeGuardian');
+        localStorage.removeItem('cardCollection');
+        localStorage.removeItem('boosters');
+
+        // Definir valores iniciais
+        localStorage.setItem('boosters', '5');
+        localStorage.setItem('cardCollection', '{}');
+        localStorage.setItem('decks', '{}');
+        localStorage.setItem('kadir_decks', '{}');
+        localStorage.setItem('activeGuardian', JSON.stringify({
+          name: 'draak',
+          img: '../assets/img/creatures/draak_bio.webp'
+        }));
+
+        alert('✅ Reset concluído! A página será recarregada.');
+        setTimeout(() => window.location.reload(), 500);
+      }
+      setCheatInput('');
+    }
+  }, [cheatInput, setBoosters]);
 
   // Fecha dropdown ao clicar fora
   React.useEffect(() => {

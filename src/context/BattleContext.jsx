@@ -1,8 +1,8 @@
 ﻿import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import creaturesPool from '../assets/cards';
 import { chooseAction } from '../logic/ai';
 import { AppContext } from './AppContext';
+import fieldChangeSfx from '../assets/sounds/effects/field-change.MP3';
 
 export const BattleContext = createContext(null);
 
@@ -34,6 +34,17 @@ const sampleDeckFromPool = (size = 20) => {
 
 export function BattleProvider({ children }) {
   const { decks } = useContext(AppContext);
+
+  const playFieldChangeSound = useCallback(() => {
+    try {
+      if (!fieldChangeSfx) return;
+      const audio = new Audio(fieldChangeSfx);
+      audio.volume = 0.5;
+      audio.play().catch(() => {});
+    } catch (e) {
+      console.warn('Erro ao tocar som de campo:', e);
+    }
+  }, []);
 
   const [state, setState] = useState({
     phase: 'idle',
@@ -201,6 +212,7 @@ export function BattleProvider({ children }) {
   // Invoca carta de campo (field) para o sharedField
 
   const invokeFieldCard = useCallback((handIndex) => {
+    playFieldChangeSound();
     setState((s) => {
       if (s.phase !== 'playing') return s;
       if (s.activePlayer !== 'player') return s;
@@ -224,6 +236,31 @@ export function BattleProvider({ children }) {
     });
   }, []);
 
+  // Invoca carta de campo da IA para o sharedField
+  const invokeFieldCardAI = useCallback((handIndex) => {
+    playFieldChangeSound();
+    setState((s) => {
+      if (s.phase !== 'playing') return s;
+      const hand = [...s.ai.hand];
+      const cardId = hand[handIndex];
+      if (!cardId) return s;
+      // Remove carta da mão
+      hand.splice(handIndex, 1);
+      return {
+        ...s,
+        ai: {
+          ...s.ai,
+          hand,
+        },
+        sharedField: {
+          active: true,
+          id: cardId,
+        },
+        log: [...s.log, `IA invocou o campo ${cardId}!`],
+      };
+    });
+  }, []);
+
   const value = useMemo(() => ({
     state,
     startBattle,
@@ -231,8 +268,9 @@ export function BattleProvider({ children }) {
     drawPlayerCard,
     summonFromHand,
     invokeFieldCard,
+    invokeFieldCardAI,
     log,
-  }), [state, startBattle, endTurn, drawPlayerCard, summonFromHand, invokeFieldCard, log]);
+  }), [state, startBattle, endTurn, drawPlayerCard, summonFromHand, invokeFieldCard, invokeFieldCardAI, log]);
 
   const performAiTurn = useCallback(() => {
     setState((s) => {
@@ -240,12 +278,37 @@ export function BattleProvider({ children }) {
       if (s.activePlayer !== 'ai') return s;
 
       const slots = [...s.ai.field.slots];
-      const emptyIndex = slots.findIndex((slot) => !slot);
       const hand = [...s.ai.hand];
       let updated = false;
       let logEntries = [...s.log];
 
+      // PRIORIDADE: Verifica se ha cartas de campo na mao da IA
+      const fieldCardIndex = hand.findIndex((cardId) => cardId && cardId.startsWith('field_'));
+
+      if (fieldCardIndex >= 0) {
+        // IA tem uma carta de campo, invoca ela no sharedField (sobrescreve a anterior)
+        const cardId = hand[fieldCardIndex];
+        playFieldChangeSound();
+        hand.splice(fieldCardIndex, 1);
+        logEntries = [...logEntries, `IA invocou o campo ${cardId}!`];
+
+        return {
+          ...s,
+          ai: {
+            ...s.ai,
+            hand,
+          },
+          sharedField: {
+            active: true,
+            id: cardId,
+          },
+          log: logEntries,
+        };
+      }
+
+      // Se nao tem carta de campo, invoca criaturas
       const action = chooseAction(s);
+      const emptyIndex = slots.findIndex((slot) => !slot);
 
       if (action?.type === 'summon' && typeof action.handIndex === 'number' && typeof action.slotIndex === 'number') {
         const { handIndex, slotIndex } = action;
@@ -262,7 +325,7 @@ export function BattleProvider({ children }) {
         updated = true;
         logEntries = [...logEntries, `IA invocou ${cardId} no slot ${emptyIndex + 1}.`];
       } else {
-        logEntries = [...logEntries, 'IA n├úo fez a├º├úo.'];
+        logEntries = [...logEntries, 'IA nao fez acao.'];
       }
 
       if (!updated) {
@@ -280,7 +343,7 @@ export function BattleProvider({ children }) {
       };
     });
 
-    // Entrega o turno de volta para o jogador ap├│s a a├º├úo da IA
+    // Entrega o turno de volta para o jogador apos a acao da IA
     endTurn();
   }, [endTurn]);
 

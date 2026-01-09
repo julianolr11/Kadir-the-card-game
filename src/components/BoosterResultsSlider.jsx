@@ -175,7 +175,11 @@ function BoosterResultsSlider({ cards, lang, onClose }) {
                         </div>
                         {/* Arte */}
                         <div className="card-preview-art-wrapper">
-                          <img src={require(`../assets/${card.image}`)} alt={getLocalizedText(card?.name, lang)} className="card-preview-art" />
+                          {card?.img ? (
+                            <img src={card.img} alt={getLocalizedText(card?.name, lang)} className="card-preview-art" />
+                          ) : (
+                            <div style={{width: '100%', height: '100%', backgroundColor: '#333'}} />
+                          )}
                         </div>
                         {/* Descrição e efeitos */}
                         <div className="card-preview-field-desc">

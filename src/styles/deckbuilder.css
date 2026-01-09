@@ -910,6 +910,30 @@
   border-color: rgba(90, 248, 122, 0.4);
 }
 
+/* Input + appended button group */
+.deck-editor-title-group {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  flex: 1;
+}
+
+.deck-editor-title-group .deck-editor-title {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.deck-editor-append-btn {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  height: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  border-left: none;
+}
+
 .deck-editor-close {
   background: rgba(255, 100, 100, 0.2);
   border: 1px solid rgba(255, 100, 100, 0.4);

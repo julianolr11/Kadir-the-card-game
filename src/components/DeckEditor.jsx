@@ -336,22 +336,24 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
         <audio ref={successSoundRef} src={sphereMenuSound} preload="auto" />
         <audio ref={errorSoundRef} src={packageSound} preload="auto" />
         <div className="deck-editor-header">
-          <input
-            ref={nameInputRef}
-            type="text"
-            className={`deck-editor-title${editingName ? '' : ' readonly'}`}
-            value={deckName}
-            onChange={e => setDeckName(e.target.value)}
-            onKeyDown={(e) => { if (editingName && e.key === 'Enter') handleSaveName(); }}
-            placeholder="Nome do Deck"
-            readOnly={!editingName}
-          />
+          <div className="deck-editor-title-group">
+            <input
+              ref={nameInputRef}
+              type="text"
+              className={`deck-editor-title${editingName ? '' : ' readonly'}`}
+              value={deckName}
+              onChange={e => setDeckName(e.target.value)}
+              onKeyDown={(e) => { if (editingName && e.key === 'Enter') handleSaveName(); }}
+              placeholder="Nome do Deck"
+              readOnly={!editingName}
+            />
+            {!editingName ? (
+              <button className="deck-editor-append-btn deck-editor-edit" onClick={() => setEditingName(true)}>Editar</button>
+            ) : (
+              <button className="deck-editor-append-btn deck-editor-save" onClick={handleSaveName}>Salvar</button>
+            )}
+          </div>
           <div className="deck-editor-counter">{cardCount}/20 cartas</div>
-          {!editingName ? (
-            <button className="deck-editor-edit" onClick={() => setEditingName(true)}>Editar</button>
-          ) : (
-            <button className="deck-editor-save" onClick={handleSaveName}>Salvar</button>
-          )}
           <button className="deck-editor-close" onClick={onClose}>✕</button>
         </div>
         <div className="deck-editor-guardian-section">

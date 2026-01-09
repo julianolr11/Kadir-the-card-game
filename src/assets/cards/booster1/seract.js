@@ -21,14 +21,6 @@ module.exports = {
       },
     },
     {
-      name: { pt: 'Névoa Noturna', en: 'Night Mist' },
-      cost: 1,
-      desc: {
-        pt: 'Envolve o campo em névoa escura: inimigos perdem +8% de precisão por 2 turnos.',
-        en: 'Shrouds the field in dark mist: enemies lose +8% accuracy for 2 turns.',
-      },
-    },
-    {
       name: { pt: 'Cristal de Sombra', en: 'Shadow Crystal' },
       cost: 3,
       desc: {

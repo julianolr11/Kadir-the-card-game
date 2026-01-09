@@ -148,14 +148,16 @@ function CreatureCardPreview({
   const langKey = lang === 'ptbr' ? 'pt' : lang;
   if (!creature) return null;
 
-  return (
-    <div
-      style={{ position: 'relative', display: 'flex', perspective: '1000px' }}
-    >
-      {/* Audio */}
-      <audio ref={swipeAudioRef} src={swipeSound} preload="auto" />
+  // Detecta se é carta de campo
+  const isFieldCard = creature.type === 'field';
+  // Força classe de campo se solicitado
+  const forceFieldClass = creature.forceFieldClass;
+  // Corrige imagem para cartas de campo
+  const imageSrc = typeof creature.img === 'string' ? creature.img : (creature.img?.default || creature.image || '');
 
-      {/* Container com flip 3D */}
+  return (
+    <div style={{ position: 'relative', display: 'flex', perspective: '1000px' }}>
+      <audio ref={swipeAudioRef} src={swipeSound} preload="auto" />
       <div
         style={{
           position: 'relative',
@@ -167,120 +169,64 @@ function CreatureCardPreview({
       >
         {/* FRENTE DA CARTA */}
         <div style={{ backfaceVisibility: 'hidden' }}>
-          <div className={`card-preview ${colorClass[creature.element] || ''} ${isHolo ? 'card-preview-holo' : ''}`}>
+          <div className={`card-preview ${forceFieldClass ? 'card-preview-field' : colorClass[creature.element] || (isFieldCard ? 'card-preview-field' : '')} ${isHolo ? 'card-preview-holo' : ''}`}>
             <div className="card-preview-header">
               <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <img
-                  src={elementIcons[creature.element]}
-                  alt={creature.element}
-                  className="card-preview-element"
-                />
-                <span
-                  className="card-preview-name"
-                  style={{
-                    color: '#fff',
-                    fontWeight: 700,
-                    fontSize: '1.00rem',
-                    textShadow: '0 2px 8px #000a',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 4,
-                  }}
-                >
-                  {typeof creature.name === 'object'
-                    ? creature.name[langKey]
-                    : creature.name}
+                {!isFieldCard && (
+                  <img
+                    src={elementIcons[creature.element]}
+                    alt={creature.element}
+                    className="card-preview-element"
+                  />
+                )}
+                <span className="card-preview-name" style={{ color: '#fff', fontWeight: 700, fontSize: '1.00rem', textShadow: '0 2px 8px #000a', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  {typeof creature.name === 'object' ? creature.name[langKey] : creature.name}
                   {isHolo && <span className="holo-indicator">✨</span>}
                 </span>
-                <span
-                  className="card-preview-title"
-                  style={{
-                    marginLeft: 8,
-                    color: '#fff',
-                    fontStyle: 'italic',
-                    textShadow: 'rgba(0, 0, 0, 0.667) 0px 2px 8px',
-                    fontSize: '12px',
-                  }}
-                >
-                  {typeof creature.title === 'object'
-                    ? creature.title[langKey]
-                    : creature.title}
+                <span className="card-preview-title" style={{ marginLeft: 8, color: '#fff', fontStyle: 'italic', textShadow: 'rgba(0, 0, 0, 0.667) 0px 2px 8px', fontSize: '12px' }}>
+                  {typeof creature.title === 'object' ? creature.title[langKey] : creature.title}
                 </span>
               </span>
-              <span
-                className="card-preview-id"
-                style={{
-                  fontWeight: 600,
-                  fontSize: '1.05rem',
-                  color: '#ffe6b0',
-                  marginLeft: 12,
-                }}
-              >
-                #{creature.num ? String(creature.num).padStart(3, '0') : '???'}
+              <span className="card-preview-id" style={{ fontWeight: 600, fontSize: '1.05rem', color: '#ffe6b0', marginLeft: 12 }}>
+                {isFieldCard ? `#${creature.id || '???'}` : `#${creature.num ? String(creature.num).padStart(3, '0') : '???'}`}
               </span>
             </div>
-            {/* Áudio do swipe */}
             <audio ref={swipeAudioRef} src={swipeSound} preload="auto" />
             <div className="card-preview-art-wrapper">
               <img
-                src={creature.img}
-                alt={
-                  typeof creature.name === 'object'
-                    ? creature.name[langKey]
-                    : creature.name
-                }
+                src={imageSrc}
+                alt={typeof creature.name === 'object' ? creature.name[langKey] : creature.name}
                 className="card-preview-art"
                 draggable={false}
               />
-              {/* Indicadores de status effects e armadura no canto inferior direito */}
               <div className="card-preview-effects-container">
                 {armor > 0 && (
                   <div className="card-preview-effect-indicator armor">
-                    <img
-                      src={shieldIcon}
-                      alt="Armadura"
-                      className="effect-icon"
-                    />
+                    <img src={shieldIcon} alt="Armadura" className="effect-icon" />
                     <span className="effect-value">{armor}</span>
                   </div>
                 )}
                 {burn > 0 && (
                   <div className="card-preview-effect-indicator burn">
-                    <img
-                      src={burnIcon}
-                      alt="Queimadura"
-                      className="effect-icon"
-                    />
+                    <img src={burnIcon} alt="Queimadura" className="effect-icon" />
                     <span className="effect-value">{burn}</span>
                   </div>
                 )}
                 {freeze > 0 && (
                   <div className="card-preview-effect-indicator freeze">
-                    <img
-                      src={freezeIcon}
-                      alt="Congelamento"
-                      className="effect-icon"
-                    />
+                    <img src={freezeIcon} alt="Congelamento" className="effect-icon" />
                     <span className="effect-value">{freeze}</span>
                   </div>
                 )}
                 {paralyze > 0 && (
                   <div className="card-preview-effect-indicator paralyze">
-                    <img
-                      src={paralyzeIcon}
-                      alt="Paralisia"
-                      className="effect-icon"
-                    />
+                    <img src={paralyzeIcon} alt="Paralisia" className="effect-icon" />
                     <span className="effect-value">{paralyze}</span>
                   </div>
                 )}
                 {poison > 0 && (
                   <div className="card-preview-effect-indicator poison">
-                    <img
-                      src={poisonIcon}
-                      alt="Veneno"
-                      className="effect-icon"
-                    />
+                    <img src={poisonIcon} alt="Veneno" className="effect-icon" />
                     <span className="effect-value">{poison}</span>
                   </div>
                 )}
@@ -292,126 +238,89 @@ function CreatureCardPreview({
                 )}
                 {bleed > 0 && (
                   <div className="card-preview-effect-indicator bleed">
-                    <img
-                      src={bleedIcon}
-                      alt="Sangramento"
-                      className="effect-icon"
-                    />
+                    <img src={bleedIcon} alt="Sangramento" className="effect-icon" />
                     <span className="effect-value">{bleed}</span>
                   </div>
                 )}
               </div>
             </div>
-            <div className="card-preview-abilities">
-              {creature.abilities &&
-                creature.abilities.map((ab, idx) => (
-                  <div className="card-preview-ability" key={idx}>
-                    <span className="essence-cost-icons">
-                      {[...Array(ab.cost || idx + 1)].map((_, i) => (
-                        <img
-                          key={i}
-                          src={soulEssence}
-                          alt="Essência"
-                          className="essence-icon"
-                        />
-                      ))}
-                    </span>
-                    <div>
-                      <strong>
-                        {typeof ab.name === 'object'
-                          ? ab.name[langKey]
-                          : ab.name}
-                      </strong>
-                      <div
-                        className="desc"
-                        dangerouslySetInnerHTML={{
-                          __html: processDescription(
-                            typeof ab.desc === 'object'
-                              ? ab.desc[langKey]
-                              : ab.desc,
-                          ),
-                        }}
-                      />
-                    </div>
-                  </div>
-                ))}
-            </div>
-            <div className="card-preview-field">
-              <strong>
-                {typeof creature.field === 'object'
-                  ? creature.field[langKey]
-                  : creature.field}
-              </strong>{' '}
-              {typeof creature.fielddesc === 'object'
-                ? creature.fielddesc[langKey]
-                : creature.fielddesc}
-            </div>
-            <div className="card-preview-bottom">
-              <span className="card-preview-level-icon">
-                <img src={lvlIcon} alt="Nível" className="icon-bg" />
-                <span className="icon-text">{level}</span>
-              </span>
-              <div className="card-preview-descs-inline">
-                <div className="desc-col">
-                  <span className="desc-label">
-                    {labelTranslations[langKey].type}
-                  </span>
-                  {(() => {
-                    let typeText =
-                      typeof creature.type === 'object'
-                        ? creature.type[langKey]
-                        : creature.type;
-                    // Remove "Criatura" e "Creature" antes de Mystic/Mística/Shadow/Sombria
-                    if (typeText) {
-                      typeText = typeText
-                        .replace(/(Criatura\s+)?(Mística|Sombria)/i, '$2')
-                        .replace(/(Creature\s+)?(Mystic|Shadow)/i, '$2')
-                        .replace(/Shadow Creature/i, 'Shadow');
-                    }
-                    return (
-                      <span
-                        className="desc-value"
-                        style={{
-                          fontSize: '13px',
-                          lineHeight: '16px',
-                          whiteSpace: 'normal',
-                          wordBreak: 'break-word',
-                          display: 'inline-block',
-                          maxWidth: 80,
-                          textAlign: 'center',
-                        }}
-                      >
-                        {typeText || 'N/A'}
-                      </span>
-                    );
-                  })()}
-                </div>
-                <div className="desc-col" style={{ textAlign: 'center' }}>
-                  <span className="desc-label">
-                    {labelTranslations[langKey].height}
-                  </span>
-                  <span className="desc-value">
-                    {creature.height ? `${creature.height.toFixed(2)}m` : '--'}
-                  </span>
-                </div>
-                <div className="desc-col">
-                  <span className="desc-label">
-                    {labelTranslations[langKey].weakness}
-                  </span>
-                  <span className="desc-value">
-                    <img
-                      src={elementIcons[creature.weakness || 'agua']}
-                      alt={creature.weakness || 'agua'}
-                      className="fraqueza-icon"
-                    />
-                  </span>
+            {/* Se for carta de campo, mostra só descrição e efeitos */}
+            {isFieldCard ? (
+              <div className="card-preview-field-desc">
+                <strong>Descrição:</strong>
+                <div style={{whiteSpace: 'pre-line'}}>{creature.description}</div>
+                <div className="card-preview-field-effects">
+                  <strong>Efeitos:</strong>
+                  <ul>
+                    <li>Criaturas do elemento <b>puro</b>: +1 Dano / +1 HP</li>
+                    <li>Criaturas do tipo <b>monstro</b>: +1 Dano / +1 HP</li>
+                    <li><b>Puras e Monstros</b>: +2 Dano / +2 HP</li>
+                  </ul>
                 </div>
               </div>
-              <span className="card-preview-hp-icon">
-                <img src={heartIcon} alt="Vida" className="icon-bg" />
-                <span className="icon-text">{creature.hp}</span>
-              </span>
-            </div>
+            ) : (
+              <div className="card-preview-abilities">
+                {creature.abilities &&
+                  creature.abilities.map((ab, idx) => (
+                    <div className="card-preview-ability" key={idx}>
+                      <span className="essence-cost-icons">
+                        {[...Array(ab.cost || idx + 1)].map((_, i) => (
+                          <img key={i} src={soulEssence} alt="Essência" className="essence-icon" />
+                        ))}
+                      </span>
+                      <div>
+                        <strong>{typeof ab.name === 'object' ? ab.name[langKey] : ab.name}</strong>
+                        <div className="desc" dangerouslySetInnerHTML={{ __html: processDescription(typeof ab.desc === 'object' ? ab.desc[langKey] : ab.desc) }} />
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            )}
+            {/* Campo, tipo, altura, fraqueza, HP só para criaturas */}
+            {!isFieldCard && (
+              <div className="card-preview-field">
+                <strong>{typeof creature.field === 'object' ? creature.field[langKey] : creature.field}</strong>{' '}
+                {typeof creature.fielddesc === 'object' ? creature.fielddesc[langKey] : creature.fielddesc}
+              </div>
+            )}
+            {!isFieldCard && (
+              <div className="card-preview-bottom">
+                <span className="card-preview-level-icon">
+                  <img src={lvlIcon} alt="Nível" className="icon-bg" />
+                  <span className="icon-text">{level}</span>
+                </span>
+                <div className="card-preview-descs-inline">
+                  <div className="desc-col">
+                    <span className="desc-label">{labelTranslations[langKey].type}</span>
+                    {(() => {
+                      let typeText = typeof creature.type === 'object' ? creature.type[langKey] : creature.type;
+                      if (typeText) {
+                        typeText = typeText.replace(/(Criatura\s+)?(Mística|Sombria)/i, '$2').replace(/(Creature\s+)?(Mystic|Shadow)/i, '$2').replace(/Shadow Creature/i, 'Shadow');
+                      }
+                      return (
+                        <span className="desc-value" style={{ fontSize: '13px', lineHeight: '16px', whiteSpace: 'normal', wordBreak: 'break-word', display: 'inline-block', maxWidth: 80, textAlign: 'center' }}>
+                          {typeText || 'N/A'}
+                        </span>
+                      );
+                    })()}
+                  </div>
+                  <div className="desc-col" style={{ textAlign: 'center' }}>
+                    <span className="desc-label">{labelTranslations[langKey].height}</span>
+                    <span className="desc-value">{creature.height ? `${creature.height.toFixed(2)}m` : '--'}</span>
+                  </div>
+                  <div className="desc-col">
+                    <span className="desc-label">{labelTranslations[langKey].weakness}</span>
+                    <span className="desc-value">
+                      <img src={elementIcons[creature.weakness || 'agua']} alt={creature.weakness || 'agua'} className="fraqueza-icon" />
+                    </span>
+                  </div>
+                </div>
+                <span className="card-preview-hp-icon">
+                  <img src={heartIcon} alt="Vida" className="icon-bg" />
+                  <span className="icon-text">{creature.hp}</span>
+                </span>
+              </div>
+            )}
           </div>
         </div>
 

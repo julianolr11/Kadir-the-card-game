@@ -12,6 +12,12 @@ function BoardInner({ onNavigate, selectedDeck }) {
   const { cardCollection } = React.useContext(AppContext);
   const [activeCardIndex, setActiveCardIndex] = React.useState(null);
   const [deckCardDrawn, setDeckCardDrawn] = React.useState(false);
+  const [fieldAnimating, setFieldAnimating] = React.useState(false);
+  const [lastFieldId, setLastFieldId] = React.useState(null);
+  const [baseBg, setBaseBg] = React.useState(undefined);
+  const [overlayBg, setOverlayBg] = React.useState(undefined);
+  const [hoveredCard, setHoveredCard] = React.useState(null);
+  const [mousePos, setMousePos] = React.useState({ x: 0, y: 0 });
 
   const cardCache = useMemo(() => ({}), []);
 
@@ -285,7 +291,12 @@ function BoardInner({ onNavigate, selectedDeck }) {
   const renderSlots = (slots = [], owner = 'player') => (
     <div className={`slots slots-${owner}`}>
       {slots.map((slot, i) => (
-        <div key={i} className={`slot ${slot ? 'occupied' : 'empty'}`}>
+        <div
+          key={i}
+          className={`slot ${slot ? 'occupied' : 'empty'}`}
+          onMouseEnter={() => slot && setHoveredCard({ cardId: slot.id, source: 'slot', owner, index: i })}
+          onMouseLeave={() => setHoveredCard(null)}
+        >
           {slot ? renderCardChip(slot.id, 'slot', slot) : <span className="slot-label">{i + 1}</span>}
         </div>
       ))}
@@ -296,7 +307,27 @@ function BoardInner({ onNavigate, selectedDeck }) {
     summonFromHand(handIndex, slotIndex);
   };
 
-  // Determina o background do board
+  // Detecta mudancas no campo e ativa animacao (classe)
+  useEffect(() => {
+    const currentFieldId = state.sharedField?.id;
+    if (currentFieldId && currentFieldId !== lastFieldId) {
+      setFieldAnimating(true);
+      setLastFieldId(currentFieldId);
+      const timer = setTimeout(() => setFieldAnimating(false), 950);
+      return () => clearTimeout(timer);
+    }
+  }, [state.sharedField?.id, lastFieldId]);
+
+  // Rastreia posicao do mouse para o ghost preview
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      setMousePos({ x: e.clientX, y: e.clientY });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  // Determina o background do board (novo bg calculado a partir do campo ativo)
   const boardBg = state.sharedField.active && state.sharedField.id ? (() => {
     let fieldData = null;
     try {
@@ -314,6 +345,31 @@ function BoardInner({ onNavigate, selectedDeck }) {
     }
     return undefined;
   })() : undefined;
+
+  // Inicializa o fundo base na primeira vez
+  useEffect(() => {
+    if (!baseBg && boardBg) {
+      setBaseBg(boardBg);
+    }
+  }, [boardBg, baseBg]);
+
+  // Quando o bg calculado mudar, revela radialmente o novo por cima do antigo
+  useEffect(() => {
+    if (!boardBg) return;
+    // Dispara animação radial sempre que boardBg mudar (mesmo na primeira vez)
+    if (boardBg !== baseBg) {
+      setOverlayBg(boardBg);
+      setFieldAnimating(true);
+      setLastFieldId(boardBg);
+
+      const t = setTimeout(() => {
+        setBaseBg(boardBg);
+        setOverlayBg(undefined);
+        setFieldAnimating(false);
+      }, 1700);
+      return () => clearTimeout(t);
+    }
+  }, [boardBg]);
   return (
     <div className="battle-root">
       <div className="battle-topbar">
@@ -345,16 +401,17 @@ function BoardInner({ onNavigate, selectedDeck }) {
       </div>
 
       <div
-        className="board"
+        className={`board ${fieldAnimating || overlayBg ? 'field-animating' : ''}`}
         style={{
-          backgroundImage: boardBg,
+          backgroundImage: baseBg || boardBg,
           backgroundRepeat: 'no-repeat',
           backgroundSize: 'cover',
-          boxShadow: '0 0 100px rgba(0, 0, 0, 0.9666666667) inset, 0 12px 28px rgba(0, 0, 0, 0.8)',
-          transition: 'background 0.5s',
+          backgroundPosition: 'center',
           position: 'relative',
+          '--to-bg': overlayBg ? `${overlayBg}` : 'none',
         }}
       >
+        {(fieldAnimating || overlayBg) && <div className="field-pulse" />}
         {state.sharedField.active && state.sharedField.cardData && (
           {/* efeito central removido conforme solicitado */}
         )}
@@ -484,8 +541,8 @@ function BoardInner({ onNavigate, selectedDeck }) {
               <div
                 key={`${cid}-${i}`}
                 className={`hand-card${isActive ? ' active' : ''}`}
-                onClick={() => setActiveCardIndex(isActive ? null : i)}
-              >
+                onClick={() => setActiveCardIndex(isActive ? null : i)}                onMouseEnter={() => setHoveredCard({ cardId: cid, source: 'hand', index: i })}
+                onMouseLeave={() => setHoveredCard(null)}              >
                 {renderCardChip(cid, 'hand')}
               </div>
             );
@@ -591,6 +648,39 @@ function BoardInner({ onNavigate, selectedDeck }) {
               return null;
             })()}
           </div>
+        </div>
+      )}
+
+      {/* Ghost Preview - aparece ao passar o mouse */}
+      {hoveredCard && hoveredCard.cardId && (
+        <div
+          className="ghost-preview"
+          style={{
+            left: mousePos.x + 30,
+            top: mousePos.y - 280,
+            pointerEvents: 'none',
+          }}
+        >
+          {(() => {
+            const { instance } = resolveCardId(hoveredCard.cardId);
+            const cardData = getCardData(hoveredCard.cardId);
+            const level = instance?.level || 1;
+            const isHolo = instance?.isHolo || false;
+
+            if (!cardData) return null;
+
+            return (
+              <div style={{ transform: 'scale(0.95)', transformOrigin: 'top left' }}>
+                <CreatureCardPreview
+                  creature={cardData}
+                  onClose={null}
+                  level={level}
+                  isHolo={isHolo}
+                  allowFlip={false}
+                />
+              </div>
+            );
+          })()}
         </div>
       )}
     </div>

@@ -1,5 +1,6 @@
 // Exporta todas as cartas individualmente
-const fieldCards = require('./field/exampleFieldCards').default;
+const fieldCardsModule = require('./field/exampleFieldCards');
+const fieldCards = Array.isArray(fieldCardsModule) ? fieldCardsModule : (fieldCardsModule?.default || []);
 
 const creatures = [
   require('./booster1/draak'),
@@ -32,8 +33,12 @@ const creatures = [
   require('./booster1/ekonos'),
   require('./booster1/terrakhal'),
   require('./booster1/seract'),
-  ...fieldCards,
 ];
+
+// Adiciona field cards se estiverem disponíveis
+if (Array.isArray(fieldCards) && fieldCards.length > 0) {
+  creatures.push(...fieldCards);
+}
 
 module.exports = creatures;
 module.exports.creatures = creatures;

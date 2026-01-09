@@ -18,6 +18,50 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
   const [overlayBg, setOverlayBg] = React.useState(undefined);
   const [hoveredCard, setHoveredCard] = React.useState(null);
   const [mousePos, setMousePos] = React.useState({ x: 0, y: 0 });
+  const [turnBlockModalOpen, setTurnBlockModalOpen] = React.useState(false);
+
+  // estilos simples para modal centralizado
+  const turnModalBgStyle = {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: 'rgba(30,22,40,0.32)',
+    zIndex: 1000,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backdropFilter: 'blur(10px)',
+    WebkitBackdropFilter: 'blur(10px)',
+  };
+
+  const turnModalStyle = {
+    background: 'rgba(44, 38, 60, 0.38)',
+    color: '#f5f5fa',
+    padding: '32px 28px',
+    borderRadius: '16px',
+    minWidth: '320px',
+    boxShadow: '0 6px 32px 0 rgba(30,22,40,0.18)',
+    border: '1.5px solid rgba(255,255,255,0.18)',
+    textShadow: '0 2px 8px #0007',
+    backdropFilter: 'blur(14px)',
+    WebkitBackdropFilter: 'blur(14px)',
+    textAlign: 'center',
+  };
+
+  const turnModalBtnStyle = {
+    marginTop: 18,
+    padding: '10px 24px',
+    fontSize: '1rem',
+    borderRadius: '6px',
+    border: '2px solid #a87e2d',
+    background: 'linear-gradient(90deg, #a87e2d 0%, #ffe6b0 100%)',
+    color: '#3a2c4a',
+    cursor: 'pointer',
+    boxShadow: '0 2px 12px #000a',
+    fontWeight: 600,
+  };
 
   const cardCache = useMemo(() => ({}), []);
 
@@ -106,38 +150,61 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
   };
 
   const renderCardChip = (cardId, variant = 'slot', slotData = null) => {
-    // Se for carta de campo, renderiza usando CreatureCardPreview (padrão visual)
+    // Se for carta de campo, renderiza com visual padrão de campo + holo
     if (isFieldId(cardId)) {
+      const { instance } = resolveCardId(cardId);
+      // tenta pegar holo da instância; fallback: sharedField state; fallback: primeira instância na coleção
+      let isHolo = instance?.isHolo || false;
+      if (!isHolo && state.sharedField?.id === cardId) {
+        isHolo = !!state.sharedField?.isHolo;
+      }
+      if (!isHolo && cardCollection && Array.isArray(cardCollection[cardId]) && cardCollection[cardId].length > 0) {
+        isHolo = !!cardCollection[cardId][0].isHolo;
+      }
       let fieldData = typeof state !== 'undefined' && state.sharedField && state.sharedField.cardData ? state.sharedField.cardData : null;
       // Se não tiver os dados completos, busca pelo id
       if (!fieldData) {
         try {
           const fieldCards = require('../assets/cards/field/exampleFieldCards').default;
-          fieldData = fieldCards.find(c => c.id === cardId || c.legacyId === cardId);
+          fieldData = fieldCards.find((c) => c.id === cardId || c.legacyId === cardId);
         } catch (e) {
           fieldData = null;
         }
       }
       if (!fieldData) return <div className={`card-chip card-chip-${variant}`}><div className="card-chip-label">{cardId}</div></div>;
+      const boostsEl = fieldData.elementBoosts || {};
+      const boostsType = fieldData.cardTypeBoosts || {};
+      const special = fieldData.specialBoosts || {};
+      const name = typeof fieldData.name === 'object' ? fieldData.name.pt || fieldData.name.en : fieldData.name;
+      const desc = typeof fieldData.description === 'object' ? fieldData.description.pt || fieldData.description.en : fieldData.description;
       return (
         <div className="slider-card-wrapper active" style={{ transform: variant === 'hand' ? 'scale(0.464)' : 'scale(0.6)', transformOrigin: variant === 'hand' ? 'left top' : 'center', pointerEvents: 'none' }}>
-          <div className="card-preview card-preview-field">
+          <div className={`card-preview card-preview-field ${isHolo ? 'card-preview-holo' : ''}`}>
             <div className="card-preview-header">
-              <span className="card-preview-name">{typeof fieldData.name === 'object' ? fieldData.name.pt : fieldData.name}</span>
+              <span className="card-preview-name" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                {name}
+                {isHolo && <span className="holo-indicator">✨</span>}
+              </span>
               <span className="card-preview-id">#{fieldData.id}</span>
             </div>
             <div className="card-preview-art-wrapper">
-              <img alt={typeof fieldData.name === 'object' ? fieldData.name.pt : fieldData.name} className="card-preview-art" src={typeof fieldData.img === 'string' ? fieldData.img : (fieldData.img?.default || '')} />
+              <img alt={name} className="card-preview-art" src={typeof fieldData.img === 'string' ? fieldData.img : (fieldData.img?.default || '')} />
             </div>
             <div className="card-preview-field-desc">
               <strong>Descrição:</strong>
-              <div style={{whiteSpace: 'pre-line'}}>{typeof fieldData.description === 'object' ? fieldData.description.pt || fieldData.description.en : fieldData.description}</div>
+              <div style={{ whiteSpace: 'pre-line' }}>{desc}</div>
               <div className="card-preview-field-effects">
                 <strong>Efeitos:</strong>
                 <ul>
-                  <li>Criaturas do elemento <b>puro</b>: +1 Dano / +1 HP</li>
-                  <li>Criaturas do tipo <b>monstro</b>: +1 Dano / +1 HP</li>
-                  <li><b>Puras e Monstros</b>: +2 Dano / +2 HP</li>
+                  {Object.entries(boostsEl).map(([el, val]) => (
+                    <li key={`el-${el}`}>Criaturas do elemento <b>{el}</b>: +{val} Dano / +{val} HP</li>
+                  ))}
+                  {Object.entries(boostsType).map(([t, val]) => (
+                    <li key={`type-${t}`}>Criaturas do tipo <b>{t}</b>: +{val} Dano / +{val} HP</li>
+                  ))}
+                  {special.puroAndMonstro && (
+                    <li><b>Puras e Monstros</b>: +{special.puroAndMonstro.damage} Dano / +{special.puroAndMonstro.hp} HP</li>
+                  )}
                 </ul>
               </div>
             </div>
@@ -399,7 +466,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
       return () => clearTimeout(t);
     }
   }, [boardBg]);
-  return (
+  return (<>
     <div className="battle-root">
       <div className="battle-topbar">
         <button className="battle-exit" onClick={() => onNavigate?.('home')}>Sair</button>
@@ -441,9 +508,6 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
         }}
       >
         {(fieldAnimating || overlayBg) && <div className="field-pulse" />}
-        {state.sharedField.active && state.sharedField.cardData && (
-          {/* efeito central removido conforme solicitado */}
-        )}
         <div className="turn-indicator">Turno {state.turn}</div>
         <div className="side ai-side">
           <div className="side-header">
@@ -483,13 +547,19 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
 
               if (!fieldData) return <div className="field-inactive">Campo não encontrado</div>;
 
+              // Flag holo do campo compartilhado
+              let isHolo = !!state.sharedField?.isHolo;
+              if (!isHolo && cardCollection && Array.isArray(cardCollection[fieldData.id]) && cardCollection[fieldData.id].length > 0) {
+                isHolo = !!cardCollection[fieldData.id][0].isHolo;
+              }
+
               const name = typeof fieldData.name === 'object' ? fieldData.name.pt || fieldData.name.en : fieldData.name;
               const description = typeof fieldData.description === 'object' ? fieldData.description.pt || fieldData.description.en : fieldData.description;
               const img = typeof fieldData.img === 'string' ? fieldData.img : (fieldData.img?.default || '');
 
               return (
                 <div
-                  className="card-chip card-chip-hand"
+                  className={`card-chip card-chip-hand ${isHolo ? 'card-preview-holo' : ''}`}
                   onMouseEnter={() => setHoveredCard({ cardId: fieldData.id, source: 'shared' })}
                   onMouseLeave={() => setHoveredCard(null)}
                 >
@@ -503,6 +573,10 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
                       borderRadius: 18,
                     }}
                   >
+                    <div style={{ position: 'absolute', top: 6, left: 6, color: '#fff', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      {name}
+                      {isHolo && <span className="holo-indicator">✨</span>}
+                    </div>
                     <CreatureCardPreview
                       creature={{
                         id: fieldData.id,
@@ -538,7 +612,29 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
           <img src={essenceIcon} alt="essência" />
           <span>{state.player.essence}</span>
         </div>
-        <button className="end-turn-btn" onClick={endTurn}>Fim do turno</button>
+        {(() => {
+          const canDraw = (state.player?.deck?.length || 0) > 0 && (state.player?.hand?.length || 0) < 7;
+          const mustDrawToEnd = state.activePlayer === 'player' && canDraw;
+          const isBlocked = mustDrawToEnd && !deckCardDrawn;
+          return (
+            <div className="end-turn-container">
+              <button
+                className={`end-turn-btn${isBlocked ? ' end-turn-blocked' : ''}`}
+                onClick={() => {
+                  if (isBlocked) {
+                    setTurnBlockModalOpen(true);
+                    return;
+                  }
+                  endTurn();
+                }}
+                title={isBlocked ? 'Você deve comprar uma carta antes' : undefined}
+              >
+                Fim do turno
+              </button>
+              {/* mensagem inline removida em favor do modal */}
+            </div>
+          );
+        })()}
       </div>
 
       <div className="deck-draw">
@@ -593,14 +689,23 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
               const { instance } = resolveCardId(handId);
               const cardData = getCardData(handId);
               const level = instance?.level || 1;
-              const isHolo = instance?.isHolo || false;
-              // Se for carta de campo, mostrar preview especial
+              let isHolo = instance?.isHolo || false;
+              if (!isHolo && state.sharedField?.id === handId) {
+                isHolo = !!state.sharedField?.isHolo;
+              }
+              if (!isHolo && cardCollection && Array.isArray(cardCollection[handId]) && cardCollection[handId].length > 0) {
+                isHolo = !!cardCollection[handId][0].isHolo;
+              }
+              // Se for carta de campo, mostrar preview especial (com holo)
               if (cardData?.type === 'field') {
                 return (
                   <div style={{ width: 370 }}>
-                    <div className="card-preview card-preview-field">
+                    <div className={`card-preview card-preview-field ${isHolo ? 'card-preview-holo' : ''}`}>
                       <div className="card-preview-header">
-                        <span className="card-preview-name">{typeof cardData.name === 'object' ? cardData.name.pt || cardData.name.en : cardData.name}</span>
+                        <span className="card-preview-name" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          {typeof cardData.name === 'object' ? cardData.name.pt || cardData.name.en : cardData.name}
+                          {isHolo && <span className="holo-indicator">✨</span>}
+                        </span>
                         <span className="card-preview-id">#{cardData.id}</span>
                       </div>
                       <div className="card-preview-art-wrapper">
@@ -713,7 +818,16 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
         </div>
       )}
     </div>
-  );
+    {turnBlockModalOpen && (
+      <div style={turnModalBgStyle}>
+        <div style={turnModalStyle}>
+          <h2 style={{ color: '#ffe6b0', fontWeight: 700, fontSize: 20, marginBottom: 12 }}>Ação bloqueada</h2>
+          <div style={{ fontSize: 14 }}>Você deve comprar uma carta antes</div>
+          <button style={turnModalBtnStyle} onClick={() => setTurnBlockModalOpen(false)}>Entendi</button>
+        </div>
+      </div>
+    )}
+  </>);
 }
 
 export default function BattleBoard({ onNavigate, selectedDeck, menuMusicRef }) {

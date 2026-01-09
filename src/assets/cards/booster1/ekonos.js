@@ -24,8 +24,8 @@ module.exports = {
       name: { pt: 'Asa Prismática', en: 'Prismatic Wing' },
       cost: 1,
       desc: {
-        pt: 'Ganha escudo 2 e reflete 1 de dano recebido por 1 turno.',
-        en: 'Gains 2 shield and reflects 1 damage taken for 1 turn.',
+        pt: 'Ganha um escudo que nega o próximo ataque recebido por 1 rodada.',
+        en: 'Gains a shield that negates the next attack taken for 1 round.',
       },
     },
   ],
@@ -67,8 +67,8 @@ module.exports = {
       id: 'ekonos_skill_2',
       name: { pt: 'Vigília Perpétua', en: 'Perpetual Vigil' },
       desc: {
-        pt: 'Ganha escudo 2, revela furtivos e dá +8% esquiva por 1 turno.',
-        en: 'Gains 2 shield, reveals stealth, and grants +8% dodge for 1 turn.',
+        pt: 'Ganha um escudo que nega ataques, revela furtivos e dá +8% esquiva por 1 rodada.',
+        en: 'Gains a shield that negates attacks, reveals stealth, and grants +8% dodge for 1 round.',
       },
       cost: 1,
       type: 'buff',
@@ -114,8 +114,8 @@ module.exports = {
       id: 'ekonos_skill_5',
       name: { pt: 'Círculo Vigia', en: 'Watcher Circle' },
       desc: {
-        pt: 'Garante 3 de escudo e +10% resistência por 2 turnos.',
-        en: 'Grants 3 shield and +10% resistance for 2 turns.',
+        pt: 'Garante um escudo que nega todos os ataques por 2 rodadas e +10% resistência.',
+        en: 'Grants a shield that negates all attacks for 2 rounds and +10% resistance.',
       },
       cost: 2,
     },

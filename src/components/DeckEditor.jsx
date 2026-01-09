@@ -183,6 +183,11 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
 
   const libraryCards = useMemo(() => {
     const ownedCardIds = cardCollection ? Object.keys(cardCollection) : [];
+    const isFieldCardById = (id) => {
+      if (!id) return false;
+      const s = String(id).toLowerCase();
+      return /^f\d{3}$/i.test(id) || s.startsWith('field_');
+    };
     let cards = ownedCardIds
       .filter(id => id)
       .map((id) => {
@@ -200,7 +205,15 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
       cards = cards.filter((c) => c.data.element === elementFilter);
     }
     if (typeFilter !== 'all') {
-      cards = cards.filter((c) => resolveType(c.data) === typeFilter);
+      if (typeFilter === 'campo') {
+        cards = cards.filter((c) => {
+          const typeNorm = normalizeType(resolveType(c.data));
+          const categoryNorm = normalizeType(c.data?.category);
+          return isFieldCardById(c.id) || typeNorm === 'campo' || categoryNorm === 'campo' || typeNorm === 'field' || categoryNorm === 'field';
+        });
+      } else {
+        cards = cards.filter((c) => resolveType(c.data) === typeFilter);
+      }
     }
     cards.sort((a, b) => {
       const aName = typeof a.data.name === 'object' ? a.data.name[langKey] : a.data.name;
@@ -323,22 +336,24 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
         <audio ref={successSoundRef} src={sphereMenuSound} preload="auto" />
         <audio ref={errorSoundRef} src={packageSound} preload="auto" />
         <div className="deck-editor-header">
-          <input
-            ref={nameInputRef}
-            type="text"
-            className={`deck-editor-title${editingName ? '' : ' readonly'}`}
-            value={deckName}
-            onChange={e => setDeckName(e.target.value)}
-            onKeyDown={(e) => { if (editingName && e.key === 'Enter') handleSaveName(); }}
-            placeholder="Nome do Deck"
-            readOnly={!editingName}
-          />
+          <div className="deck-editor-title-group">
+            <input
+              ref={nameInputRef}
+              type="text"
+              className={`deck-editor-title${editingName ? '' : ' readonly'}`}
+              value={deckName}
+              onChange={e => setDeckName(e.target.value)}
+              onKeyDown={(e) => { if (editingName && e.key === 'Enter') handleSaveName(); }}
+              placeholder="Nome do Deck"
+              readOnly={!editingName}
+            />
+            {!editingName ? (
+              <button className="deck-editor-append-btn deck-editor-edit" onClick={() => setEditingName(true)}>Editar</button>
+            ) : (
+              <button className="deck-editor-append-btn deck-editor-save" onClick={handleSaveName}>Salvar</button>
+            )}
+          </div>
           <div className="deck-editor-counter">{cardCount}/20 cartas</div>
-          {!editingName ? (
-            <button className="deck-editor-edit" onClick={() => setEditingName(true)}>Editar</button>
-          ) : (
-            <button className="deck-editor-save" onClick={handleSaveName}>Salvar</button>
-          )}
           <button className="deck-editor-close" onClick={onClose}>✕</button>
         </div>
         <div className="deck-editor-guardian-section">
@@ -406,6 +421,7 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
           </div>
           <select className="deck-library-sort" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
             <option value="all">Tipo</option>
+            <option value="campo">Campo</option>
             <option value="mistica">Mística</option>
             <option value="sombria">Sombria</option>
             <option value="draconideo">Draconídeo</option>

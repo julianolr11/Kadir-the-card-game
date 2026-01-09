@@ -167,10 +167,13 @@ function BoosterResultsSlider({ cards, lang, onClose }) {
                 if (card?.type === 'field') {
                   return (
                     <div key={`${card?.id || idx}-${idx}`} className={wrapperClass}>
-                      <div className="card-preview card-preview-field">
+                      <div className={`card-preview card-preview-field ${card?.isHolo ? 'card-preview-holo' : ''}`}>
                         {/* Header */}
                         <div className="card-preview-header">
-                          <span className="card-preview-name">{getLocalizedText(card?.name, lang)}</span>
+                          <span className="card-preview-name" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            {getLocalizedText(card?.name, lang)}
+                            {card?.isHolo && <span className="holo-indicator">✨</span>}
+                          </span>
                           <span className="card-preview-id">#{card?.id || '?'}</span>
                         </div>
                         {/* Arte */}

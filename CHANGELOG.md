@@ -1,3 +1,23 @@
+# Unreleased
+
+## Adicionado
+- Três novas criaturas: **Noctyra** (Sombria/Ar), **Nihil** (Monstro/Puro), **Gravhyr** (Monstro/Terra)
+- Modal de bloqueio ao tentar finalizar turno sem comprar carta
+- Suporte visual holo para cartas de campo em booster e batalha
+- Indicador visual ✨ para cartas holo em todas as views
+
+## Alterado
+- Mecânica de escudo atualizada: agora nega ataques completamente por 1-2 rodadas (Agolir, Beoxyr, Ekonos, Elderox, Draak)
+- Bênção de Nihil: rouba 1 essência do adversário por rodada
+- Jogador não pode mais finalizar o turno sem comprar uma carta (quando possível)
+
+## Corrigido
+- JSX mal-formado em `BattleBoard.jsx` (fragmentos, tags de campo compartilhado)
+- Propagação de flag `isHolo` em `sharedField` para renderização consistente
+- Estrutura de elementos em preview de campo compartilhado
+
+---
+
 # 2.1.0
 
 - Migrate to `css-minifier-webpack-plugin`

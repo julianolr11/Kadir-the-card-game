@@ -122,8 +122,8 @@ module.exports = {
       id: 'draak_skill_6',
       name: { pt: 'Escudo Dragônico', en: 'Dragon Shield' },
       desc: {
-        pt: 'Aumenta defesa e reflete 5% do dano recebido.',
-        en: 'Increases defense and reflects 5% of damage taken.',
+        pt: 'Ganha um escudo que nega o próximo ataque e aumenta defesa por 1 rodada.',
+        en: 'Gains a shield that negates the next attack and increases defense for 1 round.',
       },
       cost: 2,
     },

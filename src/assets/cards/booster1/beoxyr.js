@@ -24,8 +24,8 @@ module.exports = {
       name: { pt: 'Escamas de Brasa', en: 'Ember Scales' },
       cost: 1,
       desc: {
-        pt: 'Ganha escudo de 2 e reflete 1 de dano recebido até o próximo turno.',
-        en: 'Gains 2 shield and reflects 1 damage taken until next turn.',
+        pt: 'Ganha um escudo que nega o próximo ataque recebido por 1 rodada.',
+        en: 'Gains a shield that negates the next attack taken for 1 round.',
       },
     },
   ],
@@ -114,8 +114,8 @@ module.exports = {
       id: 'beoxyr_skill_5',
       name: { pt: 'Casco Forjado', en: 'Forged Carapace' },
       desc: {
-        pt: 'Ganha 3 de escudo e reflete 2 de dano por 2 turnos.',
-        en: 'Gains 3 shield and reflects 2 damage for 2 turns.',
+        pt: 'Ganha um escudo que nega os ataques recebidos por 2 rodadas.',
+        en: 'Gains a shield that negates attacks taken for 2 rounds.',
       },
       cost: 2,
     },

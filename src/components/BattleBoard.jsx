@@ -34,16 +34,18 @@ function BoardInner({ onNavigate, selectedDeck }) {
     return { baseId: id, instance: null };
   };
 
+  const isFieldId = (id) => !!id && (/^f\d{3}$/i.test(id) || String(id).toLowerCase().startsWith('field'));
+
   const getCardData = (cardId) => {
     if (!cardId) return null;
     const { baseId } = resolveCardId(cardId);
     if (!baseId) return null;
     if (cardCache[baseId]) return cardCache[baseId];
     // Se for carta de campo, busca no arquivo correto
-    if (baseId.startsWith('f') || baseId === 'field') {
+    if (isFieldId(baseId)) {
       try {
         const fieldCards = require('../assets/cards/field/exampleFieldCards').default;
-        const fieldCard = fieldCards.find(c => c.id === baseId);
+        const fieldCard = fieldCards.find(c => c.id === baseId || c.legacyId === baseId);
         if (fieldCard) {
           cardCache[baseId] = fieldCard;
           return fieldCard;
@@ -92,13 +94,13 @@ function BoardInner({ onNavigate, selectedDeck }) {
 
   const renderCardChip = (cardId, variant = 'slot', slotData = null) => {
     // Se for carta de campo, renderiza usando CreatureCardPreview (padrão visual)
-    if (cardId && (cardId.startsWith('f') || cardId.includes('field'))) {
+    if (isFieldId(cardId)) {
       let fieldData = typeof state !== 'undefined' && state.sharedField && state.sharedField.cardData ? state.sharedField.cardData : null;
       // Se não tiver os dados completos, busca pelo id
       if (!fieldData) {
         try {
           const fieldCards = require('../assets/cards/field/exampleFieldCards').default;
-          fieldData = fieldCards.find(c => c.id === cardId);
+          fieldData = fieldCards.find(c => c.id === cardId || c.legacyId === cardId);
         } catch (e) {
           fieldData = null;
         }
@@ -459,7 +461,11 @@ function BoardInner({ onNavigate, selectedDeck }) {
               const img = typeof fieldData.img === 'string' ? fieldData.img : (fieldData.img?.default || '');
 
               return (
-                <div className="card-chip card-chip-hand">
+                <div
+                  className="card-chip card-chip-hand"
+                  onMouseEnter={() => setHoveredCard({ cardId: fieldData.id, source: 'shared' })}
+                  onMouseLeave={() => setHoveredCard(null)}
+                >
                   <div
                     style={{
                       transform: 'scale(0.5)',
@@ -474,6 +480,7 @@ function BoardInner({ onNavigate, selectedDeck }) {
                       creature={{
                         id: fieldData.id,
                         name: name || 'Campo',
+                        lore: fieldData.lore,
                         description: description || '',
                         img: img,
                         type: 'field',
@@ -573,24 +580,13 @@ function BoardInner({ onNavigate, selectedDeck }) {
                         <img src={cardData.img} alt={typeof cardData.name === 'object' ? cardData.name.pt || cardData.name.en : cardData.name} className="card-preview-art" />
                       </div>
                       <div className="card-preview-field-desc">
-                        <strong>Descrição:</strong>
-                        <div style={{ whiteSpace: 'pre-line' }}>{typeof cardData.description === 'object' ? cardData.description.pt || cardData.description.en : cardData.description}</div>
-                        <div className="card-preview-field-effects">
-                          <strong>Efeitos:</strong>
-                          <ul>
-                            {Array.isArray(cardData.elementBoosts) && cardData.elementBoosts.map(([el, val]) => (
-                              <li key={el}>Criaturas do elemento <b>{el}</b>: +{val} Dano / +{val} HP</li>
-                            ))}
-                            {Array.isArray(cardData.cardTypeBoosts) && cardData.cardTypeBoosts.map(([type, val]) => (
-                              <li key={type}>Criaturas do tipo <b>{type}</b>: +{val} Dano / +{val} HP</li>
-                            ))}
-                            {cardData.specialBoosts && cardData.specialBoosts.puroAndMonstro && typeof cardData.specialBoosts.puroAndMonstro === 'object' && (
-                              <li>
-                                <b>Puras e Monstros</b>: +{cardData.specialBoosts.puroAndMonstro.damage} Dano / +{cardData.specialBoosts.puroAndMonstro.hp} HP
-                              </li>
-                            )}
-                          </ul>
-                        </div>
+                        {cardData.lore && (
+                          <div style={{ marginBottom: 12, fontSize: '13px', fontStyle: 'italic', color: '#ddd', lineHeight: '1.4' }}>
+                            <strong>Descrição:</strong> {cardData.lore}
+                          </div>
+                        )}
+                        <strong>Efeito:</strong>
+                        <div style={{ whiteSpace: 'pre-line', fontSize: '13px', color: '#fff', lineHeight: '1.4' }}>{typeof cardData.description === 'object' ? cardData.description.pt || cardData.description.en : cardData.description}</div>
                       </div>
                     </div>
                   </div>
@@ -652,7 +648,14 @@ function BoardInner({ onNavigate, selectedDeck }) {
       )}
 
       {/* Ghost Preview - aparece ao passar o mouse */}
-      {hoveredCard && hoveredCard.cardId && (
+      {hoveredCard && hoveredCard.cardId && (() => {
+        // Remove ghost preview para cartas de campo na mão
+        const cardData = getCardData(hoveredCard.cardId);
+        if (hoveredCard.source === 'hand' && cardData?.type === 'field') {
+          return null;
+        }
+        return true;
+      })() && (
         <div
           className="ghost-preview"
           style={{

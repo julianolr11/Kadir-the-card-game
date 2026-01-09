@@ -244,19 +244,16 @@ function CreatureCardPreview({
                 )}
               </div>
             </div>
-            {/* Se for carta de campo, mostra só descrição e efeitos */}
+            {/* Se for carta de campo, mostra só lore e description */}
             {isFieldCard ? (
               <div className="card-preview-field-desc">
-                <strong>Descrição:</strong>
-                <div style={{whiteSpace: 'pre-line'}}>{creature.description}</div>
-                <div className="card-preview-field-effects">
-                  <strong>Efeitos:</strong>
-                  <ul>
-                    <li>Criaturas do elemento <b>puro</b>: +1 Dano / +1 HP</li>
-                    <li>Criaturas do tipo <b>monstro</b>: +1 Dano / +1 HP</li>
-                    <li><b>Puras e Monstros</b>: +2 Dano / +2 HP</li>
-                  </ul>
-                </div>
+                {creature.lore && (
+                  <div style={{ marginBottom: 12, fontSize: '13px', fontStyle: 'italic', color: '#ddd', lineHeight: '1.4' }}>
+                    <strong>Descrição:</strong> {creature.lore}
+                  </div>
+                )}
+                <strong>Efeito:</strong>
+                <div style={{ whiteSpace: 'pre-line', fontSize: '13px', color: '#fff', lineHeight: '1.4' }}>{typeof creature.description === 'object' ? creature.description.pt || creature.description.en : creature.description}</div>
               </div>
             ) : (
               <div className="card-preview-abilities">

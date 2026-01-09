@@ -282,8 +282,8 @@ export function BattleProvider({ children }) {
       let updated = false;
       let logEntries = [...s.log];
 
-      // PRIORIDADE: Verifica se ha cartas de campo na mao da IA
-      const fieldCardIndex = hand.findIndex((cardId) => cardId && cardId.startsWith('field_'));
+      // PRIORIDADE: Verifica se há cartas de campo na mão da IA
+      const fieldCardIndex = hand.findIndex((cardId) => cardId && (/^f\d{3}$/i.test(cardId) || String(cardId).toLowerCase().startsWith('field_')));
 
       if (fieldCardIndex >= 0) {
         // IA tem uma carta de campo, invoca ela no sharedField (sobrescreve a anterior)

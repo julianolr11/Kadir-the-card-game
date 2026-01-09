@@ -99,8 +99,8 @@ module.exports = {
       id: 'elderox_skill_4',
       name: { pt: 'Escudo Eterno', en: 'Eternal Shield' },
       desc: {
-        pt: 'Cria um escudo absorvendo 3 de dano por 2 turnos.',
-        en: 'Creates a shield absorbing 3 damage for 2 turns.',
+        pt: 'Cria um escudo que nega os ataques recebidos por 2 rodadas.',
+        en: 'Creates a shield that negates attacks taken for 2 rounds.',
       },
       cost: 2,
     },

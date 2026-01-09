@@ -35,7 +35,7 @@ const sampleDeckFromPool = (size = 20) => {
 };
 
 export function BattleProvider({ children }) {
-  const { decks } = useContext(AppContext);
+  const { decks, cardCollection } = useContext(AppContext);
   const battleAudioRef = useRef(null);
 
   const playFieldChangeSound = useCallback(() => {
@@ -259,6 +259,26 @@ export function BattleProvider({ children }) {
       const hand = [...s.player.hand];
       const cardId = hand[handIndex];
       if (!cardId) return s;
+      // Deriva flag de holo se vier de instância
+      let isHolo = false;
+      if (cardCollection) {
+        if (cardId.includes('-')) {
+          for (const [baseId, instances] of Object.entries(cardCollection)) {
+            const inst = instances.find((x) => x.instanceId === cardId);
+            if (inst) { isHolo = !!inst.isHolo; break; }
+          }
+        } else if (Array.isArray(cardCollection[cardId]) && cardCollection[cardId].length > 0) {
+          isHolo = !!cardCollection[cardId][0].isHolo;
+        }
+      }
+      // Resolve dados da carta de campo
+      let cardData = null;
+      try {
+        const fieldCards = require('../assets/cards/field/exampleFieldCards').default;
+        cardData = fieldCards.find((c) => c.id === cardId || c.legacyId === cardId) || null;
+      } catch (e) {
+        cardData = null;
+      }
       // Remove carta da mão
       hand.splice(handIndex, 1);
       return {
@@ -270,6 +290,8 @@ export function BattleProvider({ children }) {
         sharedField: {
           active: true,
           id: cardId,
+          isHolo,
+          cardData,
         },
         log: [...s.log, `Campo ${cardId} foi invocado!`],
       };
@@ -284,6 +306,13 @@ export function BattleProvider({ children }) {
       const hand = [...s.ai.hand];
       const cardId = hand[handIndex];
       if (!cardId) return s;
+      let cardData = null;
+      try {
+        const fieldCards = require('../assets/cards/field/exampleFieldCards').default;
+        cardData = fieldCards.find((c) => c.id === cardId || c.legacyId === cardId) || null;
+      } catch (e) {
+        cardData = null;
+      }
       // Remove carta da mão
       hand.splice(handIndex, 1);
       return {
@@ -295,6 +324,8 @@ export function BattleProvider({ children }) {
         sharedField: {
           active: true,
           id: cardId,
+          isHolo: false,
+          cardData,
         },
         log: [...s.log, `IA invocou o campo ${cardId}!`],
       };

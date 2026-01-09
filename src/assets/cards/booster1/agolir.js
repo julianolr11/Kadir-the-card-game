@@ -114,8 +114,8 @@ module.exports = {
       id: 'agolir_skill_5',
       name: { pt: 'Sombras Absorventes', en: 'Absorbing Shadows' },
       desc: {
-        pt: 'Ganha um escudo que absorve 3 de dano e converte metade em cura.',
-        en: 'Gains a shield absorbing 3 damage and converts half into healing.',
+        pt: 'Ganha um escudo que nega o próximo ataque recebido por 2 rodadas.',
+        en: 'Gains a shield that negates the next attack taken for 2 rounds.',
       },
       cost: 2,
     },

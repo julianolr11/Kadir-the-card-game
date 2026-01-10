@@ -25,7 +25,9 @@ function CoinFlip({ onResult, playerName = 'Jogador', aiName = 'Adversário' }) 
 
     // Simula o tempo de giro da moeda (2 segundos)
     setTimeout(() => {
-      const flipResult = Math.random() < 0.5 ? 'head' : 'crown';
+      const randomValue = Math.random();
+      const flipResult = randomValue < 0.5 ? 'head' : 'crown';
+      console.log('CoinFlip random:', randomValue, '-> result:', flipResult);
       setResult(flipResult);
       setIsFlipping(false);
 

@@ -63,9 +63,9 @@
 
 /* Moeda */
 .coin {
-  width: 160px;
-  height: 160px;
-  margin: 32px auto;
+  width: 110px;
+  height: 110px;
+  margin: 15px auto;
   position: relative;
   perspective: 1000px;
 }
@@ -99,8 +99,8 @@
 }
 
 .coin-icon {
-  width: 80px;
-  height: 80px;
+  width: 130px;
+  height: 130px;
   object-fit: contain;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }

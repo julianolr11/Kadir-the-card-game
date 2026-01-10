@@ -5,6 +5,7 @@ import { AppContext } from './AppContext';
 import fieldChangeSfx from '../assets/sounds/effects/field-change.MP3';
 import flipCardSfx from '../assets/sounds/effects/flipcard.MP3';
 import battleMusic from '../assets/sounds/music/battle-music.mp3';
+import * as effectRegistry from '../utils/effectRegistry';
 
 export const BattleContext = createContext(null);
 
@@ -235,7 +236,31 @@ export function BattleProvider({ children }) {
       if (!cardId) return s;
       const slots = [...s.player.field.slots];
       if (slots[slotIndex]) return s; // slot ocupado
-      slots[slotIndex] = { id: cardId, hp: 1 }; // HP real vir├í depois, por enquanto placeholder
+
+      // Busca dados da criatura no creaturesPool
+      const creatureData = creaturesPool.find(c => c.id === cardId);
+      if (!creatureData) {
+        console.warn(`Criatura ${cardId} não encontrada no pool`);
+        return s;
+      }
+
+      // Cria estrutura completa da criatura
+      const creature = {
+        id: cardId,
+        name: creatureData.name?.pt || creatureData.name?.en || cardId,
+        element: creatureData.element || 'puro',
+        hp: creatureData.hp || 5,
+        maxHp: creatureData.hp || 5,
+        atk: creatureData.atk || 2,
+        def: creatureData.def || 1,
+        abilities: creatureData.abilities || [],
+        buffs: [],
+        debuffs: [],
+        shield: 0,
+        statusEffects: [],
+      };
+
+      slots[slotIndex] = creature;
       hand.splice(index, 1);
       return {
         ...s,
@@ -341,6 +366,7 @@ export function BattleProvider({ children }) {
     summonFromHand,
     invokeFieldCard,
     invokeFieldCardAI,
+      useAbility,
     log,
     startPlaying: (firstPlayer) => {
       setState(s => ({
@@ -349,7 +375,7 @@ export function BattleProvider({ children }) {
         activePlayer: firstPlayer === 'player' ? 'player' : 'ai',
       }));
     },
-  }), [state, startBattle, endTurn, drawPlayerCard, summonFromHand, invokeFieldCard, invokeFieldCardAI, log]);
+  }), [state, startBattle, endTurn, drawPlayerCard, summonFromHand, invokeFieldCard, invokeFieldCardAI, useAbility, log]);
 
   const performAiTurn = useCallback(() => {
     setState((s) => {
@@ -427,6 +453,71 @@ export function BattleProvider({ children }) {
       endTurn();
     }, 800);
   }, [endTurn]);
+
+  // ===== SISTEMA DE HABILIDADES =====
+  const useAbility = useCallback((playerSide, slotIndex, abilityIndex, targetSide, targetSlotIndex) => {
+    setState((s) => {
+      if (s.phase !== 'playing') return s;
+      if (s.activePlayer !== playerSide) return s; // Só pode usar habilidade no seu turno
+      
+      const attacker = s[playerSide].field.slots[slotIndex];
+      if (!attacker || attacker.hp <= 0) return s;
+      
+      const ability = attacker.abilities[abilityIndex];
+      if (!ability) return s;
+      
+      // Valida custo de essência
+      const essence = s[playerSide].essence || 0;
+      const cost = ability.cost || 0;
+      if (essence < cost) {
+        return {
+          ...s,
+          log: [...s.log, `Essência insuficiente! Necessário: ${cost}, Disponível: ${essence}`],
+        };
+      }
+      
+      // Encontra criatura alvo
+      const target = s[targetSide].field.slots[targetSlotIndex];
+      if (!target || target.hp <= 0) {
+        return {
+          ...s,
+          log: [...s.log, 'Alvo inválido!'],
+        };
+      }
+      
+      // Gera IDs únicos para atacante e alvo
+      const attackerId = `${playerSide}_slot${slotIndex}`;
+      const targetId = `${targetSide}_slot${targetSlotIndex}`;
+      
+      // Por enquanto, assume que todas as habilidades causam dano
+      // TODO: Implementar parsing de desc para detectar tipo de efeito
+      const baseDamage = ability.cost * 2 + 1; // Fórmula temporária: custo * 2 + 1
+      
+      const result = effectRegistry.applyDamage(s, {
+        attackerId,
+        targetId,
+        baseDamage,
+        attackerElement: attacker.element,
+        ignoreShield: false,
+      });
+      
+      // Deduz essência
+      let newState = {
+        ...result.newState,
+        [playerSide]: {
+          ...result.newState[playerSide],
+          essence: essence - cost,
+        },
+        log: [
+          ...result.newState.log,
+          `${attacker.name} usou ${ability.name?.pt || ability.name?.en || 'habilidade'} (custo: ${cost})`,
+          ...result.log,
+        ],
+      };
+      
+      return newState;
+    });
+  }, []);
 
   useEffect(() => {
     if (state.phase === 'playing' && state.activePlayer === 'ai') {

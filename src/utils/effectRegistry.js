@@ -21,6 +21,16 @@ const RESISTANCE_MULTIPLIER = 0.7; // -30% de dano em resistências
 export function getElementMultiplier(attackerElement, defenderElement) {
   if (!attackerElement || !defenderElement) return 1.0;
   
+  // Elemento PURO tem vantagem apenas contra PURO
+  if (attackerElement === 'puro' && defenderElement === 'puro') {
+    return WEAKNESS_MULTIPLIER;
+  }
+  
+  // PURO é neutro contra todos os outros elementos
+  if (attackerElement === 'puro' || defenderElement === 'puro') {
+    return 1.0;
+  }
+  
   // Verifica fraqueza
   if (ELEMENT_WEAKNESS[attackerElement]?.includes(defenderElement)) {
     return WEAKNESS_MULTIPLIER;

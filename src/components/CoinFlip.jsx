@@ -12,12 +12,22 @@ function CoinFlip({ onResult, playerName = 'Jogador', aiName = 'Adversário' }) 
   const audioRef = React.useRef(null);
 
   useEffect(() => {
-    // Mostra "Início de partida" por 1.5s, depois fica pronto para jogar
-    const timer = setTimeout(() => {
+    // Mostra "Início de partida" por 3s
+    const introTimer = setTimeout(() => {
       setPhase('ready');
-    }, 1500);
-    return () => clearTimeout(timer);
+    }, 3000);
+    return () => clearTimeout(introTimer);
   }, []);
+
+  useEffect(() => {
+    // Quando entrar na fase ready, aguarda 500ms e joga a moeda automaticamente
+    if (phase === 'ready') {
+      const flipTimer = setTimeout(() => {
+        handleFlip();
+      }, 500);
+      return () => clearTimeout(flipTimer);
+    }
+  }, [phase]);
 
   const handleFlip = () => {
     if (isFlipping || result || phase !== 'ready') return;
@@ -40,17 +50,21 @@ function CoinFlip({ onResult, playerName = 'Jogador', aiName = 'Adversário' }) 
       console.log('CoinFlip random:', randomValue, '-> result:', flipResult);
       setResult(flipResult);
       setIsFlipping(false);
-      setPhase('result');
 
       // Determina o vencedor
       const flipped = flipResult === 'head' ? playerName : aiName;
       setWinner(flipped);
 
-      // Chama callback depois que resultado está definido
+      // Aguarda um pouco antes de mostrar o resultado
       setTimeout(() => {
-        onResult?.(flipResult === 'head' ? 'player' : 'ai');
-      }, 2000);
-    }, 1200); // Reduzido para 1.2s
+        setPhase('result');
+        
+        // Chama callback depois que resultado está definido
+        setTimeout(() => {
+          onResult?.(flipResult === 'head' ? 'player' : 'ai');
+        }, 3000);
+      }, 800);
+    }, 1200);
   };
 
   return (
@@ -67,7 +81,7 @@ function CoinFlip({ onResult, playerName = 'Jogador', aiName = 'Adversário' }) 
         )}
 
         {/* Fase de Jogar a Moeda */}
-        {phase !== 'intro' && (
+        {(phase === 'ready' || phase === 'flipping') && (
           <>
             <h1 className="coinflip-title">Quem Começa?</h1>
 
@@ -90,37 +104,26 @@ function CoinFlip({ onResult, playerName = 'Jogador', aiName = 'Adversário' }) 
                 <img src={crownIcon} alt="Coroa" className="coin-icon" />
               </div>
             </div>
+          </>
+        )}
 
-            {/* Resultado */}
-            {phase === 'result' && result && (
-              <div className={`result-container ${result}`}>
-                <p className="result-label">
-                  {result === 'head' ? '🎯 Cara' : '👑 Coroa'}
-                </p>
-                <p className="result-winner">
-                  {winner === playerName ? (
-                    <><strong>Você joga primeiro!</strong></>
-                  ) : (
-                    <><strong>Você joga em seguida</strong></>
-                  )}
-                </p>
-              </div>
-            )}
+        {/* Fase de Resultado */}
+        {phase === 'result' && result && (
+          <>
+            <div className={`result-container ${result}`}>
+              <p className="result-label">
+                {result === 'head' ? '🎯 Cara' : '👑 Coroa'}
+              </p>
+              <p className="result-winner">
+                {winner === playerName ? (
+                  <><strong>Você joga primeiro!</strong></>
+                ) : (
+                  <><strong>Você joga em seguida</strong></>
+                )}
+              </p>
+            </div>
 
-            {/* Botão */}
-            {phase === 'ready' && !result && (
-              <button
-                className="flip-button"
-                onClick={handleFlip}
-                disabled={isFlipping}
-              >
-                {isFlipping ? 'Girando...' : 'Girar Moeda'}
-              </button>
-            )}
-
-            {phase === 'result' && result && (
-              <p className="continue-text">A partida começará em breve...</p>
-            )}
+            <p className="continue-text">A partida começará em breve...</p>
           </>
         )}
       </div>

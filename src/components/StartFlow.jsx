@@ -80,7 +80,7 @@ function StartFlow({ onFinish, onGoHome, menuMusicRef }) {
       }
     };
   }, [candleKey]);
-  const { lang, effectsVolume, setActiveGuardian } = useContext(AppContext);
+  const { lang, effectsVolume, setActiveGuardian, addCardsFromBooster } = useContext(AppContext);
   const [step, setStep] = useState(0);
   const [showModal, setShowModal] = useState(false);
   const [displayedText, setDisplayedText] = useState('');
@@ -305,6 +305,10 @@ function StartFlow({ onFinish, onGoHome, menuMusicRef }) {
                       setShowPreview(true);
                       // Salva como guardião ativo (criatura completa)
                       setActiveGuardian(sorteada);
+                      // Adiciona a carta à coleção
+                      if (addCardsFromBooster) {
+                        addCardsFromBooster([sorteada.id]);
+                      }
                     }
                     // Toca o som de flipcard ao virar a carta
                     if (flipAudioRef.current) {
@@ -339,6 +343,11 @@ function StartFlow({ onFinish, onGoHome, menuMusicRef }) {
                           ];
                         setPreviewCreature(sorteada);
                         setShowPreview(true);
+                        setActiveGuardian(sorteada);
+                        // Adiciona a carta à coleção
+                        if (addCardsFromBooster) {
+                          addCardsFromBooster([sorteada.id]);
+                        }
                       }
                       if (flipAudioRef.current) {
                         flipAudioRef.current.currentTime = 0;

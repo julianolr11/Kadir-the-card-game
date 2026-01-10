@@ -5,6 +5,7 @@ import sphereMenuSound from '../assets/sounds/effects/sphere-menu.MP3';
 import OptionsModal from './OptionsModal';
 import CogIcon from './CogIcon';
 import '../styles/homescreen.css';
+import '../styles/bestiary.css';
 import { AppContext } from '../context/AppContext';
 import boosterImg from '../assets/img/card/booster.png';
 import packageSound from '../assets/sounds/effects/package.MP3';
@@ -12,6 +13,7 @@ import boosterAnimationVideo from '../assets/img/card/animacao-booster.mp4';
 import creatures from '../assets/cards';
 import BoosterResultsSlider from './BoosterResultsSlider';
 import DeckSelectModal from './DeckSelectModal';
+import Bestiary from './Bestiary';
 
 // Função para carregar dados da carta do guardião
 const getGuardianCardData = (guardianId) => {
@@ -229,6 +231,8 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
   const boosterVideoRef = useRef(null);
   const [cheatInput, setCheatInput] = useState('');
   const [showDeckModal, setShowDeckModal] = useState(false);
+  const [showBestiary, setShowBestiary] = useState(false);
+  const bestiaryAudioRef = useRef(null);
 
   // Cheat code detector
   useEffect(() => {
@@ -367,8 +371,18 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
     }
   }, [showBoosterVideo]);
 
+  function handleBestiaryClick() {
+    if (bestiaryAudioRef.current) {
+      bestiaryAudioRef.current.currentTime = 0;
+      bestiaryAudioRef.current.play().catch(() => {});
+    }
+    setShowBestiary(true);
+  }
+
   return (
-    <div className="home-screen">
+    <div className="home-screen-container">
+      <div className={`screen-wrapper ${showBestiary ? 'slide-to-left' : 'center'}`}>
+        <div className="home-screen">
       {/* Áudio de vela queimando em loop - key força recriação do elemento */}
       <audio
         key={candleKey}
@@ -525,6 +539,22 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
             Batalha (MVP)
           </button>
         </div>
+
+        {/* Botão do Bestiário */}
+        <audio ref={bestiaryAudioRef} src={sphereMenuSound} preload="auto" />
+        <button
+          className="bestiary-nav-btn"
+          onClick={handleBestiaryClick}
+          onMouseEnter={() => {
+            if (bestiaryAudioRef.current) {
+              bestiaryAudioRef.current.currentTime = 0;
+              bestiaryAudioRef.current.play().catch(() => {});
+            }
+          }}
+        >
+          <span className="bestiary-nav-text">Bestiário</span>
+          <span className="bestiary-nav-arrow">→</span>
+        </button>
       </main>
       <DeckSelectModal
         visible={showDeckModal}
@@ -583,6 +613,13 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
           onClose={handleCloseBoosterResults}
         />
       )}
+        </div>
+      </div>
+
+      {/* Tela do Bestiário */}
+      <div className={`screen-wrapper ${showBestiary ? 'center' : 'slide-to-right'}`}>
+        <Bestiary onBack={() => setShowBestiary(false)} />
+      </div>
     </div>
   );
 }

@@ -2,13 +2,14 @@
 import { BattleProvider, useBattle } from '../context/BattleContext';
 import { AppContext } from '../context/AppContext';
 import CreatureCardPreview from './CreatureCardPreview.jsx';
+import CoinFlip from './CoinFlip.jsx';
 import heartIcon from '../assets/img/icons/hearticon.png';
 import essenceIcon from '../assets/img/icons/soul-essence.png';
 import cardVerso from '../assets/img/card/verso.png';
 import '../styles/battle.css';
 
 function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
-  const { state, startBattle, endTurn, summonFromHand, drawPlayerCard, invokeFieldCard } = useBattle();
+  const { state, startBattle, endTurn, summonFromHand, drawPlayerCard, invokeFieldCard, startPlaying } = useBattle();
   const { cardCollection } = React.useContext(AppContext);
   const [activeCardIndex, setActiveCardIndex] = React.useState(null);
   const [deckCardDrawn, setDeckCardDrawn] = React.useState(false);
@@ -826,6 +827,15 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
           <button style={turnModalBtnStyle} onClick={() => setTurnBlockModalOpen(false)}>Entendi</button>
         </div>
       </div>
+    )}
+    {state.phase === 'coinflip' && (
+      <CoinFlip
+        playerName="Você"
+        aiName="Adversário"
+        onResult={(winner) => {
+          startPlaying(winner);
+        }}
+      />
     )}
   </>);
 }

@@ -61,7 +61,7 @@ export function BattleProvider({ children }) {
   }, []);
 
   const [state, setState] = useState({
-    phase: 'idle',
+    phase: 'idle', // 'idle' | 'coinflip' | 'playing'
     turn: 1,
     activePlayer: 'player', // 'player' | 'ai'
     player: {
@@ -138,7 +138,7 @@ export function BattleProvider({ children }) {
     }
 
     setState({
-      phase: 'playing',
+      phase: 'coinflip',
       turn: 1,
       activePlayer: 'player',
       player: { orbs: 5, essence: 0, deck: pDeck, hand: pHand, field: { slots: [null, null, null], effects: [null, null, null] } },
@@ -341,6 +341,13 @@ export function BattleProvider({ children }) {
     invokeFieldCard,
     invokeFieldCardAI,
     log,
+    startPlaying: (firstPlayer) => {
+      setState(s => ({
+        ...s,
+        phase: 'playing',
+        activePlayer: firstPlayer === 'player' ? 'player' : 'ai',
+      }));
+    },
   }), [state, startBattle, endTurn, drawPlayerCard, summonFromHand, invokeFieldCard, invokeFieldCardAI, log]);
 
   const performAiTurn = useCallback(() => {

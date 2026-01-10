@@ -421,13 +421,19 @@ export function BattleProvider({ children }) {
       };
     });
 
-    // Entrega o turno de volta para o jogador apos a acao da IA
-    endTurn();
+    // Entrega o turno de volta para o jogador apos a acao da IA (com delay adicional)
+    setTimeout(() => {
+      endTurn();
+    }, 800);
   }, [endTurn]);
 
   useEffect(() => {
     if (state.phase === 'playing' && state.activePlayer === 'ai') {
-      performAiTurn();
+      // Adiciona delay de 1.5s antes da IA agir
+      const aiDelayTimer = setTimeout(() => {
+        performAiTurn();
+      }, 1500);
+      return () => clearTimeout(aiDelayTimer);
     }
   }, [state.phase, state.activePlayer, performAiTurn]);
 

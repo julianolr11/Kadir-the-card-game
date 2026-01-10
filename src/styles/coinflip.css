@@ -141,18 +141,22 @@
     transform: translateY(-80px) rotateY(900deg);
   }
   100% {
-    transform: translateY(0px) rotateY(1800deg);
+    transform: translateY(0px) rotateY(1620deg);
   }
 }
 
 /* Posições finais após a animação */
 .coin.result-head {
-  animation: bounceSettle 0.4s ease-out 1.2s forwards;
+  transform: rotateY(1800deg);
 }
 
 .coin.result-crown {
+  transform: rotateY(1980deg);
+}
+
+.coin.result-head,
+.coin.result-crown {
   animation: bounceSettle 0.4s ease-out 1.2s forwards;
-  transform: rotateY(180deg);
 }
 
 @keyframes bounceSettle {

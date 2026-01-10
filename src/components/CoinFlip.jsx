@@ -23,7 +23,7 @@ function CoinFlip({ onResult, playerName = 'Jogador', aiName = 'Adversário' }) 
       audioRef.current.play().catch(() => {});
     }
 
-    // Simula o tempo de giro da moeda (2 segundos)
+    // Simula o tempo de giro da moeda (1.2 segundos)
     setTimeout(() => {
       const randomValue = Math.random();
       const flipResult = randomValue < 0.5 ? 'head' : 'crown';
@@ -38,8 +38,8 @@ function CoinFlip({ onResult, playerName = 'Jogador', aiName = 'Adversário' }) 
       // Chama callback depois que resultado está definido
       setTimeout(() => {
         onResult?.(flipResult === 'head' ? 'player' : 'ai');
-      }, 500);
-    }, 2000);
+      }, 2000);
+    }, 1200); // Reduzido para 1.2s
   };
 
   return (

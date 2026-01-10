@@ -36,8 +36,87 @@ const sampleDeckFromPool = (size = 20) => {
 };
 
 export function BattleProvider({ children }) {
-  const { decks, cardCollection, effectsVolume } = useContext(AppContext);
+  const { decks, cardCollection, effectsVolume, loadGuardianLoadout } = useContext(AppContext);
   const battleAudioRef = useRef(null);
+
+  // Resolve habilidades selecionadas (2 slots) e aplica perk simples
+  const resolveCreatureBuild = useCallback((creatureData) => {
+    const loadout = loadGuardianLoadout ? loadGuardianLoadout(creatureData.id) : null;
+
+    // Base stats
+    const baseHp = creatureData.hp || 5;
+    let atk = creatureData.atk || 2;
+    let def = creatureData.def || 1;
+    let hpBoost = 0;
+    let shieldOnSummon = null; // { amount, duration }
+
+    // Determina nível máximo desbloqueado a partir da coleção (para fallback de perk)
+    const instances = cardCollection?.[creatureData.id] || [];
+    const maxLevel = instances.length > 0 ? Math.max(...instances.map(i => i.level || 0)) : 0;
+
+    // Seleciona perk: ou a do loadout ou a primeira desbloqueada por nível
+    let selectedPerkId = loadout?.selectedPerk || null;
+    if (!selectedPerkId) {
+      const unlockedPerks = (Array.isArray(creatureData.unlockTable) ? creatureData.unlockTable : [])
+        .filter(x => x.type === 'perk' && typeof x.level === 'number' && x.level <= maxLevel);
+      if (unlockedPerks.length > 0) {
+        selectedPerkId = unlockedPerks[0].id;
+      }
+    }
+
+    // Aplica perks conhecidos
+    switch (selectedPerkId) {
+      case 'ATTACK_PLUS_1':
+        atk += 1;
+        break;
+      case 'HP_PLUS_1':
+        hpBoost += 1;
+        break;
+      case 'HP_PLUS_2':
+        hpBoost += 2;
+        break;
+      case 'FIRST_ROUND_SHIELD':
+        shieldOnSummon = { amount: 1, duration: 1 };
+        break;
+      case 'SHIELD_1_TURN':
+      case 'SHIELD_ON_SUMMON_1':
+        shieldOnSummon = { amount: 1, duration: 1 };
+        break;
+      default:
+        break;
+    }
+
+    // Monta habilidades selecionadas (fallback: primeiras 2 habilidades básicas)
+    let selectedAbilities = [];
+    if (Array.isArray(loadout?.selectedSkills) && loadout.selectedSkills.length > 0) {
+      const skillsPool = [
+        ...(Array.isArray(creatureData.defaultSkills) ? creatureData.defaultSkills : []),
+        ...(Array.isArray(creatureData.unlockTable) ? creatureData.unlockTable.filter(x => x.type === 'skill') : []),
+      ];
+      selectedAbilities = loadout.selectedSkills
+        .map(skillId => skillsPool.find(s => s.id === skillId))
+        // Filtra apenas habilidades cujo nível requerido foi desbloqueado (defaultSkills assumem nível 0)
+        .filter((s) => {
+          if (!s) return false;
+          const required = typeof s.level === 'number' ? s.level : 0;
+          return required <= maxLevel;
+        })
+        .slice(0, 2)
+        .map((s) => ({
+          name: s.name,
+          cost: s.cost || 1,
+          desc: s.desc,
+          _skillId: s.id,
+        }));
+    }
+    if (selectedAbilities.length === 0) {
+      selectedAbilities = (creatureData.abilities || []).slice(0, 2);
+    }
+
+    const hp = baseHp + hpBoost;
+    const maxHp = hp;
+    return { atk, def, hp, maxHp, abilities: selectedAbilities, perkEffects: { shieldOnSummon } };
+  }, [loadGuardianLoadout, cardCollection]);
 
   const playFieldChangeSound = useCallback(() => {
     try {
@@ -188,10 +267,30 @@ export function BattleProvider({ children }) {
         }
       }
 
+      // Processa expiração de escudos por 1 turno em ambos os lados
+      const processShieldTurns = (slots) => (slots || []).map((c) => {
+        if (!c) return c;
+        const turns = typeof c.shieldTurns === 'number' ? c.shieldTurns : 0;
+        if (turns > 0) {
+          const newTurns = turns - 1;
+          return {
+            ...c,
+            shieldTurns: newTurns,
+            shield: newTurns <= 0 ? 0 : c.shield,
+          };
+        }
+        return c;
+      });
+
+      const playerSlots = processShieldTurns(s.player.field.slots);
+      const aiSlots = processShieldTurns(s.ai.field.slots);
+
       return {
         ...s,
         activePlayer: nextActive,
         turn: nextTurn,
+        player: { ...s.player, field: { ...s.player.field, slots: playerSlots } },
+        ai: { ...s.ai, field: { ...s.ai.field, slots: aiSlots } },
         [currentSide]: { ...currentSnapshot },
         [side]: { ...s[side], deck, hand, essence, field, orbs },
         log: [...logEntries, `Fim do turno de ${s.activePlayer}.`],
@@ -382,9 +481,27 @@ export function BattleProvider({ children }) {
       if (s.phase !== 'playing') return s;
       if (s.activePlayer !== 'ai') return s;
 
-      const slots = [...s.ai.field.slots];
-      const hand = [...s.ai.hand];
-      let updated = false;
+      const slots = [...s.player.field.slots];
+      if (slots[slotIndex]) return s; // slot ocupado
+      // Dados da criatura completa
+      const creatureData = creaturesPool.find(c => c.id === cardId) || {};
+      const build = resolveCreatureBuild(creatureData);
+      const creature = {
+        id: cardId,
+        name: creatureData.name?.pt || creatureData.name?.en || cardId,
+        element: creatureData.element || 'puro',
+        hp: build.hp,
+        maxHp: build.maxHp,
+        atk: build.atk,
+        def: build.def,
+        abilities: build.abilities,
+        buffs: [],
+        debuffs: [],
+        shield: build.perkEffects?.shieldOnSummon?.amount || 0,
+        shieldTurns: build.perkEffects?.shieldOnSummon?.duration || 0,
+        statusEffects: [],
+      };
+      slots[slotIndex] = creature;
       let logEntries = [...s.log];
 
       // PRIORIDADE: Verifica se há cartas de campo na mão da IA
@@ -393,7 +510,7 @@ export function BattleProvider({ children }) {
       if (fieldCardIndex >= 0) {
         // IA tem uma carta de campo, invoca ela no sharedField (sobrescreve a anterior)
         const cardId = hand[fieldCardIndex];
-        playFieldChangeSound();
+        log: [...s.log, `Invocou ${creature.name} no slot ${slotIndex + 1}.`],
         hand.splice(fieldCardIndex, 1);
         logEntries = [...logEntries, `IA invocou o campo ${cardId}!`];
 
@@ -420,13 +537,45 @@ export function BattleProvider({ children }) {
         if (hand[handIndex] && !slots[slotIndex]) {
           const cardId = hand[handIndex];
           hand.splice(handIndex, 1);
-          slots[slotIndex] = { id: cardId, hp: 1 };
+          const creatureData = creaturesPool.find(c => c.id === cardId) || {};
+          const build = resolveCreatureBuild(creatureData);
+          slots[slotIndex] = {
+            id: cardId,
+            name: creatureData.name?.pt || creatureData.name?.en || cardId,
+            element: creatureData.element || 'puro',
+            hp: build.hp,
+            maxHp: build.maxHp,
+            atk: build.atk,
+            def: build.def,
+            abilities: build.abilities,
+            buffs: [],
+            debuffs: [],
+            shield: build.perkEffects?.shieldOnSummon?.amount || 0,
+            shieldTurns: build.perkEffects?.shieldOnSummon?.duration || 0,
+            statusEffects: [],
+          };
           updated = true;
           logEntries = [...logEntries, `IA invocou ${cardId} no slot ${slotIndex + 1}.`];
         }
       } else if (emptyIndex >= 0 && hand.length > 0) {
         const cardId = hand.shift();
-        slots[emptyIndex] = { id: cardId, hp: 1 };
+        const creatureData = creaturesPool.find(c => c.id === cardId) || {};
+        const build = resolveCreatureBuild(creatureData);
+        slots[emptyIndex] = {
+          id: cardId,
+          name: creatureData.name?.pt || creatureData.name?.en || cardId,
+          element: creatureData.element || 'puro',
+          hp: build.hp,
+          maxHp: build.maxHp,
+          atk: build.atk,
+          def: build.def,
+          abilities: build.abilities,
+          buffs: [],
+          debuffs: [],
+          shield: build.perkEffects?.shieldOnSummon?.amount || 0,
+          shieldTurns: build.perkEffects?.shieldOnSummon?.duration || 0,
+          statusEffects: [],
+        };
         updated = true;
         logEntries = [...logEntries, `IA invocou ${cardId} no slot ${emptyIndex + 1}.`];
       } else {

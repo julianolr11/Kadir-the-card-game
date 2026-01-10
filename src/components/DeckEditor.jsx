@@ -12,7 +12,7 @@ import puroIcon from '../assets/img/elements/puro.png';
 import '../styles/deckbuilder.css';
 
 const ALL_CARD_IDS = [
-  'agolir','alatoy','arguilia','ashfang','beoxyr','digitama','draak','drazaq','ekeranth','ekonos','elderox','elythra','faskel','griffor','ignis','kael','landor','leoracal','lunethal','mawthorn','owlberoth','pawferion','raptauros','seract','sunburst','terrakhal','viborom','virideer','whalar','zephyron',
+  'agolir','alatoy','arguilia','ashfang','beoxyr','digitama','draak','drazaq','ekeranth','ekernoth','ekonos','elderox','elythra','faskel','griffor','ignis','kael','landor','leoracal','lunethal','mawthorn','nihil','noctyra','owlberoth','pawferion','raptauros','seract','sunburst','terrakhal','viborom','virideer','whalar','zephyron',
   // Field cards
   'F001','F002','F003','F004','F005','F006','F007','F008','F009','F010','F011','F012',
 ];

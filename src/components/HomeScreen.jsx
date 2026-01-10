@@ -2,6 +2,7 @@ import React, { useContext, useRef, useEffect, useState } from 'react';
 import cogSound from '../assets/sounds/effects/cog.MP3';
 import candleSound from '../assets/sounds/effects/candle.mp3';
 import sphereMenuSound from '../assets/sounds/effects/sphere-menu.MP3';
+import movingTableSound from '../assets/sounds/effects/moving-table.mp3';
 import OptionsModal from './OptionsModal';
 import CogIcon from './CogIcon';
 import '../styles/homescreen.css';
@@ -541,7 +542,7 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
         </div>
 
         {/* Botão do Bestiário */}
-        <audio ref={bestiaryAudioRef} src={sphereMenuSound} preload="auto" />
+        <audio ref={bestiaryAudioRef} src={movingTableSound} preload="auto" />
         <button
           className="bestiary-nav-btn"
           onClick={handleBestiaryClick}

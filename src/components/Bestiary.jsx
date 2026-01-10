@@ -1,6 +1,8 @@
 import React, { useContext, useState } from 'react';
 import '../styles/bestiary.css';
 import cogSound from '../assets/sounds/effects/cog.MP3';
+import movingTableSound from '../assets/sounds/effects/moving-table.mp3';
+import pageFlipSound from '../assets/sounds/effects/page-flip.mp3';
 import background3D from '../assets/img/wallpaper/3d-menu-overlay.png';
 import { AppContext } from '../context/AppContext';
 import creatures from '../assets/cards';
@@ -18,6 +20,8 @@ const getText = (field, lang = 'ptbr') => {
 
 function Bestiary({ onBack }) {
   const cogAudioRef = React.useRef(null);
+  const movingAudioRef = React.useRef(null);
+  const pageFlipAudioRef = React.useRef(null);
   const { cardCollection, lang = 'ptbr' } = useContext(AppContext);
   const [selectedCard, setSelectedCard] = useState(null);
   const [isFading, setIsFading] = useState(false);
@@ -153,7 +157,13 @@ function Bestiary({ onBack }) {
       {/* Botão de voltar com seta para esquerda */}
       <button
         className="bestiary-back-btn"
-        onClick={onBack}
+        onClick={() => {
+          if (movingAudioRef.current) {
+            movingAudioRef.current.currentTime = 0;
+            movingAudioRef.current.play().catch(() => {});
+          }
+          onBack?.();
+        }}
         onMouseEnter={handleCogMouseEnter}
       >
         <span className="bestiary-back-arrow">←</span>
@@ -176,7 +186,13 @@ function Bestiary({ onBack }) {
                 <div
                   key={card.id}
                   className={`bestiary-card-item ${owned ? 'owned' : 'locked'} ${selectedCard?.id === card.id ? 'selected' : ''}`}
-                  onClick={() => setSelectedCard(card)}
+                  onClick={() => {
+                    if (pageFlipAudioRef.current) {
+                      pageFlipAudioRef.current.currentTime = 0;
+                      pageFlipAudioRef.current.play().catch(() => {});
+                    }
+                    setSelectedCard(card);
+                  }}
                 >
                   {owned ? (
                     <img src={card.img} alt={getText(card.name, lang)} className="bestiary-card-img" />
@@ -193,8 +209,10 @@ function Bestiary({ onBack }) {
         </div>
       </div>
 
-      {/* Áudio */}
+      {/* Áudios */}
       <audio ref={cogAudioRef} src={cogSound} preload="auto" />
+      <audio ref={movingAudioRef} src={movingTableSound} preload="auto" />
+      <audio ref={pageFlipAudioRef} src={pageFlipSound} preload="auto" />
     </div>
   );
 }

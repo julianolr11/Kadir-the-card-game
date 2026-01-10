@@ -76,7 +76,7 @@ export function applyDamage(state, params) {
   const target = findCreatureById(state, targetId);
 
   if (!target || target.hp <= 0) {
-    return { newState: state, log: [], damageDealt: 0, hasAdvantage: false, hasDisadvantage: false };
+    return { newState: state, log: [], damageDealt: 0, hasAdvantage: false, hasDisadvantage: false, shieldHit: false, shieldBroken: false };
   }
 
   // Calcula modificador de elemento
@@ -95,8 +95,9 @@ export function applyDamage(state, params) {
   // Sistema de escudo
   let finalDamage = damage;
   let shieldBroken = false;
+  const hadShield = !ignoreShield && (target.shield > 0);
 
-  if (!ignoreShield && target.shield > 0) {
+  if (hadShield) {
     if (damage >= target.shield) {
       finalDamage = damage - target.shield;
       shieldBroken = true;
@@ -119,7 +120,7 @@ export function applyDamage(state, params) {
     ...(died ? [`${target.name} foi derrotado!`] : [])
   ];
 
-  return { newState, log, damageDealt: finalDamage, hasAdvantage, hasDisadvantage };
+  return { newState, log, damageDealt: finalDamage, hasAdvantage, hasDisadvantage, shieldHit: hadShield, shieldBroken };
 }
 
 /**

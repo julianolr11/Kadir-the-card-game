@@ -160,6 +160,7 @@ export function BattleProvider({ children }) {
     },
     sharedField: { active: false, id: null },
     log: [],
+    animations: {},
   });
 
   // Controla música de fundo da batalha
@@ -627,10 +628,22 @@ export function BattleProvider({ children }) {
 
   // ===== SISTEMA DE HABILIDADES =====
   const useAbility = useCallback((playerSide, slotIndex, abilityIndex, targetSide, targetSlotIndex) => {
+    const clearAnimAfter = (creatureId, timeoutMs = 900) => {
+      setTimeout(() => {
+        setState((s2) => {
+          const anims = { ...(s2.animations || {}) };
+          if (anims[creatureId]) {
+            delete anims[creatureId];
+          }
+          return { ...s2, animations: anims };
+        });
+      }, timeoutMs);
+    };
+
     setState((s) => {
       if (s.phase !== 'playing') return s;
       if (s.activePlayer !== playerSide) return s; // Só pode usar habilidade no seu turno
-      
+
       const attacker = s[playerSide].field.slots[slotIndex];
       if (!attacker || attacker.hp <= 0) return s;
       // Bloqueia ação se incapacitado
@@ -638,10 +651,10 @@ export function BattleProvider({ children }) {
       if (incapacitating) {
         return { ...s, log: [...s.log, `${attacker.name} está incapacitado e não pode agir.`] };
       }
-      
+
       const ability = attacker.abilities[abilityIndex];
       if (!ability) return s;
-      
+
       // Valida custo de essência
       const essence = s[playerSide].essence || 0;
       const cost = ability.cost || 0;
@@ -651,7 +664,7 @@ export function BattleProvider({ children }) {
           log: [...s.log, `Essência insuficiente! Necessário: ${cost}, Disponível: ${essence}`],
         };
       }
-      
+
       // Encontra criatura alvo
       const target = s[targetSide].field.slots[targetSlotIndex];
       if (!target || target.hp <= 0) {
@@ -660,11 +673,11 @@ export function BattleProvider({ children }) {
           log: [...s.log, 'Alvo inválido!'],
         };
       }
-      
+
       // Usa IDs das criaturas instanciadas
       const attackerId = attacker.id;
       const targetId = target.id;
-      
+
       // Parsing simples de efeitos pela descrição
       const descText = (ability.desc?.pt || ability.desc?.en || '').toLowerCase();
       const mappings = [
@@ -683,6 +696,8 @@ export function BattleProvider({ children }) {
       ];
       const match = mappings.find(m => descText.includes(m.key));
       let result;
+      let animPayload = null;
+
       if (match) {
         result = effectRegistry.applyStatusEffect(s, {
           targetId,
@@ -690,6 +705,7 @@ export function BattleProvider({ children }) {
           duration: match.duration,
           value: match.value,
         });
+        animPayload = { type: 'status', statusType: match.type };
       } else {
         const baseDamage = ability.cost * 2 + 1; // Fórmula temporária: custo * 2 + 1
         result = effectRegistry.applyDamage(s, {
@@ -699,9 +715,17 @@ export function BattleProvider({ children }) {
           attackerElement: attacker.element,
           ignoreShield: false,
         });
+        animPayload = {
+          type: 'damage',
+          amount: result.damageDealt,
+          hasAdvantage: !!result.hasAdvantage,
+          hasDisadvantage: !!result.hasDisadvantage,
+          shieldHit: !!result.shieldHit,
+          shieldBroken: !!result.shieldBroken,
+        };
       }
-      
-      // Deduz essência
+
+      // Deduz essência e aplica animação
       let newState = {
         ...result.newState,
         [playerSide]: {
@@ -713,8 +737,15 @@ export function BattleProvider({ children }) {
           `${attacker.name} usou ${ability.name?.pt || ability.name?.en || 'habilidade'} (custo: ${cost})`,
           ...result.log,
         ],
+        animations: {
+          ...(result.newState.animations || {}),
+          ...(animPayload ? { [targetId]: animPayload } : {}),
+        },
       };
-      
+
+      // Agenda limpeza da animação
+      clearAnimAfter(targetId, match ? 1000 : 900);
+
       return newState;
     });
   }, []);

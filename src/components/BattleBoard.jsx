@@ -7,6 +7,7 @@ import heartIcon from '../assets/img/icons/hearticon.png';
 import essenceIcon from '../assets/img/icons/soul-essence.png';
 import cardVerso from '../assets/img/card/verso.png';
 import '../styles/battle.css';
+import '../styles/effects.css';
 import shieldIcon from '../assets/img/icons/shield.png';
 import bleedIcon from '../assets/img/icons/bleed.png';
 import burnIcon from '../assets/img/icons/burn.png';
@@ -423,6 +424,26 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
                   ) : null;
                 })}
               </div>
+              {(() => {
+                const anim = state.animations?.[slot.id];
+                if (!anim) return null;
+                if (anim.type === 'damage') {
+                  const cls = anim.hasAdvantage ? 'advantage' : (anim.hasDisadvantage ? 'disadvantage' : 'neutral');
+                  return (
+                    <>
+                      <div className={`effect-float effect-damage ${cls}`}>-{anim.amount}</div>
+                      {anim.shieldHit && <div className={`shield-shimmer${anim.shieldBroken ? ' shield-broken' : ''}`} />}
+                    </>
+                  );
+                }
+                if (anim.type === 'heal') {
+                  return <div className="effect-float effect-heal">+{anim.amount}</div>;
+                }
+                if (anim.type === 'status' && anim.statusType) {
+                  return <div className={`status-pulse status-${anim.statusType}`} />;
+                }
+                return null;
+              })()}
             </div>
           ) : (
             <span className="slot-label">{i + 1}</span>

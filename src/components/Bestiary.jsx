@@ -165,7 +165,7 @@ function Bestiary({ onBack }) {
         onMouseEnter={handleBackMouseEnter}
       >
         <span className="bestiary-back-arrow">←</span>
-        Voltar para o Principal
+        Principal
       </button>
 
       {/* Conteúdo do Bestiário */}

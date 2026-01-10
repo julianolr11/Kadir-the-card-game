@@ -347,6 +347,7 @@
 .creature-preview-story {
   margin-bottom: 14px;
   color: #666;
+  text-align: justify;
 }
 
 .creature-preview-story-line {

@@ -153,7 +153,18 @@ function CreatureCardPreview({
   // Força classe de campo se solicitado
   const forceFieldClass = creature.forceFieldClass;
   // Corrige imagem para cartas de campo
-  const imageSrc = typeof creature.img === 'string' ? creature.img : (creature.img?.default || creature.image || '');
+  // creature.img pode ser: string | objeto com propriedade default | undefined
+  let imageSrc = '';
+  if (typeof creature.img === 'string') {
+    imageSrc = creature.img;
+  } else if (creature.img && typeof creature.img === 'object') {
+    // Se é objeto, tenta pegar default ou a primeira propriedade
+    imageSrc = creature.img.default || Object.values(creature.img)[0] || '';
+  }
+  // Fallback para propriedades antigas
+  if (!imageSrc) {
+    imageSrc = creature.image || '';
+  }
 
   return (
     <div style={{ position: 'relative', display: 'flex', perspective: '1000px' }}>

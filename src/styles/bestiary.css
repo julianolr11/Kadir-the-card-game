@@ -1,0 +1,594 @@
+/* Bestiary Screen */
+.bestiary-screen {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 1000;
+  background: #000;
+}
+
+.bestiary-background {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.bestiary-content {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  padding: 32px;
+  padding-top: 40px;
+}
+
+.bestiary-layout {
+    display: grid;
+    grid-template-columns: 450px 1fr;
+    gap: 0px;
+    width: 100%;
+    max-width: 1414px;
+    height: 976px;
+    overflow: hidden;
+    overflow-x: hidden;
+    margin: 0 auto;
+    position: absolute;
+    top: 188px;
+    left: 575px;
+    padding-left: 10px;
+}
+
+/* Coluna Esquerda - Preview */
+.bestiary-preview {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 24px 16px 24px 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  box-shadow: none;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.bestiary-preview-placeholder {
+  text-align: center;
+  color: #666;
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.3rem;
+}
+
+/* Coluna Direita - Grid de cartas */
+.bestiary-grid {
+  background: transparent;
+  border: none;
+  border-left: 1px solid #666;
+  border-radius: 0;
+  padding: 0px 10px 0px 10px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 9px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-shadow: none;
+  pointer-events: auto;
+  max-height: 100%;
+}
+
+.bestiary-grid::-webkit-scrollbar,
+.bestiary-preview::-webkit-scrollbar {
+  width: 12px;
+}
+
+.bestiary-grid::-webkit-scrollbar-track,
+.bestiary-preview::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+}
+
+.bestiary-grid::-webkit-scrollbar-thumb,
+.bestiary-preview::-webkit-scrollbar-thumb {
+  background: #666;
+  border-radius: 8px;
+}
+
+.bestiary-grid::-webkit-scrollbar-thumb:hover,
+.bestiary-preview::-webkit-scrollbar-thumb:hover {
+  background: #888;
+}
+
+/* Item de carta no grid */
+.bestiary-card-item {
+  position: relative;
+  display: grid;
+  align-items: center;
+  justify-items: center;
+  height: 160px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  overflow: hidden;
+  background: transparent;
+  border: 1px solid rgba(102, 102, 102, 0.5);
+  pointer-events: auto;
+}
+
+.bestiary-card-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 230, 176, 0.2);
+  border-color: #666;
+}
+
+.bestiary-card-item.selected {
+  box-shadow: 0 0 0 2px #666;
+  border-color: #666;
+  transform: scale(1.02);
+}
+
+.bestiary-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+/* Carta bloqueada - apenas ponto de interrogação com borda */
+.bestiary-card-locked {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border-radius: 12px;
+}
+
+.bestiary-question-mark {
+  font-size: 4rem;
+  font-weight: bold;
+  color: #666;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+  font-family: 'Cinzel', serif;
+}
+
+/* Bordas coloridas por elemento */
+.bestiary-card-border {
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  pointer-events: none;
+  border: 2px solid;
+  display: none;
+}
+
+.bestiary-card-border-fogo {
+  border-color: #ff3c00;
+  box-shadow: inset 0 0 20px rgba(255, 60, 0, 0.3);
+}
+
+.bestiary-card-border-agua {
+  border-color: #00cfff;
+  box-shadow: inset 0 0 20px rgba(0, 207, 255, 0.3);
+}
+
+.bestiary-card-border-terra {
+  border-color: #4caf50;
+  box-shadow: inset 0 0 20px rgba(76, 175, 80, 0.3);
+}
+
+.bestiary-card-border-ar {
+  border-color: #b388ff;
+  box-shadow: inset 0 0 20px rgba(179, 136, 255, 0.3);
+}
+
+.bestiary-card-border-puro {
+  border-color: #fff6b0;
+  box-shadow: inset 0 0 20px rgba(255, 246, 176, 0.3);
+}
+
+.bestiary-card-border-neutral {
+  border-color: #999;
+  box-shadow: inset 0 0 20px rgba(153, 153, 153, 0.3);
+}
+
+/* Preview de criatura no lado esquerdo */
+.creature-preview-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.creature-preview-card {
+  width: 100%;
+  background: transparent;
+  border-radius: 0;
+  padding: 12px 0;
+  border: none;
+  box-shadow: none;
+}
+
+.creature-preview-border-fogo {
+  border-color: #ff3c00;
+}
+
+.creature-preview-border-agua {
+  border-color: #00cfff;
+}
+
+.creature-preview-border-terra {
+  border-color: #4caf50;
+}
+
+.creature-preview-border-ar {
+  border-color: #b388ff;
+}
+
+.creature-preview-border-puro {
+  border-color: #fff6b0;
+}
+
+.creature-preview-border-neutral {
+  border-color: #999;
+}
+
+.creature-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.creature-preview-name {
+  font-family: 'Cinzel', serif;
+  font-size: 2.2rem;
+  color: #666;
+  margin: 0;
+}
+
+.creature-preview-element {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1rem;
+  color: #666;
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+}
+
+.creature-preview-image-wrapper {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  background: transparent;
+}
+
+.creature-preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.creature-preview-stats {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+  overflow-x: hidden;
+}
+
+.creature-preview-stat {
+    flex: 1;
+    background: transparent;
+    padding: 8px 0;
+    border-radius: 0;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 4px;
+    align-items: center;
+}
+
+.creature-preview-stat-label {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1rem;
+  color: #666;
+}
+
+.creature-preview-stat-value {
+  font-family: 'Cinzel', serif;
+  font-size: 1.5rem;
+  color: #666;
+  font-weight: bold;
+}
+
+.creature-preview-section-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.4rem;
+  color: #666;
+  margin: 20px 0 12px 0;
+}
+
+.creature-preview-abilities {
+  margin-bottom: 16px;
+}
+
+.creature-preview-ability {
+  background: transparent;
+  padding: 8px 0;
+  border-radius: 0;
+  margin-bottom: 8px;
+  color: #666;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.creature-preview-ability strong {
+  color: #666;
+}
+
+.creature-preview-description {
+  color: #666;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.creature-preview-story {
+  margin-bottom: 14px;
+  color: #666;
+}
+
+.creature-preview-story-line {
+  margin: 6px 0;
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+
+.creature-preview-locked {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.creature-preview-unknown {
+  text-align: center;
+  color: #666;
+}
+
+.creature-preview-question {
+  font-size: 10rem;
+  font-weight: bold;
+  font-family: 'Cinzel', serif;
+  display: block;
+  margin-bottom: 24px;
+  text-shadow: 0 4px 16px rgba(0, 0, 0, 0.8);
+}
+
+.creature-preview-locked-text {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.2rem;
+  color: #888;
+}
+
+/* Botão de voltar */
+.bestiary-back-btn {
+  position: fixed;
+  top: 50%;
+  left: 32px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: rgba(30, 22, 40, 0.9);
+  border: 2px solid #ffe6b0;
+  border-radius: 12px;
+  color: #ffe6b0;
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 100;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+.bestiary-back-btn:hover {
+  background: rgba(40, 32, 50, 0.95);
+  border-color: #fff6b0;
+  box-shadow: 0 6px 24px rgba(255, 230, 176, 0.4);
+  transform: translateX(-4px);
+}
+
+.bestiary-back-arrow {
+  font-size: 1.8rem;
+  font-weight: bold;
+  transition: transform 0.3s ease;
+}
+
+.bestiary-back-btn:hover .bestiary-back-arrow {
+  transform: translateX(-4px);
+}
+
+/* Animações de slide */
+.home-screen-container {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+}
+
+.screen-wrapper {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+.screen-wrapper.slide-to-left {
+  transform: translateX(-100%);
+}
+
+.screen-wrapper.slide-to-right {
+  transform: translateX(100%);
+}
+
+.screen-wrapper.center {
+  transform: translateX(0);
+}
+
+
+
+/* Media Query para 1920x1080 */
+@media (max-width: 1920px), (max-height: 1080px) {
+  .bestiary-layout {
+    display: grid;
+    grid-template-columns: 450px 1fr;
+    gap: 0px;
+    width: 100%;
+    max-width: 1069px;
+    height: 729px;
+    overflow: hidden;
+    overflow-x: hidden;
+    margin: 0 auto;
+    position: absolute;
+    top: 148px;
+    left: 421px;
+    padding-left: 10px;
+  }
+}
+/* Media Query para 1280x720 */
+@media (max-width: 1280px), (max-height: 720px) {
+  .bestiary-content {
+    padding: 24px;
+    padding-top: 32px;
+  }
+
+  .bestiary-layout {
+    grid-template-columns: 220px 1fr;
+    gap: 0px;
+    width: 698px;
+    height: 470px;
+    position: absolute;
+    top: 108px;
+    left: 291px;
+  }
+
+  .bestiary-preview {
+    padding: 16px 12px 16px 0;
+  }
+
+  .bestiary-grid {
+    padding: 16px 10px 16px 10px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+
+  .bestiary-card-item {
+    height: 130px;
+    border-radius: 10px;
+  }
+
+  .bestiary-question-mark {
+    font-size: 3rem;
+  }
+
+  .creature-preview-name {
+    font-size: 1.6rem;
+  }
+
+  .creature-preview-element {
+    font-size: 0.9rem;
+  }
+
+  .creature-preview-stat-label {
+    font-size: 0.8rem;
+  }
+
+  .creature-preview-stat-value {
+    font-size: 1.1rem;
+  }
+
+  .creature-preview-section-title {
+    font-size: 1.1rem;
+    margin: 14px 0 8px 0;
+  }
+
+  .creature-preview-story {
+    margin-bottom: 10px;
+  }
+
+  .creature-preview-story-line {
+    margin: 3px 0;
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+
+  .creature-preview-description {
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+
+  .creature-preview-question {
+    font-size: 6rem;
+    margin-bottom: 16px;
+  }
+
+  .creature-preview-locked-text {
+    font-size: 1rem;
+  }
+
+  .bestiary-back-btn {
+    padding: 10px 16px;
+    font-size: 0.95rem;
+    gap: 10px;
+  }
+
+  .bestiary-back-arrow {
+    font-size: 1.5rem;
+  }
+}
+/* Fade animations */
+.fade-in {
+  animation: fadeIn 0.3s ease-in forwards;
+}
+
+.fade-out {
+  animation: fadeOut 0.2s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}

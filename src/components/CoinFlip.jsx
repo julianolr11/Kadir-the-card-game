@@ -58,7 +58,7 @@ function CoinFlip({ onResult, playerName = 'Jogador', aiName = 'Adversário' }) 
       // Aguarda um pouco antes de mostrar o resultado
       setTimeout(() => {
         setPhase('result');
-        
+
         // Chama callback depois que resultado está definido
         setTimeout(() => {
           onResult?.(flipResult === 'head' ? 'player' : 'ai');

@@ -148,23 +148,29 @@
 /* Posições finais após a animação */
 .coin.result-head {
   transform: rotateY(1800deg);
+  animation: bounceSettleHead 0.4s ease-out 1.2s forwards;
 }
 
 .coin.result-crown {
   transform: rotateY(1980deg);
+  animation: bounceSettleCrown 0.4s ease-out 1.2s forwards;
 }
 
-.coin.result-head,
-.coin.result-crown {
-  animation: bounceSettle 0.4s ease-out 1.2s forwards;
-}
-
-@keyframes bounceSettle {
+@keyframes bounceSettleHead {
   0%, 100% {
-    transform: scale(1);
+    transform: scale(1) rotateY(1800deg);
   }
   50% {
-    transform: scale(1.1);
+    transform: scale(1.1) rotateY(1800deg);
+  }
+}
+
+@keyframes bounceSettleCrown {
+  0%, 100% {
+    transform: scale(1) rotateY(1980deg);
+  }
+  50% {
+    transform: scale(1.1) rotateY(1980deg);
   }
 }
 

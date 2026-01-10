@@ -60,7 +60,7 @@ function CoinFlip({ onResult, playerName = 'Jogador', aiName = 'Adversário' }) 
         </div>
 
         {/* Moeda */}
-        <div className={`coin ${isFlipping ? 'flipping' : ''}`}>
+        <div className={`coin ${isFlipping ? 'flipping' : ''} ${result ? `result-${result}` : ''}`}>
           <div className="coin-side coin-front">
             <img src={headIcon} alt="Cara" className="coin-icon" />
           </div>

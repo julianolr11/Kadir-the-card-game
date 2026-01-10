@@ -117,6 +117,15 @@
   }
 }
 
+/* Posições finais após a animação */
+.coin.result-head {
+  transform: rotateY(0deg);
+}
+
+.coin.result-crown {
+  transform: rotateY(180deg);
+}
+
 /* Resultado */
 .result-container {
   background: rgba(255, 230, 176, 0.1);

@@ -1,7 +1,7 @@
 import React, { useContext, useState } from 'react';
 import '../styles/bestiary.css';
 import pageFlipSound from '../assets/sounds/effects/page-flip.mp3';
-import pageFlipSound from '../assets/sounds/effects/page-flip.mp3';
+import movingTableSound from '../assets/sounds/effects/moving-table.mp3';
 import background3D from '../assets/img/wallpaper/3d-menu-overlay.png';
 import { AppContext } from '../context/AppContext';
 import creatures from '../assets/cards';
@@ -19,6 +19,7 @@ const getText = (field, lang = 'ptbr') => {
 
 function Bestiary({ onBack }) {
   const pageFlipAudioRef = React.useRef(null);
+  const movingAudioRef = React.useRef(null);
   const { cardCollection, lang = 'ptbr' } = useContext(AppContext);
   const [selectedCard, setSelectedCard] = useState(null);
   const [isFading, setIsFading] = useState(false);
@@ -49,9 +50,9 @@ function Bestiary({ onBack }) {
   }, [selectedCard, displayCard]);
 
   function handleBackMouseEnter() {
-    if (pageFlipAudioRef.current) {
-      pageFlipAudioRef.current.currentTime = 0;
-      pageFlipAudioRef.current.play().catch(() => {});
+    if (movingAudioRef.current) {
+      movingAudioRef.current.currentTime = 0;
+      movingAudioRef.current.play().catch(() => {});
     }
   }
 
@@ -155,9 +156,9 @@ function Bestiary({ onBack }) {
       <button
         className="bestiary-back-btn"
         onClick={() => {
-          if (pageFlipAudioRef.current) {
-            pageFlipAudioRef.current.currentTime = 0;
-            pageFlipAudioRef.current.play().catch(() => {});
+          if (movingAudioRef.current) {
+            movingAudioRef.current.currentTime = 0;
+            movingAudioRef.current.play().catch(() => {});
           }
           onBack?.();
         }}
@@ -206,8 +207,9 @@ function Bestiary({ onBack }) {
         </div>
       </div>
 
-      {/* Áudio */}
+      {/* Áudios */}
       <audio ref={pageFlipAudioRef} src={pageFlipSound} preload="auto" />
+      <audio ref={movingAudioRef} src={movingTableSound} preload="auto" />
     </div>
   );
 }

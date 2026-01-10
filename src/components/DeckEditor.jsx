@@ -48,6 +48,7 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
   const [hoveredCard, setHoveredCard] = useState(null);
   const [hoveredCardId, setHoveredCardId] = useState(null);
   const [showSavedToast, setShowSavedToast] = useState(false);
+  const [showDeckIncompleteWarning, setShowDeckIncompleteWarning] = useState(false);
   const [showInstanceSelector, setShowInstanceSelector] = useState(false);
   const [selectedCardForInstance, setSelectedCardForInstance] = useState(null);
   const [instanceSlotIndex, setInstanceSlotIndex] = useState(null);
@@ -354,7 +355,13 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
             )}
           </div>
           <div className="deck-editor-counter">{cardCount}/20 cartas</div>
-          <button className="deck-editor-close" onClick={onClose}>✕</button>
+          <button className="deck-editor-close" onClick={() => {
+            if (cardCount < 20) {
+              setShowDeckIncompleteWarning(true);
+            } else {
+              onClose?.();
+            }
+          }}>✕</button>
         </div>
         <div className="deck-editor-guardian-section">
           <span className="guardian-label">Guardião: {selectedGuardian || 'Não selecionado'}</span>
@@ -533,6 +540,65 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
           </div>
         )}
         {showSavedToast && <div className="deck-saved-toast">✓ Salvo</div>}
+        {showDeckIncompleteWarning && (
+          <div
+            className="loadout-modal-overlay"
+            onClick={() => setShowDeckIncompleteWarning(false)}
+          >
+            <div
+              className="loadout-modal-content"
+              onClick={(e) => e.stopPropagation()}
+              style={{ maxWidth: '420px', padding: '32px', textAlign: 'center' }}
+            >
+              <h2
+                style={{
+                  color: '#f6e8ff',
+                  marginBottom: '16px',
+                  fontSize: '20px',
+                  fontWeight: '700',
+                }}
+              >
+                ⚠️ Deck Incompleto
+              </h2>
+
+              <p
+                style={{
+                  color: '#cbb9f2',
+                  marginBottom: '24px',
+                  fontSize: '15px',
+                  lineHeight: '1.6',
+                }}
+              >
+                Seu deck precisa ter exatamente <strong>20 cartas</strong> para ser finalizado.
+                <br />
+                Atualmente você tem: <strong>{cardCount} cartas</strong>
+              </p>
+
+              <button
+                onClick={() => setShowDeckIncompleteWarning(false)}
+                style={{
+                  padding: '12px 28px',
+                  borderRadius: '8px',
+                  border: '2px solid rgba(144, 97, 249, 0.6)',
+                  background: 'linear-gradient(135deg, rgba(144, 97, 249, 0.2), rgba(122, 90, 248, 0.15))',
+                  color: '#fff',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.background = 'linear-gradient(135deg, rgba(144, 97, 249, 0.4), rgba(122, 90, 248, 0.3))';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = 'linear-gradient(135deg, rgba(144, 97, 249, 0.2), rgba(122, 90, 248, 0.15))';
+                }}
+              >
+                Voltar ao Deck
+              </button>
+            </div>
+          </div>
+        )}
         {showInstanceSelector && selectedCardForInstance && (
           <CardInstanceSelector cardId={selectedCardForInstance} cardData={getCardData(selectedCardForInstance)} instances={getAvailableInstances(selectedCardForInstance)} onSelect={handleInstanceSelected} onClose={() => setShowInstanceSelector(false)} title={lang === 'ptbr' ? 'Selecione uma cópia para o deck' : 'Select a card copy for deck'} lang={lang} />
         )}

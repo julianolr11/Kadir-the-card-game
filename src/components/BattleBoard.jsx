@@ -7,6 +7,13 @@ import heartIcon from '../assets/img/icons/hearticon.png';
 import essenceIcon from '../assets/img/icons/soul-essence.png';
 import cardVerso from '../assets/img/card/verso.png';
 import '../styles/battle.css';
+import shieldIcon from '../assets/img/icons/shield.png';
+import bleedIcon from '../assets/img/icons/bleed.png';
+import burnIcon from '../assets/img/icons/burn.png';
+import freezeIcon from '../assets/img/icons/freeze.png';
+import paralyzeIcon from '../assets/img/icons/paralyze.png';
+import poisonIcon from '../assets/img/icons/poison.png';
+import sleepIcon from '../assets/img/icons/sleep.png';
 
 function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
   const { state, startBattle, endTurn, summonFromHand, drawPlayerCard, invokeFieldCard, startPlaying } = useBattle();
@@ -379,6 +386,18 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
     );
   };
 
+  const statusIconFor = (type) => {
+    switch (type) {
+      case 'bleed': return bleedIcon;
+      case 'burn': return burnIcon;
+      case 'freeze': return freezeIcon;
+      case 'paralyze': return paralyzeIcon;
+      case 'poison': return poisonIcon;
+      case 'sleep': return sleepIcon;
+      default: return null;
+    }
+  };
+
   const renderSlots = (slots = [], owner = 'player') => (
     <div className={`slots slots-${owner}`}>
       {slots.map((slot, i) => (
@@ -388,7 +407,26 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
           onMouseEnter={() => slot && setHoveredCard({ cardId: slot.id, source: 'slot', owner, index: i })}
           onMouseLeave={() => setHoveredCard(null)}
         >
-          {slot ? renderCardChip(slot.id, 'slot', slot) : <span className="slot-label">{i + 1}</span>}
+          {slot ? (
+            <div style={{ position: 'relative' }}>
+              {renderCardChip(slot.id, 'slot', slot)}
+              <div className="status-icons-overlay">
+                {/* Escudo */}
+                {slot.shield > 0 && (
+                  <img src={shieldIcon} alt="shield" className="status-icon" />
+                )}
+                {/* Status effects */}
+                {(slot.statusEffects || []).map((se, idx) => {
+                  const icon = statusIconFor(se.type);
+                  return icon ? (
+                    <img key={idx} src={icon} alt={se.type} className="status-icon" />
+                  ) : null;
+                })}
+              </div>
+            </div>
+          ) : (
+            <span className="slot-label">{i + 1}</span>
+          )}
         </div>
       ))}
     </div>

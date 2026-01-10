@@ -285,7 +285,24 @@ export function BattleProvider({ children }) {
       const playerSlots = processShieldTurns(s.player.field.slots);
       const aiSlots = processShieldTurns(s.ai.field.slots);
 
-      return {
+      // Processa status e buffs para o próximo lado (início do turno)
+      const processSideStart = (curState, sideKey) => {
+        let ns = { ...curState };
+        const slots = ns[sideKey]?.field?.slots || [];
+        let logs = [];
+        slots.forEach((c) => {
+          if (!c) return;
+          const r1 = effectRegistry.processStatusEffects(ns, c.id);
+          ns = r1.newState;
+          logs = logs.concat(r1.log);
+          const r2 = effectRegistry.processBuffs(ns, c.id);
+          ns = r2.newState;
+          logs = logs.concat(r2.log);
+        });
+        return { ns, logs };
+      };
+
+      const baseNextState = {
         ...s,
         activePlayer: nextActive,
         turn: nextTurn,
@@ -293,7 +310,12 @@ export function BattleProvider({ children }) {
         ai: { ...s.ai, field: { ...s.ai.field, slots: aiSlots } },
         [currentSide]: { ...currentSnapshot },
         [side]: { ...s[side], deck, hand, essence, field, orbs },
-        log: [...logEntries, `Fim do turno de ${s.activePlayer}.`],
+      };
+      const processed = processSideStart(baseNextState, side);
+
+      return {
+        ...processed.ns,
+        log: [...logEntries, `Fim do turno de ${s.activePlayer}.`, ...processed.logs],
       };
     });
   }, [log]);
@@ -611,6 +633,11 @@ export function BattleProvider({ children }) {
       
       const attacker = s[playerSide].field.slots[slotIndex];
       if (!attacker || attacker.hp <= 0) return s;
+      // Bloqueia ação se incapacitado
+      const incapacitating = (attacker.statusEffects || []).some(e => ['paralyze', 'freeze', 'sleep'].includes(e.type) && e.duration > 0);
+      if (incapacitating) {
+        return { ...s, log: [...s.log, `${attacker.name} está incapacitado e não pode agir.`] };
+      }
       
       const ability = attacker.abilities[abilityIndex];
       if (!ability) return s;
@@ -634,21 +661,45 @@ export function BattleProvider({ children }) {
         };
       }
       
-      // Gera IDs únicos para atacante e alvo
-      const attackerId = `${playerSide}_slot${slotIndex}`;
-      const targetId = `${targetSide}_slot${targetSlotIndex}`;
+      // Usa IDs das criaturas instanciadas
+      const attackerId = attacker.id;
+      const targetId = target.id;
       
-      // Por enquanto, assume que todas as habilidades causam dano
-      // TODO: Implementar parsing de desc para detectar tipo de efeito
-      const baseDamage = ability.cost * 2 + 1; // Fórmula temporária: custo * 2 + 1
-      
-      const result = effectRegistry.applyDamage(s, {
-        attackerId,
-        targetId,
-        baseDamage,
-        attackerElement: attacker.element,
-        ignoreShield: false,
-      });
+      // Parsing simples de efeitos pela descrição
+      const descText = (ability.desc?.pt || ability.desc?.en || '').toLowerCase();
+      const mappings = [
+        { key: 'venen', type: 'poison', duration: 2, value: 1 },
+        { key: 'poison', type: 'poison', duration: 2, value: 1 },
+        { key: 'queim', type: 'burn', duration: 2, value: 1 },
+        { key: 'burn', type: 'burn', duration: 2, value: 1 },
+        { key: 'congel', type: 'freeze', duration: 1 },
+        { key: 'freeze', type: 'freeze', duration: 1 },
+        { key: 'paralis', type: 'paralyze', duration: 1 },
+        { key: 'stun', type: 'paralyze', duration: 1 },
+        { key: 'sono', type: 'sleep', duration: 2 },
+        { key: 'sleep', type: 'sleep', duration: 2 },
+        { key: 'sangr', type: 'bleed', duration: 2, value: 1 },
+        { key: 'bleed', type: 'bleed', duration: 2, value: 1 },
+      ];
+      const match = mappings.find(m => descText.includes(m.key));
+      let result;
+      if (match) {
+        result = effectRegistry.applyStatusEffect(s, {
+          targetId,
+          effectType: match.type,
+          duration: match.duration,
+          value: match.value,
+        });
+      } else {
+        const baseDamage = ability.cost * 2 + 1; // Fórmula temporária: custo * 2 + 1
+        result = effectRegistry.applyDamage(s, {
+          attackerId,
+          targetId,
+          baseDamage,
+          attackerElement: attacker.element,
+          ignoreShield: false,
+        });
+      }
       
       // Deduz essência
       let newState = {

@@ -13,6 +13,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
   const { cardCollection } = React.useContext(AppContext);
   const [activeCardIndex, setActiveCardIndex] = React.useState(null);
   const [deckCardDrawn, setDeckCardDrawn] = React.useState(false);
+  const [opponentDeckCardDrawn, setOpponentDeckCardDrawn] = React.useState(false);
   const [fieldAnimating, setFieldAnimating] = React.useState(false);
   const [lastFieldId, setLastFieldId] = React.useState(null);
   const [baseBg, setBaseBg] = React.useState(undefined);
@@ -130,6 +131,13 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
   useEffect(() => {
     if (state.activePlayer === 'player') {
       setDeckCardDrawn(false);
+    }
+    if (state.activePlayer === 'ai') {
+      setOpponentDeckCardDrawn(false);
+      // Ativa a animação após um pequeno delay
+      setTimeout(() => {
+        setOpponentDeckCardDrawn(true);
+      }, 100);
     }
   }, [state.activePlayer]);
 
@@ -490,7 +498,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
       <div className="opponent-deck-draw">
         <div style={{ position: 'relative', display: 'inline-block' }}>
           <div
-            className="opponent-deck-card-back"
+            className={`opponent-deck-card-back ${opponentDeckCardDrawn ? 'drawn' : ''}`}
             style={{ backgroundImage: `url(${cardVerso})` }}
           />
           <div className="deck-count-pill deck-count-enemy">Cartas: {state.ai.deck.length}</div>

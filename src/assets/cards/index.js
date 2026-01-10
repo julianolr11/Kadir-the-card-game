@@ -36,6 +36,7 @@ const creatures = [
   require('./booster1/noctyra'),
   require('./booster1/nihil'),
   require('./booster1/gravhyr'),
+  require('./booster1/ekernoth'),
 ];
 
 // Adiciona field cards se estiverem disponíveis

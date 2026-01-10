@@ -14,6 +14,8 @@ import bleedIcon from '../assets/img/icons/bleed.png';
 import shieldIcon from '../assets/img/icons/shield.png';
 import '../styles/deckbuilder.css';
 
+const GUARDIANS_DATA = require('../assets/guardiansData');
+
 const MAX_DECKS = 3;
 
 // Mock de progressão do jogador
@@ -235,6 +237,8 @@ const getGuardianData = (guardianId) => {
   try {
     return require(`../assets/cards/booster1/${guardianId}.js`);
   } catch (error) {
+    const fallback = GUARDIANS_DATA?.[guardianId];
+    if (fallback) return fallback;
     console.warn(`Guardião ${guardianId} não encontrado`, error);
     return null;
   }
@@ -438,6 +442,12 @@ function DeckBuilder({ onNavigate }) {
     return getGuardianData(activeGuardian.id);
   }, [activeGuardian?.id]);
 
+  // Guardião base: dados completos da carta + metas do contexto
+  const guardianBase = useMemo(() => {
+    if (guardianData) return { ...guardianData, ...activeGuardian };
+    return activeGuardian;
+  }, [guardianData, activeGuardian]);
+
   // Pegar progresso do jogador
   const guardianProgress = useMemo(() => {
     if (!activeGuardian?.id) return { level: 0, xp: 0 };
@@ -464,35 +474,49 @@ function DeckBuilder({ onNavigate }) {
     if (!guardianData) return [];
 
     const unlocks = [];
+    const seen = new Set();
 
-    // Adicionar itens da unlock table (que já inclui as habilidades padrão do nível 0)
+    const pushSkill = (skill, level = 0, isDefault = false) => {
+      if (!skill?.id || seen.has(skill.id)) return;
+      unlocks.push({
+        level,
+        type: 'skill',
+        id: skill.id,
+        name: skill.name,
+        desc: skill.desc,
+        displayText: skill.displayText,
+        cost: skill.cost || 1,
+        statusEffect: skill.statusEffect,
+        isDefault,
+      });
+      seen.add(skill.id);
+    };
+
+    const pushPerk = (perkUnlock) => {
+      if (!perkUnlock?.id || seen.has(perkUnlock.id)) return;
+      unlocks.push({
+        level: perkUnlock.level,
+        type: 'perk',
+        id: perkUnlock.id,
+        name: PERK_DATA[perkUnlock.id]?.name ||
+          perkUnlock.name || { pt: 'Perk', en: 'Perk' },
+        desc: PERK_DATA[perkUnlock.id]?.desc || perkUnlock.desc || { pt: '', en: '' },
+        displayText: perkUnlock.displayText,
+        isDefault: false,
+      });
+      seen.add(perkUnlock.id);
+    };
+
+    // Garantir que habilidades padrão apareçam no nível 0
+    (guardianData.defaultSkills || []).forEach((skill) => pushSkill(skill, 0, true));
+
+    // Adicionar itens da tabela de desbloqueio
     guardianData.unlockTable.forEach((unlock) => {
-      // Pular items de tipo 'none'
       if (unlock.type === 'none') return;
-
       if (unlock.type === 'skill') {
-        unlocks.push({
-          level: unlock.level,
-          type: 'skill',
-          id: unlock.id,
-          name: unlock.name,
-          desc: unlock.desc,
-          displayText: unlock.displayText,
-          cost: unlock.cost || 1,
-          statusEffect: unlock.statusEffect,
-          isDefault: false,
-        });
+        pushSkill(unlock, unlock.level, false);
       } else if (unlock.type === 'perk') {
-        unlocks.push({
-          level: unlock.level,
-          type: 'perk',
-          id: unlock.id,
-          name: PERK_DATA[unlock.id]?.name ||
-            unlock.name || { pt: 'Perk', en: 'Perk' },
-          desc: PERK_DATA[unlock.id]?.desc || unlock.desc || { pt: '', en: '' },
-          displayText: unlock.displayText,
-          isDefault: false,
-        });
+        pushPerk(unlock);
       }
     });
 
@@ -501,6 +525,18 @@ function DeckBuilder({ onNavigate }) {
 
     return unlocks;
   }, [guardianData]);
+
+  // Preencher slots com habilidades padrão se nada foi escolhido ainda
+  React.useEffect(() => {
+    if (!guardianData) return;
+    const hasSelection = selectedSkills.some((s) => s);
+    if (!hasSelection && guardianData.defaultSkills?.length) {
+      setSelectedSkills([
+        guardianData.defaultSkills[0]?.id || null,
+        guardianData.defaultSkills[1]?.id || null,
+      ]);
+    }
+  }, [guardianData, selectedSkills]);
 
   // Calcular HP com bônus do perk selecionado
   const hpBonus = useMemo(() => {
@@ -533,13 +569,13 @@ function DeckBuilder({ onNavigate }) {
 
   // Guardião com HP ajustado para exibição no modal
   const guardianWithBonusHp = useMemo(() => {
-    if (!activeGuardian || !hpBonus) return activeGuardian;
-    return { ...activeGuardian, hp: (activeGuardian.hp || 0) + hpBonus };
-  }, [activeGuardian, hpBonus]);
+    if (!guardianBase || !hpBonus) return guardianBase;
+    return { ...guardianBase, hp: (guardianBase.hp || 0) + hpBonus };
+  }, [guardianBase, hpBonus]);
 
   // Guardião com habilidades selecionadas para exibição em tempo real
   const guardianWithSelectedSkills = useMemo(() => {
-    if (!activeGuardian || !allUnlocks || !guardianData) return guardianWithBonusHp;
+    if (!guardianBase || !allUnlocks || !guardianData) return guardianWithBonusHp;
 
     // Encontrar os dados completos das skills selecionadas
     const selectedAbilities = selectedSkills
@@ -571,7 +607,7 @@ function DeckBuilder({ onNavigate }) {
       abilities: selectedAbilities,
     };
   }, [
-    activeGuardian,
+    guardianBase,
     guardianWithBonusHp,
     selectedSkills,
     allUnlocks,
@@ -594,7 +630,7 @@ function DeckBuilder({ onNavigate }) {
   const currentGuardianForDisplay = useMemo(() => {
     if (guardianLoadout && guardianLoadout.guardianId === activeGuardian?.id) {
       // Recalcular com base no loadout salvo
-      if (!activeGuardian || !allUnlocks || !guardianData) return guardianData || activeGuardian;
+      if (!guardianBase || !allUnlocks || !guardianData) return guardianData || guardianBase;
 
       const selectedAbilities = guardianLoadout.selectedSkills
         .filter((skillId) => skillId)
@@ -613,20 +649,20 @@ function DeckBuilder({ onNavigate }) {
 
       if (selectedAbilities.length === 0) {
         return {
-          ...guardianData,
-          hp: (guardianData.hp || 0) + guardianLoadout.hpBonus,
+          ...guardianBase,
+          hp: (guardianBase.hp || 0) + guardianLoadout.hpBonus,
           abilities: guardianData.defaultSkills,
         };
       }
 
       return {
-        ...guardianData,
-        hp: (guardianData.hp || 0) + guardianLoadout.hpBonus,
+        ...guardianBase,
+        hp: (guardianBase.hp || 0) + guardianLoadout.hpBonus,
         abilities: selectedAbilities,
       };
     }
-    return guardianData || activeGuardian;
-  }, [activeGuardian, guardianLoadout, allUnlocks, guardianData]);
+    return guardianData || guardianBase;
+  }, [activeGuardian, guardianLoadout, allUnlocks, guardianData, guardianBase]);
 
   return (
     <div className="deckbuilder-screen">

@@ -222,6 +222,8 @@ export function applyStatusEffect(state, params) {
     paralyze: 'paralisia',
     freeze: 'congelamento',
     regeneration: 'regeneração',
+    sleep: 'sono',
+    bleed: 'sangramento',
   };
 
   const log = [`${target.name} foi afetado por ${effectNames[effectType] || effectType}`];
@@ -246,29 +248,52 @@ export function processStatusEffects(state, creatureId) {
   const updatedEffects = [];
 
   statusEffects.forEach(effect => {
-    // Aplica efeito
-    if (effect.type === 'burn' || effect.type === 'poison') {
+    // Aplica efeito por tipo
+    if (['burn', 'poison', 'bleed'].includes(effect.type)) {
+      const dmg = Number.isFinite(effect.value) ? effect.value : 1;
       const result = applyDamage(newState, {
         attackerId: null,
         targetId: creatureId,
-        baseDamage: effect.value,
+        baseDamage: dmg,
         ignoreShield: true,
       });
       newState = result.newState;
-      log.push(`${creature.name} sofreu ${result.damageDealt} de dano por ${effect.type === 'burn' ? 'queimadura' : 'veneno'}`);
+      const typeName = effect.type === 'burn' ? 'queimadura' : effect.type === 'poison' ? 'veneno' : 'sangramento';
+      log.push(`${creature.name} sofreu ${result.damageDealt} de dano por ${typeName}`);
+      effect.duration -= 1;
+      if (effect.duration > 0) updatedEffects.push(effect);
     } else if (effect.type === 'regeneration') {
+      const heal = Number.isFinite(effect.value) ? effect.value : 1;
       const result = applyHeal(newState, {
         targetId: creatureId,
-        healAmount: effect.value,
+        healAmount: heal,
       });
       newState = result.newState;
       log.push(`${creature.name} regenerou ${result.healAmount} HP`);
-    }
-
-    // Reduz duração
-    effect.duration -= 1;
-    if (effect.duration > 0) {
-      updatedEffects.push(effect);
+      effect.duration -= 1;
+      if (effect.duration > 0) updatedEffects.push(effect);
+    } else if (effect.type === 'paralyze' || effect.type === 'sleep') {
+      // 50% de chance de remover no início do turno
+      const removed = Math.random() < 0.5;
+      if (removed) {
+        log.push(`${creature.name} se recuperou de ${effect.type === 'paralyze' ? 'paralisia' : 'sono'}.`);
+        effect.duration = 0;
+      } else {
+        effect.duration -= 1;
+        if (effect.duration > 0) {
+          updatedEffects.push(effect);
+          log.push(`${creature.name} permanece ${effect.type === 'paralyze' ? 'paralisado' : 'adormecido'}.`);
+        }
+      }
+    } else if (effect.type === 'freeze') {
+      // Congelado: não age; apenas reduz a duração
+      effect.duration -= 1;
+      if (effect.duration > 0) {
+        updatedEffects.push(effect);
+        log.push(`${creature.name} permanece congelado.`);
+      } else {
+        log.push(`${creature.name} não está mais congelado.`);
+      }
     }
   });
 

@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import coinFlipSound from '../assets/sounds/effects/coin-flip.mp3';
 import headIcon from '../assets/img/icons/head.png';
 import crownIcon from '../assets/img/icons/crown.png';
 import '../styles/coinflip.css';
+import { AppContext } from '../context/AppContext';
 
 function CoinFlip({ onResult, playerName = 'Jogador', aiName = 'Adversário' }) {
+  const { effectsVolume } = useContext(AppContext);
   const [phase, setPhase] = useState('intro'); // intro -> ready -> flipping -> result
   const [isFlipping, setIsFlipping] = useState(false);
   const [result, setResult] = useState(null);
@@ -40,6 +42,7 @@ function CoinFlip({ onResult, playerName = 'Jogador', aiName = 'Adversário' }) 
     // Toca o som
     if (audioRef.current) {
       audioRef.current.currentTime = 0;
+      audioRef.current.volume = (effectsVolume ?? 50) / 100;
       audioRef.current.play().catch(() => {});
     }
 

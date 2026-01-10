@@ -31,7 +31,7 @@ function LoadingScreen({ onFinish, menuMusicRef }) {
   // audioRef removido - intro agora é global no App
   // menuAudioRef removido, agora usa menuMusicRef global
   const keyClickAudioRef = useRef(null);
-  const { musicVolume, lang } = useContext(AppContext);
+  const { musicVolume, lang, effectsVolume } = useContext(AppContext);
   const t = translations[lang] || translations.ptbr;
 
   useEffect(() => {
@@ -47,7 +47,7 @@ function LoadingScreen({ onFinish, menuMusicRef }) {
   const playClick = () => {
     if (keyClickAudioRef.current) {
       keyClickAudioRef.current.currentTime = 0;
-      keyClickAudioRef.current.volume = 1;
+      keyClickAudioRef.current.volume = (effectsVolume ?? 50) / 100;
       keyClickAudioRef.current.play().catch(() => {});
     }
   };

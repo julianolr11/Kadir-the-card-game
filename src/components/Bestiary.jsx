@@ -20,7 +20,7 @@ const getText = (field, lang = 'ptbr') => {
 function Bestiary({ onBack }) {
   const pageFlipAudioRef = React.useRef(null);
   const movingAudioRef = React.useRef(null);
-  const { cardCollection, lang = 'ptbr' } = useContext(AppContext);
+  const { cardCollection, lang = 'ptbr', effectsVolume } = useContext(AppContext);
   const [selectedCard, setSelectedCard] = useState(null);
   const [isFading, setIsFading] = useState(false);
   const [displayCard, setDisplayCard] = useState(null);
@@ -52,6 +52,7 @@ function Bestiary({ onBack }) {
   function handleBackMouseEnter() {
     if (movingAudioRef.current) {
       movingAudioRef.current.currentTime = 0;
+      movingAudioRef.current.volume = (effectsVolume ?? 50) / 100;
       movingAudioRef.current.play().catch(() => {});
     }
   }
@@ -158,6 +159,7 @@ function Bestiary({ onBack }) {
         onClick={() => {
           if (movingAudioRef.current) {
             movingAudioRef.current.currentTime = 0;
+            movingAudioRef.current.volume = (effectsVolume ?? 50) / 100;
             movingAudioRef.current.play().catch(() => {});
           }
           onBack?.();
@@ -187,6 +189,7 @@ function Bestiary({ onBack }) {
                   onClick={() => {
                     if (pageFlipAudioRef.current) {
                       pageFlipAudioRef.current.currentTime = 0;
+                      pageFlipAudioRef.current.volume = (effectsVolume ?? 50) / 100;
                       pageFlipAudioRef.current.play().catch(() => {});
                     }
                     setSelectedCard(card);

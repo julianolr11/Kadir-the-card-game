@@ -130,6 +130,7 @@ function CreatureCardPreview({
   sleep = 0,
   bleed = 0,
 }) {
+  const { lang, effectsVolume } = useContext(AppContext);
   const swipeAudioRef = React.useRef(null);
   const labelTranslations = {
     pt: {
@@ -144,7 +145,6 @@ function CreatureCardPreview({
     },
   };
   const [showStory, setShowStory] = useState(false);
-  const { lang } = useContext(AppContext);
   const langKey = lang === 'ptbr' ? 'pt' : lang;
   if (!creature) return null;
 
@@ -384,6 +384,7 @@ function CreatureCardPreview({
           onClick={() => {
             if (swipeAudioRef.current) {
               swipeAudioRef.current.currentTime = 0;
+              swipeAudioRef.current.volume = (effectsVolume ?? 50) / 100;
               swipeAudioRef.current.play().catch(() => {});
             }
             setShowStory((s) => !s);

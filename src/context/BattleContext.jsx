@@ -35,30 +35,30 @@ const sampleDeckFromPool = (size = 20) => {
 };
 
 export function BattleProvider({ children }) {
-  const { decks, cardCollection } = useContext(AppContext);
+  const { decks, cardCollection, effectsVolume } = useContext(AppContext);
   const battleAudioRef = useRef(null);
 
   const playFieldChangeSound = useCallback(() => {
     try {
       if (!fieldChangeSfx) return;
       const audio = new Audio(fieldChangeSfx);
-      audio.volume = 0.5;
+      audio.volume = (effectsVolume ?? 50) / 100;
       audio.play().catch(() => {});
     } catch (e) {
       console.warn('Erro ao tocar som de campo:', e);
     }
-  }, []);
+  }, [effectsVolume]);
 
   const playFlipCardSound = useCallback(() => {
     try {
       if (!flipCardSfx) return;
       const audio = new Audio(flipCardSfx);
-      audio.volume = 0.5;
+      audio.volume = (effectsVolume ?? 50) / 100;
       audio.play().catch(() => {});
     } catch (e) {
       console.warn('Erro ao tocar som de carta:', e);
     }
-  }, []);
+  }, [effectsVolume]);
 
   const [state, setState] = useState({
     phase: 'idle', // 'idle' | 'coinflip' | 'playing'

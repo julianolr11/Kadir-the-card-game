@@ -31,7 +31,7 @@ const cogTranslations = {
   en: { settings: 'Settings', exit: 'Exit' },
 };
 
-function BoosterZone({ boosters, onOpenBooster, isOpeningBooster }) {
+function BoosterZone({ boosters, onOpenBooster, isOpeningBooster, effectsVolume }) {
   // Edite este array para controlar manualmente o ângulo de cada booster (em graus)
   // Exemplo: diferença de 25 graus entre cada booster, do fundo para o topo
   const boosterAngles = [0, 25, 50, 75, 100];
@@ -43,6 +43,7 @@ function BoosterZone({ boosters, onOpenBooster, isOpeningBooster }) {
     setHover(true);
     if (packageAudioRef.current) {
       packageAudioRef.current.currentTime = 0;
+      packageAudioRef.current.volume = (effectsVolume ?? 50) / 100;
       packageAudioRef.current.play().catch(() => {});
     }
   }
@@ -141,6 +142,7 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
   function handleCogMouseEnter() {
     if (cogAudioRef.current) {
       cogAudioRef.current.currentTime = 0;
+      cogAudioRef.current.volume = (effectsVolume ?? 50) / 100;
       cogAudioRef.current.play().catch(() => {});
     }
   }
@@ -149,6 +151,7 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
   function handleDeckBtnMouseEnter() {
     if (deckBtnAudioRef.current) {
       deckBtnAudioRef.current.currentTime = 0;
+      deckBtnAudioRef.current.volume = (effectsVolume ?? 50) / 100;
       deckBtnAudioRef.current.play().catch(() => {});
     }
   }
@@ -221,6 +224,7 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
     setBoosters,
     addCardsFromBooster,
     decks = {},
+    effectsVolume,
   } = useContext(AppContext);
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -375,6 +379,7 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
   function handleBestiaryClick() {
     if (bestiaryAudioRef.current) {
       bestiaryAudioRef.current.currentTime = 0;
+      bestiaryAudioRef.current.volume = (effectsVolume ?? 50) / 100;
       bestiaryAudioRef.current.play().catch(() => {});
     }
     setShowBestiary(true);
@@ -492,6 +497,7 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
         boosters={boosters}
         onOpenBooster={handleOpenBooster}
         isOpeningBooster={isOpeningBooster}
+        effectsVolume={effectsVolume}
       />
       <main className="home-main">
         {/* Título removido conforme solicitado */}

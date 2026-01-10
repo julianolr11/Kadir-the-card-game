@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import '../styles/booster-results-slider.css';
 import '../styles/cardpreview.css';
 import soulEssence from '../assets/img/icons/soul-essence.png';
@@ -6,6 +6,7 @@ import lvlIcon from '../assets/img/icons/lvlicon.png';
 import heartIcon from '../assets/img/icons/hearticon.png';
 import flipCardSound from '../assets/sounds/effects/flipcard.MP3';
 import holoEffectSound from '../assets/sounds/effects/holo-effect.mp3';
+import { AppContext } from '../context/AppContext';
 
 const getElementImage = (element) => {
   try {
@@ -23,6 +24,7 @@ const getElementImage = (element) => {
 };
 
 function BoosterResultsSlider({ cards, lang, onClose }) {
+  const { effectsVolume } = useContext(AppContext);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const currentCard = cards[currentCardIndex] || {};
   const CARD_WIDTH = 360;
@@ -37,11 +39,13 @@ function BoosterResultsSlider({ cards, lang, onClose }) {
 
   const playFlipSound = () => {
     audioRef.current.currentTime = 0;
+    audioRef.current.volume = (effectsVolume ?? 50) / 100;
     audioRef.current.play().catch(() => {});
   };
 
   const playHoloSound = () => {
     holoAudioRef.current.currentTime = 0;
+    holoAudioRef.current.volume = (effectsVolume ?? 50) / 100;
     holoAudioRef.current.play().catch(() => {});
   };
 

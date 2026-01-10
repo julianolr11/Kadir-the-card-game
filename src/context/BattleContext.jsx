@@ -174,6 +174,7 @@ export function BattleProvider({ children }) {
 
       // compra autom├ítica apenas para IA; o jogador compra manualmente no deck-draw
       if (side === 'ai') {
+        playFlipCardSound(); // Som de flip quando IA compra
         const d = drawFromDeck(deck);
         deck = d.nextDeck;
         if (d.card) {

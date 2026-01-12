@@ -141,9 +141,11 @@ export function BattleProvider({ children }) {
   }, [effectsVolume]);
 
   const [state, setState] = useState({
-    phase: 'idle', // 'idle' | 'coinflip' | 'playing'
+    phase: 'idle', // 'idle' | 'coinflip' | 'playing' | 'ended'
     turn: 1,
     activePlayer: 'player', // 'player' | 'ai'
+    creaturesInvokedThisTurn: 0, // Contador de criaturas invocadas no turno atual
+    creaturesWithUsedAbility: new Set(), // Criaturas que já usaram habilidade este turno
     player: {
       orbs: 5,
       essence: 0,
@@ -161,6 +163,22 @@ export function BattleProvider({ children }) {
     sharedField: { active: false, id: null },
     log: [],
     animations: {},
+    gameResult: null, // { winner: 'player' | 'ai', kills: [{ attacker: id, target: id }, ...], playerStats, aiStats }
+    killFeed: [], // [{ turn, attacker, target }, ...]
+    battleStats: {
+      player: {
+        cardsDrawn: [], // Cards que foram compradas para a mão
+        cardsSummoned: [], // Cards que foram invocadas
+        cardsKilled: [], // Cards que abateram inimigos
+        cardsAssisted: [], // Cards que deram assistência (dano sem matar)
+      },
+      ai: {
+        cardsDrawn: [],
+        cardsSummoned: [],
+        cardsKilled: [],
+        cardsAssisted: [],
+      },
+    }
   });
 
   // Controla música de fundo da batalha
@@ -222,10 +240,27 @@ export function BattleProvider({ children }) {
       phase: 'coinflip',
       turn: 1,
       activePlayer: 'player',
-      player: { orbs: 5, essence: 0, deck: pDeck, hand: pHand, field: { slots: [null, null, null], effects: [null, null, null] } },
-      ai: { orbs: 5, essence: 0, deck: aDeck, hand: aHand, field: { slots: [null, null, null], effects: [null, null, null] } },
+      creaturesInvokedThisTurn: 0,
+      player: { orbs: 5, essence: 0, deck: pDeck, hand: pHand, field: { slots: [null, null, null], effects: [null, null, null] }, graveyard: [] },
+      ai: { orbs: 5, essence: 0, deck: aDeck, hand: aHand, field: { slots: [null, null, null], effects: [null, null, null] }, graveyard: [] },
       sharedField: { active: false, id: null },
       log: ['Batalha iniciada!'],
+      gameResult: null,
+      killFeed: [],
+      battleStats: {
+        player: {
+          cardsDrawn: [...pHand], // Mão inicial
+          cardsSummoned: [],
+          cardsKilled: [],
+          cardsAssisted: [],
+        },
+        ai: {
+          cardsDrawn: [...aHand], // Mão inicial
+          cardsSummoned: [],
+          cardsKilled: [],
+          cardsAssisted: [],
+        },
+      },
     });
   }, [pickFirstUserDeck]);
 
@@ -243,7 +278,21 @@ export function BattleProvider({ children }) {
       if (!hasCreatures && currentSnapshot.orbs > 0) {
         currentSnapshot.orbs = Math.max(0, (currentSnapshot.orbs || 0) - 1);
         logEntries.push(`${currentSide === 'player' ? 'Voc├¬' : 'IA'} terminou sem criaturas. -1 orbe.`);
-      }
+        // Verifica se o jogo acabou após perder orb
+        if (currentSnapshot.orbs === 0) {
+          const winner = currentSide === 'player' ? 'ai' : 'player';
+          return {
+            ...s,
+            phase: 'ended',
+            [currentSide]: currentSnapshot,
+            gameResult: {
+              winner,
+              loser: currentSide,
+              kills: s.killFeed,
+            },
+            log: [...logEntries, `⚰️ ${currentSide === 'player' ? 'Você perdeu' : 'IA perdeu'} todos os orbes! FIM DE JOGO!`],
+          };
+        }      }
 
       // compra 1 carta (limite de 7; overflow: volta para o deck e embaralha)
       const side = nextActive;
@@ -263,8 +312,8 @@ export function BattleProvider({ children }) {
             deck = shuffle([d.card, ...deck]);
             log(`M├úo cheia (${side}). Carta devolvida ao baralho.`);
           } else {
-            hand = [...hand, d.card];
-          }
+            hand = [...hand, d.card];            // Registra carta comprada pela IA
+            s.battleStats.ai.cardsDrawn = [...s.battleStats.ai.cardsDrawn, d.card];          }
         }
       }
 
@@ -316,6 +365,8 @@ export function BattleProvider({ children }) {
 
       return {
         ...processed.ns,
+        creaturesInvokedThisTurn: 0, // Reseta contador de invocações para o próximo turno
+        creaturesWithUsedAbility: new Set(), // Reseta criaturas que usaram habilidade
         log: [...logEntries, `Fim do turno de ${s.activePlayer}.`, ...processed.logs],
       };
     });
@@ -342,8 +393,13 @@ export function BattleProvider({ children }) {
           ...s.player,
           deck: d.nextDeck,
           hand: [...hand, d.card],
-        },
-        log: [...s.log, 'Voc├¬ comprou uma carta.'],
+        },        battleStats: {
+          ...s.battleStats,
+          player: {
+            ...s.battleStats.player,
+            cardsDrawn: [...s.battleStats.player.cardsDrawn, d.card],
+          },
+        },        log: [...s.log, 'Voc├¬ comprou uma carta.'],
       };
     });
   }, []);
@@ -353,32 +409,55 @@ export function BattleProvider({ children }) {
     setState((s) => {
       if (s.phase !== 'playing') return s;
       if (s.activePlayer !== 'player') return s; // por enquanto s├│ jogador manual
-      const hand = [...s.player.hand];
+      // Verifica se já invocou 1 criatura neste turno
+      if ((s.creaturesInvokedThisTurn || 0) >= 1) {
+        return {
+          ...s,
+          log: [...s.log, 'Você já invocou 1 criatura neste turno!'],
+        };
+      }
+            const hand = [...s.player.hand];
       const cardId = hand[index];
       if (!cardId) return s;
       const slots = [...s.player.field.slots];
       if (slots[slotIndex]) return s; // slot ocupado
 
-      // Busca dados da criatura no creaturesPool
-      const creatureData = creaturesPool.find(c => c.id === cardId);
+      // Extrai baseId se for instanceId
+      let baseId = cardId;
+      if (cardId.includes('-')) {
+        // É um instanceId; busca o baseId na coleção
+        for (const [base, instances] of Object.entries(cardCollection || {})) {
+          if (instances.find(inst => inst.instanceId === cardId)) {
+            baseId = base;
+            break;
+          }
+        }
+      }
+
+      // Busca dados da criatura no creaturesPool usando baseId
+      const creatureData = creaturesPool.find(c => c.id === baseId);
       if (!creatureData) {
-        console.warn(`Criatura ${cardId} não encontrada no pool`);
+        console.warn(`Criatura ${baseId} não encontrada no pool`);
         return s;
       }
 
+      // Resolve build com perks e loadout
+      const build = resolveCreatureBuild(creatureData);
+
       // Cria estrutura completa da criatura
       const creature = {
-        id: cardId,
-        name: creatureData.name?.pt || creatureData.name?.en || cardId,
+        id: cardId, // Mantém o instanceId original para identificação única
+        name: creatureData.name?.pt || creatureData.name?.en || baseId,
         element: creatureData.element || 'puro',
-        hp: creatureData.hp || 5,
-        maxHp: creatureData.hp || 5,
-        atk: creatureData.atk || 2,
-        def: creatureData.def || 1,
-        abilities: creatureData.abilities || [],
+        hp: build.hp,
+        maxHp: build.maxHp,
+        atk: build.atk,
+        def: build.def,
+        abilities: build.abilities,
         buffs: [],
         debuffs: [],
-        shield: 0,
+        shield: build.perkEffects?.shieldOnSummon?.amount || 0,
+        shieldTurns: build.perkEffects?.shieldOnSummon?.duration || 0,
         statusEffects: [],
       };
 
@@ -386,15 +465,23 @@ export function BattleProvider({ children }) {
       hand.splice(index, 1);
       return {
         ...s,
+        creaturesInvokedThisTurn: (s.creaturesInvokedThisTurn || 0) + 1,
         player: {
           ...s.player,
           hand,
           field: { ...s.player.field, slots },
         },
-        log: [...s.log, `Invocou ${cardId} no slot ${slotIndex + 1}.`],
+        battleStats: {
+          ...s.battleStats,
+          player: {
+            ...s.battleStats.player,
+            cardsSummoned: [...s.battleStats.player.cardsSummoned, cardId],
+          },
+        },
+        log: [...s.log, `Invocou ${creature.name} no slot ${slotIndex + 1}.`],
       };
     });
-  }, []);
+  }, [resolveCreatureBuild, cardCollection]);
 
 
   // Invoca carta de campo (field) para o sharedField
@@ -480,152 +567,6 @@ export function BattleProvider({ children }) {
     });
   }, []);
 
-  const value = useMemo(() => ({
-    state,
-    startBattle,
-    endTurn,
-    drawPlayerCard,
-    summonFromHand,
-    invokeFieldCard,
-    invokeFieldCardAI,
-      useAbility,
-    log,
-    startPlaying: (firstPlayer) => {
-      setState(s => ({
-        ...s,
-        phase: 'playing',
-        activePlayer: firstPlayer === 'player' ? 'player' : 'ai',
-      }));
-    },
-  }), [state, startBattle, endTurn, drawPlayerCard, summonFromHand, invokeFieldCard, invokeFieldCardAI, useAbility, log]);
-
-  const performAiTurn = useCallback(() => {
-    setState((s) => {
-      if (s.phase !== 'playing') return s;
-      if (s.activePlayer !== 'ai') return s;
-
-      const slots = [...s.player.field.slots];
-      if (slots[slotIndex]) return s; // slot ocupado
-      // Dados da criatura completa
-      const creatureData = creaturesPool.find(c => c.id === cardId) || {};
-      const build = resolveCreatureBuild(creatureData);
-      const creature = {
-        id: cardId,
-        name: creatureData.name?.pt || creatureData.name?.en || cardId,
-        element: creatureData.element || 'puro',
-        hp: build.hp,
-        maxHp: build.maxHp,
-        atk: build.atk,
-        def: build.def,
-        abilities: build.abilities,
-        buffs: [],
-        debuffs: [],
-        shield: build.perkEffects?.shieldOnSummon?.amount || 0,
-        shieldTurns: build.perkEffects?.shieldOnSummon?.duration || 0,
-        statusEffects: [],
-      };
-      slots[slotIndex] = creature;
-      let logEntries = [...s.log];
-
-      // PRIORIDADE: Verifica se há cartas de campo na mão da IA
-      const fieldCardIndex = hand.findIndex((cardId) => cardId && (/^f\d{3}$/i.test(cardId) || String(cardId).toLowerCase().startsWith('field_')));
-
-      if (fieldCardIndex >= 0) {
-        // IA tem uma carta de campo, invoca ela no sharedField (sobrescreve a anterior)
-        const cardId = hand[fieldCardIndex];
-        log: [...s.log, `Invocou ${creature.name} no slot ${slotIndex + 1}.`],
-        hand.splice(fieldCardIndex, 1);
-        logEntries = [...logEntries, `IA invocou o campo ${cardId}!`];
-
-        return {
-          ...s,
-          ai: {
-            ...s.ai,
-            hand,
-          },
-          sharedField: {
-            active: true,
-            id: cardId,
-          },
-          log: logEntries,
-        };
-      }
-
-      // Se nao tem carta de campo, invoca criaturas
-      const action = chooseAction(s);
-      const emptyIndex = slots.findIndex((slot) => !slot);
-
-      if (action?.type === 'summon' && typeof action.handIndex === 'number' && typeof action.slotIndex === 'number') {
-        const { handIndex, slotIndex } = action;
-        if (hand[handIndex] && !slots[slotIndex]) {
-          const cardId = hand[handIndex];
-          hand.splice(handIndex, 1);
-          const creatureData = creaturesPool.find(c => c.id === cardId) || {};
-          const build = resolveCreatureBuild(creatureData);
-          slots[slotIndex] = {
-            id: cardId,
-            name: creatureData.name?.pt || creatureData.name?.en || cardId,
-            element: creatureData.element || 'puro',
-            hp: build.hp,
-            maxHp: build.maxHp,
-            atk: build.atk,
-            def: build.def,
-            abilities: build.abilities,
-            buffs: [],
-            debuffs: [],
-            shield: build.perkEffects?.shieldOnSummon?.amount || 0,
-            shieldTurns: build.perkEffects?.shieldOnSummon?.duration || 0,
-            statusEffects: [],
-          };
-          updated = true;
-          logEntries = [...logEntries, `IA invocou ${cardId} no slot ${slotIndex + 1}.`];
-        }
-      } else if (emptyIndex >= 0 && hand.length > 0) {
-        const cardId = hand.shift();
-        const creatureData = creaturesPool.find(c => c.id === cardId) || {};
-        const build = resolveCreatureBuild(creatureData);
-        slots[emptyIndex] = {
-          id: cardId,
-          name: creatureData.name?.pt || creatureData.name?.en || cardId,
-          element: creatureData.element || 'puro',
-          hp: build.hp,
-          maxHp: build.maxHp,
-          atk: build.atk,
-          def: build.def,
-          abilities: build.abilities,
-          buffs: [],
-          debuffs: [],
-          shield: build.perkEffects?.shieldOnSummon?.amount || 0,
-          shieldTurns: build.perkEffects?.shieldOnSummon?.duration || 0,
-          statusEffects: [],
-        };
-        updated = true;
-        logEntries = [...logEntries, `IA invocou ${cardId} no slot ${emptyIndex + 1}.`];
-      } else {
-        logEntries = [...logEntries, 'IA nao fez acao.'];
-      }
-
-      if (!updated) {
-        return { ...s, log: logEntries };
-      }
-
-      return {
-        ...s,
-        ai: {
-          ...s.ai,
-          hand,
-          field: { ...s.ai.field, slots },
-        },
-        log: logEntries,
-      };
-    });
-
-    // Entrega o turno de volta para o jogador apos a acao da IA (com delay adicional)
-    setTimeout(() => {
-      endTurn();
-    }, 800);
-  }, [endTurn]);
-
   // ===== SISTEMA DE HABILIDADES =====
   const useAbility = useCallback((playerSide, slotIndex, abilityIndex, targetSide, targetSlotIndex) => {
     const clearAnimAfter = (creatureId, timeoutMs = 900) => {
@@ -646,6 +587,15 @@ export function BattleProvider({ children }) {
 
       const attacker = s[playerSide].field.slots[slotIndex];
       if (!attacker || attacker.hp <= 0) return s;
+
+      // Verifica se a criatura já usou uma habilidade este turno
+      if (s.creaturesWithUsedAbility && s.creaturesWithUsedAbility.has(attacker.id)) {
+        return {
+          ...s,
+          log: [...s.log, `${attacker.name} já usou uma habilidade neste turno!`],
+        };
+      }
+
       // Bloqueia ação se incapacitado
       const incapacitating = (attacker.statusEffects || []).some(e => ['paralyze', 'freeze', 'sleep'].includes(e.type) && e.duration > 0);
       if (incapacitating) {
@@ -698,57 +648,341 @@ export function BattleProvider({ children }) {
       let result;
       let animPayload = null;
 
-      if (match) {
-        result = effectRegistry.applyStatusEffect(s, {
-          targetId,
-          effectType: match.type,
-          duration: match.duration,
-          value: match.value,
-        });
-        animPayload = { type: 'status', statusType: match.type };
-      } else {
-        const baseDamage = ability.cost * 2 + 1; // Fórmula temporária: custo * 2 + 1
-        result = effectRegistry.applyDamage(s, {
-          attackerId,
-          targetId,
-          baseDamage,
-          attackerElement: attacker.element,
-          ignoreShield: false,
-        });
-        animPayload = {
-          type: 'damage',
-          amount: result.damageDealt,
-          hasAdvantage: !!result.hasAdvantage,
-          hasDisadvantage: !!result.hasDisadvantage,
-          shieldHit: !!result.shieldHit,
-          shieldBroken: !!result.shieldBroken,
-        };
-      }
+      // SEMPRE aplica dano base
+      const baseDamage = ability.cost * 2 + 1; // Fórmula temporária: custo * 2 + 1
+      result = effectRegistry.applyDamage(s, {
+        attackerId,
+        targetId,
+        baseDamage,
+        attackerElement: attacker.element,
+        ignoreShield: false,
+      });
 
-      // Deduz essência e aplica animação
-      let newState = {
-        ...result.newState,
-        [playerSide]: {
-          ...result.newState[playerSide],
-          essence: essence - cost,
-        },
-        log: [
-          ...result.newState.log,
-          `${attacker.name} usou ${ability.name?.pt || ability.name?.en || 'habilidade'} (custo: ${cost})`,
-          ...result.log,
-        ],
+      // Marca a criatura como tendo usado uma habilidade neste turno
+      const updatedUsedAbilities = new Set(s.creaturesWithUsedAbility || []);
+      updatedUsedAbilities.add(attackerId);
+
+      // PASSO 1: Mostra animação de ataque no atacante
+      const stateWithAttackAnim = {
+        ...s,
         animations: {
-          ...(result.newState.animations || {}),
-          ...(animPayload ? { [targetId]: animPayload } : {}),
+          ...(s.animations || {}),
+          [attackerId]: { type: 'attacking' },
         },
       };
 
-      // Agenda limpeza da animação
-      clearAnimAfter(targetId, match ? 1000 : 900);
+      // Remove animação do atacante após 400ms
+      setTimeout(() => {
+        setState((s2) => {
+          const anims = { ...(s2.animations || {}) };
+          if (anims[attackerId]?.type === 'attacking') {
+            delete anims[attackerId];
+          }
+          return { ...s2, animations: anims };
+        });
+      }, 400);
 
-      return newState;
+      // PASSO 2: Após delay, aplica dano e mostra animação de dano
+      setTimeout(() => {
+        setState((s2) => {
+          animPayload = {
+            type: 'damage',
+            amount: result.damageDealt,
+            hasAdvantage: !!result.hasAdvantage,
+            hasDisadvantage: !!result.hasDisadvantage,
+            shieldHit: !!result.shieldHit,
+            shieldBroken: !!result.shieldBroken,
+          };
+
+          // Se tiver status effect na descrição, aplica também
+          if (match) {
+            console.log('Aplicando status effect adicional:', match.type);
+            const statusResult = effectRegistry.applyStatusEffect(result.newState, {
+              targetId,
+              effectType: match.type,
+              duration: match.duration,
+              value: match.value,
+            });
+            result.newState = statusResult.newState;
+            result.log = [...result.log, ...statusResult.log];
+          }
+
+          // Deduz essência e aplica animação de dano
+          const stateWithDamage = {
+            ...result.newState,
+            creaturesWithUsedAbility: updatedUsedAbilities,
+            [playerSide]: {
+              ...result.newState[playerSide],
+              essence: essence - cost,
+            },
+            log: [
+              ...result.newState.log,
+              `${attacker.name} usou ${ability.name?.pt || ability.name?.en || 'habilidade'} (custo: ${cost})`,
+              ...result.log,
+            ],
+            animations: {
+              ...(s2.animations || {}),
+              ...(animPayload ? { [targetId]: animPayload } : {}),
+            },
+          };
+
+          // Remove animação de dano após 900ms
+          clearAnimAfter(targetId, 900);
+
+          // PASSO 3: Se a criatura morreu, adiciona delay antes da animação de morte
+          if (result.died) {
+            const targetCreature = stateWithDamage[targetSide].field.slots.find(slot => slot?.id === targetId);
+            if (targetCreature) {
+              // Delay adicional antes da animação de morte
+              setTimeout(() => {
+                setState((s3) => {
+                  // Adiciona animação de morte
+                  const stateWithDeath = {
+                    ...s3,
+                    animations: {
+                      ...(s3.animations || {}),
+                      [targetId]: { death: true },
+                    },
+                  };
+
+                  // Aguarda 600ms (duração da animação de morte) para remover do campo
+                  setTimeout(() => {
+                    setState((s4) => {
+                      const updated = { ...s4 };
+                      updated[targetSide].field.slots = updated[targetSide].field.slots.map(slot => slot?.id === targetId ? null : slot);
+                      return updated;
+                    });
+                  }, 600);
+
+                  return stateWithDeath;
+                });
+              }, 400); // Delay de 400ms antes da animação de morte
+
+              // Prepara estado final (sem remover do campo ainda)
+              stateWithDamage[targetSide].graveyard = [...(stateWithDamage[targetSide].graveyard || []), targetCreature];
+              stateWithDamage[targetSide].orbs = Math.max(0, (stateWithDamage[targetSide].orbs || 5) - 1);
+
+              // Adiciona ao killFeed
+              stateWithDamage.killFeed = [...(stateWithDamage.killFeed || []), {
+                turn: stateWithDamage.turn,
+                attacker: attacker?.name || 'Atacante',
+                attackerId,
+                target: targetCreature.name,
+                targetId: targetCreature.id,
+                hadAdvantage: !!result.hasAdvantage,
+              }];
+
+              // Registra o kill nas estatísticas
+              stateWithDamage.battleStats = {
+                ...stateWithDamage.battleStats,
+                [playerSide]: {
+                  ...stateWithDamage.battleStats[playerSide],
+                  cardsKilled: [...stateWithDamage.battleStats[playerSide].cardsKilled, attackerId],
+                },
+              };
+
+              stateWithDamage.log.push(`${targetCreature.name} foi derrotado! ${stateWithDamage[targetSide].orbs === 0 ? '⚰️ FIM DE JOGO!' : '⚰️ -1 orbe'}`);
+
+              // Verifica se o jogo acabou
+              if (stateWithDamage[targetSide].orbs === 0) {
+                const winner = targetSide === 'ai' ? 'player' : 'ai';
+                stateWithDamage.phase = 'ended';
+                stateWithDamage.gameResult = {
+                  winner,
+                  loser: targetSide,
+                  kills: stateWithDamage.killFeed,
+                  turns: stateWithDamage.turn,
+                  stats: stateWithDamage.battleStats,
+                };
+              }
+            }
+          }
+
+          return stateWithDamage;
+        });
+      }, 300); // Delay de 300ms antes de aplicar o dano
+
+      // Retorna estado inicial com animação de ataque
+      return stateWithAttackAnim;
     });
   }, []);
+
+  const value = useMemo(() => ({
+    state,
+    startBattle,
+    endTurn,
+    drawPlayerCard,
+    summonFromHand,
+    invokeFieldCard,
+    invokeFieldCardAI,
+    useAbility,
+    log,
+    startPlaying: (firstPlayer) => {
+      setState(s => ({
+        ...s,
+        phase: 'playing',
+        activePlayer: firstPlayer === 'player' ? 'player' : 'ai',
+      }));
+    },
+  }), [state, startBattle, endTurn, drawPlayerCard, summonFromHand, invokeFieldCard, invokeFieldCardAI, useAbility, log]);
+
+  const performAiTurn = useCallback(() => {
+    setState((s) => {
+      if (s.phase !== 'playing') return s;
+      if (s.activePlayer !== 'ai') return s;
+
+      let hand = [...s.ai.hand];
+      let slots = [...s.ai.field.slots];
+      let updated = false;
+      let logEntries = [...s.log];
+
+      // PRIORIDADE 1: Verifica se há criaturas da IA que podem atacar
+      const aiCreaturesWithAbilities = slots.map((slot, i) => {
+        if (!slot || slot.hp <= 0) return null;
+        // Verifica se está incapacitado
+        const incapacitating = (slot.statusEffects || []).some(e => ['paralyze', 'freeze', 'sleep'].includes(e.type) && e.duration > 0);
+        if (incapacitating) return null;
+        // Verifica se tem habilidades
+        if (!slot.abilities || slot.abilities.length === 0) return null;
+        return { slotIndex: i, creature: slot };
+      }).filter(Boolean);
+
+      // Se houver criaturas que podem atacar E inimigos para atacar
+      const enemyCreatures = s.player.field.slots.map((slot, i) => {
+        if (!slot || slot.hp <= 0) return null;
+        return { slotIndex: i, creature: slot };
+      }).filter(Boolean);
+
+      if (aiCreaturesWithAbilities.length > 0 && enemyCreatures.length > 0) {
+        // Escolhe uma criatura aleatória da IA para atacar
+        const attacker = aiCreaturesWithAbilities[Math.floor(Math.random() * aiCreaturesWithAbilities.length)];
+        // Escolhe um inimigo aleatório
+        const target = enemyCreatures[Math.floor(Math.random() * enemyCreatures.length)];
+        // Escolhe uma habilidade aleatória
+        const abilityIndex = Math.floor(Math.random() * attacker.creature.abilities.length);
+
+        // Usa a habilidade (vai fazer ataque dentro do setState)
+        // Precisamos chamar useAbility aqui, mas é complexo porque está dentro de performAiTurn
+        // Solução: retornamos o state normalmente e deixamos que o useAbility seja chamado depois
+        logEntries = [...logEntries, `IA está preparando um ataque com ${attacker.creature.name}!`];
+
+        // Armazena a intenção de ataque para processar depois
+        return {
+          ...s,
+          aiPendingAttack: {
+            attackerSlot: attacker.slotIndex,
+            targetSlot: target.slotIndex,
+            abilityIndex,
+          },
+          log: logEntries,
+        };
+      }
+
+      // PRIORIDADE 2: Verifica se há cartas de campo na mão da IA
+      const fieldCardIndex = hand.findIndex((cardId) => cardId && (/^f\d{3}$/i.test(cardId) || String(cardId).toLowerCase().startsWith('field_')));
+
+      if (fieldCardIndex >= 0) {
+        // IA tem uma carta de campo, invoca ela no sharedField (sobrescreve a anterior)
+        const cardId = hand[fieldCardIndex];
+        hand.splice(fieldCardIndex, 1);
+        logEntries = [...logEntries, `IA invocou o campo ${cardId}!`];
+
+        return {
+          ...s,
+          ai: {
+            ...s.ai,
+            hand,
+          },
+          sharedField: {
+            active: true,
+            id: cardId,
+          },
+          log: logEntries,
+        };
+      }
+
+      // PRIORIDADE 3: Se nao tem carta de campo, invoca criaturas (máximo 1 por turno)
+      const action = chooseAction(s);
+      const emptyIndex = slots.findIndex((slot) => !slot);
+      const canInvokeCreature = (s.creaturesInvokedThisTurn || 0) < 1;
+
+      if (canInvokeCreature && action?.type === 'summon' && typeof action.handIndex === 'number' && typeof action.slotIndex === 'number') {
+        const { handIndex, slotIndex } = action;
+        if (hand[handIndex] && !slots[slotIndex]) {
+          const cardId = hand[handIndex];
+          hand.splice(handIndex, 1);
+          const creatureData = creaturesPool.find(c => c.id === cardId) || {};
+          const build = resolveCreatureBuild(creatureData);
+          const instanceId = `${cardId}-${Date.now()}-${Math.floor(Math.random()*1000)}`;
+          slots[slotIndex] = {
+            id: instanceId,
+            name: creatureData.name?.pt || creatureData.name?.en || cardId,
+            element: creatureData.element || 'puro',
+            hp: build.hp,
+            maxHp: build.maxHp,
+            atk: build.atk,
+            def: build.def,
+            abilities: build.abilities,
+            buffs: [],
+            debuffs: [],
+            shield: build.perkEffects?.shieldOnSummon?.amount || 0,
+            shieldTurns: build.perkEffects?.shieldOnSummon?.duration || 0,
+            statusEffects: [],
+          };
+          updated = true;
+          logEntries = [...logEntries, `IA invocou ${cardId} no slot ${slotIndex + 1}.`];
+          // Registra invocação nas estatísticas
+          s.battleStats.ai.cardsSummoned = [...s.battleStats.ai.cardsSummoned, cardId];
+        }
+      } else if (emptyIndex >= 0 && hand.length > 0 && canInvokeCreature) {
+        const cardId = hand.shift();
+        const creatureData = creaturesPool.find(c => c.id === cardId) || {};
+        const build = resolveCreatureBuild(creatureData);
+        const instanceId = `${cardId}-${Date.now()}-${Math.floor(Math.random()*1000)}`;
+        slots[emptyIndex] = {
+          id: instanceId,
+          name: creatureData.name?.pt || creatureData.name?.en || cardId,
+          element: creatureData.element || 'puro',
+          hp: build.hp,
+          maxHp: build.maxHp,
+          atk: build.atk,
+          def: build.def,
+          abilities: build.abilities,
+          buffs: [],
+          debuffs: [],
+          shield: build.perkEffects?.shieldOnSummon?.amount || 0,
+          shieldTurns: build.perkEffects?.shieldOnSummon?.duration || 0,
+          statusEffects: [],
+        };
+        updated = true;
+        logEntries = [...logEntries, `IA invocou ${cardId} no slot ${emptyIndex + 1}.`];
+        // Registra invocação nas estatísticas
+        s.battleStats.ai.cardsSummoned = [...s.battleStats.ai.cardsSummoned, cardId];
+      } else {
+        logEntries = [...logEntries, 'IA nao fez acao.'];
+      }
+
+      if (!updated) {
+        return { ...s, log: logEntries };
+      }
+
+      return {
+        ...s,
+        creaturesInvokedThisTurn: (s.creaturesInvokedThisTurn || 0) + 1,
+        ai: {
+          ...s.ai,
+          hand,
+          field: { ...s.ai.field, slots },
+        },
+        log: logEntries,
+      };
+    });
+
+    // Entrega o turno de volta para o jogador apos a acao da IA (com delay adicional)
+    setTimeout(() => {
+      endTurn();
+    }, 800);
+  }, [endTurn]);
 
   useEffect(() => {
     if (state.phase === 'playing' && state.activePlayer === 'ai') {
@@ -759,6 +993,20 @@ export function BattleProvider({ children }) {
       return () => clearTimeout(aiDelayTimer);
     }
   }, [state.phase, state.activePlayer, performAiTurn]);
+
+  // Processa ataque pendente da IA
+  useEffect(() => {
+    if (state.aiPendingAttack && state.phase === 'playing' && state.activePlayer === 'ai') {
+      const attackTimer = setTimeout(() => {
+        useAbility('ai', state.aiPendingAttack.attackerSlot, state.aiPendingAttack.abilityIndex, 'player', state.aiPendingAttack.targetSlot);
+        setState(s => ({
+          ...s,
+          aiPendingAttack: null,
+        }));
+      }, 500);
+      return () => clearTimeout(attackTimer);
+    }
+  }, [state.aiPendingAttack, state.phase, state.activePlayer, useAbility]);
 
   return (
     <BattleContext.Provider value={value}>{children}</BattleContext.Provider>

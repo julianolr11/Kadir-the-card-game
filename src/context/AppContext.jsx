@@ -153,6 +153,23 @@ export function AppProvider({ children }) {
     return cardCollection[cardId] || [];
   };
 
+  // Calcula XP necessário para subir de nível (progressão exponencial)
+  const getXpForLevel = (level) => {
+    // Nível 0→1: 100 XP
+    // Nível 1→2: 150 XP
+    // Nível 2→3: 225 XP
+    // Nível 3→4: 337 XP
+    // Nível 4→5: 505 XP
+    // Nível 5→6: 757 XP
+    // Nível 6→7: 1135 XP
+    // Nível 7→8: 1702 XP
+    // Nível 8→9: 2553 XP
+    // Nível 9→10: 3829 XP
+    const baseXp = 100;
+    const multiplier = 1.5; // Cada nível é 1.5x mais difícil
+    return Math.floor(baseXp * Math.pow(multiplier, level));
+  };
+
   // Atualizar XP de uma instância específica
   const updateCardInstanceXp = (cardId, instanceId, xpGain) => {
     const newCollection = { ...cardCollection };
@@ -160,10 +177,19 @@ export function AppProvider({ children }) {
       const instance = newCollection[cardId].find((inst) => inst.instanceId === instanceId);
       if (instance) {
         instance.xp += xpGain;
-        // Levelup a cada 100 XP
-        if (instance.xp >= 100 && instance.level < 10) {
-          instance.level += 1;
-          instance.xp -= 100;
+        // Levelup progressivo baseado no nível atual
+        while (instance.level < 10) {
+          const xpNeeded = getXpForLevel(instance.level);
+          if (instance.xp >= xpNeeded) {
+            instance.level += 1;
+            instance.xp -= xpNeeded;
+          } else {
+            break;
+          }
+        }
+        // Se chegou no nível máximo (10), limita o XP
+        if (instance.level >= 10) {
+          instance.xp = 0;
         }
       }
     }

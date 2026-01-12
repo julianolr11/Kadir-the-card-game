@@ -31,13 +31,15 @@ export function getElementModifier(attackerElement, defenderElement) {
     return { modifier: 0, hasAdvantage: false, hasDisadvantage: false };
   }
 
-  // Verifica fraqueza (vantagem)
-  if (ELEMENT_WEAKNESS[attackerElement]?.includes(defenderElement)) {
+  // Verifica vantagem: se o defensor é fraco contra o atacante
+  // Ex: água é fraca contra terra, então terra tem vantagem sobre água
+  if (ELEMENT_WEAKNESS[defenderElement]?.includes(attackerElement)) {
     return { modifier: 1, hasAdvantage: true, hasDisadvantage: false }; // +1 dano
   }
 
-  // Verifica resistência (desvantagem)
-  if (ELEMENT_WEAKNESS[defenderElement]?.includes(attackerElement)) {
+  // Verifica desvantagem: se o atacante é fraco contra o defensor
+  // Ex: fogo é fraco contra água, então fogo tem desvantagem sobre água
+  if (ELEMENT_WEAKNESS[attackerElement]?.includes(defenderElement)) {
     return { modifier: -1, hasAdvantage: false, hasDisadvantage: true }; // -1 dano
   }
 
@@ -91,18 +93,21 @@ export function applyDamage(state, params) {
   damage = applyModifiers(damage, defenseMods.map(m => ({ ...m, value: -m.value })));
 
   damage = Math.max(1, Math.round(damage)); // Dano mínimo de 1
-
-  // Sistema de escudo
-  let finalDamage = damage;
   let shieldBroken = false;
   const hadShield = !ignoreShield && (target.shield > 0);
+  let finalDamage = damage;
+  let newShield = target.shield;
 
   if (hadShield) {
     if (damage >= target.shield) {
+      // Dano quebra o escudo e passa para o HP
       finalDamage = damage - target.shield;
+      newShield = 0;
       shieldBroken = true;
     } else {
+      // Dano não quebra o escudo, só reduz o escudo
       finalDamage = 0;
+      newShield = target.shield - damage;
     }
   }
 
@@ -112,7 +117,7 @@ export function applyDamage(state, params) {
 
   const newState = updateCreature(state, targetId, {
     hp: newHp,
-    shield: shieldBroken ? 0 : Math.max(0, target.shield - damage),
+    shield: Math.max(0, newShield),
   });
 
   const log = [
@@ -120,7 +125,7 @@ export function applyDamage(state, params) {
     ...(died ? [`${target.name} foi derrotado!`] : [])
   ];
 
-  return { newState, log, damageDealt: finalDamage, hasAdvantage, hasDisadvantage, shieldHit: hadShield, shieldBroken };
+  return { newState, log, damageDealt: finalDamage, hasAdvantage, hasDisadvantage, shieldHit: hadShield, shieldBroken, died };
 }
 
 /**
@@ -352,26 +357,93 @@ function updateCreature(state, creatureId, updates) {
 
   // Atualiza player slots
   if (newState.player?.field?.slots) {
-    newState.player.field.slots = newState.player.field.slots.map(slot =>
-      slot && slot.id === creatureId ? { ...slot, ...updates } : slot
-    );
+    newState.player = {
+      ...newState.player,
+      field: {
+        ...newState.player.field,
+        slots: newState.player.field.slots.map(slot =>
+          slot && slot.id === creatureId ? { ...slot, ...updates } : slot
+        )
+      }
+    };
   }
 
   // Atualiza AI slots
   if (newState.ai?.field?.slots) {
-    newState.ai.field.slots = newState.ai.field.slots.map(slot =>
-      slot && slot.id === creatureId ? { ...slot, ...updates } : slot
-    );
+    newState.ai = {
+      ...newState.ai,
+      field: {
+        ...newState.ai.field,
+        slots: newState.ai.field.slots.map(slot =>
+          slot && slot.id === creatureId ? { ...slot, ...updates } : slot
+        )
+      }
+    };
   }
 
   return newState;
 }
 
-// ===== PLACEHOLDERS ANTIGOS (manter compatibilidade) =====
+/**
+ * Obtém habilidades desbloqueadas para uma criatura baseado no level
+ * @param {object} cardData - Dados da carta
+ * @param {number} level - Level atual da criatura
+ * @returns {array} Array de habilidades desbloqueadas
+ */
+export function getUnlockedAbilities(cardData, level) {
+  if (!cardData || !cardData.unlockTable) {
+    return cardData?.abilities || [];
+  }
 
-export const effectCards = {
-  // 'heal-small': { name: 'Cura Pequena', play: (ctx) => {} },
-};
+  const unlockedAbilities = [...(cardData.abilities || [])];
+  const unlockedIds = new Set(cardData.abilities?.map(a => a.id || a.name?.pt));
+
+  // Processa unlock table
+  (cardData.unlockTable || []).forEach(unlock => {
+    if (unlock.level <= level && unlock.type === 'skill') {
+      // Se ainda não está na lista, adiciona
+      if (!unlockedIds.has(unlock.id)) {
+        unlockedAbilities.push({
+          id: unlock.id,
+          name: unlock.name,
+          cost: unlock.cost,
+          desc: unlock.desc,
+          type: unlock.type,
+        });
+        unlockedIds.add(unlock.id);
+      }
+    }
+  });
+
+  return unlockedAbilities;
+}
+
+/**
+ * Obtém perks/buffs desbloqueados para uma criatura baseado no level
+ * @param {object} cardData - Dados da carta
+ * @param {number} level - Level atual da criatura
+ * @returns {array} Array de perks desbloqueados
+ */
+export function getUnlockedPerks(cardData, level) {
+  if (!cardData || !cardData.unlockTable) {
+    return [];
+  }
+
+  const unlockedPerks = [];
+
+  (cardData.unlockTable || []).forEach(unlock => {
+    if (unlock.level <= level && unlock.type === 'perk') {
+      unlockedPerks.push({
+        id: unlock.id,
+        name: unlock.name,
+        desc: unlock.desc,
+      });
+    }
+  });
+
+  return unlockedPerks;
+}
+
 
 export const fieldCards = {
   // 'purple-field': { name: 'Campo Púrpura', onEnter: (ctx) => {}, onExit: (ctx) => {} },

@@ -200,6 +200,39 @@
   box-shadow: inset 0 0 20px rgba(153, 153, 153, 0.3);
 }
 
+/* Divisória entre Criaturas e Campos */
+.bestiary-divider {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 20px 0;
+  pointer-events: none;
+}
+
+.bestiary-divider-top {
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
+.bestiary-divider-line {
+  flex: 1;
+  height: 2px;
+  background: linear-gradient(to right, transparent, #a87e2d, transparent);
+  border-radius: 2px;
+}
+
+.bestiary-divider-label {
+  font-family: 'Cinzel', serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #a87e2d;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+  letter-spacing: 2px;
+  padding: 0 8px;
+  white-space: nowrap;
+}
+
 /* Preview de criatura no lado esquerdo */
 .creature-preview-container {
   width: 100%;

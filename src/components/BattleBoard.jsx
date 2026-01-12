@@ -631,6 +631,36 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
             )}
           </div>
         </div>
+
+        {/* Container do Cemitério do Jogador */}
+        <button
+          className={`graveyard-toggle-btn graveyard-toggle-player${playerGraveyardOpen ? ' active' : ''}`}
+          onClick={() => setPlayerGraveyardOpen(!playerGraveyardOpen)}
+        >
+          <span className="graveyard-toggle-text">CEMITÉRIO</span>
+          <span className="graveyard-toggle-count">({state.player.graveyard?.length || 0})</span>
+        </button>
+
+        <div className={`graveyard-drawer graveyard-drawer-player ${playerGraveyardOpen ? 'open' : ''}`} onClick={(e) => e.stopPropagation()}>
+          <div className="graveyard-drawer-content">
+            {state.player.graveyard && state.player.graveyard.length > 0 ? (
+              state.player.graveyard.map((creature, idx) => {
+                const cardData = getCardData(creature.id);
+                return (
+                  <div className="graveyard-card-wrapper" key={idx}>
+                    <CreatureCardPreview
+                      creature={cardData}
+                      level={0}
+                      allowFlip={false}
+                    />
+                  </div>
+                );
+              })
+            ) : (
+              <div className="graveyard-drawer-empty">Nenhuma criatura derrotada</div>
+            )}
+          </div>
+        </div>
       </div>
 
       <div
@@ -1036,37 +1066,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
       />
     )}
 
-    {/* Container do Cemitério do Jogador */}
-    <div className="graveyard-container graveyard-container-player">
-      <button
-        className={`graveyard-toggle-btn graveyard-toggle-player${playerGraveyardOpen ? ' active' : ''}`}
-        onClick={() => setPlayerGraveyardOpen(!playerGraveyardOpen)}
-      >
-        <span className="graveyard-toggle-text">CEMITÉRIO</span>
-        <span className="graveyard-toggle-count">({state.player.graveyard?.length || 0})</span>
-      </button>
 
-      <div className={`graveyard-drawer graveyard-drawer-player ${playerGraveyardOpen ? 'open' : ''}`} onClick={(e) => e.stopPropagation()}>
-        <div className="graveyard-drawer-content">
-          {state.player.graveyard && state.player.graveyard.length > 0 ? (
-            state.player.graveyard.map((creature, idx) => {
-              const cardData = getCardData(creature.id);
-              return (
-                <div className="graveyard-card-wrapper" key={idx}>
-                  <CreatureCardPreview
-                    creature={cardData}
-                    level={0}
-                    allowFlip={false}
-                  />
-                </div>
-              );
-            })
-          ) : (
-            <div className="graveyard-drawer-empty">Nenhuma criatura derrotada</div>
-          )}
-        </div>
-      </div>
-    </div>
 
   </>);
 }

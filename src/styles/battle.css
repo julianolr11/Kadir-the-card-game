@@ -971,13 +971,20 @@ position: absolute;
 .graveyard-container {
   position: fixed;
   right: 0;
+  top: 290px;
+  height: calc(100vh - 190px);
   z-index: 1200;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  pointer-events: none;
 }
 
 .graveyard-toggle-btn {
-  position: absolute;
-  right: 0;
+  position: relative;
+  right: auto;
   z-index: 1201;
+  pointer-events: all;
   background: linear-gradient(135deg, rgba(80, 20, 30, 0.9), rgba(120, 30, 40, 0.9));
   border: 2px solid rgba(255, 107, 107, 0.6);
   color: #ff6b6b;
@@ -1004,27 +1011,18 @@ position: absolute;
 }
 
 .graveyard-container-player {
-  bottom: calc(50% - 160px);
 }
 
+.graveyard-toggle-opponent,
 .graveyard-toggle-player {
   transform: translateX(0);
 }
 
-.graveyard-container-opponent {
-  top: calc(50% - 250px);
-}
-
-.graveyard-toggle-opponent {
-  transform: translateX(0);
-  right: 12px;
-}
-
 /* Sync handle with drawer open state */
-.graveyard-container-player:has(.graveyard-drawer-player.open) .graveyard-toggle-player {
+.graveyard-container:has(.graveyard-drawer-player.open) .graveyard-toggle-player {
   transform: translateX(calc(-1 * var(--graveyard-drawer-width)));
 }
-.graveyard-container-opponent:has(.graveyard-drawer-opponent.open) .graveyard-toggle-opponent {
+.graveyard-container:has(.graveyard-drawer-opponent.open) .graveyard-toggle-opponent {
   transform: translateX(calc(-1 * var(--graveyard-drawer-width)));
 }
 
@@ -1076,26 +1074,28 @@ position: absolute;
 
 .graveyard-drawer-player {
   transform: translateX(100%);
-  right: -6px;
-  top: -70px;
+  right: 0;
+  top: 325px;
 }
 
 .graveyard-drawer-player.open {
-  transform: translateX(0);
-  right: -6px;
-  top: -70px;
+    transform: translateX(0);
+    right: 0;
+    top: 325px;
 }
 
 .graveyard-drawer-opponent {
   transform: translateX(100%);
-  top: -62px;
-  right: 6px;
+  top: -35px;
+  right: 0;
+  height: 220px;
 }
 
 .graveyard-drawer-opponent.open {
-  transform: translateX(0);
-  top: -62px;
-  right: 6px;
+    transform: translateX(0);
+    top: -35px;
+    right: 0;
+    height: 220px;
 }
 
 .graveyard-drawer-header {

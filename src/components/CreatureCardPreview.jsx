@@ -129,6 +129,10 @@ function CreatureCardPreview({
   poison = 0,
   sleep = 0,
   bleed = 0,
+  onAbilityClick = null,
+  currentHp = null,
+  maxHp = null,
+  playerEssence = null,
 }) {
   const { lang, effectsVolume } = useContext(AppContext);
   const swipeAudioRef = React.useRef(null);
@@ -269,19 +273,29 @@ function CreatureCardPreview({
             ) : (
               <div className="card-preview-abilities">
                 {creature.abilities &&
-                  creature.abilities.map((ab, idx) => (
-                    <div className="card-preview-ability" key={idx}>
-                      <span className="essence-cost-icons">
-                        {[...Array(ab.cost || idx + 1)].map((_, i) => (
-                          <img key={i} src={soulEssence} alt="Essência" className="essence-icon" />
-                        ))}
-                      </span>
-                      <div>
-                        <strong>{typeof ab.name === 'object' ? ab.name[langKey] : ab.name}</strong>
-                        <div className="desc" dangerouslySetInnerHTML={{ __html: processDescription(typeof ab.desc === 'object' ? ab.desc[langKey] : ab.desc) }} />
+                  creature.abilities.map((ab, idx) => {
+                    const cost = ab.cost || (idx + 1);
+                    const canAfford = playerEssence !== null ? playerEssence >= cost : true;
+                    const isClickable = onAbilityClick && canAfford;
+                    return (
+                      <div
+                        className={`card-preview-ability${isClickable ? ' ability-clickable' : ''}${!canAfford && playerEssence !== null ? ' ability-disabled' : ''}`}
+                        key={idx}
+                        onClick={() => isClickable && onAbilityClick(idx)}
+                        style={{ cursor: isClickable ? 'pointer' : 'default' }}
+                      >
+                        <span className="essence-cost-icons">
+                          {[...Array(cost)].map((_, i) => (
+                            <img key={i} src={soulEssence} alt="Essência" className="essence-icon" />
+                          ))}
+                        </span>
+                        <div>
+                          <strong>{typeof ab.name === 'object' ? ab.name[langKey] : ab.name}</strong>
+                          <div className="desc" dangerouslySetInnerHTML={{ __html: processDescription(typeof ab.desc === 'object' ? ab.desc[langKey] : ab.desc) }} />
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
               </div>
             )}
             {/* Campo, tipo, altura, fraqueza, HP só para criaturas */}
@@ -325,7 +339,7 @@ function CreatureCardPreview({
                 </div>
                 <span className="card-preview-hp-icon">
                   <img src={heartIcon} alt="Vida" className="icon-bg" />
-                  <span className="icon-text">{creature.hp}</span>
+                  <span className="icon-text">{currentHp !== null && currentHp !== undefined ? currentHp : creature.hp}</span>
                 </span>
               </div>
             )}

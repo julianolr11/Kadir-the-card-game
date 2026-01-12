@@ -24,7 +24,7 @@ const getElementImage = (element) => {
 };
 
 function BoosterResultsSlider({ cards, lang, onClose }) {
-  const { effectsVolume } = useContext(AppContext);
+  const { effectsVolume, cardCollection } = useContext(AppContext);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const currentCard = cards[currentCardIndex] || {};
   const CARD_WIDTH = 360;
@@ -60,6 +60,25 @@ function BoosterResultsSlider({ cards, lang, onClose }) {
     if (!obj) return '';
     if (typeof obj === 'string') return obj;
     return obj?.[lang === 'en' ? 'en' : 'ptbr'] || obj?.pt || obj?.en || '';
+  };
+
+  // Verifica se a carta é nova para o usuário
+  const isNewCard = (card) => {
+    if (!cardCollection) return true;
+
+    const cardId = card?.id;
+    const userCards = cardCollection[cardId];
+
+    // Se não tem a carta, é nova
+    if (!userCards || userCards.length === 0) return true;
+
+    // Se tem a carta e é holográfica, verifica se ele já tem holográfica
+    if (card?.isHolo) {
+      const hasHolo = userCards.some(c => c?.isHolo);
+      return !hasHolo;
+    }
+
+    return false;
   };
 
   function handlePrevCard() {
@@ -172,6 +191,12 @@ function BoosterResultsSlider({ cards, lang, onClose }) {
                   return (
                     <div key={`${card?.id || idx}-${idx}`} className={wrapperClass}>
                       <div className={`card-preview card-preview-field ${card?.isHolo ? 'card-preview-holo' : ''}`}>
+                        {/* Badge NEW */}
+                        {isNewCard(card) && (
+                          <div className="card-badge-new">
+                            {lang === 'en' ? 'NEW' : 'NOVA'}
+                          </div>
+                        )}
                         {/* Header */}
                         <div className="card-preview-header">
                           <span className="card-preview-name" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -222,6 +247,12 @@ function BoosterResultsSlider({ cards, lang, onClose }) {
                     <div
                       className={`${getCardClassName(card)}${card?.isHolo ? ' card-preview-holo' : ''}`}
                     >
+                      {/* Badge NEW */}
+                      {isNewCard(card) && (
+                        <div className="card-badge-new">
+                          {lang === 'en' ? 'NEW' : 'NOVA'}
+                        </div>
+                      )}
                       {/* Header */}
                       <div className="card-preview-header">
                         <span

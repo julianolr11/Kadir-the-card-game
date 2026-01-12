@@ -2,14 +2,24 @@
 import { BattleProvider, useBattle } from '../context/BattleContext';
 import { AppContext } from '../context/AppContext';
 import CreatureCardPreview from './CreatureCardPreview.jsx';
+import BattleResultModal from './BattleResultModal.jsx';
 import CoinFlip from './CoinFlip.jsx';
 import heartIcon from '../assets/img/icons/hearticon.png';
 import essenceIcon from '../assets/img/icons/soul-essence.png';
 import cardVerso from '../assets/img/card/verso.png';
 import '../styles/battle.css';
+import '../styles/battle-result.css';
+import '../styles/effects.css';
+import shieldIcon from '../assets/img/icons/shield.png';
+import bleedIcon from '../assets/img/icons/bleed.png';
+import burnIcon from '../assets/img/icons/burn.png';
+import freezeIcon from '../assets/img/icons/freeze.png';
+import paralyzeIcon from '../assets/img/icons/paralyze.png';
+import poisonIcon from '../assets/img/icons/poison.png';
+import sleepIcon from '../assets/img/icons/sleep.png';
 
 function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
-  const { state, startBattle, endTurn, summonFromHand, drawPlayerCard, invokeFieldCard, startPlaying } = useBattle();
+  const { state, startBattle, endTurn, summonFromHand, drawPlayerCard, invokeFieldCard, startPlaying, useAbility } = useBattle();
   const { cardCollection } = React.useContext(AppContext);
   const [activeCardIndex, setActiveCardIndex] = React.useState(null);
   const [deckCardDrawn, setDeckCardDrawn] = React.useState(false);
@@ -21,6 +31,11 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
   const [hoveredCard, setHoveredCard] = React.useState(null);
   const [mousePos, setMousePos] = React.useState({ x: 0, y: 0 });
   const [turnBlockModalOpen, setTurnBlockModalOpen] = React.useState(false);
+  const [selectedCreature, setSelectedCreature] = React.useState(null); // { slotIndex, creature } - abre modal de habilidades
+  const [selectedAbility, setSelectedAbility] = React.useState(null); // { slotIndex, abilityIndex } - entra em modo targeting
+  const [selectedFieldCreature, setSelectedFieldCreature] = React.useState(null); // { slotIndex, creature } - preview da carta em campo
+  const [playerGraveyardOpen, setPlayerGraveyardOpen] = React.useState(false);
+  const [opponentGraveyardOpen, setOpponentGraveyardOpen] = React.useState(false);
 
   // estilos simples para modal centralizado
   const turnModalBgStyle = {
@@ -71,11 +86,14 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
   const resolveCardId = (id) => {
     if (!id) return { baseId: null, instance: null };
     if (id.includes('-')) {
+      // Primeiro tenta resolver pela coleção do jogador
       for (const [baseId, instances] of Object.entries(cardCollection || {})) {
         const inst = instances.find((x) => x.instanceId === id);
         if (inst) return { baseId, instance: inst };
       }
-      return { baseId: null, instance: null };
+      // Fallback: usa o prefixo antes do primeiro '-'
+      const prefix = id.split('-')[0];
+      return { baseId: prefix || null, instance: null };
     }
     return { baseId: id, instance: null };
   };
@@ -277,7 +295,15 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
     return (
       <div className="card-slot-preview">
         <div style={{ transform: 'scale(0.6)', transformOrigin: 'center center', pointerEvents: 'none' }}>
-          <CreatureCardPreview creature={data} onClose={null} level={level} isHolo={isHolo} allowFlip={false} />
+          <CreatureCardPreview
+            creature={data}
+            onClose={null}
+            level={level}
+            isHolo={isHolo}
+            allowFlip={false}
+            currentHp={slotData?.hp}
+            maxHp={slotData?.maxHp || data?.hp}
+          />
         </div>
       </div>
     );
@@ -379,18 +405,87 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
     );
   };
 
+  const statusIconFor = (type) => {
+    switch (type) {
+      case 'bleed': return bleedIcon;
+      case 'burn': return burnIcon;
+      case 'freeze': return freezeIcon;
+      case 'paralyze': return paralyzeIcon;
+      case 'poison': return poisonIcon;
+      case 'sleep': return sleepIcon;
+      default: return null;
+    }
+  };
+
   const renderSlots = (slots = [], owner = 'player') => (
     <div className={`slots slots-${owner}`}>
-      {slots.map((slot, i) => (
-        <div
-          key={i}
-          className={`slot ${slot ? 'occupied' : 'empty'}`}
-          onMouseEnter={() => slot && setHoveredCard({ cardId: slot.id, source: 'slot', owner, index: i })}
-          onMouseLeave={() => setHoveredCard(null)}
-        >
-          {slot ? renderCardChip(slot.id, 'slot', slot) : <span className="slot-label">{i + 1}</span>}
+      {slots.map((slot, i) => {
+        const isTargetable = selectedAbility && owner !== state.activePlayer && slot && slot.hp > 0;
+        const isPlayerCreature = owner === 'player' && slot && slot.hp > 0 && state.activePlayer === 'player';
+        const isDying = slot && state.animations && state.animations[slot.id]?.death;
+        const isAttacking = slot && state.animations && state.animations[slot.id]?.type === 'attacking';
+        return (
+          <div
+            key={i}
+            className={`slot ${slot ? 'occupied' : 'empty'}${isTargetable ? ' slot-targetable' : ''}${isPlayerCreature ? ' slot-clickable' : ''}${isDying ? ' slot-death-animation' : ''}${isAttacking ? ' slot-attacking' : ''}`}
+            onMouseEnter={() => slot && setHoveredCard({ cardId: slot.id, source: 'slot', owner, index: i })}
+            onMouseLeave={() => setHoveredCard(null)}
+            onClick={() => {
+              if (isTargetable && selectedAbility) {
+                // Executa habilidade no alvo
+                useAbility('player', selectedAbility.slotIndex, selectedAbility.abilityIndex, 'ai', i);
+                setSelectedAbility(null);
+                setSelectedCreature(null);
+              } else if (isPlayerCreature) {
+                // Abre preview da carta em campo
+                setSelectedFieldCreature({ slotIndex: i, creature: slot });
+              }
+            }}
+            style={{ cursor: isTargetable ? 'crosshair' : (isPlayerCreature ? 'pointer' : 'default') }}
+          >
+            {slot ? (
+            <div style={{ position: 'relative' }}>
+              {renderCardChip(slot.id, 'slot', slot)}
+              <div className="status-icons-overlay">
+                {/* Escudo */}
+                {slot.shield > 0 && (
+                  <img src={shieldIcon} alt="shield" className="status-icon" />
+                )}
+                {/* Status effects */}
+                {(slot.statusEffects || []).map((se, idx) => {
+                  const icon = statusIconFor(se.type);
+                  return icon ? (
+                    <img key={idx} src={icon} alt={se.type} className="status-icon" />
+                  ) : null;
+                })}
+              </div>
+              {(() => {
+                const anim = state.animations?.[slot.id];
+                if (!anim) return null;
+                if (anim.type === 'damage') {
+                  const cls = anim.hasAdvantage ? 'advantage' : (anim.hasDisadvantage ? 'disadvantage' : 'neutral');
+                  return (
+                    <>
+                      <div className={`effect-float effect-damage ${cls}`}>-{anim.amount}</div>
+                      {anim.shieldHit && <div className={`shield-shimmer${anim.shieldBroken ? ' shield-broken' : ''}`} />}
+                    </>
+                  );
+                }
+                if (anim.type === 'heal') {
+                  return <div className="effect-float effect-heal">+{anim.amount}</div>;
+                }
+                if (anim.type === 'status' && anim.statusType) {
+                  return <div className={`status-pulse status-${anim.statusType}`} />;
+                }
+                return null;
+              })()}
+            </div>
+          ) : (
+            <span className="slot-label">{i + 1}</span>
+          )}
         </div>
-      ))}
+      );
+      })}
     </div>
   );
 
@@ -502,6 +597,69 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
             style={{ backgroundImage: `url(${cardVerso})` }}
           />
           <div className="deck-count-pill deck-count-enemy">Cartas: {state.ai.deck.length}</div>
+        </div>
+
+      </div>
+
+      {/* Container do Cemitério do Oponente */}
+      <div className="graveyard-container graveyard-container-opponent">
+        <button
+          className={`graveyard-toggle-btn graveyard-toggle-opponent${opponentGraveyardOpen ? ' active' : ''}`}
+          onClick={() => setOpponentGraveyardOpen(!opponentGraveyardOpen)}
+        >
+          <span className="graveyard-toggle-text">CEMITÉRIO</span>
+          <span className="graveyard-toggle-count">({state.ai.graveyard?.length || 0})</span>
+        </button>
+
+        <div className={`graveyard-drawer graveyard-drawer-opponent ${opponentGraveyardOpen ? 'open' : ''}`} onClick={(e) => e.stopPropagation()}>
+          <div className="graveyard-drawer-content">
+            {state.ai.graveyard && state.ai.graveyard.length > 0 ? (
+              state.ai.graveyard.map((creature, idx) => {
+                const cardData = getCardData(creature.id);
+                return (
+                  <div className="graveyard-card-wrapper" key={idx}>
+                    <CreatureCardPreview
+                      creature={cardData}
+                      level={0}
+                      allowFlip={false}
+                    />
+                  </div>
+                );
+              })
+            ) : (
+              <div className="graveyard-drawer-empty">Nenhuma criatura derrotada</div>
+            )}
+          </div>
+        </div>
+
+        {/* Container do Cemitério do Jogador */}
+        <button
+          className={`graveyard-toggle-btn graveyard-toggle-player${playerGraveyardOpen ? ' active' : ''}`}
+          onClick={() => setPlayerGraveyardOpen(!playerGraveyardOpen)}
+        >
+          <span className="graveyard-toggle-text">CEMITÉRIO</span>
+          <span className="graveyard-toggle-count">({state.player.graveyard?.length || 0})</span>
+        </button>
+
+        <div className={`graveyard-drawer graveyard-drawer-player ${playerGraveyardOpen ? 'open' : ''}`} onClick={(e) => e.stopPropagation()}>
+          <div className="graveyard-drawer-content">
+            {state.player.graveyard && state.player.graveyard.length > 0 ? (
+              state.player.graveyard.map((creature, idx) => {
+                const cardData = getCardData(creature.id);
+                return (
+                  <div className="graveyard-card-wrapper" key={idx}>
+                    <CreatureCardPreview
+                      creature={cardData}
+                      level={0}
+                      allowFlip={false}
+                    />
+                  </div>
+                );
+              })
+            ) : (
+              <div className="graveyard-drawer-empty">Nenhuma criatura derrotada</div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -668,6 +826,8 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
             <div className="deck-draw-indicator-arrow">&darr;</div>
           </div>
         )}
+
+        {/* Botão de Cemitério do Jogador removido daqui - será adicionado ao lado do fim de turno */}
       </div>
 
       <div className="hand">
@@ -810,6 +970,17 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
             const level = instance?.level || 1;
             const isHolo = instance?.isHolo || false;
 
+            // Busca HP atual do slot se for criatura em campo
+            let currentHp = null;
+            let maxHp = null;
+            if (hoveredCard.source === 'slot' && hoveredCard.owner && hoveredCard.index !== undefined) {
+              const slot = state[hoveredCard.owner]?.field?.slots?.[hoveredCard.index];
+              if (slot) {
+                currentHp = slot.hp;
+                maxHp = slot.maxHp || cardData?.hp;
+              }
+            }
+
             if (!cardData) return null;
 
             return (
@@ -820,6 +991,8 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
                   level={level}
                   isHolo={isHolo}
                   allowFlip={false}
+                  currentHp={currentHp}
+                  maxHp={maxHp}
                 />
               </div>
             );
@@ -836,6 +1009,44 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
         </div>
       </div>
     )}
+    {selectedFieldCreature && (() => {
+      const { instance } = resolveCardId(selectedFieldCreature.creature.id);
+      const cardData = getCardData(selectedFieldCreature.creature.id);
+      const level = instance?.level || 1;
+      const isHolo = instance?.isHolo || false;
+
+      return (
+        <div className="card-preview-overlay" onClick={() => setSelectedFieldCreature(null)}>
+          <div className="card-preview-container" onClick={(e) => e.stopPropagation()}>
+            <CreatureCardPreview
+              creature={cardData}
+              onClose={() => setSelectedFieldCreature(null)}
+              level={level}
+              isHolo={isHolo}
+              allowFlip={false}
+              armor={selectedFieldCreature.creature.shield || 0}
+              burn={(selectedFieldCreature.creature.statusEffects || []).find(e => e.type === 'burn')?.duration || 0}
+              freeze={(selectedFieldCreature.creature.statusEffects || []).find(e => e.type === 'freeze')?.duration || 0}
+              paralyze={(selectedFieldCreature.creature.statusEffects || []).find(e => e.type === 'paralyze')?.duration || 0}
+              poison={(selectedFieldCreature.creature.statusEffects || []).find(e => e.type === 'poison')?.duration || 0}
+              sleep={(selectedFieldCreature.creature.statusEffects || []).find(e => e.type === 'sleep')?.duration || 0}
+              bleed={(selectedFieldCreature.creature.statusEffects || []).find(e => e.type === 'bleed')?.duration || 0}
+              onAbilityClick={(abilityIndex) => {
+                const cost = selectedFieldCreature.creature.abilities[abilityIndex]?.cost || 0;
+                const canAfford = (state.player.essence || 0) >= cost;
+                const isIncapacitated = (selectedFieldCreature.creature.statusEffects || []).some(e => ['paralyze', 'freeze', 'sleep'].includes(e.type) && e.duration > 0);
+                if (!canAfford || isIncapacitated) return;
+                setSelectedAbility({ slotIndex: selectedFieldCreature.slotIndex, abilityIndex });
+                setSelectedFieldCreature(null);
+              }}
+              currentHp={selectedFieldCreature.creature.hp}
+              maxHp={selectedFieldCreature.creature.maxHp}
+              playerEssence={state.player.essence}
+            />
+          </div>
+        </div>
+      );
+    })()}
     {state.phase === 'coinflip' && (
       <CoinFlip
         playerName="Você"
@@ -845,6 +1056,18 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
         }}
       />
     )}
+    {state.phase === 'ended' && state.gameResult && (
+      <BattleResultModal
+        gameResult={state.gameResult}
+        killFeed={state.killFeed}
+        battleStats={state.battleStats}
+        playerDeck={selectedDeck}
+        onClose={() => onNavigate?.('home')}
+      />
+    )}
+
+
+
   </>);
 }
 

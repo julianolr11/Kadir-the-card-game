@@ -1,0 +1,743 @@
+/* ===== BATTLE RESULT MODAL ===== */
+
+.battle-result-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.battle-result-modal {
+  background: linear-gradient(135deg, #2a1f3d 0%, #3d2850 100%);
+  border: 2px solid #a87e2d;
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 1200px;
+  width: 95%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  animation: result-modal-entrance 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes result-modal-entrance {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.battle-result-header {
+  text-align: center;
+  margin-bottom: 28px;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.battle-result-header.victory {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(22, 163, 74, 0.2));
+  border-color: rgba(34, 197, 94, 0.4);
+}
+
+.battle-result-header.defeat {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.2));
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.battle-result-title {
+  font-size: 2.4rem;
+  font-weight: 800;
+  margin: 0 0 8px 0;
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+}
+
+.battle-result-header.victory .battle-result-title {
+  color: #4ade80;
+}
+
+.battle-result-header.defeat .battle-result-title {
+  color: #f87171;
+}
+
+.battle-result-subtitle {
+  font-size: 1.1rem;
+  color: #ffe6b0;
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+
+/* ===== STATS ===== */
+
+.battle-result-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.stat-block {
+  background: rgba(255, 230, 176, 0.08);
+  border: 1px solid rgba(255, 230, 176, 0.2);
+  border-radius: 10px;
+  padding: 16px;
+  text-align: center;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: #b8a887;
+  font-weight: 600;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #ffe6b0;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* ===== KILL FEED ===== */
+
+.battle-result-kills {
+  margin-bottom: 24px;
+}
+
+.kills-title {
+  font-size: 1.1rem;
+  color: #ffe6b0;
+  font-weight: 700;
+  margin: 0 0 12px 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.kills-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.kill-entry {
+  background: rgba(0, 0, 0, 0.3);
+  border-left: 3px solid #a87e2d;
+  padding: 10px 12px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  animation: kill-entry-appear 0.5s ease-out forwards;
+  opacity: 0;
+}
+
+.kill-entry:hover {
+  background: rgba(168, 126, 45, 0.15);
+  transform: translateX(4px);
+}
+
+.kill-attacker {
+  color: #4ade80;
+  font-weight: 700;
+  flex: 0.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kill-arrow {
+  color: #ff6b6b;
+  font-size: 1.2rem;
+}
+
+.kill-target {
+  color: #f87171;
+  font-weight: 700;
+  flex: 0.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kill-turn {
+  color: #a8a8a8;
+  font-size: 0.85rem;
+  margin-left: auto;
+}
+
+/* ===== XP DISTRIBUTION ===== */
+
+.battle-result-xp-distribution {
+  margin-bottom: 24px;
+}
+
+.xp-title {
+  font-size: 1.1rem;
+  color: #ffe6b0;
+  font-weight: 700;
+  margin: 0 0 12px 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.xp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.xp-entry {
+  background: linear-gradient(90deg, rgba(34, 197, 94, 0.2), rgba(34, 197, 94, 0.05));
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95rem;
+}
+
+.xp-card-name {
+  color: #e2e8f0;
+  font-weight: 600;
+}
+
+.xp-amount {
+  color: #4ade80;
+  font-weight: 800;
+  font-size: 1rem;
+}
+
+/* ===== XP POR CARTA ===== */
+
+.battle-result-xp-cards {
+  margin-top: 24px;
+}
+
+.xp-cards-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #ffe6b0;
+  margin-bottom: 16px;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.xp-cards-list {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.xp-card-item {
+  background: linear-gradient(135deg, rgba(42, 31, 61, 0.7), rgba(61, 40, 80, 0.7));
+  border: 1px solid rgba(168, 126, 45, 0.3);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  gap: 12px;
+  animation: xp-card-slide-in 0.6s ease-out forwards;
+  opacity: 0;
+}
+
+/* Layout compacto para grid */
+.xp-card-item.xp-card-compact {
+  flex-direction: column;
+  padding: 10px;
+  gap: 8px;
+}
+
+.xp-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.xp-card-name {
+  color: #e2e8f0;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.xp-card-gained {
+  color: #4ade80;
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+
+.xp-card-progress-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.xp-progress-bar-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.xp-progress-bar {
+  width: 100%;
+  height: 20px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(168, 126, 45, 0.4);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.xp-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4ade80, #22c55e);
+  border-radius: 10px;
+  transition: width 0.8s ease;
+  box-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
+}
+
+.xp-progress-text {
+  font-size: 0.85rem;
+  color: #cbd5e1;
+  text-align: center;
+}
+
+.xp-level-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, rgba(168, 126, 45, 0.3), rgba(255, 230, 176, 0.2));
+  border: 1px solid #a87e2d;
+  border-radius: 8px;
+  padding: 6px 10px;
+  min-width: 50px;
+  justify-content: center;
+}
+
+.xp-level-gem {
+  font-size: 1.2rem;
+}
+
+.xp-level-number {
+  color: #ffe6b0;
+  font-weight: 800;
+  font-size: 1rem;
+}
+
+.xp-levelup-text {
+  color: #fbbf24;
+  font-weight: 800;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  animation: levelup-pulse 1s ease-in-out infinite;
+  text-shadow: 0 0 10px rgba(251, 191, 36, 0.8);
+  white-space: nowrap;
+}
+
+@keyframes levelup-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+@keyframes xp-card-slide-in {
+  0% {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes kill-entry-appear {
+  0% {
+    opacity: 0;
+    transform: translateX(-20px) scaleX(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scaleX(1);
+  }
+}
+
+/* ===== XP CARD IMAGE ===== */
+
+.xp-card-image {
+  width: 80px;
+  height: 110px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid rgba(168, 126, 45, 0.5);
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.xp-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ===== XP CARD IMAGE COMPACTA (para grid) ===== */
+
+.xp-card-image-compact {
+  width: 100%;
+  height: 120px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid rgba(168, 126, 45, 0.5);
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.xp-card-image-compact img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ===== XP CARD CONTENT ===== */
+
+.xp-card-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ===== XP CARD INFO COMPACTA (para grid) ===== */
+
+.xp-card-info-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: center;
+}
+
+.xp-card-name-compact {
+  color: #e2e8f0;
+  font-weight: 600;
+  font-size: 0.9rem;
+  line-height: 1.2;
+}
+
+.xp-card-level-badge-compact {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 0.8rem;
+}
+
+.xp-card-level-badge-compact .xp-arrow {
+  color: #ffe6b0;
+}
+
+.xp-gained-compact {
+  color: #4ade80;
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+.xp-levelup-badge {
+  font-size: 0.8rem;
+  animation: levelup-pulse 1s ease-in-out infinite;
+}
+
+/* ===== XP PROGRESS BAR COMPACTA ===== */
+
+.xp-progress-bar-compact {
+  width: 100%;
+  height: 18px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(168, 126, 45, 0.4);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  margin-top: 6px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.xp-progress-fill-compact {
+  height: 100%;
+  background: linear-gradient(90deg, #4ade80, #22c55e);
+  border-radius: 8px;
+  transition: width 0.8s ease;
+  box-shadow: 0 0 8px rgba(74, 222, 128, 0.5);
+}
+
+.xp-progress-text-compact {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.7rem;
+  color: #cbd5e1;
+  font-weight: 600;
+  white-space: nowrap;
+  z-index: 2;
+}
+
+.xp-level-icon-compact {
+  position: absolute;
+  right: 3px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  z-index: 3;
+}
+
+/* ===== ACCORDION ===== */
+
+.xp-accordion-btn {
+  background: none;
+  border: 1px solid rgba(168, 126, 45, 0.3);
+  color: #ffe6b0;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  text-align: left;
+  margin-top: 6px;
+}
+
+.xp-accordion-btn:hover {
+  background: rgba(168, 126, 45, 0.2);
+  border-color: rgba(168, 126, 45, 0.6);
+}
+
+.xp-accordion-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ===== ACCORDION COMPACTO ===== */
+
+.xp-accordion-btn-compact {
+  background: none;
+  border: none;
+  color: #ffe6b0;
+  padding: 2px 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.xp-accordion-btn-compact:hover {
+  color: #ffd966;
+}
+
+.xp-accordion-content {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(168, 126, 45, 0.2);
+  border-radius: 6px;
+  padding: 12px;
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  animation: accordion-expand 0.3s ease-out;
+}
+
+@keyframes accordion-expand {
+  0% {
+    opacity: 0;
+    max-height: 0;
+  }
+  100% {
+    opacity: 1;
+    max-height: 500px;
+  }
+}
+
+.xp-breakdown-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  padding: 4px 0;
+}
+
+.xp-breakdown-item.total {
+  font-weight: 700;
+  padding-top: 8px;
+  color: #4ade80;
+}
+
+.xp-breakdown-label {
+  color: #cbd5e1;
+}
+
+.xp-breakdown-item.total .xp-breakdown-label {
+  color: #4ade80;
+}
+
+.xp-breakdown-xp {
+  color: #fbbf24;
+  font-weight: 700;
+}
+
+.xp-breakdown-item.total .xp-breakdown-xp {
+  color: #4ade80;
+}
+
+.xp-breakdown-divider {
+  height: 1px;
+  background: rgba(168, 126, 45, 0.2);
+  margin: 6px 0;
+}
+
+/* ===== ACCORDION COMPACTO ===== */
+
+.xp-accordion-content-compact {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(168, 126, 45, 0.2);
+  border-radius: 4px;
+  padding: 6px;
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 0.75rem;
+  animation: accordion-expand 0.3s ease-out;
+}
+
+.xp-breakdown-item-compact {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2px 0;
+  font-size: 0.75rem;
+}
+
+.xp-breakdown-item-compact.total {
+  font-weight: 700;
+  padding-top: 4px;
+  color: #4ade80;
+}
+
+.xp-breakdown-label-compact {
+  color: #cbd5e1;
+  flex: 1;
+}
+
+.xp-breakdown-item-compact.total .xp-breakdown-label-compact {
+  color: #4ade80;
+}
+
+.xp-breakdown-xp-compact {
+  color: #fbbf24;
+  font-weight: 700;
+  text-align: right;
+}
+
+.xp-breakdown-item-compact.total .xp-breakdown-xp-compact {
+  color: #4ade80;
+}
+
+.xp-breakdown-divider-compact {
+  height: 1px;
+  background: rgba(168, 126, 45, 0.2);
+  margin: 3px 0;
+}
+
+/* ===== CONTINUE BUTTON ===== */
+
+.battle-result-continue-btn {
+  width: 100%;
+  padding: 14px 28px;
+  font-size: 1rem;
+  font-weight: 700;
+  border: 2px solid #a87e2d;
+  background: linear-gradient(90deg, #a87e2d 0%, #ffe6b0 100%);
+  color: #3a2c4a;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 20px rgba(168, 126, 45, 0.3);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.battle-result-continue-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(168, 126, 45, 0.5);
+  background: linear-gradient(90deg, #ffe6b0 0%, #a87e2d 100%);
+}
+
+.battle-result-continue-btn:active {
+  transform: translateY(0);
+}
+
+/* ===== SCROLLBAR STYLING ===== */
+
+/* Scrollbar do modal principal */
+.battle-result-modal::-webkit-scrollbar {
+  width: 10px;
+}
+
+.battle-result-modal::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+}
+
+.battle-result-modal::-webkit-scrollbar-thumb {
+  background: rgba(168, 126, 45, 0.6);
+  border-radius: 8px;
+  border: 2px solid rgba(0, 0, 0, 0.3);
+}
+
+.battle-result-modal::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 126, 45, 0.8);
+}
+
+/* Scrollbar da lista de kills */
+.kills-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.kills-list::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+}
+
+.kills-list::-webkit-scrollbar-thumb {
+  background: rgba(168, 126, 45, 0.5);
+  border-radius: 6px;
+}
+
+.kills-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 126, 45, 0.7);
+}

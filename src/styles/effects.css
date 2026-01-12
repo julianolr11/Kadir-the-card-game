@@ -1,0 +1,104 @@
+/* Efeitos visuais de batalha: dano, cura, status, escudo */
+
+/* Número flutuante (dano/vida) */
+.effect-float {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -60%);
+  z-index: 120;
+  pointer-events: none;
+  font-family: "Poppins", Arial, sans-serif;
+  font-weight: 800;
+  font-size: 32px;
+  line-height: 1;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.6), 0 0 6px rgba(0,0,0,0.6);
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6));
+  animation: effectFloatUp 900ms ease-out forwards;
+}
+
+.effect-damage.neutral { color: #ffffff; }
+.effect-damage.advantage { color: #7CFF7C; }
+.effect-damage.disadvantage { color: #FF6B6B; }
+
+.effect-heal { color: #7CFFB0; }
+
+@keyframes effectFloatUp {
+  0% { opacity: 1; transform: translate(-50%, -40%) scale(1); }
+  60% { opacity: 1; transform: translate(-50%, -80%) scale(1.12); }
+  100% { opacity: 0; transform: translate(-50%, -110%) scale(0.96); }
+}
+
+/* Pulso de status aplicado */
+.status-pulse {
+  position: absolute;
+  inset: -6%;
+  border-radius: 16px;
+  pointer-events: none;
+  z-index: 110;
+  mix-blend-mode: screen;
+  animation: statusPulse 1000ms ease-out forwards;
+}
+
+.status-pulse.status-burn {
+  background: radial-gradient(circle at 50% 50%, rgba(255,120,60,0.35), rgba(255,120,60,0.0) 60%);
+}
+.status-pulse.status-poison {
+  background: radial-gradient(circle at 50% 50%, rgba(100,255,120,0.35), rgba(100,255,120,0.0) 60%);
+}
+.status-pulse.status-freeze {
+  background: radial-gradient(circle at 50% 50%, rgba(120,200,255,0.35), rgba(120,200,255,0.0) 60%);
+}
+.status-pulse.status-paralyze {
+  background: radial-gradient(circle at 50% 50%, rgba(255,225,100,0.35), rgba(255,225,100,0.0) 60%);
+}
+.status-pulse.status-sleep {
+  background: radial-gradient(circle at 50% 50%, rgba(180,120,255,0.35), rgba(180,120,255,0.0) 60%);
+}
+.status-pulse.status-bleed {
+  background: radial-gradient(circle at 50% 50%, rgba(255,80,80,0.35), rgba(255,80,80,0.0) 60%);
+}
+
+@keyframes statusPulse {
+  0% { opacity: 0.95; transform: scale(0.92); }
+  50% { opacity: 0.65; transform: scale(1.1); }
+  100% { opacity: 0; transform: scale(1.22); }
+}
+
+/* Brilho de escudo ao ser atingido */
+.shield-shimmer {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  pointer-events: none;
+  z-index: 115;
+  overflow: hidden;
+}
+.shield-shimmer::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, rgba(100,220,255,0.0) 20%, rgba(100,220,255,0.45) 50%, rgba(100,220,255,0.0) 80%);
+  filter: blur(2px);
+  transform: translateX(-100%);
+  animation: shieldShimmer 800ms ease-out forwards;
+}
+.shield-shimmer.shield-broken::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 2px solid rgba(100,220,255,0.35);
+  box-shadow: 0 0 18px rgba(100,220,255,0.35) inset;
+  opacity: 0.85;
+  animation: shieldBreakFade 500ms ease-out forwards;
+}
+
+@keyframes shieldShimmer {
+  0% { transform: translateX(-100%); opacity: 0.9; }
+  60% { transform: translateX(30%); opacity: 0.8; }
+  100% { transform: translateX(110%); opacity: 0; }
+}
+@keyframes shieldBreakFade {
+  0% { opacity: 0.9; }
+  100% { opacity: 0; }
+}

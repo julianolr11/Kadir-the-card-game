@@ -256,6 +256,7 @@ function DeckBuilder({ onNavigate }) {
     setActiveGuardian,
     getCardInstances,
     decks,
+    cardCollection,
   } = useContext(AppContext) || {};
   const [slots, setSlots] = useState(Array(MAX_DECKS).fill(null));
   const [openingSlotId, setOpeningSlotId] = useState(null);
@@ -270,6 +271,13 @@ function DeckBuilder({ onNavigate }) {
   const [promptSlotIndex, setPromptSlotIndex] = useState(null);
   const [deckNameInput, setDeckNameInput] = useState('');
   const [showGuardianSelectModal, setShowGuardianSelectModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  // Calcular quantidade total de cartas
+  const totalCards = useMemo(() => {
+    if (!cardCollection) return 0;
+    return Object.values(cardCollection).reduce((sum, instances) => sum + (instances?.length || 0), 0);
+  }, [cardCollection]);
 
   // Abrir editor quando slot pendente for criado
   React.useEffect(() => {
@@ -352,6 +360,14 @@ function DeckBuilder({ onNavigate }) {
 
   function handleCreate(idx) {
     console.log('🎯 handleCreate chamado! idx:', idx);
+
+    // Validar quantidade de cartas
+    if (totalCards < 20) {
+      setErrorMessage(lang === 'en' ? 'Open boosters to collect cards first' : 'Abra boosters para ganhar cartas antes');
+      setTimeout(() => setErrorMessage(''), 3000);
+      return;
+    }
+
     setPromptSlotIndex(idx);
     setDeckNameInput(`Deck ${idx + 1}`);
     setShowNamePrompt(true);
@@ -676,6 +692,28 @@ function DeckBuilder({ onNavigate }) {
           <p>Máximo de 3 decks. Cada deck usa 1 guardião + 20 cartas.</p>
         </div>
       </div>
+
+      {/* Mensagem de erro */}
+      {errorMessage && (
+        <div style={{
+          position: 'fixed',
+          top: '100px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.95), rgba(220, 38, 38, 0.95))',
+          color: '#fff',
+          padding: '16px 24px',
+          borderRadius: '10px',
+          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.6)',
+          fontSize: '15px',
+          fontWeight: '600',
+          zIndex: '1000',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          animation: 'slideInDown 0.3s ease-out forwards'
+        }}>
+          {errorMessage}
+        </div>
+      )}
 
       <div className="deckbuilder-body">
         <div className="deckbuilder-guardian">

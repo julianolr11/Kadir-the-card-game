@@ -10,6 +10,17 @@
   font-family: 'Poppins', Arial, sans-serif;
 }
 
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
 .deckbuilder-header {
   display: flex;
   align-items: center;

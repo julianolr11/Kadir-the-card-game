@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import MenuMusicPlayer from '../components/MenuMusicPlayer';
 import IntroMusicPlayer from '../components/IntroMusicPlayer';
 import LoadingScreen from '../components/LoadingScreen';
@@ -17,6 +17,27 @@ export default function App() {
   const [battleDeck, setBattleDeck] = useState(null);
   const menuMusicRef = useRef(null);
   const introMusicRef = useRef(null);
+
+  // Detectar fullscreen
+  useEffect(() => {
+    const checkFullscreen = () => {
+      const isFullscreen = document.fullscreenElement ||
+                          (document as any).webkitFullscreenElement ||
+                          (document as any).mozFullScreenElement;
+      document.body.classList.toggle('is-fullscreen', !!isFullscreen);
+    };
+
+    // Fullscreen listeners
+    document.addEventListener('fullscreenchange', checkFullscreen);
+    document.addEventListener('webkitfullscreenchange', checkFullscreen);
+    document.addEventListener('mozfullscreenchange', checkFullscreen);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', checkFullscreen);
+      document.removeEventListener('webkitfullscreenchange', checkFullscreen);
+      document.removeEventListener('mozfullscreenchange', checkFullscreen);
+    };
+  }, []);
 
   // Navegação central
   const handleNavigate = (route: string, params?: any) => {

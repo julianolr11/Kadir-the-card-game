@@ -274,12 +274,11 @@
   color: #ffe6b0;
   padding: 12px;
   font-family: 'Segoe UI', sans-serif;
-  width: 1920px;
-  height: 1080px;
+  width: 100vw;
+  height: 100vh;
   position: absolute;
   top: 0;
   left: 50%;
-  transform: translateX(-50%) scale(0.66);
   transform-origin: top center;
   overflow: hidden;
   margin: 0;
@@ -287,9 +286,22 @@
   display: flex;
   align-items: center;
 }
-@media (min-width: 1920px) and (min-height: 1080px) {
+
+@media (max-width: 1280px) and (max-height: 720px) {
   .battle-root {
-    transform: translateX(-50%) scale(1.0);
+    color: #ffe6b0;
+    padding: 12px;
+    font-family: 'Segoe UI', sans-serif;
+    width: 1920px;
+    height: 1080px;
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%) scale(0.66);
+    transform-origin: top center;
+    overflow: hidden;
+    margin: 0;
+    background: radial-gradient(circle at 50% 50%, #1a0f2e, #0d0815, #000000);
   }
 }
 
@@ -1075,13 +1087,13 @@ position: absolute;
 .graveyard-drawer-player {
   transform: translateX(100%);
   right: 0;
-  top: 325px;
+     top: 360px;
 }
 
 .graveyard-drawer-player.open {
     transform: translateX(0);
     right: 0;
-    top: 325px;
+       top: 360px;
 }
 
 .graveyard-drawer-opponent {
@@ -1237,3 +1249,73 @@ position: absolute;
   background: rgba(255, 107, 107, 0.7);
 }
 
+@media (min-width: 1920px) and (min-height: 1080px) {
+  .graveyard-container {
+    position: fixed;
+    right: 0;
+    top: 290px;
+    height: calc(100vh - 510px);
+    z-index: 1200;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    pointer-events: none;
+  }
+}
+
+/* Fullscreen adjustments */
+body.is-fullscreen .graveyard-container {
+  position: fixed;
+  right: 0;
+  top: 290px;
+  height: calc(100vh - 510px);
+  z-index: 1200;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+ .battle-root {
+  color: #ffe6b0;
+  padding: 12px;
+  font-family: 'Segoe UI', sans-serif;
+  width: 100vw;
+  height: 100vh;
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform-origin: top center;
+  overflow: hidden;
+  margin: 0;
+  background: radial-gradient(circle at 50% 50%, #1a0f2e, #0d0815, #000000);
+  display: flex;
+  align-items: center;
+}
+@media (max-width: 1280px) and (max-height: 720px) {
+  .battle-root {
+    color: #ffe6b0;
+    padding: 12px;
+    font-family: 'Segoe UI', sans-serif;
+    width: 1920px;
+    height: 1080px;
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%) scale(0.66);
+    transform-origin: top center;
+    overflow: hidden;
+    margin: 0;
+    background: radial-gradient(circle at 50% 50%, #1a0f2e, #0d0815, #000000);
+  }
+  .graveyard-drawer-player.open {
+    transform: translateX(0);
+    right: 0;
+    top: 330px;
+}
+.graveyard-drawer-player {
+    transform: translateX(0);
+    right: 0;
+    top: 330px;
+}
+}

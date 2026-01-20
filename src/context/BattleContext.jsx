@@ -491,6 +491,15 @@ export function BattleProvider({ children }) {
     setState((s) => {
       if (s.phase !== 'playing') return s;
       if (s.activePlayer !== 'player') return s;
+
+      // Verifica se já invocou 1 campo neste turno
+      if (s.sharedField?.active) {
+        return {
+          ...s,
+          log: [...s.log, 'Você já invocou 1 campo neste turno!'],
+        };
+      }
+
       const hand = [...s.player.hand];
       const cardId = hand[handIndex];
       if (!cardId) return s;
@@ -538,6 +547,15 @@ export function BattleProvider({ children }) {
     playFieldChangeSound();
     setState((s) => {
       if (s.phase !== 'playing') return s;
+
+      // Verifica se já invocou 1 campo neste turno
+      if (s.sharedField?.active) {
+        return {
+          ...s,
+          log: [...s.log, 'IA já invocou 1 campo neste turno!'],
+        };
+      }
+
       const hand = [...s.ai.hand];
       const cardId = hand[handIndex];
       if (!cardId) return s;

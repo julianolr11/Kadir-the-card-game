@@ -610,7 +610,6 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
           <span className="graveyard-toggle-text">CEMITÉRIO</span>
           <span className="graveyard-toggle-count">({state.ai.graveyard?.length || 0})</span>
         </button>
-
         <div className={`graveyard-drawer graveyard-drawer-opponent ${opponentGraveyardOpen ? 'open' : ''}`} onClick={(e) => e.stopPropagation()}>
           <div className="graveyard-drawer-content">
             {state.ai.graveyard && state.ai.graveyard.length > 0 ? (
@@ -631,8 +630,9 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
             )}
           </div>
         </div>
+      </div>
 
-        {/* Container do Cemitério do Jogador */}
+      <div className="graveyard-container graveyard-container-player">
         <button
           className={`graveyard-toggle-btn graveyard-toggle-player${playerGraveyardOpen ? ' active' : ''}`}
           onClick={() => setPlayerGraveyardOpen(!playerGraveyardOpen)}
@@ -640,7 +640,6 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
           <span className="graveyard-toggle-text">CEMITÉRIO</span>
           <span className="graveyard-toggle-count">({state.player.graveyard?.length || 0})</span>
         </button>
-
         <div className={`graveyard-drawer graveyard-drawer-player ${playerGraveyardOpen ? 'open' : ''}`} onClick={(e) => e.stopPropagation()}>
           <div className="graveyard-drawer-content">
             {state.player.graveyard && state.player.graveyard.length > 0 ? (
@@ -1065,9 +1064,6 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
         onClose={() => onNavigate?.('home')}
       />
     )}
-
-
-
   </>);
 }
 

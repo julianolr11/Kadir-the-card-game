@@ -9,6 +9,14 @@ import aguaIcon from '../assets/img/elements/agua.png';
 import terraIcon from '../assets/img/elements/terra.png';
 import arIcon from '../assets/img/elements/ar.png';
 import puroIcon from '../assets/img/elements/puro.png';
+import burnIcon from '../assets/img/icons/burn.png';
+import freezeIcon from '../assets/img/icons/freeze.png';
+import paralyzeIcon from '../assets/img/icons/paralyze.png';
+import poisonIcon from '../assets/img/icons/poison.png';
+import sleepIcon from '../assets/img/icons/sleep.png';
+import bleedIcon from '../assets/img/icons/bleed.png';
+import shieldIcon from '../assets/img/icons/shield.png';
+import soulEssence from '../assets/img/icons/soul-essence.png';
 import '../styles/deckbuilder.css';
 
 const ALL_CARD_IDS = [
@@ -31,8 +39,106 @@ const getCardData = (cardId) => {
   }
 };
 
+// Mapa de cores para status
+const STATUS_COLORS = {
+  burn: '#ff6464',
+  freeze: '#64b5ff',
+  paralyze: '#ffff64',
+  poison: '#9664ff',
+  sleep: '#c896ff',
+  bleed: '#ff6464',
+  armor: '#4169e1',
+};
+
+// Mapa básico de perks para exibição
+const PERK_DATA = {
+  HP_PLUS_1: {
+    name: { pt: '+1 Vida', en: '+1 HP' },
+    desc: { pt: 'Inicia com +1 de vida', en: 'Start with +1 HP' },
+  },
+  HP_PLUS_2: {
+    name: { pt: '+2 Vida', en: '+2 HP' },
+    desc: { pt: 'Inicia com +2 de vida', en: 'Start with +2 HP' },
+  },
+  FIRST_ROUND_SHIELD: {
+    name: { pt: 'Escudo Inicial', en: 'Initial Shield' },
+    desc: { pt: 'Recebe escudo no 1º turno', en: 'Gain shield on 1st turn' },
+  },
+  ARMOR_PLUS_2: {
+    name: { pt: 'Pele Impenetrável', en: 'Impenetrable Skin' },
+    desc: { pt: 'Ganha 2 de armadura', en: 'Gains 2 armor' },
+  },
+  KILL_XP_BONUS_10: {
+    name: { pt: '+10% XP', en: '+10% XP' },
+    desc: { pt: '+10% XP por abate do guardião', en: '+10% XP per guardian kill' },
+  },
+};
+
+// Função para renderizar displayText com ícones e cores
+const renderDisplayText = (displayText, langKey = 'pt') => {
+  if (!displayText) return null;
+  const text = typeof displayText === 'object' ? displayText[langKey] : displayText;
+  if (!text) return null;
+
+  return (
+    <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.4' }}>
+      {text
+        .split('\n')
+        .map((line, idx) => {
+          if (/^\d+\s+essências?$/i.test(line.trim())) return null;
+          if (/\[habilidade\]|\[ability\]|\[perk\]/i.test(line)) return null;
+          if (/^(nv|lv)\s+\d+\s*-/i.test(line.trim())) return null;
+
+          let rendered = line;
+          rendered = rendered.replace(/🔥/g, `<img src="${burnIcon}" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ${STATUS_COLORS.burn}; font-weight: 600;">queimadura</span>`);
+          rendered = rendered.replace(/❄️/g, `<img src="${freezeIcon}" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ${STATUS_COLORS.freeze}; font-weight: 600;">congelamento</span>`);
+          rendered = rendered.replace(/⚡/g, `<img src="${paralyzeIcon}" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ${STATUS_COLORS.paralyze}; font-weight: 600;">paralisia</span>`);
+          rendered = rendered.replace(/☠️/g, `<img src="${poisonIcon}" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ${STATUS_COLORS.poison}; font-weight: 600;">veneno</span>`);
+          rendered = rendered.replace(/😴/g, `<img src="${sleepIcon}" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ${STATUS_COLORS.sleep}; font-weight: 600;">sono</span>`);
+          rendered = rendered.replace(/🩸/g, `<img src="${bleedIcon}" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ${STATUS_COLORS.bleed}; font-weight: 600;">sangramento</span>`);
+          rendered = rendered.replace(/🛡️/g, `<img src="${shieldIcon}" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ${STATUS_COLORS.armor}; font-weight: 600;">armadura</span>`);
+
+          let colored = rendered;
+          if (!rendered.includes('queimadura</span>')) {
+            colored = colored.replace(/queimadura/gi, `<span style="color: ${STATUS_COLORS.burn}; font-weight: 600;">queimadura</span>`);
+          }
+          if (!rendered.includes('congelamento</span>')) {
+            colored = colored.replace(/congelamento/gi, `<span style="color: ${STATUS_COLORS.freeze}; font-weight: 600;">congelamento</span>`);
+          }
+          if (!rendered.includes('paralisia</span>')) {
+            colored = colored.replace(/paralisia/gi, `<span style="color: ${STATUS_COLORS.paralyze}; font-weight: 600;">paralisia</span>`);
+          }
+          if (!rendered.includes('veneno</span>')) {
+            colored = colored.replace(/veneno/gi, `<span style="color: ${STATUS_COLORS.poison}; font-weight: 600;">veneno</span>`);
+          }
+          if (!rendered.includes('sono</span>')) {
+            colored = colored.replace(/sono/gi, `<span style="color: ${STATUS_COLORS.sleep}; font-weight: 600;">sono</span>`);
+          }
+          if (!rendered.includes('sangramento</span>')) {
+            colored = colored.replace(/sangramento/gi, `<span style="color: ${STATUS_COLORS.bleed}; font-weight: 600;">sangramento</span>`);
+          }
+          if (!rendered.includes('armadura</span>')) {
+            colored = colored.replace(/armadura/gi, `<span style="color: ${STATUS_COLORS.armor}; font-weight: 600;">armadura</span>`);
+          }
+
+          if (!colored.trim()) return null;
+          return <div key={idx} dangerouslySetInnerHTML={{ __html: colored }} />;
+        })
+        .filter(Boolean)}
+    </div>
+  );
+};
+
+// Função auxiliar para obter texto traduzido
+const getName = (nameObj, lang = 'ptbr') => {
+  if (!nameObj) return '';
+  if (typeof nameObj === 'string') return nameObj;
+  const key = lang === 'en' ? 'en' : 'pt';
+  return nameObj[key] || nameObj.pt || nameObj.en || '';
+};
+
 function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCards = [], onClose, onSave }) {
-  const { lang = 'ptbr', getCardInstances, cardCollection } = React.useContext(AppContext) || {};
+  const { lang = 'ptbr', getCardInstances, cardCollection, saveGuardianLoadout, loadGuardianLoadout } = React.useContext(AppContext) || {};
   const langKey = lang === 'en' ? 'en' : 'pt';
   const [deckName, setDeckName] = useState(initialDeckName || `Deck ${deckId}`);
   const [editingName, setEditingName] = useState(false);
@@ -54,6 +160,11 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
   const [instanceSlotIndex, setInstanceSlotIndex] = useState(null);
   const [hoveredCardForInstances, setHoveredCardForInstances] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const [showCardLoadoutModal, setShowCardLoadoutModal] = useState(false);
+  const [editingCardId, setEditingCardId] = useState(null);
+  const [editingCardData, setEditingCardData] = useState(null);
+  const [editingSelectedSkills, setEditingSelectedSkills] = useState([null, null]);
+  const [editingSelectedPerk, setEditingSelectedPerk] = useState(null);
   const successSoundRef = useRef(null);
   const errorSoundRef = useRef(null);
   const isFirstRender = useRef(true);
@@ -231,6 +342,29 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
     return cards;
   }, [cardCollection, searchTerm, elementFilter, typeFilter, sortBy, langKey, selectedGuardian]);
 
+  const openCardLoadout = (cardId) => {
+    const data = getCardData(cardId);
+    if (!data) return;
+    setEditingCardId(cardId);
+    setEditingCardData(data);
+    const existing = loadGuardianLoadout ? loadGuardianLoadout(cardId) : null;
+    setEditingSelectedSkills(existing?.selectedSkills || [null, null]);
+    setEditingSelectedPerk(existing?.selectedPerk || null);
+    setShowCardLoadoutModal(true);
+  };
+
+  const saveCardLoadout = () => {
+    if (saveGuardianLoadout && editingCardId) {
+      saveGuardianLoadout(editingCardId, {
+        selectedSkills: editingSelectedSkills.filter(Boolean).slice(0, 2),
+        selectedPerk: editingSelectedPerk || null,
+      });
+    }
+    setShowCardLoadoutModal(false);
+    setEditingCardId(null);
+    setEditingCardData(null);
+  };
+
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
@@ -377,7 +511,8 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
               return (
                 <div key={idx} className={`deck-slot ${cardData ? 'filled' : 'empty'} ${isDragOver ? (canDrop ? 'drag-over-valid' : 'drag-over-invalid') : ''}`} onDragOver={(e) => handleDragOver(e, idx)} onDrop={(e) => handleDrop(e, idx)} onDragLeave={() => setDragOverSlot(null)}>
                   {cardData ? (
-                    <div className="deck-slot-card" draggable onDragStart={(e) => handleDragStart(e, instance.cardId, true, instanceId)} onDragEnd={handleDragEnd} onClick={() => removeCardFromDeck(idx)}>
+                    <>
+                    <div className="deck-slot-card" draggable onDragStart={(e) => handleDragStart(e, instance.cardId, true, instanceId)} onDragEnd={handleDragEnd}>
                       {cardData.id === 'f001' ? (
                         <div className="slider-card-wrapper active" style={{ transform: 'scale(0.27)', transformOrigin: 'center', pointerEvents: 'none' }}>
                           <div className="card-preview card-preview-field">
@@ -408,6 +543,30 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
                         </div>
                       )}
                     </div>
+                    {/* Ações: ícones Editar + Remover lado a lado (visíveis apenas no hover) */}
+                    <div className="deck-slot-actions">
+                      {(() => {
+                        const isField = cardData.id === 'f001' || /^f\d{3}$/i.test(cardData.id) || (cardData.category && String(cardData.category).toLowerCase().includes('campo'));
+                        return (
+                          <button
+                            className="deck-action-btn deck-action-edit"
+                            disabled={isField}
+                            onClick={(e) => { e.stopPropagation(); if (!isField) openCardLoadout(instance.cardId); }}
+                            title={isField ? 'Carta de campo não possui habilidades editáveis' : 'Editar habilidades'}
+                          >
+                            ✎
+                          </button>
+                        );
+                      })()}
+                      <button
+                        className="deck-action-btn deck-action-remove"
+                        onClick={(e) => { e.stopPropagation(); removeCardFromDeck(idx); }}
+                        title="Remover do deck"
+                      >
+                        −
+                      </button>
+                    </div>
+                    </>
                   ) : (
                     <div className="deck-slot-placeholder"><span className="deck-slot-plus">+</span></div>
                   )}
@@ -460,7 +619,7 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
             const displayLevel = bestAvailableInstance?.level || 1;
             const displayIsHolo = bestAvailableInstance?.isHolo || false;
             return (
-              <div key={card.id} className={`deck-library-card ${isDisabled ? 'disabled' : ''} ${draggedCardId === card.id ? 'dragging' : ''} ${hasMultipleInstances ? 'has-multiple-instances' : ''} ${countInDeck > 0 ? 'selected' : ''}`} draggable={!isDisabled} onDragStart={(e) => !isDisabled && handleDragStart(e, card.id, false)} onDragEnd={handleDragEnd} onMouseEnter={(e) => { setHoveredCard(card.data); setHoveredCardId(card.id); if (hasMultipleInstances) { setHoveredCardForInstances(card.id); const rect = e.currentTarget.getBoundingClientRect(); setTooltipPosition({ x: rect.right + 10, y: rect.top }); } }} onMouseLeave={() => { setHoveredCard(null); setHoveredCardId(null); setHoveredCardForInstances(null); }} onClick={() => !isDisabled && addCardToDeck(card.id)} style={{ animationDelay: `${idx * 50}ms` }}>
+              <div key={card.id} className={`deck-library-card ${isDisabled ? 'disabled' : ''} ${draggedCardId === card.id ? 'dragging' : ''} ${hasMultipleInstances ? 'has-multiple-instances' : ''} ${countInDeck > 0 ? 'selected' : ''}`} draggable={!isDisabled} onDragStart={(e) => !isDisabled && handleDragStart(e, card.id, false)} onDragEnd={handleDragEnd} onMouseEnter={(e) => { setHoveredCard(card.data); setHoveredCardId(card.id); if (hasMultipleInstances) { setHoveredCardForInstances(card.id); const rect = e.currentTarget.getBoundingClientRect(); setTooltipPosition({ x: rect.right + 10, y: rect.top }); } }} onMouseLeave={() => { setHoveredCard(null); setHoveredCardId(null); setHoveredCardForInstances(null); }} style={{ animationDelay: `${idx * 50}ms`, position: 'relative' }}>
                 {card.data.id === 'f001' ? (
                   <div className="slider-card-wrapper active" style={{ transform: 'scale(0.25)', transformOrigin: 'top left', pointerEvents: 'none' }}>
                     <div className="card-preview card-preview-field">
@@ -492,6 +651,33 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
                 )}
                 <div className="deck-library-card-count">{countInDeck}/{availableCount + countInDeck}</div>
                 {hasMultipleInstances && availableCount > 0 && (<div className="multiple-instances-indicator" title="Múltiplas cópias disponíveis">{availableCount}x</div>)}
+                {/* Ações: ícones Editar + Adicionar lado a lado (visíveis apenas no hover) */}
+                <div className="deck-library-actions">
+                  {(() => {
+                    const isField = (() => {
+                      const id = card.id?.toString().toLowerCase();
+                      return /^f\d{3}$/.test(card.id) || id?.startsWith('field_') || (card.data?.category && String(card.data.category).toLowerCase().includes('campo'));
+                    })();
+                    return (
+                      <button
+                        className="deck-action-btn deck-action-edit"
+                        disabled={isField}
+                        onClick={(e) => { e.stopPropagation(); if (!isField) openCardLoadout(card.id); }}
+                        title={isField ? 'Carta de campo não possui habilidades editáveis' : 'Editar habilidades'}
+                      >
+                        ✎
+                      </button>
+                    );
+                  })()}
+                  <button
+                    className="deck-action-btn deck-action-add"
+                    disabled={isDisabled}
+                    onClick={(e) => { e.stopPropagation(); if (!isDisabled) addCardToDeck(card.id); }}
+                    title="Adicionar ao deck"
+                  >
+                    +
+                  </button>
+                </div>
               </div>
             );
           })}
@@ -503,42 +689,7 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
             <div className="instances-tooltip-hint">Clique para selecionar qual usar</div>
           </div>
         )}
-        {hoveredCard && hoveredCardId && (
-          <div className="deck-card-preview-hover">
-            {hoveredCard.id === 'f001' ? (
-              <div className="slider-card-wrapper active">
-                <div className="card-preview card-preview-field">
-                  <div className="card-preview-header">
-                    <span className="card-preview-name">Campo em Reuínas</span>
-                    <span className="card-preview-id">#f001</span>
-                  </div>
-                  <div className="card-preview-art-wrapper">
-                    <img alt="Campo em Reuínas" className="card-preview-art" src={require(`../assets/${hoveredCard.image}`)} />
-                  </div>
-                  <div className="card-preview-field-desc">
-                    <strong>Descrição:</strong>
-                    <div style={{whiteSpace: 'pre-line'}}>Energias ancestrais despertam e fortalecem monstros e seres puros. Apenas os dignos sentirão o poder fluir sob seus pés.</div>
-                    <div className="card-preview-field-effects">
-                      <strong>Efeitos:</strong>
-                      <ul>
-                        <li>Criaturas do elemento <b>puro</b>: +1 Dano / +1 HP</li>
-                        <li>Criaturas do tipo <b>monstro</b>: +1 Dano / +1 HP</li>
-                        <li><b>Puras e Monstros</b>: +2 Dano / +2 HP</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              (() => {
-                const bestInstance = getBestInstance(hoveredCardId);
-                return (
-                  <CreatureCardPreview creature={hoveredCard} onClose={null} level={bestInstance?.level || 1} isHolo={bestInstance?.isHolo || false} allowFlip={false} />
-                );
-              })()
-            )}
-          </div>
-        )}
+        {/* Ghost/hover preview removido para não atrapalhar o fluxo no deckbuilder */}
         {showSavedToast && <div className="deck-saved-toast">✓ Salvo</div>}
         {showDeckIncompleteWarning && (
           <div
@@ -601,6 +752,163 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
         )}
         {showInstanceSelector && selectedCardForInstance && (
           <CardInstanceSelector cardId={selectedCardForInstance} cardData={getCardData(selectedCardForInstance)} instances={getAvailableInstances(selectedCardForInstance)} onSelect={handleInstanceSelected} onClose={() => setShowInstanceSelector(false)} title={lang === 'ptbr' ? 'Selecione uma cópia para o deck' : 'Select a card copy for deck'} lang={lang} />
+        )}
+
+        {/* Modal de Loadout para Criatura */}
+        {showCardLoadoutModal && editingCardData && editingCardId && (
+          <div className="loadout-modal-overlay" onClick={() => setShowCardLoadoutModal(false)}>
+            <div className="loadout-modal-content" onClick={(e) => e.stopPropagation()}>
+              <button className="loadout-modal-close" onClick={() => setShowCardLoadoutModal(false)}>✕</button>
+              <div className="loadout-modal-body">
+                {/* Carta à esquerda */}
+                <div className="loadout-modal-left">
+                  <div className="loadout-card-block">
+                    <div className="loadout-card-scale">
+                      {(() => {
+                        // Preview com habilidades selecionadas
+                        const skillsPool = [
+                          ...(Array.isArray(editingCardData.defaultSkills) ? editingCardData.defaultSkills : []),
+                          ...(Array.isArray(editingCardData.unlockTable) ? editingCardData.unlockTable.filter(x => x.type === 'skill') : []),
+                        ];
+                        const selectedAbilities = editingSelectedSkills
+                          .filter(Boolean)
+                          .map((skillId) => {
+                            const s = skillsPool.find((x) => x.id === skillId);
+                            if (!s) return null;
+                            return {
+                              name: s.name,
+                              desc: s.displayText || s.desc,
+                              cost: s.cost || 1,
+                            };
+                          })
+                          .filter(Boolean);
+                        const creaturePreviewData = {
+                          ...editingCardData,
+                          abilities: selectedAbilities.length > 0 ? selectedAbilities : (editingCardData.defaultSkills || []).slice(0, 2),
+                        };
+                        return (
+                          <CreatureCardPreview creature={creaturePreviewData} onClose={null} level={1} isHolo={false} allowFlip />
+                        );
+                      })()}
+                    </div>
+                  </div>
+                </div>
+                {/* Lista de habilidades à direita */}
+                <div className="loadout-modal-right">
+                  <div className="loadout-modal-header">
+                    <h3>Configurar Carta</h3>
+                  </div>
+                  {(() => {
+                    const unlocks = [];
+                    const seen = new Set();
+                    const pushSkill = (skill, level = 0, isDefault = false) => {
+                      if (!skill?.id || seen.has(skill.id)) return;
+                      unlocks.push({
+                        level,
+                        type: 'skill',
+                        id: skill.id,
+                        name: skill.name,
+                        desc: skill.desc,
+                        displayText: skill.displayText,
+                        cost: skill.cost || 1,
+                        isDefault,
+                      });
+                      seen.add(skill.id);
+                    };
+                    const pushPerk = (perkUnlock) => {
+                      if (!perkUnlock?.id || seen.has(perkUnlock.id)) return;
+                      unlocks.push({
+                        level: perkUnlock.level,
+                        type: 'perk',
+                        id: perkUnlock.id,
+                        name: PERK_DATA[perkUnlock.id]?.name || perkUnlock.name || { pt: 'Perk', en: 'Perk' },
+                        desc: PERK_DATA[perkUnlock.id]?.desc || perkUnlock.desc || { pt: '', en: '' },
+                        displayText: perkUnlock.displayText,
+                      });
+                      seen.add(perkUnlock.id);
+                    };
+                    // Default skills nível 0
+                    (editingCardData.defaultSkills || []).forEach((s) => pushSkill(s, 0, true));
+                    // unlockTable skills/perks
+                    (editingCardData.unlockTable || []).forEach((u) => {
+                      if (u.type === 'skill') pushSkill(u, u.level, false);
+                      else if (u.type === 'perk') pushPerk(u);
+                    });
+                    unlocks.sort((a, b) => a.level - b.level);
+
+                    const instances = getCardInstances(editingCardId) || [];
+                    const maxLevel = instances.length > 0 ? Math.max(...instances.map(i => i.level || 0)) : 0;
+
+                    return (
+                      <>
+                        <div className="loadout-section">
+                          <div className="loadout-section-header">
+                            <div className="loadout-section-label">
+                              Habilidades e Perks (Escolha 2 habilidades + 1 perk)
+                            </div>
+                            <div className="loadout-selected-count">
+                              Habilidades: {editingSelectedSkills.filter((s) => s).length}/2 | Perk: {editingSelectedPerk ? '1/1' : '0/1'}
+                            </div>
+                          </div>
+                          <div className="loadout-skill-scroll">
+                            {unlocks.map((unlock, idx) => {
+                              const isUnlocked = (typeof unlock.level !== 'number') || (unlock.level <= maxLevel);
+                              const isSkill = unlock.type === 'skill';
+                              const isPerk = unlock.type === 'perk';
+                              const isSkillSelected = isSkill && editingSelectedSkills.includes(unlock.id);
+                              const isPerkSelected = isPerk && editingSelectedPerk === unlock.id;
+                              const isSelected = isSkillSelected || isPerkSelected;
+                              return (
+                                <div
+                                  key={idx}
+                                  className={`loadout-skill-item ${!isUnlocked ? 'locked' : ''} ${isSelected ? 'selected' : ''} ${isPerk ? 'perk' : ''}`}
+                                  onClick={() => {
+                                    if (!isUnlocked) return;
+                                    if (isSkill) {
+                                      if (isSkillSelected) {
+                                        setEditingSelectedSkills(editingSelectedSkills.map((s) => s === unlock.id ? null : s));
+                                      } else if (editingSelectedSkills.filter(Boolean).length < 2) {
+                                        const next = [...editingSelectedSkills];
+                                        const emptyIdx = next.findIndex((s) => !s);
+                                        next[emptyIdx] = unlock.id;
+                                        setEditingSelectedSkills(next);
+                                      }
+                                    } else if (isPerk) {
+                                      setEditingSelectedPerk(isPerkSelected ? null : unlock.id);
+                                    }
+                                  }}
+                                >
+                                  <div className="loadout-skill-level">Nv. {unlock.level ?? 0}</div>
+                                  <div className="loadout-skill-name">
+                                    {getName(unlock.name, lang)}
+                                    {isSkill && (<span className="loadout-skill-badge"> [HABILIDADE]</span>)}
+                                    {isPerk && (<span className="loadout-perk-badge"> [PERK]</span>)}
+                                  </div>
+                                  <div className="loadout-skill-desc">
+                                    {unlock.displayText ? renderDisplayText(unlock.displayText, langKey) : getName(unlock.desc, lang)}
+                                  </div>
+                                  {isSkill && unlock.cost && (
+                                    <div className="loadout-skill-cost">
+                                      {[...Array(unlock.cost)].map((_, i) => (
+                                        <img key={i} src={soulEssence} alt="Essência" className="loadout-essence-icon" />
+                                      ))}
+                                    </div>
+                                  )}
+                                  {!isUnlocked && (<div className="loadout-skill-locked">🔒</div>)}
+                                  {isSelected && (<div className="loadout-skill-check">✓</div>)}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                        <button className="loadout-save-btn" onClick={saveCardLoadout}>Salvar Configuração</button>
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

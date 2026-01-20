@@ -328,6 +328,12 @@
   background: rgba(30, 20, 10, 0.85);
 }
 
+.card-preview-effect-indicator.shield {
+  border-color: rgba(100, 200, 255, 0.8);
+  background: rgba(10, 30, 50, 0.9);
+  box-shadow: 0 2px 8px #000a, 0 0 12px rgba(100, 200, 255, 0.5);
+}
+
 .card-preview-effect-indicator.burn {
   border-color: rgba(255, 100, 50, 0.6);
   background: rgba(40, 20, 10, 0.85);

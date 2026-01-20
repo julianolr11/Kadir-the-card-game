@@ -129,6 +129,8 @@ function CreatureCardPreview({
   poison = 0,
   sleep = 0,
   bleed = 0,
+  shield = 0,
+  shieldTurns = 0,
   onAbilityClick = null,
   currentHp = null,
   maxHp = null,
@@ -215,6 +217,12 @@ function CreatureCardPreview({
                 draggable={false}
               />
               <div className="card-preview-effects-container">
+                {shield > 0 && (
+                  <div className="card-preview-effect-indicator shield">
+                    <img src={shieldIcon} alt="Escudo" className="effect-icon" />
+                    <span className="effect-value">{shieldTurns || shield}</span>
+                  </div>
+                )}
                 {armor > 0 && (
                   <div className="card-preview-effect-indicator armor">
                     <img src={shieldIcon} alt="Armadura" className="effect-icon" />

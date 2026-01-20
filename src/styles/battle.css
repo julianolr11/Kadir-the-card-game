@@ -1004,7 +1004,7 @@ position: absolute;
   writing-mode: sideways-lr;
   text-orientation: mixed;
   cursor: pointer;
-  transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
   border-radius: 8px;
   font-family: "Poppins", Arial, sans-serif;
@@ -1028,6 +1028,7 @@ position: absolute;
 .graveyard-toggle-opponent,
 .graveyard-toggle-player {
   transform: translateX(0);
+  transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 /* Sync handle with drawer open state */
@@ -1085,29 +1086,37 @@ position: absolute;
 }
 
 .graveyard-drawer-player {
-  transform: translateX(100%);
+  transform: translateX(calc(100% + 20px));
   right: 0;
-     top: 360px;
+  top: 360px;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .graveyard-drawer-player.open {
-    transform: translateX(0);
-    right: 0;
-       top: 360px;
+  transform: translateX(0);
+  right: 0;
+  top: 360px;
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .graveyard-drawer-opponent {
-  transform: translateX(100%);
+  transform: translateX(calc(100% + 20px));
   top: -35px;
   right: 0;
   height: 220px;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .graveyard-drawer-opponent.open {
-    transform: translateX(0);
-    top: -35px;
-    right: 0;
-    height: 220px;
+  transform: translateX(0);
+  top: -35px;
+  right: 0;
+  height: 220px;
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .graveyard-drawer-header {

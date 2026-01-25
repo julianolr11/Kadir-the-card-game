@@ -27,6 +27,26 @@ export default function App() {
       document.body.classList.toggle('is-fullscreen', !!isFullscreen);
     };
 
+    // Aplicar configurações salvas ao iniciar
+    const savedResolution = localStorage.getItem('resolution');
+    const savedFullscreen = localStorage.getItem('fullscreen');
+
+    if (savedResolution || savedFullscreen) {
+      const res = savedResolution || '1280x720';
+      const isFull = savedFullscreen === 'true';
+
+      const width = res === '1920x1080' ? 1920 : 1280;
+      const height = res === '1920x1080' ? 1080 : 720;
+
+      if (window.electron && window.electron.ipcRenderer) {
+        window.electron.ipcRenderer.sendMessage('set-resolution', {
+          width,
+          height,
+          fullscreen: isFull,
+        });
+      }
+    }
+
     // Fullscreen listeners
     document.addEventListener('fullscreenchange', checkFullscreen);
     document.addEventListener('webkitfullscreenchange', checkFullscreen);

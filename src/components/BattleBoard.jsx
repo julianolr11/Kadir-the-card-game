@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { BattleProvider, useBattle } from '../context/BattleContext';
 import { AppContext } from '../context/AppContext';
 import CreatureCardPreview from './CreatureCardPreview.jsx';
@@ -34,8 +34,8 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
   const [selectedCreature, setSelectedCreature] = React.useState(null); // { slotIndex, creature } - abre modal de habilidades
   const [selectedAbility, setSelectedAbility] = React.useState(null); // { slotIndex, abilityIndex } - entra em modo targeting
   const [selectedFieldCreature, setSelectedFieldCreature] = React.useState(null); // { slotIndex, creature } - preview da carta em campo
-  const [playerGraveyardOpen, setPlayerGraveyardOpen] = React.useState(false);
-  const [opponentGraveyardOpen, setOpponentGraveyardOpen] = React.useState(false);
+  // Estado unificado para o drawer do cemitério
+  const [graveyardOpen, setGraveyardOpen] = React.useState(false);
 
   // estilos simples para modal centralizado
   const turnModalBgStyle = {
@@ -303,6 +303,12 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
             allowFlip={false}
             currentHp={slotData?.hp}
             maxHp={slotData?.maxHp || data?.hp}
+            burn={(slotData?.statusEffects || []).find(e => e.type === 'burn')?.duration || 0}
+            freeze={(slotData?.statusEffects || []).find(e => e.type === 'freeze')?.duration || 0}
+            paralyze={(slotData?.statusEffects || []).find(e => e.type === 'paralyze')?.duration || 0}
+            poison={(slotData?.statusEffects || []).find(e => e.type === 'poison')?.duration || 0}
+            sleep={(slotData?.statusEffects || []).find(e => e.type === 'sleep')?.duration || 0}
+            bleed={(slotData?.statusEffects || []).find(e => e.type === 'bleed')?.duration || 0}
           />
         </div>
       </div>
@@ -570,7 +576,8 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
       return () => clearTimeout(t);
     }
   }, [boardBg]);
-  return (<>
+  return (
+    <>
     <div className="battle-root">
       <div className="battle-topbar">
         <button className="battle-exit" onClick={() => onNavigate?.('home')}>Sair</button>
@@ -601,66 +608,75 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
 
       </div>
 
-      {/* Container do Cemitério do Oponente */}
-      <div className="graveyard-container graveyard-container-opponent">
+
+      {/* Cemitério Unificado */}
+      <div className="graveyard-container graveyard-container-unified">
         <button
-          className={`graveyard-toggle-btn graveyard-toggle-opponent${opponentGraveyardOpen ? ' active' : ''}`}
-          onClick={() => setOpponentGraveyardOpen(!opponentGraveyardOpen)}
+          className={`graveyard-toggle-btn graveyard-toggle-unified${graveyardOpen ? ' active open' : ''}`}
+          onClick={() => setGraveyardOpen(o => !o)}
         >
           <span className="graveyard-toggle-text">CEMITÉRIO</span>
-          <span className="graveyard-toggle-count">({state.ai.graveyard?.length || 0})</span>
+          <span className="graveyard-toggle-count">{(state.ai.graveyard?.length || 0) + (state.player.graveyard?.length || 0)}</span>
         </button>
-        <div className={`graveyard-drawer graveyard-drawer-opponent ${opponentGraveyardOpen ? 'open' : ''}`} onClick={(e) => e.stopPropagation()}>
+        <div className={`graveyard-drawer graveyard-drawer-unified${graveyardOpen ? ' open' : ''}`} onClick={e => e.stopPropagation()}>
           <div className="graveyard-drawer-content">
-            {state.ai.graveyard && state.ai.graveyard.length > 0 ? (
-              state.ai.graveyard.map((creature, idx) => {
-                const cardData = getCardData(creature.id);
-                return (
-                  <div className="graveyard-card-wrapper" key={idx}>
-                    <CreatureCardPreview
-                      creature={cardData}
-                      level={0}
-                      allowFlip={false}
-                    />
-                  </div>
-                );
-              })
-            ) : (
-              <div className="graveyard-drawer-empty">Nenhuma criatura derrotada</div>
-            )}
+            {/* Linha do cemitério do oponente */}
+            <div className="graveyard-row graveyard-row-opponent">
+              <span className="graveyard-row-label">Oponente:</span>
+              {state.ai.graveyard && state.ai.graveyard.length > 0 ? (
+                state.ai.graveyard.map((creature, idx) => {
+                  const cardData = getCardData(creature.id);
+                  return (
+                    <div className="graveyard-card-wrapper" key={idx}>
+                      <CreatureCardPreview
+                        creature={cardData}
+                        level={0}
+                        allowFlip={false}
+                        burn={(creature?.statusEffects || []).find(e => e.type === 'burn')?.duration || 0}
+                        freeze={(creature?.statusEffects || []).find(e => e.type === 'freeze')?.duration || 0}
+                        paralyze={(creature?.statusEffects || []).find(e => e.type === 'paralyze')?.duration || 0}
+                        poison={(creature?.statusEffects || []).find(e => e.type === 'poison')?.duration || 0}
+                        sleep={(creature?.statusEffects || []).find(e => e.type === 'sleep')?.duration || 0}
+                        bleed={(creature?.statusEffects || []).find(e => e.type === 'bleed')?.duration || 0}
+                      />
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="graveyard-drawer-empty">Nenhuma criatura derrotada</div>
+              )}
+            </div>
+            {/* Linha do cemitério do usuário */}
+            <div className="graveyard-row graveyard-row-player">
+              <span className="graveyard-row-label">Você:</span>
+              {state.player.graveyard && state.player.graveyard.length > 0 ? (
+                state.player.graveyard.map((creature, idx) => {
+                  const cardData = getCardData(creature.id);
+                  return (
+                    <div className="graveyard-card-wrapper" key={idx}>
+                      <CreatureCardPreview
+                        creature={cardData}
+                        level={0}
+                        allowFlip={false}
+                        burn={(creature?.statusEffects || []).find(e => e.type === 'burn')?.duration || 0}
+                        freeze={(creature?.statusEffects || []).find(e => e.type === 'freeze')?.duration || 0}
+                        paralyze={(creature?.statusEffects || []).find(e => e.type === 'paralyze')?.duration || 0}
+                        poison={(creature?.statusEffects || []).find(e => e.type === 'poison')?.duration || 0}
+                        sleep={(creature?.statusEffects || []).find(e => e.type === 'sleep')?.duration || 0}
+                        bleed={(creature?.statusEffects || []).find(e => e.type === 'bleed')?.duration || 0}
+                      />
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="graveyard-drawer-empty">Nenhuma criatura derrotada</div>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="graveyard-container graveyard-container-player">
-        <button
-          className={`graveyard-toggle-btn graveyard-toggle-player${playerGraveyardOpen ? ' active' : ''}`}
-          onClick={() => setPlayerGraveyardOpen(!playerGraveyardOpen)}
-        >
-          <span className="graveyard-toggle-text">CEMITÉRIO</span>
-          <span className="graveyard-toggle-count">({state.player.graveyard?.length || 0})</span>
-        </button>
-        <div className={`graveyard-drawer graveyard-drawer-player ${playerGraveyardOpen ? 'open' : ''}`} onClick={(e) => e.stopPropagation()}>
-          <div className="graveyard-drawer-content">
-            {state.player.graveyard && state.player.graveyard.length > 0 ? (
-              state.player.graveyard.map((creature, idx) => {
-                const cardData = getCardData(creature.id);
-                return (
-                  <div className="graveyard-card-wrapper" key={idx}>
-                    <CreatureCardPreview
-                      creature={cardData}
-                      level={0}
-                      allowFlip={false}
-                    />
-                  </div>
-                );
-              })
-            ) : (
-              <div className="graveyard-drawer-empty">Nenhuma criatura derrotada</div>
-            )}
-          </div>
-        </div>
-      </div>
+      {/* Fim do drawer do cemitério */}
 
       <div
         className={`board ${fieldAnimating || overlayBg ? 'field-animating' : ''}`}
@@ -675,6 +691,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
       >
         {(fieldAnimating || overlayBg) && <div className="field-pulse" />}
         <div className="turn-indicator">Turno {state.turn}</div>
+              {/* Fim do drawer do cemitério */}
         <div className="side ai-side">
           <div className="side-header">
             <div className="side-left">{renderOrbs(state.ai.orbs)}</div>
@@ -1056,6 +1073,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
       />
     )}
     {state.phase === 'ended' && state.gameResult && (
+
       <BattleResultModal
         gameResult={state.gameResult}
         killFeed={state.killFeed}
@@ -1064,7 +1082,8 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
         onClose={() => onNavigate?.('home')}
       />
     )}
-  </>);
+    </>
+  );
 }
 
 export default function BattleBoard({ onNavigate, selectedDeck, menuMusicRef }) {

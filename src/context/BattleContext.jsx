@@ -1,4 +1,4 @@
-﻿import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import creaturesPool from '../assets/cards';
 import { chooseAction } from '../logic/ai';
 import { AppContext } from './AppContext';
@@ -152,6 +152,7 @@ export function BattleProvider({ children }) {
       deck: [],
       hand: [],
       field: { slots: [null, null, null], effects: [null, null, null] },
+      fieldGraveyard: [],
     },
     ai: {
       orbs: 5,
@@ -159,6 +160,7 @@ export function BattleProvider({ children }) {
       deck: [],
       hand: [],
       field: { slots: [null, null, null], effects: [null, null, null] },
+      fieldGraveyard: [],
     },
     sharedField: { active: false, id: null },
     log: [],
@@ -241,8 +243,8 @@ export function BattleProvider({ children }) {
       turn: 1,
       activePlayer: 'player',
       creaturesInvokedThisTurn: 0,
-      player: { orbs: 5, essence: 0, deck: pDeck, hand: pHand, field: { slots: [null, null, null], effects: [null, null, null] }, graveyard: [] },
-      ai: { orbs: 5, essence: 0, deck: aDeck, hand: aHand, field: { slots: [null, null, null], effects: [null, null, null] }, graveyard: [] },
+      player: { orbs: 5, essence: 0, deck: pDeck, hand: pHand, field: { slots: [null, null, null], effects: [null, null, null] }, graveyard: [], fieldGraveyard: [] },
+      ai: { orbs: 5, essence: 0, deck: aDeck, hand: aHand, field: { slots: [null, null, null], effects: [null, null, null] }, graveyard: [], fieldGraveyard: [] },
       sharedField: { active: false, id: null },
       log: ['Batalha iniciada!'],
       gameResult: null,
@@ -492,14 +494,6 @@ export function BattleProvider({ children }) {
       if (s.phase !== 'playing') return s;
       if (s.activePlayer !== 'player') return s;
 
-      // Verifica se já invocou 1 campo neste turno
-      if (s.sharedField?.active) {
-        return {
-          ...s,
-          log: [...s.log, 'Você já invocou 1 campo neste turno!'],
-        };
-      }
-
       const hand = [...s.player.hand];
       const cardId = hand[handIndex];
       if (!cardId) return s;
@@ -525,11 +519,21 @@ export function BattleProvider({ children }) {
       }
       // Remove carta da mão
       hand.splice(handIndex, 1);
+      // Substitui campo anterior (se houver) e envia para o cemitério de campos
+      let newFieldGraveyard = Array.isArray(s.player.fieldGraveyard) ? [...s.player.fieldGraveyard] : [];
+      if (s.sharedField?.active && s.sharedField?.id) {
+        newFieldGraveyard.push({
+          id: s.sharedField.id,
+          isHolo: s.sharedField.isHolo,
+          cardData: s.sharedField.cardData,
+        });
+      }
       return {
         ...s,
         player: {
           ...s.player,
           hand,
+          fieldGraveyard: newFieldGraveyard,
         },
         sharedField: {
           active: true,
@@ -540,21 +544,13 @@ export function BattleProvider({ children }) {
         log: [...s.log, `Campo ${cardId} foi invocado!`],
       };
     });
-  }, []);
+  }, [playFieldChangeSound]);
 
   // Invoca carta de campo da IA para o sharedField
   const invokeFieldCardAI = useCallback((handIndex) => {
     playFieldChangeSound();
     setState((s) => {
       if (s.phase !== 'playing') return s;
-
-      // Verifica se já invocou 1 campo neste turno
-      if (s.sharedField?.active) {
-        return {
-          ...s,
-          log: [...s.log, 'IA já invocou 1 campo neste turno!'],
-        };
-      }
 
       const hand = [...s.ai.hand];
       const cardId = hand[handIndex];
@@ -568,11 +564,21 @@ export function BattleProvider({ children }) {
       }
       // Remove carta da mão
       hand.splice(handIndex, 1);
+      // Substitui campo anterior (se houver) e envia para o cemitério de campos
+      let newFieldGraveyard = Array.isArray(s.ai.fieldGraveyard) ? [...s.ai.fieldGraveyard] : [];
+      if (s.sharedField?.active && s.sharedField?.id) {
+        newFieldGraveyard.push({
+          id: s.sharedField.id,
+          isHolo: s.sharedField.isHolo,
+          cardData: s.sharedField.cardData,
+        });
+      }
       return {
         ...s,
         ai: {
           ...s.ai,
           hand,
+          fieldGraveyard: newFieldGraveyard,
         },
         sharedField: {
           active: true,
@@ -583,7 +589,7 @@ export function BattleProvider({ children }) {
         log: [...s.log, `IA invocou o campo ${cardId}!`],
       };
     });
-  }, []);
+  }, [playFieldChangeSound]);
 
   // ===== SISTEMA DE HABILIDADES =====
   const useAbility = useCallback((playerSide, slotIndex, abilityIndex, targetSide, targetSlotIndex) => {
@@ -1013,6 +1019,7 @@ export function BattleProvider({ children }) {
   }, [state.phase, state.activePlayer, performAiTurn]);
 
   // Processa ataque pendente da IA
+
   useEffect(() => {
     if (state.aiPendingAttack && state.phase === 'playing' && state.activePlayer === 'ai') {
       const attackTimer = setTimeout(() => {
@@ -1025,6 +1032,8 @@ export function BattleProvider({ children }) {
       return () => clearTimeout(attackTimer);
     }
   }, [state.aiPendingAttack, state.phase, state.activePlayer, useAbility]);
+
+  // <-- FECHAMENTO DE BLOCO ADICIONADO CASO FALTANDO
 
   return (
     <BattleContext.Provider value={value}>{children}</BattleContext.Provider>

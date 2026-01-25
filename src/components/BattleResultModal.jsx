@@ -2,6 +2,9 @@ import React, { useContext, useState } from 'react';
 import { AppContext } from '../context/AppContext';
 import '../styles/battle-result.css';
 import levelIcon from '../assets/img/icons/lvlicon.png';
+import CreatureCardPreview from './CreatureCardPreview.jsx';
+import swordIcon from '../assets/img/icons/sword.png';
+import creaturesPool from '../assets/cards';
 
 export default function BattleResultModal({ gameResult, killFeed, playerDeck, onClose, battleStats }) {
   const { cardCollection, updateCardInstanceXp, setBoosters, boosters } = useContext(AppContext);
@@ -144,12 +147,17 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
   const getCardProgressData = () => {
     if (!battleStats?.player) return [];
 
-    // Apenas cartas que foram invocadas ganham XP
-    const summonedCards = new Set(battleStats.player.cardsSummoned);
+    // Todas as cartas que participaram de qualquer ação
+    const allParticipants = new Set([
+      ...battleStats.player.cardsDrawn,
+      ...battleStats.player.cardsSummoned,
+      ...battleStats.player.cardsKilled,
+      ...battleStats.player.cardsAssisted,
+    ]);
 
     const progressData = [];
 
-    summonedCards.forEach(cardId => {
+    allParticipants.forEach(cardId => {
       let baseId = cardId;
       if (cardId.includes('-')) {
         for (const [base, instances] of Object.entries(cardCollection)) {
@@ -158,6 +166,11 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
             break;
           }
         }
+      }
+
+      // Filtrar cartas de campo (começam com F maiúsculo ou field_)
+      if (baseId.match(/^F\d+$/i) || baseId.toLowerCase().startsWith('field_')) {
+        return; // Pula cartas de campo
       }
 
       const instances = cardCollection[baseId] || [];
@@ -190,13 +203,8 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
         const progressPercent = newLevel >= 10 ? 100 : (newXp / xpNeededForCurrentLevel) * 100;
         const didLevelUp = newLevel > oldLevel;
 
-        // Importa a carta para pegar o nome e imagem
-        let cardData = null;
-        try {
-          cardData = require(`../assets/cards/booster1/${baseId}.js`);
-        } catch (e) {
-          // Se não encontrar no booster1, pode estar em outro lugar
-        }
+        // Busca dados da carta no creaturesPool
+        const cardData = creaturesPool.find(c => c.id === baseId);
 
         // Monta breakdown de XP
         const stats = battleStats.player;
@@ -304,100 +312,97 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
         </div>
 
         {/* Estatísticas */}
-        <div className="battle-result-stats">
-          <div className="stat-block">
-            <div className="stat-label">Inimigos Derrotados</div>
-            <div className="stat-value">{killFeed?.length || 0}</div>
+        <div className="battle-result-stats-container">
+          <div className="battle-result-stats">
+            <div className="stat-block">
+              <div className="stat-label">Inimigos Derrotados</div>
+              <div className="stat-value">{killFeed?.length || 0}</div>
+            </div>
           </div>
           {isPlayerWon && (
-            <div className="stat-block">
-              <div className="stat-label">Boosters</div>
-              <div className="stat-value">+1</div>
+            <div className="battle-result-booster-panel">
+              <img src={require('../assets/img/card/booster.png')} alt="Booster adquirido" className="battle-result-booster-img" />
+              <span className="battle-result-booster-label">Booster adquirido!</span>
             </div>
           )}
         </div>
 
         {/* Kill Feed */}
         {killFeed && killFeed.length > 0 && (
-          <div className="battle-result-kills">
-            <h3 className="kills-title">Histórico de Combate</h3>
-            <div className="kills-list">
-              {killFeed.map((kill, idx) => (
-                <div key={idx} className="kill-entry" style={{ animationDelay: `${idx * 0.1}s` }}>
-                  <span className="kill-attacker">{kill.attacker}</span>
-                  <span className="kill-arrow">⚔️</span>
-                  <span className="kill-target">{kill.target}</span>
-                  <span className="kill-turn">Turno {kill.turn}</span>
-                </div>
-              ))}
+          <div className="battle-result-kills-feed-grid">
+            <h3 className="kills-title">Eliminações</h3>
+            <div className="kills-grid">
+              {killFeed.map((kill, idx) => {
+                const attackerData = creaturesPool.find(c => c.id === kill.attacker || c.id === kill.attacker.toLowerCase());
+                const targetData = creaturesPool.find(c => c.id === kill.target || c.id === kill.target.toLowerCase());
+                const isUserCard = battleStats?.player?.cardsSummoned?.includes(kill.attacker);
+                return (
+                  <div key={idx} className={`kills-grid-cell ${isUserCard ? 'user' : 'opponent'}`} style={{ animationDelay: `${idx * 0.1}s` }}>
+                    <div className="kills-grid-turn">Turno {kill.turn}</div>
+                    <div className="kills-grid-content">
+                      <div className="kills-grid-attacker">
+                        <span className="kills-grid-name">{attackerData?.name?.pt || kill.attacker}</span>
+                        {attackerData?.element && <img alt={attackerData.element} src={require(`../assets/img/elements/${attackerData.element}.png`)} className="kills-grid-element" />}
+                      </div>
+                      <div className="kills-grid-vs">eliminou</div>
+                      <div className="kills-grid-target">
+                        <span className="kills-grid-name">{targetData?.name?.pt || kill.target}</span>
+                        {targetData?.element && <img alt={targetData.element} src={require(`../assets/img/elements/${targetData.element}.png`)} className="kills-grid-element" />}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
 
         {/* XP por Carta */}
-        {cardProgressData.length > 0 && (
-          <div className="battle-result-xp-cards">
-            <h3 className="xp-cards-title">Experiência Ganha</h3>
+        <div className="battle-result-xp-cards">
+          <h3 className="xp-cards-title">Experiência Ganha</h3>
+          {cardProgressData.length > 0 ? (
             <div className="xp-cards-list">
-              {cardProgressData.map((card, idx) => (
-                <div key={idx} className="xp-card-item xp-card-compact" style={{ animationDelay: `${idx * 0.15}s` }}>
-                  {/* Imagem da Carta (no topo) */}
-                  {card.image && (
-                    <div className="xp-card-image-compact">
-                      <img src={card.image} alt={card.name} />
-                    </div>
-                  )}
-
-                  {/* Informações da Carta (em baixo) */}
-                  <div className="xp-card-info-compact">
-                    <div className="xp-card-name-compact">{card.name}</div>
-                    <div className="xp-card-level-badge-compact">
-                      <span className="xp-level-gem">💎</span>
-                      <span className="xp-level-number">{card.oldLevel}</span>
-                      <span className="xp-arrow">→</span>
-                      <span className="xp-level-number">{card.newLevel}</span>
-                      {card.didLevelUp && <span className="xp-levelup-badge">⭐</span>}
-                    </div>
-                    <div className="xp-gained-compact">+{card.xpGained} XP</div>
-
-                    {/* Barra de Progresso do XP */}
-                    <div className="xp-progress-bar-compact">
-                      <div className="xp-progress-fill-compact" style={{ width: `${card.progressPercent}%` }} />
-                      <span className="xp-progress-text-compact">
-                        {card.newLevel >= 10 ? 'MAX' : `${card.newXp}/${card.xpNeededForCurrentLevel}`}
-                      </span>
-                      <img src={levelIcon} alt="level" className="xp-level-icon-compact" />
-                    </div>
-
-                    {/* Accordion com Breakdown */}
-                    <button
-                      className="xp-accordion-btn-compact"
-                      onClick={() => toggleCardExpanded(card.cardId)}
-                    >
-                      {expandedCards[card.cardId] ? '▼' : '▶'}
-                    </button>
-
-                    {expandedCards[card.cardId] && (
-                      <div className="xp-accordion-content-compact">
-                        {card.breakdown.map((item, i) => (
-                          <div key={i} className="xp-breakdown-item-compact">
-                            <span className="xp-breakdown-label-compact">{item.label}</span>
-                            <span className="xp-breakdown-xp-compact">+{Math.floor(item.xp)}</span>
+              {cardProgressData.map((card, idx) => {
+                const creatureData = creaturesPool.find(c => c.id === card.cardId);
+                if (!creatureData) {
+                  console.warn(`Carta não encontrada no pool: ${card.cardId}`);
+                  return null;
+                }
+                return (
+                  <div key={idx} className="xp-card-item xp-card-full" style={{ animationDelay: `${idx * 0.15}s` }}>
+                    <div className="xp-card-preview-full">
+                      <CreatureCardPreview creature={creatureData} allowFlip={false} />
+                      <div className="xp-card-xp-panel">
+                        <div className="xp-card-name-mini">{card.name}</div>
+                        <div className="xp-gained-full">+{card.xpGained} XP</div>
+                        <div className="xp-progress-bar-full">
+                          <div className="xp-progress-fill-full" style={{ width: `${card.progressPercent}%` }} />
+                          <span className="xp-progress-text-full">
+                            {card.newLevel >= 10 ? 'MAX' : `Nível ${card.newLevel}`}
+                          </span>
+                        </div>
+                        <div className="xp-breakdown-list">
+                          {card.breakdown.map((item, i) => (
+                            <div key={i} className="xp-breakdown-row">
+                              <span className="xp-breakdown-label">{item.label}</span>
+                              <span className="xp-breakdown-xp">+{Math.floor(item.xp)}</span>
+                            </div>
+                          ))}
+                          <div className="xp-breakdown-row xp-breakdown-total">
+                            <span className="xp-breakdown-label">Total</span>
+                            <span className="xp-breakdown-xp">+{card.xpGained} XP</span>
                           </div>
-                        ))}
-                        <div className="xp-breakdown-divider-compact" />
-                        <div className="xp-breakdown-item-compact total">
-                          <span className="xp-breakdown-label-compact">Nível +{Math.round(card.oldLevel * 10)}%</span>
-                          <span className="xp-breakdown-xp-compact">= {card.xpGained}</span>
                         </div>
                       </div>
-                    )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
-          </div>
-        )}
+          ) : (
+            <div style={{color:'#ffe6b0',textAlign:'center',margin:'32px 0',fontSize:'1.1rem'}}>Nenhuma carta ganhou experiência nesta batalha.<br/>Verifique se as cartas participantes pertencem à sua coleção.</div>
+          )}
+        </div>
 
         {/* Botão de Continuar */}
         <button className="battle-result-continue-btn" onClick={handleContinue}>

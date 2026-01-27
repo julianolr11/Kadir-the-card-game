@@ -370,7 +370,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
                     {elementIcon && <img src={elementIcon} alt={element} className="ability-element-icon" />}
                     <span className="ability-name-full">{ab.name?.pt || ab.name?.en}</span>
                   </div>
-                  <div className="ability-desc">{ab.desc?.pt || ab.desc?.en}</div>
+                  <div className="ability-desc" dangerouslySetInnerHTML={{ __html: processDescription(ab.desc?.pt || ab.desc?.en) }} />
                 </div>
               ))}
             </div>
@@ -474,6 +474,13 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
                     <>
                       <div className={`effect-float effect-damage ${cls}`}>-{anim.amount}</div>
                       {anim.shieldHit && <div className={`shield-shimmer${anim.shieldBroken ? ' shield-broken' : ''}`} />}
+                      {/* Foguinho animado para burn tick */}
+                      {anim.burnTick && (
+                        <div className="burn-tick-fire">
+                          <span className="burn-tick-fire-shape" />
+                          <span className="burn-tick-fire-spark" />
+                        </div>
+                      )}
                     </>
                   );
                 }

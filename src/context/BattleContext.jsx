@@ -672,8 +672,8 @@ export function BattleProvider({ children }) {
       let result;
       let animPayload = null;
 
-      // SEMPRE aplica dano base
-      const baseDamage = ability.cost * 2 + 1; // Fórmula temporária: custo * 2 + 1
+      // Aplica dano: prioriza campo 'damage' da habilidade, senão usa fórmula genérica
+      const baseDamage = typeof ability.damage === 'number' ? ability.damage : (ability.cost * 2 + 1);
       result = effectRegistry.applyDamage(s, {
         attackerId,
         targetId,
@@ -708,6 +708,7 @@ export function BattleProvider({ children }) {
 
       // PASSO 2: Após delay, aplica dano e mostra animação de dano
       setTimeout(() => {
+
         setState((s2) => {
           animPayload = {
             type: 'damage',
@@ -719,6 +720,7 @@ export function BattleProvider({ children }) {
           };
 
           // Se tiver status effect na descrição, aplica também
+          let sleepApplied = false;
           if (match) {
             console.log('Aplicando status effect adicional:', match.type);
             const statusResult = effectRegistry.applyStatusEffect(result.newState, {
@@ -726,12 +728,35 @@ export function BattleProvider({ children }) {
               effectType: match.type,
               duration: match.duration,
               value: match.value,
+              attackerId,
             });
+            // Detecta se foi aplicado sleep
+            if (match.type === 'sleep') {
+              // Verifica se o status foi realmente aplicado (duração > 0)
+              const targetAfter = statusResult.newState[targetSide].field.slots.find(slot => slot?.id === targetId);
+              if (targetAfter && (targetAfter.statusEffects || []).some(e => e.type === 'sleep' && e.duration > 0)) {
+                sleepApplied = true;
+              }
+            }
             result.newState = statusResult.newState;
             result.log = [...result.log, ...statusResult.log];
           }
 
           // Deduz essência e aplica animação de dano
+          let animationsPayload = {
+            ...(s2.animations || {}),
+            ...(animPayload ? { [targetId]: animPayload } : {}),
+          };
+          // Se aplicou sleep, adiciona animação de sleep
+          if (sleepApplied) {
+            animationsPayload[targetId] = { ...animationsPayload[targetId], type: 'sleep' };
+            // Remove animação de sleep após 1.2s
+            clearAnimAfter(targetId, 1200);
+          } else {
+            // Remove animação de dano após 900ms
+            clearAnimAfter(targetId, 900);
+          }
+
           const stateWithDamage = {
             ...result.newState,
             creaturesWithUsedAbility: updatedUsedAbilities,
@@ -744,14 +769,8 @@ export function BattleProvider({ children }) {
               `${attacker.name} usou ${ability.name?.pt || ability.name?.en || 'habilidade'} (custo: ${cost})`,
               ...result.log,
             ],
-            animations: {
-              ...(s2.animations || {}),
-              ...(animPayload ? { [targetId]: animPayload } : {}),
-            },
+            animations: animationsPayload,
           };
-
-          // Remove animação de dano após 900ms
-          clearAnimAfter(targetId, 900);
 
           // PASSO 3: Se a criatura morreu, adiciona delay antes da animação de morte
           if (result.died) {

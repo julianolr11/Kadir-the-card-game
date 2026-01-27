@@ -59,6 +59,11 @@ const STATUS_COLORS = {
 const processDescription = (desc) => {
   if (!desc) return '';
 
+  // Se já contém tags <span class=...>, apenas retorna (dangerouslySetInnerHTML já interpreta)
+  if (/<span[^>]*class=["']debuff-[^"']+["'][^>]*>/.test(desc)) {
+    return desc;
+  }
+
   let processed = desc;
 
   // Substituir emojis por HTML com ícone + texto colorido

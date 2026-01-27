@@ -205,7 +205,7 @@ export function applyShield(state, params) {
  * Aplica efeito de status (queimadura, paralisia, etc)
  */
 export function applyStatusEffect(state, params) {
-  const { targetId, effectType, duration, value } = params;
+  const { targetId, effectType, duration, value, attackerId } = params;
   const target = findCreatureById(state, targetId);
 
   if (!target || target.hp <= 0) {
@@ -217,6 +217,7 @@ export function applyStatusEffect(state, params) {
     type: effectType,
     duration,
     value,
+    attackerId: attackerId || null,
   };
 
   const statusEffects = [...(target.statusEffects || []), effect];
@@ -257,12 +258,33 @@ export function processStatusEffects(state, creatureId) {
     // Aplica efeito por tipo
     if (['burn', 'poison', 'bleed'].includes(effect.type)) {
       const dmg = Number.isFinite(effect.value) ? effect.value : 1;
+      const attackerId = effect.attackerId || null;
       const result = applyDamage(newState, {
-        attackerId: null,
+        attackerId,
         targetId: creatureId,
         baseDamage: dmg,
         ignoreShield: true,
       });
+      // Se a criatura morreu por debuff, registra o kill para o attackerId
+      if (result.died && attackerId) {
+        // Determina lado do atacante
+        let killerSide = null;
+        if (newState.player.field.slots.some(slot => slot && slot.id === attackerId)) killerSide = 'player';
+        if (newState.ai.field.slots.some(slot => slot && slot.id === attackerId)) killerSide = 'ai';
+        // Adiciona ao killFeed
+        newState.killFeed = [...(newState.killFeed || []), {
+          turn: newState.turn,
+          attacker: attackerId,
+          attackerId,
+          target: creatureId,
+          targetId: creatureId,
+          byDebuff: effect.type,
+        }];
+        // Atualiza battleStats
+        if (killerSide && newState.battleStats && newState.battleStats[killerSide]) {
+          newState.battleStats[killerSide].cardsKilled = [...(newState.battleStats[killerSide].cardsKilled || []), attackerId];
+        }
+      }
       newState = result.newState;
       const typeName = effect.type === 'burn' ? 'queimadura' : effect.type === 'poison' ? 'veneno' : 'sangramento';
       log.push(`${creature.name} sofreu ${result.damageDealt} de dano por ${typeName}`);
@@ -279,8 +301,8 @@ export function processStatusEffects(state, creatureId) {
       effect.duration -= 1;
       if (effect.duration > 0) updatedEffects.push(effect);
     } else if (effect.type === 'paralyze' || effect.type === 'sleep') {
-      // 50% de chance de remover no início do turno
-      const removed = Math.random() < 0.5;
+      // 20% de chance de remover no início do turno
+      const removed = Math.random() < 0.2;
       if (removed) {
         log.push(`${creature.name} se recuperou de ${effect.type === 'paralyze' ? 'paralisia' : 'sono'}.`);
         effect.duration = 0;

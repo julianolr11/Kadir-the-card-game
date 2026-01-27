@@ -98,8 +98,8 @@ module.exports = {
       id: 'draak_skill_4',
       name: { pt: 'Bafo Ardente', en: 'Burning Breath' },
       desc: {
-        pt: 'Causa 3 de dano em linha e causa incêndio.',
-        en: 'Deals 3 damage in a line and causes fire.',
+        pt: 'Causa 3 de dano em linha e aplica <span class="debuff-burn">queimadura</span>.',
+        en: 'Deals 3 damage in a line and applies <span class="debuff-burn">burn</span>.',
       },
       cost: 2,
     },

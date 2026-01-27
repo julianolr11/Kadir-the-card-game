@@ -1,3 +1,66 @@
+/* Debuff burn destacado em laranja */
+/* Destaques de debuffs em descrições (fixo, sem animação) */
+.debuff-burn {
+  color: #ff8800;
+  font-weight: bold;
+  text-shadow: 0 0 2px #000, 0 0 4px #000;
+}
+.debuff-sleep {
+  color: #3faaff;
+  font-weight: bold;
+  text-shadow: 0 0 2px #000, 0 0 4px #000;
+}
+/* Foguinho animado para burn tick (dano por rodada) */
+.burn-tick-fire {
+  position: absolute;
+  left: 50%;
+  top: 18%;
+  transform: translateX(-50%);
+  width: 32px;
+  height: 32px;
+  z-index: 150;
+  pointer-events: none;
+  opacity: 0.92;
+  animation: burnTickFlame 1.1s cubic-bezier(.7,0,.3,1);
+}
+.burn-tick-fire-shape {
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 60% 80%, #ffb36a 60%, #ff6a00 100%);
+  border-radius: 50% 50% 60% 40%/60% 40% 50% 50%;
+  box-shadow: 0 0 18px 6px #ff6a00aa, 0 0 32px 0 #ffb36a55;
+  position: absolute;
+  left: 0; top: 0;
+  animation: burnTickFlameShape 1.1s cubic-bezier(.7,0,.3,1);
+}
+.burn-tick-fire-spark {
+  position: absolute;
+  left: 60%;
+  top: 18%;
+  width: 8px;
+  height: 8px;
+  background: #fff7b0;
+  border-radius: 50%;
+  opacity: 0.7;
+  filter: blur(1.5px);
+  animation: burnTickSpark 1.1s cubic-bezier(.7,0,.3,1);
+}
+@keyframes burnTickFlame {
+  0% { opacity: 0; transform: translateX(-50%) scale(0.7); }
+  20% { opacity: 1; transform: translateX(-50%) scale(1.08); }
+  60% { opacity: 0.95; transform: translateX(-50%) scale(1.12); }
+  100% { opacity: 0; transform: translateX(-50%) scale(0.7); }
+}
+@keyframes burnTickFlameShape {
+  0% { filter: blur(2px); }
+  60% { filter: blur(0.5px); }
+  100% { filter: blur(2px); }
+}
+@keyframes burnTickSpark {
+  0% { opacity: 0; transform: scale(0.5) translateY(0); }
+  40% { opacity: 1; transform: scale(1.1) translateY(-8px); }
+  100% { opacity: 0; transform: scale(0.7) translateY(-16px); }
+}
 /* Efeitos visuais de batalha: dano, cura, status, escudo */
 
 /* Número flutuante (dano/vida) */
@@ -73,6 +136,60 @@
   pointer-events: none;
   z-index: 115;
   overflow: hidden;
+}
+
+/* === Debuff overlays === */
+.debuff-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 130;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* SLEEP: Zzz flutuando */
+
+@keyframes debuffSleepZzz {
+  0% { transform: translateY(0) scale(1); opacity: 0.85; }
+  60% { transform: translateY(-12px) scale(1.08); opacity: 1; }
+  100% { transform: translateY(-24px) scale(0.98); opacity: 0.2; }
+}
+
+/* BURN: Chamas animadas */
+/* Debuff burn ANIMADO (em cima da carta, não em texto de descrição) */
+.debuff-burn-anim {
+  width: 38px;
+  height: 38px;
+  background: radial-gradient(circle at 60% 80%, #ffb36a 60%, #ff6a00 100%);
+  border-radius: 50%;
+  box-shadow: 0 0 18px 6px #ff6a00aa, 0 0 32px 0 #ffb36a55;
+  opacity: 0.85;
+  position: relative;
+  animation: debuffBurnFlame 0.7s infinite alternate cubic-bezier(.7,0,.3,1);
+}
+@keyframes debuffBurnFlame {
+  0% { transform: scaleY(1) scaleX(1) translateY(0); filter: blur(0.5px); }
+  60% { transform: scaleY(1.18) scaleX(0.92) translateY(-6px); filter: blur(1.2px); }
+  100% { transform: scaleY(0.92) scaleX(1.08) translateY(-2px); filter: blur(0.7px); }
+}
+
+/* FREEZE: Cristais de gelo piscando */
+.debuff-freeze {
+  width: 38px;
+  height: 38px;
+  background: radial-gradient(circle at 50% 60%, #b6eaff 60%, #4cc3ff 100%);
+  border-radius: 50%;
+  box-shadow: 0 0 18px 6px #4cc3ff99, 0 0 32px 0 #b6eaff55;
+  opacity: 0.85;
+  position: relative;
+  animation: debuffFreezePulse 1.1s infinite alternate;
+}
+@keyframes debuffFreezePulse {
+  0% { filter: brightness(1) blur(0.5px); }
+  60% { filter: brightness(1.25) blur(1.2px); }
+  100% { filter: brightness(0.85) blur(0.7px); }
 }
 .shield-shimmer::before {
   content: '';

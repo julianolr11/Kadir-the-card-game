@@ -83,65 +83,114 @@ module.exports = {
   },
   unlockTable: [
     { level: 0, type: 'none' },
+    // Nível 2 - Perk: Fluidez Ancestral
     {
-      level: 1,
-      type: 'skill',
-      id: 'arguilia_skill_3',
-      name: { pt: 'Neurotoxina', en: 'Neurotoxin' },
+      level: 2,
+      type: 'perk',
+      id: 'ANCIENT_FLUIDITY',
+      name: { pt: 'Fluidez Ancestral', en: 'Ancient Fluidity' },
       desc: {
-        pt: 'Causa 3 de dano e paralisa o inimigo por 1 turno.',
-        en: 'Deals 3 damage and paralyzes the enemy for 1 turn.',
+        pt: 'Ao entrar em campo, ganha +1 esquiva por 2 turnos.',
+        en: 'When summoned, gain +1 evasion for 2 turns.',
       },
-      cost: 1,
     },
-    { level: 2, type: 'perk', id: 'HP_PLUS_1' },
+    // Nível 3 - Habilidade: Neurotoxina
     {
       level: 3,
       type: 'skill',
-      id: 'arguilia_skill_4',
-      name: { pt: 'Choque Tóxico', en: 'Toxic Shock' },
+      id: 'arguilia_skill_neurotoxina',
+      name: { pt: 'Neurotoxina', en: 'Neurotoxin' },
       desc: {
-        pt: 'Causa 3 de dano e aplica 1 camada de veneno.',
-        en: 'Deals 3 damage and applies 1 poison layer.',
+        pt: 'Causa 2 de dano e paralisa o inimigo por 1 turno.',
+        en: 'Deals 2 damage and paralyzes the enemy for 1 turn.',
       },
-      cost: 2,
+      cost: 1,
+      type: 'damage_paralyze',
     },
-    { level: 4, type: 'perk', id: 'POISON_IMMUNITY' },
+    // Nível 4 - Perk: Imunidade Tóxica
+    {
+      level: 4,
+      type: 'perk',
+      id: 'TOXIC_IMMUNITY',
+      name: { pt: 'Imunidade Tóxica', en: 'Toxic Immunity' },
+      desc: {
+        pt: 'Recebe -50% de dano de veneno.',
+        en: 'Takes -50% poison damage.',
+      },
+    },
+    // Nível 5 - Habilidade: Enxame Tóxico
     {
       level: 5,
       type: 'skill',
-      id: 'arguilia_skill_5',
-      name: { pt: 'Hálito Letal', en: 'Lethal Breath' },
+      id: 'arguilia_skill_enxame_toxico',
+      name: { pt: 'Enxame Tóxico', en: 'Toxic Swarm' },
       desc: {
-        pt: 'Causa 4 de dano e envenena o inimigo por 3 turnos.',
-        en: 'Deals 4 damage and poisons the enemy for 3 turns.',
+        pt: 'Causa 2 de dano a todos os inimigos e aplica veneno por 2 turnos.',
+        en: 'Deals 2 damage to all enemies and applies poison for 2 turns.',
       },
       cost: 2,
+      type: 'aoe_poison',
     },
-    { level: 6, type: 'perk', id: 'HP_PLUS_1' },
+    // Nível 6 - Perk: Rio Curativo
+    {
+      level: 6,
+      type: 'perk',
+      id: 'HEALING_RIVER',
+      name: { pt: 'Rio Curativo', en: 'Healing River' },
+      desc: {
+        pt: 'Ao derrotar um inimigo, cura 1 de vida.',
+        en: 'When defeating an enemy, heal 1 HP.',
+      },
+    },
+    // Nível 7 - Habilidade: Véu das Águas
     {
       level: 7,
       type: 'skill',
-      id: 'arguilia_skill_6',
-      name: { pt: 'Enxame Tóxico', en: 'Toxic Swarm' },
+      id: 'arguilia_skill_veu_aguas',
+      name: { pt: 'Véu das Águas', en: 'Veil of Waters' },
       desc: {
-        pt: 'Causa 3 de dano a todos os inimigos e reduz defesa.',
-        en: 'Deals 3 damage to all enemies and reduces defense.',
+        pt: 'Concede escudo de água (absorve 2 de dano) a todos aliados por 2 turnos.',
+        en: 'Grants water shield (absorbs 2 damage) to all allies for 2 turns.',
       },
       cost: 2,
+      type: 'team_shield',
     },
-    { level: 8, type: 'perk', id: 'DODGE_INCREASE' },
-    { level: 9, type: 'perk', id: 'HP_PLUS_2' },
+    // Nível 8 - Perk: Veneno Persistente
+    {
+      level: 8,
+      type: 'perk',
+      id: 'PERSISTENT_POISON',
+      name: { pt: 'Veneno Persistente', en: 'Persistent Poison' },
+      desc: {
+        pt: 'Veneno causado por Arguilia dura +1 turno.',
+        en: 'Poison caused by Arguilia lasts +1 turn.',
+      },
+    },
+    // Nível 9 - Habilidade: Praga do Rio
+    {
+      level: 9,
+      type: 'skill',
+      id: 'arguilia_skill_praga_rio',
+      name: { pt: 'Praga do Rio', en: 'River Plague' },
+      desc: {
+        pt: 'Causa 3 de dano. Se o alvo estiver envenenado, causa +1 de dano.',
+        en: 'Deals 3 damage. If the target is poisoned, deal +1 damage.',
+      },
+      cost: 2,
+      type: 'damage_poison_bonus',
+    },
+    // Nível 10 - Habilidade: Praga Apocalíptica
     {
       level: 10,
       type: 'skill',
-      id: 'arguilia_skill_7',
+      id: 'arguilia_skill_praga_apocaliptica',
       name: { pt: 'Praga Apocalíptica', en: 'Apocalyptic Plague' },
       desc: {
-        pt: 'Supremo: 4 de dano e aplica veneno permanente até o fim do combate.',
-        en: 'Ultimate: 4 damage and applies permanent poison until combat ends.',
+        pt: 'Causa 4 de dano e aplica veneno permanente até o fim do combate.',
+        en: 'Deals 4 damage and applies permanent poison until combat ends.',
       },
       cost: 3,
+      type: 'ultimate_poison',
     },
   ],
 };

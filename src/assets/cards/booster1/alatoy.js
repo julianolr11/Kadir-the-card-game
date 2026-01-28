@@ -79,65 +79,114 @@ module.exports = {
   },
   unlockTable: [
     { level: 0, type: 'none' },
+    // Nível 2 - Perk: Pele Abissal
     {
-      level: 1,
-      type: 'skill',
-      id: 'alatoy_skill_3',
-      name: { pt: 'Onda Congelante', en: 'Freezing Wave' },
+      level: 2,
+      type: 'perk',
+      id: 'ABYSSAL_SKIN',
+      name: { pt: 'Pele Abissal', en: 'Abyssal Skin' },
       desc: {
-        pt: 'Causa 3 de dano e congela o inimigo por 1 turno.',
-        en: 'Deals 3 damage and freezes the enemy for 1 turn.',
+        pt: 'Recebe -1 de dano de ataques físicos por 2 turnos ao entrar em campo.',
+        en: 'Takes -1 physical damage for 2 turns when summoned.',
       },
-      cost: 1,
     },
-    { level: 2, type: 'perk', id: 'HP_PLUS_1' },
+    // Nível 3 - Habilidade: Onda Congelante
     {
       level: 3,
       type: 'skill',
-      id: 'alatoy_skill_4',
-      name: { pt: 'Implosão Aquática', en: 'Aquatic Implosion' },
+      id: 'alatoy_skill_onda_congelante',
+      name: { pt: 'Onda Congelante', en: 'Freezing Wave' },
       desc: {
-        pt: 'Causa 3 de dano e reduz defesa do inimigo.',
-        en: 'Deals 3 damage and reduces enemy defense.',
+        pt: 'Causa 2 de dano e congela o inimigo por 1 turno.',
+        en: 'Deals 2 damage and freezes the enemy for 1 turn.',
       },
-      cost: 2,
+      cost: 1,
+      type: 'damage_freeze',
     },
-    { level: 4, type: 'perk', id: 'WATER_RESISTANCE' },
+    // Nível 4 - Perk: Defesa Profunda
+    {
+      level: 4,
+      type: 'perk',
+      id: 'DEEP_DEFENSE',
+      name: { pt: 'Defesa Profunda', en: 'Deep Defense' },
+      desc: {
+        pt: 'Ganha +1 defesa enquanto estiver com escudo ativo.',
+        en: 'Gain +1 defense while shielded.',
+      },
+    },
+    // Nível 5 - Habilidade: Implosão Aquática
     {
       level: 5,
       type: 'skill',
-      id: 'alatoy_skill_5',
-      name: { pt: 'Maremoto', en: 'Tidal Wave' },
+      id: 'alatoy_skill_implosao_aquatica',
+      name: { pt: 'Implosão Aquática', en: 'Aquatic Implosion' },
       desc: {
-        pt: 'Causa 4 de dano em área atingindo todos os inimigos.',
-        en: 'Deals 4 area damage hitting all enemies.',
+        pt: 'Causa 3 de dano e reduz defesa do inimigo em 10% por 2 turnos.',
+        en: 'Deals 3 damage and reduces enemy defense by 10% for 2 turns.',
       },
       cost: 2,
+      type: 'damage_defense_down',
     },
-    { level: 6, type: 'perk', id: 'HP_PLUS_1' },
+    // Nível 6 - Perk: Reflexo Abissal
+    {
+      level: 6,
+      type: 'perk',
+      id: 'ABYSSAL_REFLEX',
+      name: { pt: 'Reflexo Abissal', en: 'Abyssal Reflex' },
+      desc: {
+        pt: 'Reflete 1 de dano de água recebido por turno.',
+        en: 'Reflects 1 water damage received per turn.',
+      },
+    },
+    // Nível 7 - Habilidade: Maremoto
     {
       level: 7,
       type: 'skill',
-      id: 'alatoy_skill_6',
+      id: 'alatoy_skill_maremoto',
+      name: { pt: 'Maremoto', en: 'Tidal Wave' },
+      desc: {
+        pt: 'Causa 3 de dano em área e reduz velocidade dos inimigos por 1 turno.',
+        en: 'Deals 3 area damage and reduces enemy speed for 1 turn.',
+      },
+      cost: 2,
+      type: 'aoe_slow',
+    },
+    // Nível 8 - Perk: Gélido Instintivo
+    {
+      level: 8,
+      type: 'perk',
+      id: 'INSTINCTIVE_FROST',
+      name: { pt: 'Gélido Instintivo', en: 'Instinctive Frost' },
+      desc: {
+        pt: 'Ao ser atacado, 30% de chance de congelar o atacante por 1 turno.',
+        en: 'When attacked, 30% chance to freeze the attacker for 1 turn.',
+      },
+    },
+    // Nível 9 - Habilidade: Abismo Gélido
+    {
+      level: 9,
+      type: 'skill',
+      id: 'alatoy_skill_abismo_gelido',
       name: { pt: 'Abismo Gélido', en: 'Glacial Abyss' },
       desc: {
         pt: 'Causa 4 de dano e congela o campo por 2 turnos.',
         en: 'Deals 4 damage and freezes the field for 2 turns.',
       },
-      cost: 2,
+      cost: 3,
+      type: 'field_freeze',
     },
-    { level: 8, type: 'perk', id: 'FIRST_ROUND_SHIELD' },
-    { level: 9, type: 'perk', id: 'HP_PLUS_2' },
+    // Nível 10 - Habilidade: Fúria Oceânica
     {
       level: 10,
       type: 'skill',
-      id: 'alatoy_skill_7',
+      id: 'alatoy_skill_furia_oceanica',
       name: { pt: 'Fúria Oceânica', en: 'Ocean Fury' },
       desc: {
-        pt: 'Supremo: 4 de dano e restaura 2 de vida.',
-        en: 'Ultimate: 4 damage and restores 2 HP.',
+        pt: 'Causa 4 de dano a todos os inimigos e restaura 2 de vida.',
+        en: 'Deals 4 damage to all enemies and restores 2 HP.',
       },
       cost: 3,
+      type: 'ultimate_aoe_heal',
     },
   ],
 };

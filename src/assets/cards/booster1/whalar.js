@@ -82,65 +82,114 @@ module.exports = {
   },
   unlockTable: [
     { level: 0, type: 'none' },
+    // Nível 2 - Perk: Caçador Noturno
     {
-      level: 1,
+      level: 2,
+      type: 'perk',
+      id: 'NIGHT_HUNTER',
+      name: { pt: 'Caçador Noturno', en: 'Night Hunter' },
+      desc: {
+        pt: 'À noite, ganha +1 ataque e +1 esquiva.',
+        en: 'At night, gain +1 attack and +1 evasion.',
+      },
+    },
+    // Nível 3 - Habilidade: Espículo de Gelo
+    {
+      level: 3,
       type: 'skill',
-      id: 'whalar_skill_3',
+      id: 'whalar_skill_espiculo_gelo',
       name: { pt: 'Espículo de Gelo', en: 'Ice Spike' },
       desc: {
-        pt: 'Causa 3 de dano com espículos congelados.',
-        en: 'Deals 3 damage with frozen spikes.',
+        pt: 'Causa 2 de dano com espículos congelados.',
+        en: 'Deals 2 damage with frozen spikes.',
       },
       cost: 1,
+      type: 'damage',
     },
-    { level: 2, type: 'perk', id: 'HP_PLUS_1' },
-    { level: 3, type: 'none' },
+    // Nível 4 - Perk: Resistência Abissal
     {
       level: 4,
+      type: 'perk',
+      id: 'ABYSSAL_RESISTANCE',
+      name: { pt: 'Resistência Abissal', en: 'Abyssal Resistance' },
+      desc: {
+        pt: 'Recebe -1 de dano de gelo por 2 turnos ao entrar em campo.',
+        en: 'Takes -1 ice damage for 2 turns when summoned.',
+      },
+    },
+    // Nível 5 - Habilidade: Blizzard
+    {
+      level: 5,
       type: 'skill',
-      id: 'whalar_skill_4',
+      id: 'whalar_skill_blizzard',
       name: { pt: 'Blizzard', en: 'Blizzard' },
       desc: {
         pt: 'Causa 3 de dano e reduz velocidade inimiga por 2 turnos.',
         en: 'Deals 3 damage and reduces enemy speed for 2 turns.',
       },
       cost: 2,
+      type: 'damage_slow',
     },
+    // Nível 6 - Perk: Fôlego das Profundezas
     {
-      level: 5,
+      level: 6,
+      type: 'perk',
+      id: 'DEEP_BREATH',
+      name: { pt: 'Fôlego das Profundezas', en: 'Deep Breath' },
+      desc: {
+        pt: 'Ao derrotar um inimigo, recupera 1 de vida.',
+        en: 'When defeating an enemy, recover 1 HP.',
+      },
+    },
+    // Nível 7 - Habilidade: Fúria do Abismo
+    {
+      level: 7,
       type: 'skill',
-      id: 'whalar_skill_5',
+      id: 'whalar_skill_furia_abismo',
       name: { pt: 'Fúria do Abismo', en: 'Abyss Fury' },
       desc: {
         pt: 'Causa 4 de dano com a força das profundezas.',
         en: 'Deals 4 damage with the force of the depths.',
       },
       cost: 2,
+      type: 'damage',
     },
-    { level: 6, type: 'none' },
-    { level: 7, type: 'perk', id: 'FIRST_ROUND_SHIELD' },
-    { level: 8, type: 'perk', id: 'HP_PLUS_2' },
+    // Nível 8 - Perk: Maré Protetora
+    {
+      level: 8,
+      type: 'perk',
+      id: 'PROTECTIVE_TIDE',
+      name: { pt: 'Maré Protetora', en: 'Protective Tide' },
+      desc: {
+        pt: 'Aliados ganham +1 defesa enquanto Whalar estiver em campo.',
+        en: 'Allies gain +1 defense while Whalar is on the field.',
+      },
+    },
+    // Nível 9 - Habilidade: Âncora Gelada
     {
       level: 9,
       type: 'skill',
-      id: 'whalar_skill_6',
+      id: 'whalar_skill_ancora_gelada',
       name: { pt: 'Âncora Gelada', en: 'Frozen Anchor' },
       desc: {
         pt: 'Causa 4 de dano e prende o inimigo por 2 turnos.',
         en: 'Deals 4 damage and binds the enemy for 2 turns.',
       },
-      cost: 2,
+      cost: 3,
+      type: 'damage_bind',
     },
+    // Nível 10 - Habilidade: Cataclisma Aquático
     {
       level: 10,
       type: 'skill',
-      id: 'whalar_skill_7',
+      id: 'whalar_skill_cataclisma_aquatico',
       name: { pt: 'Cataclisma Aquático', en: 'Aquatic Cataclysm' },
       desc: {
         pt: 'Supremo: 4 de dano e congela inimigos por 2 turnos.',
         en: 'Ultimate: 4 damage and freezes enemies for 2 turns.',
       },
-      cost: 3,
+      cost: 4,
+      type: 'ultimate_freeze',
     },
   ],
 };

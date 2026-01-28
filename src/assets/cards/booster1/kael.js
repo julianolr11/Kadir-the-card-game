@@ -80,65 +80,114 @@ module.exports = {
   },
   unlockTable: [
     { level: 0, type: 'none' },
+    // Nível 2 - Perk: Pele Gélida
     {
-      level: 1,
+      level: 2,
+      type: 'perk',
+      id: 'FROST_SKIN',
+      name: { pt: 'Pele Gélida', en: 'Frost Skin' },
+      desc: {
+        pt: 'Recebe -1 de dano de ataques físicos por 2 turnos ao entrar em campo.',
+        en: 'Takes -1 physical damage for 2 turns when summoned.',
+      },
+    },
+    // Nível 3 - Habilidade: Blizzard Cortante
+    {
+      level: 3,
       type: 'skill',
-      id: 'kael_skill_3',
+      id: 'kael_skill_blizzard_cortante',
       name: { pt: 'Blizzard Cortante', en: 'Cutting Blizzard' },
       desc: {
-        pt: 'Causa 3 de dano em área e congela por 1 turno.',
-        en: 'Deals 3 area damage and freezes for 1 turn.',
+        pt: 'Causa 2 de dano em área e congela por 1 turno.',
+        en: 'Deals 2 area damage and freezes for 1 turn.',
       },
       cost: 1,
+      type: 'aoe_freeze',
     },
-    { level: 2, type: 'perk', id: 'HP_PLUS_1' },
-    { level: 3, type: 'none' },
+    // Nível 4 - Perk: Reflexo Gélido
     {
       level: 4,
+      type: 'perk',
+      id: 'FROST_REFLECT',
+      name: { pt: 'Reflexo Gélido', en: 'Frost Reflect' },
+      desc: {
+        pt: 'Reflete 1 de dano de gelo recebido por turno.',
+        en: 'Reflects 1 ice damage received per turn.',
+      },
+    },
+    // Nível 5 - Habilidade: Prisma Gelado
+    {
+      level: 5,
       type: 'skill',
-      id: 'kael_skill_4',
+      id: 'kael_skill_prisma_gelado',
       name: { pt: 'Prisma Gelado', en: 'Icy Prism' },
       desc: {
         pt: 'Causa 3 de dano e reflete 5% do dano recebido.',
         en: 'Deals 3 damage and reflects 5% of damage taken.',
       },
       cost: 2,
+      type: 'damage_reflect',
     },
+    // Nível 6 - Perk: Resistência Profunda
     {
-      level: 5,
+      level: 6,
+      type: 'perk',
+      id: 'DEEP_RESISTANCE',
+      name: { pt: 'Resistência Profunda', en: 'Deep Resistance' },
+      desc: {
+        pt: 'Recebe -20% de dano de gelo.',
+        en: 'Takes -20% ice damage.',
+      },
+    },
+    // Nível 7 - Habilidade: Inverno Eterno
+    {
+      level: 7,
       type: 'skill',
-      id: 'kael_skill_5',
+      id: 'kael_skill_inverno_eterno',
       name: { pt: 'Inverno Eterno', en: 'Eternal Winter' },
       desc: {
         pt: 'Causa 4 de dano e congela o campo por 2 turnos.',
         en: 'Deals 4 damage and freezes the field for 2 turns.',
       },
       cost: 2,
+      type: 'field_freeze',
     },
-    { level: 6, type: 'none' },
-    { level: 7, type: 'perk', id: 'GUARDIAN_KILL_XP_BONUS' },
-    { level: 8, type: 'perk', id: 'HP_PLUS_2' },
+    // Nível 8 - Perk: Fôlego Ártico
+    {
+      level: 8,
+      type: 'perk',
+      id: 'ARCTIC_BREATH',
+      name: { pt: 'Fôlego Ártico', en: 'Arctic Breath' },
+      desc: {
+        pt: 'Ao derrotar um inimigo, recupera 1 de vida.',
+        en: 'When defeating an enemy, recover 1 HP.',
+      },
+    },
+    // Nível 9 - Habilidade: Avalanche Misteriosa
     {
       level: 9,
       type: 'skill',
-      id: 'kael_skill_6',
+      id: 'kael_skill_avalanche_misteriosa',
       name: { pt: 'Avalanche Misteriosa', en: 'Mysterious Avalanche' },
       desc: {
         pt: 'Causa 4 de dano e paralisa todos os inimigos.',
         en: 'Deals 4 damage and paralyzes all enemies.',
       },
-      cost: 2,
+      cost: 3,
+      type: 'aoe_paralyze',
     },
+    // Nível 10 - Habilidade: Era do Gelo
     {
       level: 10,
       type: 'skill',
-      id: 'kael_skill_7',
+      id: 'kael_skill_era_do_gelo',
       name: { pt: 'Era do Gelo', en: 'Ice Age' },
       desc: {
         pt: 'Supremo: 4 de dano e congela o campo por 3 turnos.',
         en: 'Ultimate: 4 damage and freezes the field for 3 turns.',
       },
-      cost: 3,
+      cost: 4,
+      type: 'ultimate_field_freeze',
     },
   ],
 };

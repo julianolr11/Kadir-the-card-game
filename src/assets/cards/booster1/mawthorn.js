@@ -83,65 +83,114 @@ module.exports = {
   },
   unlockTable: [
     { level: 0, type: 'none' },
+    // Nível 2 - Perk: Espinhos Abissais
     {
-      level: 1,
-      type: 'skill',
-      id: 'mawthorn_skill_3',
-      name: { pt: 'Nuvem Tóxica', en: 'Toxic Cloud' },
+      level: 2,
+      type: 'perk',
+      id: 'ABYSSAL_THORNS',
+      name: { pt: 'Espinhos Abissais', en: 'Abyssal Thorns' },
       desc: {
-        pt: 'Causa 3 de dano, aplica poison e -5% de acerto no alvo.',
-        en: 'Deals 3 damage, applies poison and -5% accuracy.',
+        pt: 'Ao entrar em campo, aplica bleed leve em todos os inimigos.',
+        en: 'When summoned, applies light bleed to all enemies.',
       },
-      cost: 1,
     },
-    { level: 2, type: 'perk', id: 'POISON_CHANCE_PLUS_10' },
+    // Nível 3 - Habilidade: Nuvem Tóxica
     {
       level: 3,
       type: 'skill',
-      id: 'mawthorn_skill_4',
-      name: { pt: 'Picada Mortal', en: 'Deadly Sting' },
+      id: 'mawthorn_skill_nuvem_toxica',
+      name: { pt: 'Nuvem Tóxica', en: 'Toxic Cloud' },
       desc: {
-        pt: 'Causa 4 de dano, bleed + poison por 3 turnos.',
-        en: 'Deals 4 damage, bleed + poison for 3 turns.',
+        pt: 'Causa 2 de dano, aplica poison e -5% de acerto no alvo.',
+        en: 'Deals 2 damage, applies poison and -5% accuracy.',
       },
-      cost: 2,
+      cost: 1,
+      type: 'damage_poison_accuracy',
     },
-    { level: 4, type: 'perk', id: 'ARMOR_PEN_PLUS_10' },
+    // Nível 4 - Perk: Regeneração Profunda
+    {
+      level: 4,
+      type: 'perk',
+      id: 'DEEP_REGEN',
+      name: { pt: 'Regeneração Profunda', en: 'Deep Regeneration' },
+      desc: {
+        pt: 'Recupera 1 de vida por turno enquanto estiver com bleed ativo.',
+        en: 'Recovers 1 HP per turn while bleed is active.',
+      },
+    },
+    // Nível 5 - Habilidade: Picada Mortal
     {
       level: 5,
       type: 'skill',
-      id: 'mawthorn_skill_5',
+      id: 'mawthorn_skill_picada_mortal',
+      name: { pt: 'Picada Mortal', en: 'Deadly Sting' },
+      desc: {
+        pt: 'Causa 3 de dano, bleed + poison por 2 turnos.',
+        en: 'Deals 3 damage, bleed + poison for 2 turns.',
+      },
+      cost: 2,
+      type: 'damage_bleed_poison',
+    },
+    // Nível 6 - Perk: Pele Tóxica
+    {
+      level: 6,
+      type: 'perk',
+      id: 'TOXIC_SKIN',
+      name: { pt: 'Pele Tóxica', en: 'Toxic Skin' },
+      desc: {
+        pt: 'Recebe -1 de dano de poison e bleed.',
+        en: 'Takes -1 damage from poison and bleed.',
+      },
+    },
+    // Nível 7 - Habilidade: Fúria da Natureza
+    {
+      level: 7,
+      type: 'skill',
+      id: 'mawthorn_skill_furia_natureza',
       name: { pt: 'Fúria da Natureza', en: "Nature's Fury" },
       desc: {
         pt: 'Causa 4 de dano e cria campo que aplica bleed leve em inimigos novos.',
         en: 'Deals 4 damage and creates a field applying light bleed to new enemies.',
       },
       cost: 2,
+      type: 'field_bleed',
     },
-    { level: 6, type: 'perk', id: 'REGEN_PLUS_5' },
-    { level: 7, type: 'perk', id: 'FIRST_ROUND_SHIELD' },
-    { level: 8, type: 'perk', id: 'HP_PLUS_2' },
+    // Nível 8 - Perk: Esporos Curativos
+    {
+      level: 8,
+      type: 'perk',
+      id: 'HEALING_SPORES',
+      name: { pt: 'Esporos Curativos', en: 'Healing Spores' },
+      desc: {
+        pt: 'Ao aplicar um DoT, cura 1 de vida.',
+        en: 'When applying a DoT, heal 1 HP.',
+      },
+    },
+    // Nível 9 - Habilidade: Toxina Suprema
     {
       level: 9,
       type: 'skill',
-      id: 'mawthorn_skill_6',
+      id: 'mawthorn_skill_toxina_suprema',
       name: { pt: 'Toxina Suprema', en: 'Supreme Toxin' },
       desc: {
         pt: 'Causa 4 em área, poison forte 3 turnos e 25% de paralisar.',
         en: 'Deals 4 AoE, strong poison 3 turns and 25% paralyze.',
       },
-      cost: 2,
+      cost: 3,
+      type: 'aoe_poison_paralyze',
     },
+    // Nível 10 - Habilidade: Apocalipse Tóxico
     {
       level: 10,
       type: 'skill',
-      id: 'mawthorn_skill_7',
+      id: 'mawthorn_skill_apocalipse_toxico',
       name: { pt: 'Apocalipse Tóxico', en: 'Toxic Apocalypse' },
       desc: {
         pt: 'Supremo: 4 de dano, bleed + poison extremo por 4 turnos.',
         en: 'Ultimate: 4 damage, extreme bleed + poison for 4 turns.',
       },
-      cost: 3,
+      cost: 4,
+      type: 'ultimate_bleed_poison',
     },
   ],
 };

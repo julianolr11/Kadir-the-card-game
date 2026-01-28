@@ -80,65 +80,114 @@ module.exports = {
   },
   unlockTable: [
     { level: 0, type: 'none' },
+    // Nível 2 - Perk: Aura Lunar
     {
-      level: 1,
+      level: 2,
+      type: 'perk',
+      id: 'LUNAR_AURA',
+      name: { pt: 'Aura Lunar', en: 'Lunar Aura' },
+      desc: {
+        pt: 'Aliados recebem +1 de defesa por 2 turnos ao entrar em campo.',
+        en: 'Allies gain +1 defense for 2 turns when summoned.',
+      },
+    },
+    // Nível 3 - Habilidade: Pulso Celestial
+    {
+      level: 3,
       type: 'skill',
-      id: 'lunethal_skill_3',
+      id: 'lunethal_skill_pulso_celestial',
       name: { pt: 'Pulso Celestial', en: 'Celestial Pulse' },
       desc: {
-        pt: 'Causa 3 de dano e cura 2 de vida.',
-        en: 'Deals 3 damage and heals 2 HP.',
+        pt: 'Causa 2 de dano e cura 2 de vida.',
+        en: 'Deals 2 damage and heals 2 HP.',
       },
       cost: 1,
+      type: 'damage_heal',
     },
-    { level: 2, type: 'perk', id: 'HP_PLUS_1' },
-    { level: 3, type: 'none' },
+    // Nível 4 - Perk: Reflexo da Lua
     {
       level: 4,
+      type: 'perk',
+      id: 'MOON_REFLECT',
+      name: { pt: 'Reflexo da Lua', en: 'Moon Reflect' },
+      desc: {
+        pt: 'Reflete 1 de dano sagrado recebido por turno.',
+        en: 'Reflects 1 holy damage received per turn.',
+      },
+    },
+    // Nível 5 - Habilidade: Manto Protetor
+    {
+      level: 5,
       type: 'skill',
-      id: 'lunethal_skill_4',
+      id: 'lunethal_skill_manto_protetor',
       name: { pt: 'Manto Protetor', en: 'Protective Mantle' },
       desc: {
         pt: 'Aumenta defesa e cura 3 de vida.',
         en: 'Increases defense and heals 3 HP.',
       },
       cost: 2,
+      type: 'buff_heal',
     },
+    // Nível 6 - Perk: Bênção Noturna
     {
-      level: 5,
+      level: 6,
+      type: 'perk',
+      id: 'NIGHT_BLESSING',
+      name: { pt: 'Bênção Noturna', en: 'Night Blessing' },
+      desc: {
+        pt: 'Aliados curam +1 de vida ao receber cura.',
+        en: 'Allies heal +1 HP when healed.',
+      },
+    },
+    // Nível 7 - Habilidade: Graça Divina
+    {
+      level: 7,
       type: 'skill',
-      id: 'lunethal_skill_5',
+      id: 'lunethal_skill_graca_divina',
       name: { pt: 'Graça Divina', en: 'Divine Grace' },
       desc: {
-        pt: 'Causa 4 de dano e cura todos os aliados em 3 de vida.',
-        en: 'Deals 4 damage and heals all allies for 3 HP.',
+        pt: 'Causa 3 de dano e cura todos os aliados em 2 de vida.',
+        en: 'Deals 3 damage and heals all allies for 2 HP.',
       },
       cost: 2,
+      type: 'damage_team_heal',
     },
-    { level: 6, type: 'none' },
-    { level: 7, type: 'perk', id: 'GUARDIAN_KILL_XP_BONUS' },
-    { level: 8, type: 'perk', id: 'HP_PLUS_2' },
+    // Nível 8 - Perk: Luz Crescente
+    {
+      level: 8,
+      type: 'perk',
+      id: 'RISING_LIGHT',
+      name: { pt: 'Luz Crescente', en: 'Rising Light' },
+      desc: {
+        pt: 'Aliados recebem +1 de ataque durante a noite.',
+        en: 'Allies gain +1 attack at night.',
+      },
+    },
+    // Nível 9 - Habilidade: Ressurreição Lunar
     {
       level: 9,
       type: 'skill',
-      id: 'lunethal_skill_6',
+      id: 'lunethal_skill_ressurreicao_lunar',
       name: { pt: 'Ressurreição Lunar', en: 'Lunar Resurrection' },
       desc: {
         pt: 'Cura 4 de vida em todos os aliados.',
         en: 'Heals 4 HP to all allies.',
       },
-      cost: 2,
+      cost: 3,
+      type: 'team_heal',
     },
+    // Nível 10 - Habilidade: Era da Luz Eterna
     {
       level: 10,
       type: 'skill',
-      id: 'lunethal_skill_7',
+      id: 'lunethal_skill_era_luz_eterna',
       name: { pt: 'Era da Luz Eterna', en: 'Eternal Light Era' },
       desc: {
         pt: 'Supremo: 4 de dano e cura 4 de vida para todos os aliados.',
         en: 'Ultimate: 4 damage and heals 4 HP to all allies.',
       },
-      cost: 3,
+      cost: 4,
+      type: 'ultimate_team_heal',
     },
   ],
 };

@@ -30,10 +30,18 @@ import CreatureCardPreview from './CreatureCardPreview';
 import CardInstanceSelector from './CardInstanceSelector';
 import sphereMenuSound from '../assets/sounds/effects/sphereMenuSound.js';
 import packageSound from '../assets/sounds/effects/packageSound.js';
+
 import fogoIcon from '../assets/img/elements/fogo.png';
 import aguaIcon from '../assets/img/elements/agua.png';
 import terraIcon from '../assets/img/elements/terra.png';
 import arIcon from '../assets/img/elements/ar.png';
+import burnIcon from '../assets/img/icons/burn.png';
+import freezeIcon from '../assets/img/icons/freeze.png';
+import paralyzeIcon from '../assets/img/icons/paralyze.png';
+import poisonIcon from '../assets/img/icons/poison.png';
+import sleepIcon from '../assets/img/icons/sleep.png';
+import bleedIcon from '../assets/img/icons/bleed.png';
+import shieldIcon from '../assets/img/icons/shield.png';
 
 
 
@@ -450,7 +458,8 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
 
   const normalizeType = (value) => {
     if (!value) return '';
-    return value.toString().normalize('NFD').replace(/[\u0000-\u000f]/g, '').toLowerCase().trim();
+    // Remove acentos corretamente
+    return value.toString().normalize('NFD').replace(/[ -\u000f]/g, '').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
   };
 
   const resolveType = (data) => {
@@ -870,26 +879,32 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
                   <div className="loadout-card-block">
                     <div className="loadout-card-scale">
                       {(() => {
-                        // Preview com habilidades selecionadas
+                        // Preview com habilidades selecionadas (mantendo todos os campos da skill original)
                         const skillsPool = [
-                          ...(Array.isArray(editingCardData.defaultSkills) ? editingCardData.defaultSkills : []),
+                          ...(Array.isArray(editingCardData.defaultSkills)
+                              ? editingCardData.defaultSkills
+                              : (Array.isArray(editingCardData.abilities) ? editingCardData.abilities : [])),
                           ...(Array.isArray(editingCardData.unlockTable) ? editingCardData.unlockTable.filter(x => x.type === 'skill') : []),
                         ];
                         const selectedAbilities = editingSelectedSkills
                           .filter(Boolean)
                           .map((skillId) => {
+                            // Só considera habilidades que ainda existem no pool
                             const s = skillsPool.find((x) => x.id === skillId);
                             if (!s) return null;
                             return {
-                              name: s.name,
+                              ...s,
                               desc: s.displayText || s.desc,
-                              cost: s.cost || 1,
                             };
                           })
                           .filter(Boolean);
                         const creaturePreviewData = {
                           ...editingCardData,
-                          abilities: selectedAbilities.length > 0 ? selectedAbilities : (editingCardData.defaultSkills || []).slice(0, 2),
+                          abilities: selectedAbilities.length > 0
+                            ? selectedAbilities
+                            : (Array.isArray(editingCardData.defaultSkills)
+                                ? editingCardData.defaultSkills.slice(0, 2)
+                                : (Array.isArray(editingCardData.abilities) ? editingCardData.abilities.slice(0, 2) : [])),
                         };
                         return (
                           <CreatureCardPreview creature={creaturePreviewData} onClose={null} level={1} isHolo={false} allowFlip />

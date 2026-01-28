@@ -100,65 +100,114 @@ module.exports = {
   },
   unlockTable: [
     { level: 0, type: 'none' },
+    // Nível 2 - Perk: Carapaça Abissal
     {
-      level: 1,
-      type: 'skill',
-      id: 'ekernoth_skill_3',
-      name: { pt: 'Pressão do Profundo', en: 'Abyssal Pressure' },
+      level: 2,
+      type: 'perk',
+      id: 'ABYSSAL_CARAPACE',
+      name: { pt: 'Carapaça Abissal', en: 'Abyssal Carapace' },
       desc: {
-        pt: 'Causa 3 de dano água a todos e aplica -8% defesa por 2 turnos.',
-        en: 'Deals 3 water damage to all and applies -8% defense for 2 turns.',
+        pt: 'Recebe -2 de dano de ataques físicos por 2 turnos ao entrar em campo.',
+        en: 'Takes -2 physical damage for 2 turns when summoned.',
       },
-      cost: 2,
     },
-    { level: 2, type: 'perk', id: 'HP_PLUS_1' },
+    // Nível 3 - Habilidade: Pressão do Profundo
     {
       level: 3,
       type: 'skill',
-      id: 'ekernoth_skill_4',
-      name: { pt: 'Escudo Salgado', en: 'Salt Shield' },
+      id: 'ekernoth_skill_pressao_profundo',
+      name: { pt: 'Pressão do Profundo', en: 'Abyssal Pressure' },
       desc: {
-        pt: 'Cura 3 de HP e ganha +6% defesa por 2 turnos; aliados próximos ganham +3% defesa.',
-        en: 'Heals 3 HP and gains +6% defense for 2 turns; nearby allies gain +3% defense.',
+        pt: 'Causa 3 de dano em área e reduz defesa dos inimigos em 10% por 2 turnos.',
+        en: 'Deals 3 area damage and reduces enemy defense by 10% for 2 turns.',
       },
-      cost: 1,
+      cost: 2,
+      type: 'aoe_defense_down',
     },
-    { level: 4, type: 'perk', id: 'CRIT_CHANCE' },
+    // Nível 4 - Perk: Escudo Salino
+    {
+      level: 4,
+      type: 'perk',
+      id: 'SALINE_SHIELD',
+      name: { pt: 'Escudo Salino', en: 'Saline Shield' },
+      desc: {
+        pt: 'No início do turno, ganha escudo que absorve 2 de dano.',
+        en: 'At the start of the turn, gain a shield that absorbs 2 damage.',
+      },
+    },
+    // Nível 5 - Habilidade: Tormenta Esmagadora
     {
       level: 5,
       type: 'skill',
-      id: 'ekernoth_skill_5',
+      id: 'ekernoth_skill_tormenta_esmagadora',
       name: { pt: 'Tormenta Esmagadora', en: 'Crushing Storm' },
       desc: {
-        pt: 'Causa 4 de dano em área, reduz velocidade em 12% e defesa em 8% por 2 turnos.',
-        en: 'Deals 4 area damage, reduces speed by 12% and defense by 8% for 2 turns.',
+        pt: 'Causa 4 de dano em área e reduz velocidade dos inimigos em 12% por 2 turnos.',
+        en: 'Deals 4 area damage and reduces enemy speed by 12% for 2 turns.',
       },
       cost: 2,
+      type: 'aoe_slow',
     },
-    { level: 6, type: 'perk', id: 'DODGE_INCREASE' },
-    { level: 7, type: 'perk', id: 'DEFENSE_PLUS_1' },
-    { level: 8, type: 'perk', id: 'HP_PLUS_2' },
+    // Nível 6 - Perk: Fúria do Abismo
     {
-      level: 9,
+      level: 6,
+      type: 'perk',
+      id: 'ABYSSAL_FURY',
+      name: { pt: 'Fúria do Abismo', en: 'Abyssal Fury' },
+      desc: {
+        pt: 'Ao derrotar um inimigo, recupera 2 de vida.',
+        en: 'When defeating an enemy, recover 2 HP.',
+      },
+    },
+    // Nível 7 - Habilidade: Giro Destruidor
+    {
+      level: 7,
       type: 'skill',
-      id: 'ekernoth_skill_6',
+      id: 'ekernoth_skill_giro_destruidor',
       name: { pt: 'Giro Destruidor', en: 'Destructive Spin' },
       desc: {
         pt: 'Causa 3 de dano a todos e bloqueia 1 ataque para aliados próximos por 1 turno.',
         en: 'Deals 3 damage to all and blocks 1 attack for nearby allies for 1 turn.',
       },
       cost: 2,
+      type: 'aoe_block',
     },
+    // Nível 8 - Perk: Pressão Constante
+    {
+      level: 8,
+      type: 'perk',
+      id: 'CONSTANT_PRESSURE',
+      name: { pt: 'Pressão Constante', en: 'Constant Pressure' },
+      desc: {
+        pt: 'Inimigos recebem -1 de defesa enquanto Ekernoth estiver em campo.',
+        en: 'Enemies have -1 defense while Ekernoth is on the field.',
+      },
+    },
+    // Nível 9 - Habilidade: Redemoinho Abissal
+    {
+      level: 9,
+      type: 'skill',
+      id: 'ekernoth_skill_redemoinho_abissal',
+      name: { pt: 'Redemoinho Abissal', en: 'Abyssal Whirlpool' },
+      desc: {
+        pt: 'Causa 4 de dano em área e puxa todos os inimigos para o centro (reduz evasão).',
+        en: 'Deals 4 area damage and pulls all enemies to the center (reduces evasion).',
+      },
+      cost: 3,
+      type: 'aoe_pull',
+    },
+    // Nível 10 - Habilidade: Maelstrom Abissal
     {
       level: 10,
       type: 'skill',
-      id: 'ekernoth_skill_7',
+      id: 'ekernoth_skill_maelstrom_abissal',
       name: { pt: 'Maelstrom Abissal', en: 'Abyssal Maelstrom' },
       desc: {
         pt: 'Supremo: 5 de dano em todos, reduz velocidade em 15%, defesa em 10% por 3 turnos e ganha escudo que absorve 3 de dano.',
         en: 'Ultimate: 5 damage to all, reduces speed by 15%, defense by 10% for 3 turns, and gains a shield absorbing 3 damage.',
       },
-      cost: 3,
+      cost: 4,
+      type: 'ultimate_aoe_shield',
     },
   ],
 };

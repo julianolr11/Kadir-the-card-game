@@ -76,65 +76,114 @@ module.exports = {
   },
   unlockTable: [
     { level: 0, type: 'none' },
+    // Nível 2 - Perk: Instinto Felino
     {
-      level: 1,
+      level: 2,
+      type: 'perk',
+      id: 'FELINE_INSTINCT',
+      name: { pt: 'Instinto Felino', en: 'Feline Instinct' },
+      desc: {
+        pt: 'Ganha +1 esquiva ao entrar em campo.',
+        en: 'Gain +1 evasion when summoned.',
+      },
+    },
+    // Nível 3 - Habilidade: Ataque Múltiplo
+    {
+      level: 3,
       type: 'skill',
-      id: 'pawferion_skill_3',
+      id: 'pawferion_skill_ataque_multiplo',
       name: { pt: 'Ataque Múltiplo', en: 'Multi-Strike' },
       desc: {
-        pt: 'Causa 3 de dano em múltiplos golpes rápidos.',
-        en: 'Deals 3 damage in multiple quick strikes.',
+        pt: 'Causa 2 de dano duas vezes (total 4).',
+        en: 'Deals 2 damage twice (total 4).',
       },
       cost: 1,
+      type: 'multi_hit',
     },
-    { level: 2, type: 'perk', id: 'HP_PLUS_1' },
-    { level: 3, type: 'none' },
+    // Nível 4 - Perk: Reflexos Ágeis
     {
       level: 4,
-      type: 'skill',
-      id: 'pawferion_skill_4',
-      name: { pt: 'Dança Feroz', en: 'Fierce Dance' },
+      type: 'perk',
+      id: 'AGILE_REFLEXES',
+      name: { pt: 'Reflexos Ágeis', en: 'Agile Reflexes' },
       desc: {
-        pt: 'Causa 3 de dano e aumenta esquiva.',
-        en: 'Deals 3 damage and increases dodge.',
+        pt: 'Recebe -1 de dano de ataques físicos.',
+        en: 'Takes -1 damage from physical attacks.',
       },
-      cost: 2,
     },
+    // Nível 5 - Habilidade: Dança Feroz
     {
       level: 5,
       type: 'skill',
-      id: 'pawferion_skill_5',
-      name: { pt: 'Fúria do Felino', en: 'Feline Fury' },
+      id: 'pawferion_skill_danca_feroz',
+      name: { pt: 'Dança Feroz', en: 'Fierce Dance' },
       desc: {
-        pt: 'Causa 4 de dano e aumenta ataque e velocidade.',
-        en: 'Deals 4 damage and increases attack and speed.',
+        pt: 'Causa 3 de dano e aumenta esquiva por 2 turnos.',
+        en: 'Deals 3 damage and increases dodge for 2 turns.',
       },
       cost: 2,
+      type: 'damage_buff',
     },
-    { level: 6, type: 'none' },
-    { level: 7, type: 'perk', id: 'FIRST_ROUND_SHIELD' },
-    { level: 8, type: 'perk', id: 'HP_PLUS_2' },
+    // Nível 6 - Perk: Fôlego Selvagem
+    {
+      level: 6,
+      type: 'perk',
+      id: 'WILD_BREATH',
+      name: { pt: 'Fôlego Selvagem', en: 'Wild Breath' },
+      desc: {
+        pt: 'Ao derrotar um inimigo, recupera 1 de vida.',
+        en: 'When defeating an enemy, recover 1 HP.',
+      },
+    },
+    // Nível 7 - Habilidade: Fúria do Felino
+    {
+      level: 7,
+      type: 'skill',
+      id: 'pawferion_skill_furia_felino',
+      name: { pt: 'Fúria do Felino', en: 'Feline Fury' },
+      desc: {
+        pt: 'Causa 4 de dano e aumenta ataque e velocidade por 2 turnos.',
+        en: 'Deals 4 damage and increases attack and speed for 2 turns.',
+      },
+      cost: 2,
+      type: 'damage_buff',
+    },
+    // Nível 8 - Perk: Garras Protetoras
+    {
+      level: 8,
+      type: 'perk',
+      id: 'PROTECTIVE_CLAWS',
+      name: { pt: 'Garras Protetoras', en: 'Protective Claws' },
+      desc: {
+        pt: 'No início do turno, ganha 1 de escudo se estiver com esquiva ativa.',
+        en: 'At the start of the turn, gain 1 shield if evasion is active.',
+      },
+    },
+    // Nível 9 - Habilidade: Tornado de Garras
     {
       level: 9,
       type: 'skill',
-      id: 'pawferion_skill_6',
+      id: 'pawferion_skill_tornado_garras',
       name: { pt: 'Tornado de Garras', en: 'Claw Tornado' },
       desc: {
-        pt: 'Causa 4 de dano em ataque giratório.',
-        en: 'Deals 4 damage in spinning attack.',
+        pt: 'Causa 4 de dano em ataque giratório e reduz defesa do alvo.',
+        en: 'Deals 4 damage in spinning attack and reduces target defense.',
       },
-      cost: 2,
+      cost: 3,
+      type: 'damage_defense_down',
     },
+    // Nível 10 - Habilidade: Fúria Absoluta
     {
       level: 10,
       type: 'skill',
-      id: 'pawferion_skill_7',
+      id: 'pawferion_skill_furia_absoluta',
       name: { pt: 'Fúria Absoluta', en: 'Absolute Fury' },
       desc: {
         pt: 'Supremo: 4 de dano e aumenta todos os atributos aliados por 2 turnos.',
         en: 'Ultimate: 4 damage and increases all ally attributes for 2 turns.',
       },
-      cost: 3,
+      cost: 4,
+      type: 'ultimate_team_buff',
     },
   ],
 };

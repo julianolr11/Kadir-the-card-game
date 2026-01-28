@@ -79,65 +79,114 @@ module.exports = {
   },
   unlockTable: [
     { level: 0, type: 'none' },
+    // Nível 2 - Perk: Pele Venenosa
     {
-      level: 1,
+      level: 2,
+      type: 'perk',
+      id: 'VENOM_SKIN',
+      name: { pt: 'Pele Venenosa', en: 'Venom Skin' },
+      desc: {
+        pt: 'Recebe -1 de dano de poison por 2 turnos ao entrar em campo.',
+        en: 'Takes -1 poison damage for 2 turns when summoned.',
+      },
+    },
+    // Nível 3 - Habilidade: Presas Venenosas
+    {
+      level: 3,
       type: 'skill',
-      id: 'viborom_skill_3',
+      id: 'viborom_skill_presas_venenosas',
       name: { pt: 'Presas Venenosas', en: 'Venom Fangs' },
       desc: {
-        pt: 'Causa 3 de dano com múltiplas feridas envenenadas.',
-        en: 'Deals 3 damage with multiple poison wounds.',
+        pt: 'Causa 2 de dano com múltiplas feridas envenenadas.',
+        en: 'Deals 2 damage with multiple poison wounds.',
       },
       cost: 1,
+      type: 'damage_poison',
     },
-    { level: 2, type: 'perk', id: 'HP_PLUS_1' },
-    { level: 3, type: 'none' },
+    // Nível 4 - Perk: Resistência Tóxica
     {
       level: 4,
-      type: 'skill',
-      id: 'viborom_skill_4',
-      name: { pt: 'Nuvem Tóxica', en: 'Poison Cloud' },
+      type: 'perk',
+      id: 'TOXIC_RESISTANCE',
+      name: { pt: 'Resistência Tóxica', en: 'Toxic Resistance' },
       desc: {
-        pt: 'Causa 3 de dano e envenena por 4 turnos.',
-        en: 'Deals 3 damage and poisons for 4 turns.',
+        pt: 'Recebe -20% de dano de poison.',
+        en: 'Takes -20% poison damage.',
       },
-      cost: 2,
     },
+    // Nível 5 - Habilidade: Nuvem Tóxica
     {
       level: 5,
       type: 'skill',
-      id: 'viborom_skill_5',
-      name: { pt: 'Epidemia', en: 'Epidemic' },
+      id: 'viborom_skill_nuvem_toxica',
+      name: { pt: 'Nuvem Tóxica', en: 'Poison Cloud' },
       desc: {
-        pt: 'Causa 4 de dano e espalha veneno para aliados inimigos.',
-        en: 'Deals 4 damage and spreads poison to enemy allies.',
+        pt: 'Causa 3 de dano e envenena por 3 turnos.',
+        en: 'Deals 3 damage and poisons for 3 turns.',
       },
       cost: 2,
+      type: 'damage_poison_dot',
     },
-    { level: 6, type: 'none' },
-    { level: 7, type: 'perk', id: 'GUARDIAN_KILL_XP_BONUS' },
-    { level: 8, type: 'perk', id: 'HP_PLUS_2' },
+    // Nível 6 - Perk: Veneno Persistente
+    {
+      level: 6,
+      type: 'perk',
+      id: 'PERSISTENT_VENOM',
+      name: { pt: 'Veneno Persistente', en: 'Persistent Venom' },
+      desc: {
+        pt: 'Poison causado por Viborom dura +1 turno.',
+        en: 'Poison caused by Viborom lasts +1 turn.',
+      },
+    },
+    // Nível 7 - Habilidade: Epidemia
+    {
+      level: 7,
+      type: 'skill',
+      id: 'viborom_skill_epidemia',
+      name: { pt: 'Epidemia', en: 'Epidemic' },
+      desc: {
+        pt: 'Causa 4 de dano e espalha veneno para inimigos adjacentes.',
+        en: 'Deals 4 damage and spreads poison to adjacent enemies.',
+      },
+      cost: 2,
+      type: 'aoe_poison_spread',
+    },
+    // Nível 8 - Perk: Cura Tóxica
+    {
+      level: 8,
+      type: 'perk',
+      id: 'TOXIC_HEAL',
+      name: { pt: 'Cura Tóxica', en: 'Toxic Heal' },
+      desc: {
+        pt: 'Ao derrotar um inimigo envenenado, cura 2 de vida.',
+        en: 'When defeating a poisoned enemy, heal 2 HP.',
+      },
+    },
+    // Nível 9 - Habilidade: Corrosão Ácida
     {
       level: 9,
       type: 'skill',
-      id: 'viborom_skill_6',
+      id: 'viborom_skill_corrosao_acida',
       name: { pt: 'Corrosão Ácida', en: 'Acid Corrosion' },
       desc: {
         pt: 'Causa 4 de dano e reduz defesa inimiga por 3 turnos.',
         en: 'Deals 4 damage and reduces enemy defense for 3 turns.',
       },
-      cost: 2,
+      cost: 3,
+      type: 'damage_defense_down',
     },
+    // Nível 10 - Habilidade: Morte Tóxica
     {
       level: 10,
       type: 'skill',
-      id: 'viborom_skill_7',
+      id: 'viborom_skill_morte_toxica',
       name: { pt: 'Morte Tóxica', en: 'Toxic Death' },
       desc: {
         pt: 'Supremo: 4 de dano e aplica veneno por 5 turnos.',
         en: 'Ultimate: 4 damage and applies poison for 5 turns.',
       },
-      cost: 3,
+      cost: 4,
+      type: 'ultimate_poison',
     },
   ],
 };

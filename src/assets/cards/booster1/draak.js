@@ -50,24 +50,28 @@ module.exports = {
   isGuardian: true,
   defaultSkills: [
     {
-      id: 'draak_skill_1',
+      id: 'draak_skill_grito_draconico',
       name: { pt: 'Grito Dracônico', en: 'Draconic Roar' },
       desc: {
         pt: 'Causa 3 de dano e atordoa o inimigo.',
         en: 'Deals 3 damage and stuns the enemy.',
       },
       cost: 1,
-      type: 'damage_debuff',
+      type: 'damage_stun',
+      damage: 3,
+      statusEffect: 'stun',
+      duration: 1,
     },
     {
-      id: 'draak_skill_2',
+      id: 'draak_skill_escama_destruidora',
       name: { pt: 'Escama Destruidora', en: 'Destroyer Scale' },
       desc: {
         pt: 'Causa 2 de dano e ignora 5% da defesa inimiga.',
         en: 'Deals 2 damage and ignores 5% of enemy defense.',
       },
       cost: 1,
-      type: 'damage',
+      type: 'damage_shieldpierce',
+      damage: 2,
     },
   ],
   defaultBlessing: {
@@ -80,65 +84,114 @@ module.exports = {
   },
   unlockTable: [
     { level: 0, type: 'none' },
+    // Nível 2 - Perk: Instinto Dracônico
     {
-      level: 1,
-      type: 'skill',
-      id: 'draak_skill_3',
-      name: { pt: 'Investida Dracônica', en: 'Draconic Charge' },
+      level: 2,
+      type: 'perk',
+      id: 'DRACONIC_INSTINCT',
+      name: { pt: 'Instinto Dracônico', en: 'Draconic Instinct' },
       desc: {
-        pt: 'Causa 3 de dano e aumenta a próxima ação.',
-        en: 'Deals 3 damage and increases next action.',
+        pt: 'Ganha +1 esquiva ao entrar em campo.',
+        en: 'Gain +1 evasion when summoned.',
       },
-      cost: 1,
     },
-    { level: 2, type: 'perk', id: 'ATTACK_PLUS_1' },
+    // Nível 3 - Habilidade: Sopro Etéreo
     {
       level: 3,
       type: 'skill',
-      id: 'draak_skill_4',
-      name: { pt: 'Bafo Ardente', en: 'Burning Breath' },
+      id: 'draak_skill_sopro_etereo',
+      name: { pt: 'Sopro Etéreo', en: 'Ethereal Breath' },
       desc: {
-        pt: 'Causa 3 de dano em linha e aplica <span class="debuff-burn">queimadura</span>.',
-        en: 'Deals 3 damage in a line and applies <span class="debuff-burn">burn</span>.',
+        pt: 'Causa 2 de dano e reduz ataque do alvo por 1 turno.',
+        en: 'Deals 2 damage and reduces target attack for 1 turn.',
       },
-      cost: 2,
+      cost: 1,
+      type: 'damage_debuff',
     },
-    { level: 4, type: 'perk', id: 'HP_PLUS_1' },
+    // Nível 4 - Perk: Escamas Protetoras
+    {
+      level: 4,
+      type: 'perk',
+      id: 'PROTECTIVE_SCALES',
+      name: { pt: 'Escamas Protetoras', en: 'Protective Scales' },
+      desc: {
+        pt: 'Recebe -1 de dano de ataques mágicos.',
+        en: 'Takes -1 damage from magic attacks.',
+      },
+    },
+    // Nível 5 - Habilidade: Cauda Cortante
     {
       level: 5,
       type: 'skill',
-      id: 'draak_skill_5',
-      name: { pt: 'Tornado Destrutivo', en: 'Destructive Tornado' },
+      id: 'draak_skill_cauda_cortante',
+      name: { pt: 'Cauda Cortante', en: 'Cutting Tail' },
       desc: {
-        pt: 'Causa 4 de dano e reduz velocidade do inimigo.',
-        en: 'Deals 4 damage and reduces enemy speed.',
+        pt: 'Causa 2 de dano e 50% de chance de sangrar por 2 turnos.',
+        en: 'Deals 2 damage and 50% chance to bleed for 2 turns.',
       },
-      cost: 2,
+      cost: 1,
+      type: 'damage_bleed',
     },
-    { level: 6, type: 'perk', id: 'DEFENSE_REDUCTION' },
+    // Nível 6 - Perk: Fôlego dos Céus
+    {
+      level: 6,
+      type: 'perk',
+      id: 'SKY_BREATH',
+      name: { pt: 'Fôlego dos Céus', en: 'Sky Breath' },
+      desc: {
+        pt: 'Ao derrotar um inimigo, recupera 1 de vida.',
+        en: 'When defeating an enemy, recover 1 HP.',
+      },
+    },
+    // Nível 7 - Habilidade: Rajada Ascendente
     {
       level: 7,
       type: 'skill',
-      id: 'draak_skill_6',
-      name: { pt: 'Escudo Dragônico', en: 'Dragon Shield' },
+      id: 'draak_skill_rajada_ascendente',
+      name: { pt: 'Rajada Ascendente', en: 'Ascending Gust' },
       desc: {
-        pt: 'Ganha um escudo que nega o próximo ataque e aumenta defesa por 1 rodada.',
-        en: 'Gains a shield that negates the next attack and increases defense for 1 round.',
+        pt: 'Causa 3 de dano e empurra o alvo para trás.',
+        en: 'Deals 3 damage and pushes the target back.',
       },
       cost: 2,
+      type: 'damage_push',
     },
-    { level: 8, type: 'perk', id: 'HP_PLUS_2' },
-    { level: 9, type: 'perk', id: 'CRIT_CHANCE' },
+    // Nível 8 - Perk: Olhos Vigilantes
+    {
+      level: 8,
+      type: 'perk',
+      id: 'WATCHFUL_EYES',
+      name: { pt: 'Olhos Vigilantes', en: 'Watchful Eyes' },
+      desc: {
+        pt: 'No início do turno, ganha 1 de escudo se estiver com esquiva ativa.',
+        en: 'At the start of the turn, gain 1 shield if evasion is active.',
+      },
+    },
+    // Nível 9 - Habilidade: Grito Dracônico
+    {
+      level: 9,
+      type: 'skill',
+      id: 'draak_skill_grito_draconico',
+      name: { pt: 'Grito Dracônico', en: 'Draconic Roar' },
+      desc: {
+        pt: 'Causa 4 de dano e atordoa o inimigo.',
+        en: 'Deals 4 damage and stuns the enemy.',
+      },
+      cost: 3,
+      type: 'damage_stun',
+    },
+    // Nível 10 - Habilidade: Fúria Celeste
     {
       level: 10,
       type: 'skill',
-      id: 'draak_skill_7',
-      name: { pt: 'Fúria Primordial', en: 'Primordial Fury' },
+      id: 'draak_skill_furia_celeste',
+      name: { pt: 'Fúria Celeste', en: 'Celestial Fury' },
       desc: {
-        pt: 'Supremo: 4 de dano ignorando totalmente a defesa.',
-        en: 'Ultimate: 4 damage completely ignores defense.',
+        pt: 'Supremo: 5 de dano e reduz defesa de todos os inimigos.',
+        en: 'Ultimate: 5 damage and reduces all enemies defense.',
       },
-      cost: 3,
+      cost: 4,
+      type: 'ultimate_aoe_def_down',
     },
   ],
 };

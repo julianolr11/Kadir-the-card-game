@@ -365,8 +365,28 @@ export function BattleProvider({ children }) {
       };
       const processed = processSideStart(baseNextState, side);
 
-      return {
+      // Limpa slots com criaturas mortas (hp <= 0) após processar status/buffs
+      const cleanDeadSlots = (slots) => (slots || []).map(c => (c && c.hp <= 0 ? null : c));
+      const nsCleaned = {
         ...processed.ns,
+        player: {
+          ...processed.ns.player,
+          field: {
+            ...processed.ns.player.field,
+            slots: cleanDeadSlots(processed.ns.player.field.slots),
+          },
+        },
+        ai: {
+          ...processed.ns.ai,
+          field: {
+            ...processed.ns.ai.field,
+            slots: cleanDeadSlots(processed.ns.ai.field.slots),
+          },
+        },
+      };
+
+      return {
+        ...nsCleaned,
         creaturesInvokedThisTurn: 0, // Reseta contador de invocações para o próximo turno
         creaturesWithUsedAbility: new Set(), // Reseta criaturas que usaram habilidade
         log: [...logEntries, `Fim do turno de ${s.activePlayer}.`, ...processed.logs],

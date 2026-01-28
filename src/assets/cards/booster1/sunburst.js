@@ -83,65 +83,114 @@ module.exports = {
   },
   unlockTable: [
     { level: 0, type: 'none' },
+    // Nível 2 - Perk: Brilho Noturno
     {
-      level: 1,
+      level: 2,
+      type: 'perk',
+      id: 'NIGHT_GLEAM',
+      name: { pt: 'Brilho Noturno', en: 'Night Gleam' },
+      desc: {
+        pt: 'À noite, ganha +1 ataque e +1 esquiva.',
+        en: 'At night, gain +1 attack and +1 evasion.',
+      },
+    },
+    // Nível 3 - Habilidade: Purificação
+    {
+      level: 3,
       type: 'skill',
-      id: 'sunburst_skill_3',
+      id: 'sunburst_skill_purificacao',
       name: { pt: 'Purificação', en: 'Purification' },
       desc: {
-        pt: 'Causa 3 de dano e remove buffs inimigos.',
-        en: 'Deals 3 damage and removes enemy buffs.',
+        pt: 'Causa 2 de dano e remove buffs inimigos.',
+        en: 'Deals 2 damage and removes enemy buffs.',
       },
       cost: 1,
+      type: 'damage_dispel',
     },
-    { level: 2, type: 'perk', id: 'HP_PLUS_1' },
-    { level: 3, type: 'none' },
+    // Nível 4 - Perk: Radiação Solar
     {
       level: 4,
+      type: 'perk',
+      id: 'SOLAR_RADIANCE',
+      name: { pt: 'Radiação Solar', en: 'Solar Radiance' },
+      desc: {
+        pt: 'Durante o dia, aliados ganham +1 ataque.',
+        en: 'During the day, allies gain +1 attack.',
+      },
+    },
+    // Nível 5 - Habilidade: Labareda Solar
+    {
+      level: 5,
       type: 'skill',
-      id: 'sunburst_skill_4',
+      id: 'sunburst_skill_labareda_solar',
       name: { pt: 'Labareda Solar', en: 'Solar Flare' },
       desc: {
         pt: 'Causa 3 de dano e causa dano extra por 2 turnos.',
         en: 'Deals 3 damage and deals extra damage for 2 turns.',
       },
       cost: 2,
+      type: 'damage_dot',
     },
+    // Nível 6 - Perk: Luz Protetora
     {
-      level: 5,
+      level: 6,
+      type: 'perk',
+      id: 'PROTECTIVE_LIGHT',
+      name: { pt: 'Luz Protetora', en: 'Protective Light' },
+      desc: {
+        pt: 'Aliados recebem -1 de dano de habilidades de sombra.',
+        en: 'Allies take -1 damage from shadow abilities.',
+      },
+    },
+    // Nível 7 - Habilidade: Fúria do Sol
+    {
+      level: 7,
       type: 'skill',
-      id: 'sunburst_skill_5',
+      id: 'sunburst_skill_furia_sol',
       name: { pt: 'Fúria do Sol', en: "Sun's Fury" },
       desc: {
-        pt: 'Causa 4 de dano e aumenta ataque temporal.',
-        en: 'Deals 4 damage and increases temporary attack.',
+        pt: 'Causa 4 de dano e aumenta ataque temporariamente.',
+        en: 'Deals 4 damage and temporarily increases attack.',
       },
       cost: 2,
+      type: 'damage_buff',
     },
-    { level: 6, type: 'none' },
-    { level: 7, type: 'perk', id: 'FIRST_ROUND_SHIELD' },
-    { level: 8, type: 'perk', id: 'HP_PLUS_2' },
+    // Nível 8 - Perk: Luz Persistente
+    {
+      level: 8,
+      type: 'perk',
+      id: 'PERSISTENT_LIGHT',
+      name: { pt: 'Luz Persistente', en: 'Persistent Light' },
+      desc: {
+        pt: 'Ao derrotar um inimigo, recupera 1 de vida.',
+        en: 'When defeating an enemy, recover 1 HP.',
+      },
+    },
+    // Nível 9 - Habilidade: Aura Solar
     {
       level: 9,
       type: 'skill',
-      id: 'sunburst_skill_6',
+      id: 'sunburst_skill_aura_solar',
       name: { pt: 'Aura Solar', en: 'Solar Aura' },
       desc: {
         pt: 'Cria uma aura que aumenta defesa de todos aliados por 3 turnos.',
         en: 'Creates an aura that increases defense of all allies for 3 turns.',
       },
-      cost: 2,
+      cost: 3,
+      type: 'team_defense_buff',
     },
+    // Nível 10 - Habilidade: Apoteose Solar
     {
       level: 10,
       type: 'skill',
-      id: 'sunburst_skill_7',
+      id: 'sunburst_skill_apoteose_solar',
       name: { pt: 'Apoteose Solar', en: 'Solar Apotheosis' },
       desc: {
         pt: 'Supremo: 4 de dano e purifica o campo de batalha.',
         en: 'Ultimate: 4 damage and purifies the battlefield.',
       },
-      cost: 3,
+      cost: 4,
+      type: 'ultimate_dispel',
     },
   ],
 };

@@ -96,65 +96,114 @@ module.exports = {
   },
   unlockTable: [
     { level: 0, type: 'none' },
+    // Nível 2 - Perk: Essência Vazia
     {
-      level: 1,
-      type: 'skill',
-      id: 'nihil_skill_3',
-      name: { pt: 'Espiral Devoradora', en: 'Devouring Spiral' },
+      level: 2,
+      type: 'perk',
+      id: 'VOID_ESSENCE',
+      name: { pt: 'Essência Vazia', en: 'Void Essence' },
       desc: {
-        pt: 'Causa 3 de dano puro e aplica -8% resistência por 2 turnos.',
-        en: 'Deals 3 pure damage and applies -8% resistance for 2 turns.',
+        pt: 'Ganha +1 resistência ao entrar em campo.',
+        en: 'Gain +1 resistance when summoned.',
       },
-      cost: 1,
     },
-    { level: 2, type: 'perk', id: 'HP_PLUS_1' },
+    // Nível 3 - Habilidade: Espiral Devoradora
     {
       level: 3,
       type: 'skill',
-      id: 'nihil_skill_4',
+      id: 'nihil_skill_espiral_devoradora',
+      name: { pt: 'Espiral Devoradora', en: 'Devouring Spiral' },
+      desc: {
+        pt: 'Causa 2 de dano puro e aplica -8% resistência por 2 turnos.',
+        en: 'Deals 2 pure damage and applies -8% resistance for 2 turns.',
+      },
+      cost: 1,
+      type: 'damage_resist_down',
+    },
+    // Nível 4 - Perk: Vazio Protetor
+    {
+      level: 4,
+      type: 'perk',
+      id: 'PROTECTIVE_VOID',
+      name: { pt: 'Vazio Protetor', en: 'Protective Void' },
+      desc: {
+        pt: 'Recebe -1 de dano de ataques puros.',
+        en: 'Takes -1 damage from pure attacks.',
+      },
+    },
+    // Nível 5 - Habilidade: Cicatriz Etérea
+    {
+      level: 5,
+      type: 'skill',
+      id: 'nihil_skill_cicatriz_eterea',
       name: { pt: 'Cicatriz Etérea', en: 'Ethereal Scar' },
       desc: {
         pt: 'Causa 3 de dano e deixa vulnerável: +8% dano recebido por 2 turnos.',
         en: 'Deals 3 damage and leaves target vulnerable: +8% damage taken for 2 turns.',
       },
       cost: 2,
+      type: 'damage_vulnerable',
     },
-    { level: 4, type: 'perk', id: 'CRIT_CHANCE' },
+    // Nível 6 - Perk: Fôlego do Nada
     {
-      level: 5,
+      level: 6,
+      type: 'perk',
+      id: 'VOID_BREATH',
+      name: { pt: 'Fôlego do Nada', en: 'Void Breath' },
+      desc: {
+        pt: 'Ao derrotar um inimigo, recupera 1 de vida.',
+        en: 'When defeating an enemy, recover 1 HP.',
+      },
+    },
+    // Nível 7 - Habilidade: Vazio Sanguessuga
+    {
+      level: 7,
       type: 'skill',
-      id: 'nihil_skill_5',
+      id: 'nihil_skill_vazio_sanguessuga',
       name: { pt: 'Vazio Sanguessuga', en: 'Leeching Void' },
       desc: {
         pt: 'Causa 2 de dano em área, drena 1 essência de cada inimigo e cura 2 de HP.',
         en: 'Deals 2 area damage, drains 1 essence from each enemy, and heals 2 HP.',
       },
       cost: 2,
+      type: 'aoe_drain_heal',
     },
-    { level: 6, type: 'perk', id: 'DODGE_INCREASE' },
-    { level: 7, type: 'perk', id: 'DEFENSE_REDUCTION' },
-    { level: 8, type: 'perk', id: 'HP_PLUS_2' },
+    // Nível 8 - Perk: Essência Protetora
+    {
+      level: 8,
+      type: 'perk',
+      id: 'PROTECTIVE_ESSENCE',
+      name: { pt: 'Essência Protetora', en: 'Protective Essence' },
+      desc: {
+        pt: 'No início do turno, ganha 1 de escudo se estiver com resistência ativa.',
+        en: 'At the start of the turn, gain 1 shield if resistance is active.',
+      },
+    },
+    // Nível 9 - Habilidade: Fenda Absoluta
     {
       level: 9,
       type: 'skill',
-      id: 'nihil_skill_6',
+      id: 'nihil_skill_fenda_absoluta',
       name: { pt: 'Fenda Absoluta', en: 'Absolute Rift' },
       desc: {
         pt: 'Causa 4 de dano puro e remove 1 efeito positivo do alvo.',
         en: 'Deals 4 pure damage and removes 1 positive effect from the target.',
       },
       cost: 3,
+      type: 'damage_dispel',
     },
+    // Nível 10 - Habilidade: Abismo Faminto
     {
       level: 10,
       type: 'skill',
-      id: 'nihil_skill_7',
+      id: 'nihil_skill_abismo_faminto',
       name: { pt: 'Abismo Faminto', en: 'Ravenous Abyss' },
       desc: {
         pt: 'Supremo: 5 de dano puro em todos, drena 1 essência de cada e concede escudo que nega 1 ataque.',
         en: 'Ultimate: 5 pure damage to all, drains 1 essence each, and grants a shield that negates 1 attack.',
       },
-      cost: 3,
+      cost: 4,
+      type: 'ultimate_aoe_drain_shield',
     },
   ],
 };

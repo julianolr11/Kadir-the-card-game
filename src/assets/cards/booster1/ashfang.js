@@ -50,17 +50,20 @@ module.exports = {
   isGuardian: true,
   defaultSkills: [
     {
-      id: 'ashfang_skill_1',
+      id: 'ashfang_skill_mordida_vulcanica',
       name: { pt: 'Mordida Vulcânica', en: 'Volcanic Bite' },
       desc: {
-        pt: 'Causa 3 de dano ao inimigo com presas incandescentes.',
-        en: 'Deals 3 damage to the enemy with incandescent fangs.',
+        pt: 'Causa 3 de dano e aplica queimadura por 2 turnos.',
+        en: 'Deals 3 damage and applies burn for 2 turns.',
       },
       cost: 1,
-      type: 'damage',
+      type: 'damage_burn',
+      damage: 3,
+      statusEffect: 'burn',
+      duration: 2,
     },
     {
-      id: 'ashfang_skill_2',
+      id: 'ashfang_skill_furia_cinzas',
       name: { pt: 'Fúria das Cinzas', en: 'Ashen Fury' },
       desc: {
         pt: 'Causa 2 de dano e aumenta o próprio ataque em 4% por 2 turnos.',
@@ -68,6 +71,140 @@ module.exports = {
       },
       cost: 1,
       type: 'damage_buff',
+      damage: 2,
+      buff: { stat: 'attack', value: 4, duration: 2 },
+    },
+  ],
+  defaultBlessing: {
+    id: 'ashfang_blessing',
+    name: { pt: 'Campos de Cinzas', en: 'Ash Fields' },
+    desc: {
+      pt: 'Aliados de fogo recebem 6% menos dano enquanto Ashfang estiver em campo.',
+      en: 'Fire allies take 6% less damage while Ashfang is on the field.',
+    },
+  },
+  unlockTable: [
+    { level: 0, type: 'none' },
+    // Nível 2 - Perk: Pele de Lava
+    {
+      level: 2,
+      type: 'perk',
+      id: 'LAVA_SKIN',
+      name: { pt: 'Pele de Lava', en: 'Lava Skin' },
+      desc: {
+        pt: 'Recebe -1 de dano de ataques físicos.',
+        en: 'Takes -1 damage from physical attacks.',
+      },
+    },
+    // Nível 3 - Habilidade: Chamas Crescentes
+    {
+      level: 3,
+      type: 'skill',
+      id: 'ashfang_skill_chamas_crescentes',
+      name: { pt: 'Chamas Crescentes', en: 'Rising Flames' },
+      desc: {
+        pt: 'Causa 2 de dano e aplica queimadura por 2 turnos.',
+        en: 'Deals 2 damage and applies burn for 2 turns.',
+      },
+      cost: 1,
+      type: 'damage_burn',
+      damage: 2,
+      statusEffect: 'burn',
+      duration: 2,
+    },
+    // Nível 4 - Perk: Fôlego Vulcânico
+    {
+      level: 4,
+      type: 'perk',
+      id: 'VOLCANIC_BREATH',
+      name: { pt: 'Fôlego Vulcânico', en: 'Volcanic Breath' },
+      desc: {
+        pt: 'Ao derrotar um inimigo, recupera 1 de vida.',
+        en: 'When defeating an enemy, recover 1 HP.',
+      },
+    },
+    // Nível 5 - Habilidade: Rajada de Cinzas
+    {
+      level: 5,
+      type: 'skill',
+      id: 'ashfang_skill_rajada_cinzas',
+      name: { pt: 'Rajada de Cinzas', en: 'Ash Blast' },
+      desc: {
+        pt: 'Causa 2 de dano a todos os inimigos e reduz ataque por 1 turno.',
+        en: 'Deals 2 damage to all enemies and reduces attack for 1 turn.',
+      },
+      cost: 2,
+      type: 'aoe_damage_debuff',
+      damage: 2,
+      statusEffect: 'weaken',
+      duration: 1,
+    },
+    // Nível 6 - Perk: Fúria Incandescente
+    {
+      level: 6,
+      type: 'perk',
+      id: 'INCANDESCENT_FURY',
+      name: { pt: 'Fúria Incandescente', en: 'Incandescent Fury' },
+      desc: {
+        pt: 'Aumenta dano de queimadura em +1.',
+        en: 'Increases burn damage by +1.',
+      },
+    },
+    // Nível 7 - Habilidade: Mordida Explosiva
+    {
+      level: 7,
+      type: 'skill',
+      id: 'ashfang_skill_mordida_explosiva',
+      name: { pt: 'Mordida Explosiva', en: 'Explosive Bite' },
+      desc: {
+        pt: 'Causa 4 de dano e aplica queimadura extrema (2 de dano/turno).',
+        en: 'Deals 4 damage and applies extreme burn (2 damage/turn).',
+      },
+      cost: 2,
+      type: 'damage_extreme_burn',
+      damage: 4,
+      statusEffect: 'extreme_burn',
+      duration: 2,
+    },
+    // Nível 8 - Perk: Instinto Selvagem
+    {
+      level: 8,
+      type: 'perk',
+      id: 'WILD_INSTINCT',
+      name: { pt: 'Instinto Selvagem', en: 'Wild Instinct' },
+      desc: {
+        pt: 'Ganha +1 de ataque ao receber dano.',
+        en: 'Gains +1 attack when taking damage.',
+      },
+    },
+    // Nível 9 - Habilidade: Fúria Vulcânica
+    {
+      level: 9,
+      type: 'skill',
+      id: 'ashfang_skill_furia_vulcanica',
+      name: { pt: 'Fúria Vulcânica', en: 'Volcanic Fury' },
+      desc: {
+        pt: 'Causa 3 de dano e aplica queimadura por 2 turnos em todos os inimigos.',
+        en: 'Deals 3 damage and applies burn for 2 turns to all enemies.',
+      },
+      cost: 3,
+      type: 'aoe_damage_burn',
+      damage: 3,
+      statusEffect: 'burn',
+      duration: 2,
+    },
+    // Nível 10 - Habilidade: Renascimento Ígneo
+    {
+      level: 10,
+      type: 'skill',
+      id: 'ashfang_skill_renascimento_igneo',
+      name: { pt: 'Renascimento Ígneo', en: 'Fiery Rebirth' },
+      desc: {
+        pt: 'Revive com 3 de vida ao morrer (1 vez por partida).',
+        en: 'Revives with 3 HP upon death (once per match).',
+      },
+      cost: 0,
+      type: 'self_revive',
     },
   ],
   defaultBlessing: {

@@ -15,6 +15,7 @@ module.exports = {
     {
       name: { pt: 'Chama Mística', en: 'Mystic Flame' },
       cost: 1,
+      type: 'damage_chance_burn',
       desc: {
         pt: 'Causa 2 de dano e tem 50% de chance de aplicar <span class="debuff-burn">queimadura</span> por 2 turnos.',
         en: 'Deals 2 damage and has a 50% chance to apply <span class="debuff-burn">burn</span> for 2 turns.',
@@ -27,11 +28,11 @@ module.exports = {
     {
       name: { pt: 'Fumaça Sonolenta', en: 'Sleepy Smoke' },
       cost: 2,
+      type: 'damage_chance_sleep',
       desc: {
         pt: 'Causa 1 de dano e tem 50% de chance de aplicar <span class="debuff-sleep">dormir</span> por 2 turnos (não pode agir).',
         en: 'Deals 1 damage and has a 50% chance to apply <span class="debuff-sleep">sleep</span> for 2 turns (cannot act).',
       },
-      type: 'damage_chance_sleep',
       damage: 1,
       chance: 0.5,
       statusEffect: 'sleep',
@@ -61,26 +62,34 @@ module.exports = {
   isGuardian: true,
   defaultSkills: [
     {
-      id: 'digitama_skill_1',
-      name: { pt: 'Brasas Rúnicas', en: 'Runic Embers' },
+      id: 'digitama_skill_chama_mistica',
+      name: { pt: 'Chama Mística', en: 'Mystic Flame' },
       desc: {
-          pt: 'Causa 3 de dano, aplica queimadura e marca runa que adiciona +1 no próximo ataque.',
-          en: 'Deals 3 damage, applies burn, and sets a rune adding +1 on next hit.',
-        },
-        cost: 1,
-        type: 'damage_dot',
+        pt: 'Causa 2 de dano e 50% de chance de aplicar <span class="debuff-burn">queimadura</span> por 2 turnos.',
+        en: 'Deals 2 damage and 50% chance to apply <span class="debuff-burn">burn</span> for 2 turns.',
       },
-      {
-        id: 'digitama_skill_2',
-        name: { pt: 'Véu Incandescente', en: 'Incandescent Veil' },
-        desc: {
-          pt: 'Ganha 12% de esquiva por 2 turnos e reflete 2 de dano de fogo.',
-          en: 'Gain 12% evasion for 2 turns and reflect 2 fire damage.',
-        },
-        cost: 1,
-        type: 'buff_reflect',
+      cost: 1,
+      type: 'damage_chance_burn',
+      damage: 2,
+      chance: 0.5,
+      statusEffect: 'burn',
+      duration: 2,
+    },
+    {
+      id: 'digitama_skill_fumaca_sonolenta',
+      name: { pt: 'Fumaça Sonolenta', en: 'Sleepy Smoke' },
+      desc: {
+        pt: 'Causa 1 de dano e 50% de chance de aplicar <span class="debuff-sleep">dormir</span> por 2 turnos.',
+        en: 'Deals 1 damage and 50% chance to apply <span class="debuff-sleep">sleep</span> for 2 turns.',
       },
-    ],
+      cost: 2,
+      type: 'damage_chance_sleep',
+      damage: 1,
+      chance: 0.5,
+      statusEffect: 'sleep',
+      duration: 2,
+    },
+  ],
   defaultBlessing: {
       id: 'digitama_blessing',
       name: { pt: 'Coroa Ardente', en: 'Burning Crown' },
@@ -90,53 +99,116 @@ module.exports = {
       },
     },
   unlockTable: [
-      { level: 0, type: 'none' },
-      {
-        level: 1,
-        type: 'skill',
-        id: 'digitama_skill_3',
-        name: { pt: 'Brasa Giratória', en: 'Spinning Ember' },
-        desc: {
-          pt: 'Causa 3 de dano, aplica queimadura e 20% de chance de cegar.',
-          en: 'Deals 3 damage, applies burn, 20% chance to blind.',
-        },
-        cost: 1,
+    { level: 0, type: 'none' },
+    // Nível 2 - Perk: Espírito Ágil
+    {
+      level: 2,
+      type: 'perk',
+      id: 'AGILE_SPIRIT',
+      name: { pt: 'Espírito Ágil', en: 'Agile Spirit' },
+      desc: {
+        pt: 'Ganha +1 de esquiva por 2 turnos ao entrar em campo.',
+        en: 'Gain +1 evasion for 2 turns when summoned.',
       },
-      { level: 2, type: 'perk', id: 'BURN_CHANCE_PLUS_10' },
-      {
-        level: 3,
-        type: 'skill',
-        id: 'digitama_skill_4',
-        name: { pt: 'Lança Incandescente', en: 'Incandescent Spear' },
-        desc: {
-          pt: 'Causa 4 de dano, ignora 15% da defesa e causa bleed de fogo.',
-          en: 'Deals 4 damage, ignores 15% defense and inflicts fire bleed.',
-        },
-        cost: 2,
+    },
+    // Nível 3 - Habilidade: Véu Incandescente
+    {
+      level: 3,
+      type: 'skill',
+      id: 'digitama_skill_veu_incandescente',
+      name: { pt: 'Véu Incandescente', en: 'Incandescent Veil' },
+      desc: {
+        pt: 'Ganha evasão por 2 turnos e reflete 1 de dano de fogo.',
+        en: 'Gain evasion for 2 turns and reflect 1 fire damage.',
       },
-      { level: 4, type: 'perk', id: 'CRIT_FIRE_PLUS_8' },
-      {
-        level: 5,
-        type: 'skill',
-        id: 'digitama_skill_5',
-        name: { pt: 'Chamas Crescentes', en: 'Rising Flames' },
-        desc: {
-          pt: 'Causa 4 de dano, cada uso aumenta +1 e estende queimadura por 1 turno.',
-          en: 'Deals 4 damage, each use +1 and extends burn by 1 turn.',
-        },
-        cost: 2,
+      cost: 1,
+      type: 'buff_reflect',
+    },
+    // Nível 4 - Perk: Chama Persistente
+    {
+      level: 4,
+      type: 'perk',
+      id: 'PERSISTENT_FLAME',
+      name: { pt: 'Chama Persistente', en: 'Persistent Flame' },
+      desc: {
+        pt: 'Queimadura causada por Digitama dura +1 turno.',
+        en: 'Burn caused by Digitama lasts +1 turn.',
       },
-      {
-        level: 6,
-        type: 'skill',
-        id: 'digitama_skill_6',
-        name: { pt: 'Chama Final', en: 'Final Flame' },
-        desc: {
-          pt: 'Ultimate: 4 de dano, queimadura extrema e silencia por 1 turno.',
-          en: 'Ultimate: 4 damage, extreme burn and silence 1 turn.',
-        },
-        cost: 3,
+    },
+    // Nível 5 - Habilidade: Brasa Giratória
+    {
+      level: 5,
+      type: 'skill',
+      id: 'digitama_skill_brasa_giratoria',
+      name: { pt: 'Brasa Giratória', en: 'Spinning Ember' },
+      desc: {
+        pt: 'Causa 2 de dano, aplica queimadura e 50% de chance de cegar por 1 turno.',
+        en: 'Deals 2 damage, applies burn and 50% chance to blind for 1 turn.',
       },
-    ]
+      cost: 1,
+      type: 'damage_burn_blind',
+    },
+    // Nível 6 - Perk: Fôlego Místico
+    {
+      level: 6,
+      type: 'perk',
+      id: 'MYSTIC_BREATH',
+      name: { pt: 'Fôlego Místico', en: 'Mystic Breath' },
+      desc: {
+        pt: 'Ao derrotar um inimigo, recupera 1 de vida.',
+        en: 'When defeating an enemy, recover 1 HP.',
+      },
+    },
+    // Nível 7 - Habilidade: Lança Incandescente
+    {
+      level: 7,
+      type: 'skill',
+      id: 'digitama_skill_lanca_incandescente',
+      name: { pt: 'Lança Incandescente', en: 'Incandescent Spear' },
+      desc: {
+        pt: 'Causa 3 de dano, ignora escudo e aplica sangramento de fogo por 2 turnos.',
+        en: 'Deals 3 damage, ignores shield and applies fire bleed for 2 turns.',
+      },
+      cost: 2,
+      type: 'damage_bleed_shieldpierce',
+    },
+    // Nível 8 - Perk: Fogo Protetor
+    {
+      level: 8,
+      type: 'perk',
+      id: 'PROTECTIVE_FIRE',
+      name: { pt: 'Fogo Protetor', en: 'Protective Fire' },
+      desc: {
+        pt: 'No início do turno, ganha 1 de escudo se estiver com queimadura ativa.',
+        en: 'At the start of the turn, gain 1 shield if burn is active.',
+      },
+    },
+    // Nível 9 - Habilidade: Chamas Crescentes
+    {
+      level: 9,
+      type: 'skill',
+      id: 'digitama_skill_chamas_crescentes',
+      name: { pt: 'Chamas Crescentes', en: 'Rising Flames' },
+      desc: {
+        pt: 'Causa 3 de dano. Se o alvo estiver queimando, causa +1 de dano.',
+        en: 'Deals 3 damage. If the target is burning, deal +1 damage.',
+      },
+      cost: 2,
+      type: 'damage_burn_bonus',
+    },
+    // Nível 10 - Habilidade: Chama Final
+    {
+      level: 10,
+      type: 'skill',
+      id: 'digitama_skill_chama_final',
+      name: { pt: 'Chama Final', en: 'Final Flame' },
+      desc: {
+        pt: 'Causa 4 de dano, aplica queimadura extrema (2 de dano por turno) e silencia por 1 turno.',
+        en: 'Deals 4 damage, applies extreme burn (2 damage/turn) and silences for 1 turn.',
+      },
+      cost: 3,
+      type: 'damage_extreme_burn_silence',
+    },
+  ],
   };
 

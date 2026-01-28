@@ -275,8 +275,8 @@ function DeckBuilder({ onNavigate }) {
 
   // Calcular quantidade total de cartas
   const totalCards = useMemo(() => {
-    if (!cardCollection) return 0;
-    return Object.values(cardCollection).reduce((sum, instances) => sum + (instances?.length || 0), 0);
+    if (!cardCollection || typeof cardCollection !== 'object') return 0;
+    return Object.values(cardCollection || {}).reduce((sum, instances) => sum + (instances?.length || 0), 0);
   }, [cardCollection]);
 
   // Abrir editor quando slot pendente for criado

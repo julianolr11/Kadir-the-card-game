@@ -1,3 +1,17 @@
+
+
+
+.deck-library-grid.deck-library-grid-css::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 98px;
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 1) 60%);
+  z-index: 2;
+}
 .deckbuilder-screen {
   min-height: 100vh;
   padding: 16px 24px 24px;
@@ -10,7 +24,7 @@
   font-family: 'Poppins', Arial, sans-serif;
 }
 
-@keyframes slideInDown {
+@keyframes deckbuilder-fade-in {
   from {
     opacity: 0;
     transform: translateX(-50%) translateY(-20px);
@@ -1189,38 +1203,63 @@
   filter: brightness(1.3);
 }
 
-.deck-library-sort {
-  background: rgba(0, 0, 0, 0.4);
-  border: 2px solid rgba(122, 90, 248, 0.4);
-  border-radius: 10px;
-  padding: 8px 14px;
-  color: #fff;
-  font-size: 13px;
-  font-family: 'Poppins', Arial, sans-serif;
-  font-weight: 600;
-  cursor: pointer;
-  outline: none;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+
+
+.deck-library-grid.deck-library-grid-css {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 8px;
+  width: 100%;
+  padding: 0;
+  justify-items: center;
+  align-items: start;
+  min-height: 520px;
+  max-height: 70vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: transparent;
+  box-sizing: border-box;
 }
 
-.deck-library-sort:hover {
-  border-color: rgba(122, 90, 248, 0.7);
-  background: rgba(122, 90, 248, 0.15);
-  box-shadow: 0 2px 12px rgba(122, 90, 248, 0.3);
+
+
+
+.deck-library-sort {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: linear-gradient(135deg, #1a1333 60%, #2a1b3f 100%);
+  color: #f6e8ff;
+  border: 2px solid #7a5af8;
+  border-radius: 8px;
+  padding: 8px 36px 8px 14px;
+  font-size: 16px;
+  font-family: 'Poppins', Arial, sans-serif;
+  font-weight: 600;
+  box-shadow: 0 2px 12px #0006;
+  outline: none;
+  transition: border 0.2s, box-shadow 0.2s, background 0.2s;
+  cursor: pointer;
+  position: relative;
+  margin-right: 10px;
+  min-width: 120px;
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 18px 18px;
+  background-image: url('data:image/svg+xml;utf8,<svg fill="%237a5af8" height="18" viewBox="0 0 24 24" width="18" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
 }
 
 .deck-library-sort:focus {
-  border-color: #7a5af8;
-  background: rgba(122, 90, 248, 0.2);
-  box-shadow: 0 0 0 3px rgba(122, 90, 248, 0.2);
+  border-color: #a78bfa;
+  box-shadow: 0 0 0 3px #7a5af855;
+  background: linear-gradient(135deg, #21162f 60%, #3a2b5f 100%);
 }
 
 .deck-library-sort option {
-  background: rgba(20, 20, 40, 0.98);
-  color: #fff;
-  padding: 10px;
+  background: #1a1333;
+  color: #f6e8ff;
   font-weight: 500;
+  font-size: 15px;
 }
 
 .deck-library-grid {
@@ -1261,7 +1300,8 @@
   transition: all 0.2s ease;
   overflow: visible;
   animation: fadeInUp 0.4s ease both;
-      height: 148px;
+    height: 188px;
+    width: 128px;
 }
 
 @keyframes fadeInUp {

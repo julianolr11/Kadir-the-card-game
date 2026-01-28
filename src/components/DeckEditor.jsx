@@ -1,4 +1,30 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+// Error Boundary para capturar erros do react-window
+class GridErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, info) {
+    // Pode logar para analytics se quiser
+    // console.error('Grid error:', error, info);
+  }
+  render() {
+    if (this.state.hasError) {
+      return <div style={{color: 'red', padding: 24, background: '#1a001a', borderRadius: 12}}>
+        <b>Erro ao renderizar grid:</b><br/>
+        {this.state.error?.message || 'Erro desconhecido.'}
+      </div>;
+    }
+    return this.props.children;
+  }
+}
+import soulEssence from '../assets/img/icons/soul-essence.png';
+import puroIcon from '../assets/img/elements/puro.png';
+import { Grid as FixedSizeGrid } from 'react-window';
 import { AppContext } from '../context/AppContext';
 import CreatureCardPreview from './CreatureCardPreview';
 import CardInstanceSelector from './CardInstanceSelector';
@@ -8,16 +34,156 @@ import fogoIcon from '../assets/img/elements/fogo.png';
 import aguaIcon from '../assets/img/elements/agua.png';
 import terraIcon from '../assets/img/elements/terra.png';
 import arIcon from '../assets/img/elements/ar.png';
-import puroIcon from '../assets/img/elements/puro.png';
-import burnIcon from '../assets/img/icons/burn.png';
-import freezeIcon from '../assets/img/icons/freeze.png';
-import paralyzeIcon from '../assets/img/icons/paralyze.png';
-import poisonIcon from '../assets/img/icons/poison.png';
-import sleepIcon from '../assets/img/icons/sleep.png';
-import bleedIcon from '../assets/img/icons/bleed.png';
-import shieldIcon from '../assets/img/icons/shield.png';
-import soulEssence from '../assets/img/icons/soul-essence.png';
-import '../styles/deckbuilder.css';
+
+
+
+function DeckLibraryGrid({
+  cards = [],
+  getCardInstances = () => [],
+  getAvailableInstances = () => [],
+  countCardInDeck = () => 0,
+  getBestAvailableInstance = () => null,
+  draggedCardId = null,
+  handleDragStart = () => {},
+  handleDragEnd = () => {},
+  openCardLoadout = () => {},
+  addCardToDeck = () => {},
+  setHoveredCard = () => {},
+  setHoveredCardId = () => {},
+  setHoveredCardForInstances = () => {},
+  setTooltipPosition = () => {},
+}) {
+  // Parâmetros do grid
+  // Garante que cards é sempre array
+  const safeCards = Array.isArray(cards) ? cards : [];
+  const columnCount = 10;
+  const cardWidth = 128;
+  const cardHeight = 188;
+  const rowCount = safeCards.length > 0 ? Math.ceil(safeCards.length / columnCount) : 0;
+  const gridHeight = rowCount > 0 ? Math.min(6, rowCount) * (cardHeight + 16) : cardHeight + 16;
+
+  // Renderização de cada célula
+  const Cell = ({ columnIndex, rowIndex, style }) => {
+    const idx = rowIndex * columnCount + columnIndex;
+    if (idx >= safeCards.length) return null;
+    const card = safeCards[idx];
+    // Fallback defensivo: só renderiza se card, card.data e card.id existem
+    if (!card || !card.data || !card.id) return null;
+    const instances = getCardInstances(card.id);
+    const availableInstances = getAvailableInstances(card.id);
+    const countInDeck = countCardInDeck(card.id);
+    const instanceCount = instances ? instances.length : 0;
+    const availableCount = availableInstances ? availableInstances.length : 0;
+    const maxPerDeck = Math.min(instanceCount, 2);
+    const isDisabled = countInDeck >= maxPerDeck || availableCount === 0;
+    const hasMultipleInstances = instances && instances.length > 1;
+    const bestAvailableInstance = getBestAvailableInstance(card.id);
+    // Se não houver instância disponível, mostra a carta como desabilitada
+    const displayLevel = bestAvailableInstance?.level || 1;
+    const displayIsHolo = bestAvailableInstance?.isHolo || false;
+    const unavailable = !bestAvailableInstance;
+    return (
+      <div
+        key={card.id}
+        className={`deck-library-card ${isDisabled || unavailable ? 'disabled' : ''} ${draggedCardId === card.id ? 'dragging' : ''} ${hasMultipleInstances ? 'has-multiple-instances' : ''} ${countInDeck > 0 ? 'selected' : ''}`}
+        draggable={!isDisabled && !unavailable}
+        onDragStart={(e) => !isDisabled && !unavailable && handleDragStart(e, card.id, false)}
+        onDragEnd={handleDragEnd}
+        onMouseEnter={(e) => {
+          setHoveredCard(card.data);
+          setHoveredCardId(card.id);
+          if (hasMultipleInstances) {
+            setHoveredCardForInstances(card.id);
+            const rect = e.currentTarget.getBoundingClientRect();
+            setTooltipPosition({ x: rect.right + 10, y: rect.top });
+          }
+        }}
+        onMouseLeave={() => {
+          setHoveredCard(null);
+          setHoveredCardId(null);
+          setHoveredCardForInstances(null);
+        }}
+        style={{ ...style, animationDelay: `${idx * 50}ms`, position: 'relative', width: cardWidth, height: cardHeight, margin: 8, opacity: unavailable ? 0.5 : 1 }}
+      >
+        {card.data.id === 'f001' ? (
+          <div className="slider-card-wrapper active" style={{ transform: 'scale(0.319)', transformOrigin: 'top left', pointerEvents: 'none' }}>
+            <div className="card-preview card-preview-field">
+              <div className="card-preview-header">
+                <span className="card-preview-name">Campo em Reuínas</span>
+                <span className="card-preview-id">#f001</span>
+              </div>
+              <div className="card-preview-art-wrapper">
+                <img alt="Campo em Reuínas" className="card-preview-art" src={require(`../assets/${card.data.image}`)} />
+              </div>
+              <div className="card-preview-field-desc">
+                <strong>Descrição:</strong>
+                <div style={{whiteSpace: 'pre-line'}}>Energias ancestrais despertam e fortalecem monstros e seres puros. Apenas os dignos sentirão o poder fluir sob seus pés.</div>
+                <div className="card-preview-field-effects">
+                  <strong>Efeitos:</strong>
+                  <ul>
+                    <li>Criaturas do elemento <b>puro</b>: +1 Dano / +1 HP</li>
+                    <li>Criaturas do tipo <b>monstro</b>: +1 Dano / +1 HP</li>
+                    <li><b>Puras e Monstros</b>: +2 Dano / +2 HP</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div style={{ transform: 'scale(0.319)', transformOrigin: 'top left', pointerEvents: 'none' }}>
+            <CreatureCardPreview creature={card.data} onClose={null} level={displayLevel} isHolo={displayIsHolo} allowFlip={false} />
+          </div>
+        )}
+        <div className="deck-library-card-count">{countInDeck}/{availableCount + countInDeck}</div>
+        {hasMultipleInstances && availableCount > 0 && (<div className="multiple-instances-indicator" title="Múltiplas cópias disponíveis">{availableCount}x</div>)}
+        <div className="deck-library-actions">
+          {(() => {
+            const isField = (() => {
+              const id = card.id?.toString().toLowerCase();
+              return /^f\d{3}$/.test(card.id) || id?.startsWith('field_') || (card.data?.category && String(card.data.category).toLowerCase().includes('campo'));
+            })();
+            return (
+              <button
+                className="deck-action-btn deck-action-edit"
+                disabled={isField || unavailable}
+                onClick={(e) => { e.stopPropagation(); if (!isField && !unavailable) openCardLoadout(card.id); }}
+                title={isField ? 'Carta de campo não possui habilidades editáveis' : 'Editar habilidades'}
+              >
+                ✎
+              </button>
+            );
+          })()}
+          <button
+            className="deck-action-btn deck-action-add"
+            disabled={isDisabled || unavailable}
+            onClick={(e) => { e.stopPropagation(); if (!isDisabled && !unavailable) addCardToDeck(card.id); }}
+            title={unavailable ? 'Nenhuma cópia disponível' : 'Adicionar ao deck'}
+          >
+            +
+          </button>
+        </div>
+        {unavailable && <div style={{position:'absolute',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.35)',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700,fontSize:16,pointerEvents:'none'}}>Indisponível</div>}
+      </div>
+    );
+  };
+
+  if (!Array.isArray(cards) || safeCards.length === 0) {
+    return <div className="deck-library-grid deck-library-grid-css" style={{ minHeight: cardHeight + 16 }}>Nenhuma carta encontrada ou dados inválidos.</div>;
+  }
+  // Grid puro CSS: renderiza todas as cartas em um container flex/grid
+  return (
+    <div className="deck-library-grid deck-library-grid-css">
+      {safeCards.map((card, idx) => {
+        // Reaproveita a lógica do Cell
+        const columnIndex = idx % columnCount;
+        const rowIndex = Math.floor(idx / columnCount);
+        return Cell({ columnIndex, rowIndex, style: {} });
+      })}
+    </div>
+  );
+}
+
+// (Fim do componente DeckLibraryGrid)
 
 const ALL_CARD_IDS = [
   'agolir','alatoy','arguilia','ashfang','beoxyr','digitama','draak','drazaq','ekeranth','ekernoth','ekonos','elderox','elythra','faskel','griffor','ignis','kael','landor','leoracal','lunethal','mawthorn','nihil','noctyra','owlberoth','pawferion','raptauros','seract','sunburst','terrakhal','viborom','virideer','whalar','zephyron',
@@ -294,7 +460,7 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
   };
 
   const libraryCards = useMemo(() => {
-    const ownedCardIds = cardCollection ? Object.keys(cardCollection) : [];
+    const ownedCardIds = (cardCollection && typeof cardCollection === 'object') ? Object.keys(cardCollection) : [];
     const isFieldCardById = (id) => {
       if (!id) return false;
       const s = String(id).toLowerCase();
@@ -304,13 +470,14 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
       .filter(id => id)
       .map((id) => {
         const data = id ? getCardData(id) : null;
+        if (!id || !data) return null;
         return { id, data };
       })
-      .filter((c) => c.data);
+      .filter((c) => c && c.id && c.data);
     if (searchTerm) {
       cards = cards.filter((c) => {
         const name = typeof c.data.name === 'object' ? c.data.name[langKey] : c.data.name;
-        return name.toLowerCase().includes(searchTerm.toLowerCase());
+        return name && name.toLowerCase().includes(searchTerm.toLowerCase());
       });
     }
     if (elementFilter !== 'all') {
@@ -339,7 +506,7 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
         default: return 0;
       }
     });
-    return cards;
+    return Array.isArray(cards) ? cards : [];
   }, [cardCollection, searchTerm, elementFilter, typeFilter, sortBy, langKey, selectedGuardian]);
 
   const openCardLoadout = (cardId) => {
@@ -514,7 +681,7 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
                     <>
                     <div className="deck-slot-card" draggable onDragStart={(e) => handleDragStart(e, instance.cardId, true, instanceId)} onDragEnd={handleDragEnd}>
                       {cardData.id === 'f001' ? (
-                        <div className="slider-card-wrapper active" style={{ transform: 'scale(0.27)', transformOrigin: 'center', pointerEvents: 'none' }}>
+                        <div className="slider-card-wrapper active" style={{ transform: 'scale(0.33)', transformOrigin: 'center', pointerEvents: 'none' }}>
                           <div className="card-preview card-preview-field">
                             <div className="card-preview-header">
                               <span className="card-preview-name">Campo em Reuínas</span>
@@ -538,7 +705,7 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
                           </div>
                         </div>
                       ) : (
-                        <div style={{ transform: 'scale(0.27)', transformOrigin: 'center', pointerEvents: 'none' }}>
+                        <div style={{ transform: 'scale(0.33)', transformOrigin: 'center', pointerEvents: 'none' }}>
                           <CreatureCardPreview creature={cardData} onClose={null} level={instance.level || 1} isHolo={instance.isHolo || false} allowFlip={false} />
                         </div>
                       )}
@@ -604,84 +771,22 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
             <option value="element">Elemento</option>
           </select>
         </div>
-        <div className="deck-library-grid">
-          {libraryCards.map((card, idx) => {
-            const instances = getCardInstances(card.id);
-            const availableInstances = getAvailableInstances(card.id);
-            const countInDeck = countCardInDeck(card.id);
-            const instanceCount = instances ? instances.length : 0;
-            const availableCount = availableInstances ? availableInstances.length : 0;
-            const maxPerDeck = Math.min(instanceCount, 2);
-            const isDisabled = countInDeck >= maxPerDeck || availableCount === 0;
-            const hasMultipleInstances = instances && instances.length > 1;
-            const bestAvailableInstance = getBestAvailableInstance(card.id);
-            if (!bestAvailableInstance) return null;
-            const displayLevel = bestAvailableInstance?.level || 1;
-            const displayIsHolo = bestAvailableInstance?.isHolo || false;
-            return (
-              <div key={card.id} className={`deck-library-card ${isDisabled ? 'disabled' : ''} ${draggedCardId === card.id ? 'dragging' : ''} ${hasMultipleInstances ? 'has-multiple-instances' : ''} ${countInDeck > 0 ? 'selected' : ''}`} draggable={!isDisabled} onDragStart={(e) => !isDisabled && handleDragStart(e, card.id, false)} onDragEnd={handleDragEnd} onMouseEnter={(e) => { setHoveredCard(card.data); setHoveredCardId(card.id); if (hasMultipleInstances) { setHoveredCardForInstances(card.id); const rect = e.currentTarget.getBoundingClientRect(); setTooltipPosition({ x: rect.right + 10, y: rect.top }); } }} onMouseLeave={() => { setHoveredCard(null); setHoveredCardId(null); setHoveredCardForInstances(null); }} style={{ animationDelay: `${idx * 50}ms`, position: 'relative' }}>
-                {card.data.id === 'f001' ? (
-                  <div className="slider-card-wrapper active" style={{ transform: 'scale(0.25)', transformOrigin: 'top left', pointerEvents: 'none' }}>
-                    <div className="card-preview card-preview-field">
-                      <div className="card-preview-header">
-                        <span className="card-preview-name">Campo em Reuínas</span>
-                        <span className="card-preview-id">#f001</span>
-                      </div>
-                      <div className="card-preview-art-wrapper">
-                        <img alt="Campo em Reuínas" className="card-preview-art" src={require(`../assets/${card.data.image}`)} />
-                      </div>
-                      <div className="card-preview-field-desc">
-                        <strong>Descrição:</strong>
-                        <div style={{whiteSpace: 'pre-line'}}>Energias ancestrais despertam e fortalecem monstros e seres puros. Apenas os dignos sentirão o poder fluir sob seus pés.</div>
-                        <div className="card-preview-field-effects">
-                          <strong>Efeitos:</strong>
-                          <ul>
-                            <li>Criaturas do elemento <b>puro</b>: +1 Dano / +1 HP</li>
-                            <li>Criaturas do tipo <b>monstro</b>: +1 Dano / +1 HP</li>
-                            <li><b>Puras e Monstros</b>: +2 Dano / +2 HP</li>
-                          </ul>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div style={{ transform: 'scale(0.25)', transformOrigin: 'top left', pointerEvents: 'none' }}>
-                    <CreatureCardPreview creature={card.data} onClose={null} level={displayLevel} isHolo={displayIsHolo} allowFlip={false} />
-                  </div>
-                )}
-                <div className="deck-library-card-count">{countInDeck}/{availableCount + countInDeck}</div>
-                {hasMultipleInstances && availableCount > 0 && (<div className="multiple-instances-indicator" title="Múltiplas cópias disponíveis">{availableCount}x</div>)}
-                {/* Ações: ícones Editar + Adicionar lado a lado (visíveis apenas no hover) */}
-                <div className="deck-library-actions">
-                  {(() => {
-                    const isField = (() => {
-                      const id = card.id?.toString().toLowerCase();
-                      return /^f\d{3}$/.test(card.id) || id?.startsWith('field_') || (card.data?.category && String(card.data.category).toLowerCase().includes('campo'));
-                    })();
-                    return (
-                      <button
-                        className="deck-action-btn deck-action-edit"
-                        disabled={isField}
-                        onClick={(e) => { e.stopPropagation(); if (!isField) openCardLoadout(card.id); }}
-                        title={isField ? 'Carta de campo não possui habilidades editáveis' : 'Editar habilidades'}
-                      >
-                        ✎
-                      </button>
-                    );
-                  })()}
-                  <button
-                    className="deck-action-btn deck-action-add"
-                    disabled={isDisabled}
-                    onClick={(e) => { e.stopPropagation(); if (!isDisabled) addCardToDeck(card.id); }}
-                    title="Adicionar ao deck"
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <DeckLibraryGrid
+          cards={Array.isArray(libraryCards) ? libraryCards : []}
+          getCardInstances={getCardInstances}
+          getAvailableInstances={getAvailableInstances}
+          countCardInDeck={countCardInDeck}
+          getBestAvailableInstance={getBestAvailableInstance}
+          draggedCardId={draggedCardId}
+          handleDragStart={handleDragStart}
+          handleDragEnd={handleDragEnd}
+          openCardLoadout={openCardLoadout}
+          addCardToDeck={addCardToDeck}
+          setHoveredCard={setHoveredCard}
+          setHoveredCardId={setHoveredCardId}
+          setHoveredCardForInstances={setHoveredCardForInstances}
+          setTooltipPosition={setTooltipPosition}
+        />
         {hoveredCardForInstances && (
           <div className="instances-tooltip" style={{ position: 'fixed', left: `${tooltipPosition.x}px`, top: `${tooltipPosition.y}px`, zIndex: 9999 }}>
             <div className="instances-tooltip-header"><strong>Cópias Disponíveis</strong><span className="instances-tooltip-count">{getCardInstances(hoveredCardForInstances).length} cópias</span></div>

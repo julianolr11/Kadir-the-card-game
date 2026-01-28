@@ -168,9 +168,10 @@ function CreatureCardPreview({
   let imageSrc = '';
   if (typeof creature.img === 'string') {
     imageSrc = creature.img;
-  } else if (creature.img && typeof creature.img === 'object') {
+  } else if (creature.img && typeof creature.img === 'object' && creature.img !== null) {
     // Se é objeto, tenta pegar default ou a primeira propriedade
-    imageSrc = creature.img.default || Object.values(creature.img)[0] || '';
+    const imgObj = creature.img;
+    imageSrc = imgObj.default || (Object.values(imgObj && typeof imgObj === 'object' ? imgObj : {})[0]) || '';
   }
   // Fallback para propriedades antigas
   if (!imageSrc) {

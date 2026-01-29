@@ -11,6 +11,12 @@ interface LoadingMenuProps {
   introMusicRef: any;
 }
 
+
+// Importa a versão direto do package.json
+// @ts-ignore
+import pkg from '../../package.json';
+const appVersion = pkg.version || '1.0.0';
+
 function LoadingMenu({ onNavigate, menuMusicRef, introMusicRef }: LoadingMenuProps) {
   const [showOptions, setShowOptions] = useState(false);
   const [showExit, setShowExit] = useState(false);
@@ -41,6 +47,27 @@ function LoadingMenu({ onNavigate, menuMusicRef, introMusicRef }: LoadingMenuPro
         overflow: 'hidden',
       }}
     >
+      {/* Versão no canto superior esquerdo */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 8,
+          left: 4,
+          background: 'rgba(30, 22, 40, 0.72)',
+          color: 'rgb(255, 230, 176)',
+          fontWeight: 600,
+          fontSize: 10,
+          padding: '4px 16px',
+          borderRadius: 8,
+          letterSpacing: '1px',
+          zIndex: 20,
+          boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.4)',
+          fontFamily: 'Poppins, Arial, sans-serif',
+          userSelect: 'none',
+        }}
+      >
+        v{appVersion}
+      </div>
       <img
         src={wallpaper}
         alt="Menu"

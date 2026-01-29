@@ -17,13 +17,9 @@ import { resolveHtmlPath } from './util';
 import { setupResolutionIPC } from './ipcResolution';
 import { setupAudioManager } from './audioManager';
 
-class AppUpdater {
-  constructor() {
-    log.transports.file.level = 'info';
-    autoUpdater.logger = log;
-    autoUpdater.checkForUpdatesAndNotify();
-  }
-}
+// Novo fluxo: inicialização do autoUpdater será feita sob demanda via IPC
+log.transports.file.level = 'info';
+autoUpdater.logger = log;
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -128,9 +124,47 @@ const createWindow = async () => {
     return { action: 'deny' };
   });
 
-  // Remove this if your app does not use auto updates
-  // eslint-disable-next-line
-  new AppUpdater();
+  // O update será iniciado manualmente via IPC do renderer
+  // IPC handlers para update
+  ipcMain.handle('update-check', async () => {
+    try {
+      const result = await autoUpdater.checkForUpdates();
+      if (result && result.updateInfo && result.updateInfo.version !== app.getVersion()) {
+        return { updateAvailable: true, info: result.updateInfo };
+      }
+      return { updateAvailable: false };
+    } catch (err) {
+      return { updateAvailable: false, error: err?.message || 'Update check failed' };
+    }
+  });
+
+  ipcMain.handle('update-download', async () => {
+    try {
+      await autoUpdater.downloadUpdate();
+      return { started: true };
+    } catch (err) {
+      return { started: false, error: err?.message || 'Download failed' };
+    }
+  });
+
+  // Eventos de progresso e status
+  autoUpdater.on('download-progress', (progressObj) => {
+    if (mainWindow) {
+      mainWindow.webContents.send('update-download-progress', progressObj);
+    }
+  });
+
+  autoUpdater.on('update-downloaded', (info) => {
+    if (mainWindow) {
+      mainWindow.webContents.send('update-downloaded', info);
+    }
+  });
+
+  autoUpdater.on('error', (err) => {
+    if (mainWindow) {
+      mainWindow.webContents.send('update-error', err?.message || 'Update error');
+    }
+  });
 };
 
 /**

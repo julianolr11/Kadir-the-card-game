@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
+import FeedbackModal from './FeedbackModal';
 import { AppContext } from '../context/AppContext';
 import '../styles/animations.css';
 
@@ -15,6 +16,9 @@ const translations = {
     english: 'English',
     res1: '1280x720',
     res2: '1920x1080',
+    feedback: 'Enviar feedback',
+    feedback_enviado: 'Feedback enviado! Obrigado!',
+    feedback_erro: 'Erro ao enviar feedback.',
   },
   en: {
     options: 'Options',
@@ -28,6 +32,9 @@ const translations = {
     english: 'English',
     res1: '1280x720',
     res2: '1920x1080',
+    feedback: 'Send feedback',
+    feedback_enviado: 'Feedback sent! Thank you!',
+    feedback_erro: 'Error sending feedback.',
   },
 };
 
@@ -78,6 +85,8 @@ function OptionsModal({
   const [resolution, setResolution] = useState(() =>
     getInitial('resolution', initialResolution),
   );
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [feedbackStatus, setFeedbackStatus] = useState('idle'); // idle | sent | error
 
   const handleLangChange = (e) => setLocalLang(e.target.value);
   const handleMusicVolumeChange = (e) => {
@@ -167,195 +176,230 @@ function OptionsModal({
 
   const t = translations[lang] || translations.ptbr;
   return (
-    <div style={modalBgStyle}>
-      <div style={modalStyle} className="modal-zoom-in">
-        <h2
-          style={{
-            color: '#ffe6b0',
-            fontWeight: 700,
-            fontSize: 24,
-            marginBottom: 24,
-            textAlign: 'center',
-            letterSpacing: 0.5,
-          }}
-        >
-          {t.options}
-        </h2>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-          <div>
-            <label style={labelStyle}>{t.language}</label>
-            <select
-              value={localLang}
-              onChange={handleLangChange}
-              style={selectStyle}
-            >
-              <option value="ptbr" style={optionStyle}>
-                {t.portuguese}
-              </option>
-              <option value="en" style={optionStyle}>
-                {t.english}
-              </option>
-            </select>
-          </div>
-          <div>
-            <label style={labelStyle}>Volume da Música</label>
+    <React.Fragment>
+      <div style={modalBgStyle}>
+        <div style={modalStyle} className="modal-zoom-in">
+          <h2
+            style={{
+              color: '#ffe6b0',
+              fontWeight: 700,
+              fontSize: 24,
+              marginBottom: 24,
+              textAlign: 'center',
+              letterSpacing: 0.5,
+            }}
+          >
+            {t.options}
+          </h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+            {/* ...campos de opções... */}
+            <div>
+              <label style={labelStyle}>{t.language}</label>
+              <select
+                value={localLang}
+                onChange={handleLangChange}
+                style={selectStyle}
+              >
+                <option value="ptbr" style={optionStyle}>
+                  {t.portuguese}
+                </option>
+                <option value="en" style={optionStyle}>
+                  {t.english}
+                </option>
+              </select>
+            </div>
+            <div>
+              <label style={labelStyle}>Volume da Música</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  value={localMusicVolume}
+                  onChange={handleMusicVolumeChange}
+                  style={{ ...rangeStyle, width: 270 }}
+                />
+                <span
+                  style={{
+                    minWidth: 32,
+                    textAlign: 'right',
+                    fontVariantNumeric: 'tabular-nums',
+                    color: '#ffe6b0',
+                    fontWeight: 600,
+                  }}
+                >
+                  {localMusicVolume}
+                </span>
+              </div>
+            </div>
+            <div>
+              <label style={labelStyle}>Volume dos Efeitos</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  value={localEffectsVolume}
+                  onChange={handleEffectsVolumeChange}
+                  style={{ ...rangeStyle, width: 270 }}
+                />
+                <span
+                  style={{
+                    minWidth: 32,
+                    textAlign: 'right',
+                    fontVariantNumeric: 'tabular-nums',
+                    color: '#ffe6b0',
+                    fontWeight: 600,
+                  }}
+                >
+                  {localEffectsVolume}
+                </span>
+              </div>
+            </div>
+            <div>
+              <label style={labelStyle}>{t.resolution}</label>
+              <select
+                value={resolution}
+                onChange={(e) => setResolution(e.target.value)}
+                style={selectStyle}
+              >
+                <option value="1280x720" style={optionStyle}>
+                  {t.res1}
+                </option>
+                <option value="1920x1080" style={optionStyle}>
+                  {t.res2}
+                </option>
+              </select>
+            </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <input
-                type="range"
-                min={0}
-                max={100}
-                value={localMusicVolume}
-                onChange={handleMusicVolumeChange}
-                style={{ ...rangeStyle, width: 270 }}
-              />
-              <span
+              <label
                 style={{
-                  minWidth: 32,
-                  textAlign: 'right',
-                  fontVariantNumeric: 'tabular-nums',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  cursor: 'pointer',
+                  fontWeight: 500,
                   color: '#ffe6b0',
-                  fontWeight: 600,
                 }}
               >
-                {localMusicVolume}
-              </span>
+                <span
+                  style={{
+                    position: 'relative',
+                    width: 44,
+                    height: 24,
+                    display: 'inline-block',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={fullscreen}
+                    onChange={(e) => setFullscreen(e.target.checked)}
+                    style={{
+                      opacity: 0,
+                      width: 44,
+                      height: 24,
+                      position: 'absolute',
+                      left: 0,
+                      top: 0,
+                      margin: 0,
+                      zIndex: 2,
+                      cursor: 'pointer',
+                    }}
+                    tabIndex={0}
+                    aria-checked={fullscreen}
+                  />
+                  <span
+                    style={{
+                      position: 'absolute',
+                      left: 0,
+                      top: 0,
+                      width: 44,
+                      height: 24,
+                      background: fullscreen
+                        ? 'linear-gradient(90deg, #a87e2d 0%, #ffe6b0 100%)'
+                        : 'rgba(60,50,80,0.5)',
+                      borderRadius: 16,
+                      boxShadow: fullscreen
+                        ? '0 0 8px #ffe6b0aa'
+                        : '0 0 4px #0006',
+                      transition: 'background 0.2s',
+                      border: fullscreen
+                        ? '1.5px solid #ffe6b0'
+                        : '1.5px solid #a87e2d',
+                      display: 'block',
+                    }}
+                  />
+                  <span
+                    style={{
+                      position: 'absolute',
+                      top: 4,
+                      left: fullscreen ? 24 : 4,
+                      width: 16,
+                      height: 16,
+                      borderRadius: '50%',
+                      background: fullscreen ? '#ffe6b0' : '#a87e2d',
+                      boxShadow: fullscreen ? '0 0 8px #ffe6b0' : '0 0 4px #0006',
+                      transition: 'left 0.2s, background 0.2s',
+                      border: '2px solid #fff2',
+                      display: 'block',
+                      zIndex: 1,
+                    }}
+                  />
+                </span>
+                {t.fullscreen}
+              </label>
             </div>
           </div>
-          <div>
-            <label style={labelStyle}>Volume dos Efeitos</label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <input
-                type="range"
-                min={0}
-                max={100}
-                value={localEffectsVolume}
-                onChange={handleEffectsVolumeChange}
-                style={{ ...rangeStyle, width: 270 }}
-              />
-              <span
-                style={{
-                  minWidth: 32,
-                  textAlign: 'right',
-                  fontVariantNumeric: 'tabular-nums',
-                  color: '#ffe6b0',
-                  fontWeight: 600,
-                }}
-              >
-                {localEffectsVolume}
-              </span>
-            </div>
-          </div>
-          <div>
-            <label style={labelStyle}>{t.resolution}</label>
-            <select
-              value={resolution}
-              onChange={(e) => setResolution(e.target.value)}
-              style={selectStyle}
-            >
-              <option value="1280x720" style={optionStyle}>
-                {t.res1}
-              </option>
-              <option value="1920x1080" style={optionStyle}>
-                {t.res2}
-              </option>
-            </select>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <label
+          <div
+            style={{
+              marginTop: 32,
+              display: 'flex',
+              justifyContent: 'center',
+              gap: 16,
+              position: 'relative',
+            }}
+          >
+            <button onClick={handleApply} style={btnStyle}>
+              {t.apply}
+            </button>
+            <button onClick={handleClose} style={btnStyle}>
+              {t.close}
+            </button>
+            {/* Botão de feedback flutuante no canto inferior direito do modal */}
+            <button
+              onClick={() => setShowFeedback(true)}
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                cursor: 'pointer',
-                fontWeight: 500,
-                color: '#ffe6b0',
+                ...btnStyle,
+                position: 'absolute',
+                right: 50,
+                bottom: -114,
+                minWidth: 170,
+                boxShadow: '0 2px 12px #000a',
+                background: 'linear-gradient(90deg, #ffe6b0 0%, #a87e2d 100%)',
+                color: '#3a2c4a',
+                fontWeight: 700,
+                zIndex: 10,
               }}
             >
-              <span
-                style={{
-                  position: 'relative',
-                  width: 44,
-                  height: 24,
-                  display: 'inline-block',
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={fullscreen}
-                  onChange={(e) => setFullscreen(e.target.checked)}
-                  style={{
-                    opacity: 0,
-                    width: 44,
-                    height: 24,
-                    position: 'absolute',
-                    left: 0,
-                    top: 0,
-                    margin: 0,
-                    zIndex: 2,
-                    cursor: 'pointer',
-                  }}
-                  tabIndex={0}
-                  aria-checked={fullscreen}
-                />
-                <span
-                  style={{
-                    position: 'absolute',
-                    left: 0,
-                    top: 0,
-                    width: 44,
-                    height: 24,
-                    background: fullscreen
-                      ? 'linear-gradient(90deg, #a87e2d 0%, #ffe6b0 100%)'
-                      : 'rgba(60,50,80,0.5)',
-                    borderRadius: 16,
-                    boxShadow: fullscreen
-                      ? '0 0 8px #ffe6b0aa'
-                      : '0 0 4px #0006',
-                    transition: 'background 0.2s',
-                    border: fullscreen
-                      ? '1.5px solid #ffe6b0'
-                      : '1.5px solid #a87e2d',
-                    display: 'block',
-                  }}
-                />
-                <span
-                  style={{
-                    position: 'absolute',
-                    top: 4,
-                    left: fullscreen ? 24 : 4,
-                    width: 16,
-                    height: 16,
-                    borderRadius: '50%',
-                    background: fullscreen ? '#ffe6b0' : '#a87e2d',
-                    boxShadow: fullscreen ? '0 0 8px #ffe6b0' : '0 0 4px #0006',
-                    transition: 'left 0.2s, background 0.2s',
-                    border: '2px solid #fff2',
-                    display: 'block',
-                    zIndex: 1,
-                  }}
-                />
-              </span>
-              {t.fullscreen}
-            </label>
+              {t.feedback}
+            </button>
           </div>
         </div>
-        <div
-          style={{
-            marginTop: 32,
-            display: 'flex',
-            justifyContent: 'center',
-            gap: 16,
-          }}
-        >
-          <button onClick={handleApply} style={btnStyle}>
-            {t.apply}
-          </button>
-          <button onClick={handleClose} style={btnStyle}>
-            {t.close}
-          </button>
-        </div>
+        {showFeedback && (
+          <FeedbackModal
+            visible={showFeedback}
+            onClose={() => {
+              setShowFeedback(false);
+              setFeedbackStatus('idle');
+            }}
+            onSend={() => {
+              setFeedbackStatus('sent');
+              setTimeout(() => setShowFeedback(false), 1500);
+            }}
+          />
+        )}
       </div>
-    </div>
+    </React.Fragment>
   );
 }
 

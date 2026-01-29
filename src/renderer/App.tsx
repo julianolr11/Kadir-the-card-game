@@ -1,3 +1,4 @@
+//
 import React, { useState, useRef, useEffect } from 'react';
 import UpdateModal from '../components/UpdateModal';
 import UpdateNotesModal from '../components/UpdateNotesModal';
@@ -17,6 +18,7 @@ import LoadingMenu from './LoadingMenu';
 // linha removida: declaração duplicada de useState
 export default function App() {
   const [screen, setScreen] = useState('loading');
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
   const [battleDeck, setBattleDeck] = useState(null);
   const menuMusicRef = useRef(null);
   const introMusicRef = useRef(null);
@@ -49,15 +51,26 @@ export default function App() {
     };
   }, []);
 
-  // Checar update ao iniciar app
+  // Checar update ao iniciar app (com delay mínimo para overlay)
   useEffect(() => {
+    let overlayTimeout: NodeJS.Timeout;
+    setCheckingUpdate(true);
+    const minDelay = new Promise((resolve) => {
+      overlayTimeout = setTimeout(resolve, 1500); // 1.5 segundos
+    });
     if (window.electron?.ipcRenderer?.checkForUpdate) {
-      window.electron.ipcRenderer.checkForUpdate().then((res: any) => {
+      Promise.all([
+        window.electron.ipcRenderer.checkForUpdate(),
+        minDelay
+      ]).then(([res]) => {
+        setCheckingUpdate(false);
         if (res?.updateAvailable) {
           setUpdateModalOpen(true);
           setUpdateVersion(res.info?.version || '');
         }
       });
+    } else {
+      minDelay.then(() => setCheckingUpdate(false));
     }
     // Listeners de progresso/erro
     window.electron?.ipcRenderer?.onUpdateProgress?.((progress: any) => {
@@ -77,6 +90,9 @@ export default function App() {
         fetchReleaseNotes(updateVersion);
       }
     });
+    return () => {
+      if (overlayTimeout) clearTimeout(overlayTimeout);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [updateVersion]);
 
@@ -131,6 +147,23 @@ export default function App() {
     <AppProvider>
       <IntroMusicPlayer ref={introMusicRef} />
       {screen !== 'battle' && <MenuMusicPlayer ref={menuMusicRef} />}
+      {checkingUpdate && (
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.7)',
+          zIndex: 2000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: '#fff',
+          fontSize: 24,
+          fontWeight: 600,
+          letterSpacing: 1,
+        }}>
+          {lang === 'en' ? 'Checking for updates...' : 'Buscando por atualizações...'}
+        </div>
+      )}
       <UpdateModal
         open={updateModalOpen}
         onUpdate={handleUpdate}

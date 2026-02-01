@@ -75,10 +75,10 @@ module.exports = {
   ],
   defaultBlessing: {
     id: 'mawthorn_blessing',
-    name: { pt: 'Esporos Abissais', en: 'Abyssal Spores' },
+    name: { pt: 'Gélido Abissal', en: 'Abyssal Freeze' },
     desc: {
-      pt: 'Aliados aplicam +1 tick de poison/bleed e curam 1 ao aplicar um DoT.',
-      en: 'Allies apply +1 tick of poison/bleed and heal 1 when applying a DoT.',
+      pt: 'Ao ser invocado, escolhe uma criatura do campo adversário e aplica congelamento por 3 turnos.',
+      en: 'When summoned, chooses an enemy creature and applies freeze for 3 turns.',
     },
   },
   unlockTable: [

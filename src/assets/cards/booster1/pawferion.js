@@ -68,10 +68,10 @@ module.exports = {
   ],
   defaultBlessing: {
     id: 'pawferion_blessing',
-    name: { pt: 'Agilidade Felina', en: 'Feline Agility' },
+    name: { pt: 'Proteção Sagrada', en: 'Sacred Protection' },
     desc: {
-      pt: 'Criaturas rápidas ganham +3% de velocidade enquanto Pawferion estiver em campo.',
-      en: 'Fast creatures gain +3% speed while Pawferion is on the field.',
+      pt: 'Ao ser invocado, todas as criaturas aliadas ficam imunes a debuffs por 3 turnos.',
+      en: 'When summoned, all allied creatures become immune to debuffs for 3 turns.',
     },
   },
   unlockTable: [

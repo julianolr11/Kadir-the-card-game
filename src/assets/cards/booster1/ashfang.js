@@ -77,10 +77,10 @@ module.exports = {
   ],
   defaultBlessing: {
     id: 'ashfang_blessing',
-    name: { pt: 'Campos de Cinzas', en: 'Ash Fields' },
+    name: { pt: 'Chama Eterna', en: 'Eternal Flame' },
     desc: {
-      pt: 'Aliados de fogo recebem 6% menos dano enquanto Ashfang estiver em campo.',
-      en: 'Fire allies take 6% less damage while Ashfang is on the field.',
+      pt: 'Ao ser invocado, 1 criatura aleatória do campo adversário toma 1 de dano e queimadura por 3 turnos.',
+      en: 'When summoned, 1 random enemy creature takes 1 damage and burn for 3 turns.',
     },
   },
   unlockTable: [
@@ -207,14 +207,6 @@ module.exports = {
       type: 'self_revive',
     },
   ],
-  defaultBlessing: {
-    id: 'ashfang_blessing',
-    name: { pt: 'Campos de Cinzas', en: 'Ash Fields' },
-    desc: {
-      pt: 'Aliados de fogo recebem 6% menos dano enquanto Ashfang estiver em campo.',
-      en: 'Fire allies take 6% less damage while Ashfang is on the field.',
-    },
-  },
   unlockTable: [
     { level: 0, type: 'none' },
     {

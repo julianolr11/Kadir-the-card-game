@@ -91,10 +91,10 @@ module.exports = {
   // Bênção padrão
   defaultBlessing: {
     id: 'ekeranth_blessing',
-    name: { pt: 'Solo Vulcânico', en: 'Volcanic Soil' },
+    name: { pt: 'Queimadura Vulcânica', en: 'Volcanic Burn' },
     desc: {
-      pt: 'Durante 3 turnos as cartas de fogo ficam imunes as suas fraquezas.',
-      en: 'For 3 turns, fire cards become immune to their weaknesses.',
+      pt: 'Ao ser invocado todos os personagens do campo adversário recebem queimadura por 2 turnos.',
+      en: 'When summoned, all enemy characters on the field receive burn for 2 turns.',
     },
   },
 

@@ -76,10 +76,10 @@ module.exports = {
   ],
   defaultBlessing: {
     id: 'zephyron_blessing',
-    name: { pt: 'Fome dos Ventos', en: 'Hunger of Winds' },
+    name: { pt: 'Tempestade Paralisante', en: 'Paralyzing Storm' },
     desc: {
-      pt: 'Aliados de ar ganham +4% velocidade e +6% chance de crítico no primeiro ataque.',
-      en: 'Air allies gain +4% speed and +6% crit chance on their first attack.',
+      pt: 'Ao ser invocado paralisa todas as criaturas adversárias por 1 turno.',
+      en: 'When summoned, paralyzes all enemy creatures for 1 turn.',
     },
   },
   unlockTable: [

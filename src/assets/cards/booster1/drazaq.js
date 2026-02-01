@@ -75,10 +75,10 @@ module.exports = {
   ],
   defaultBlessing: {
     id: 'drazaq_blessing',
-    name: { pt: 'Chamas Sombras', en: 'Shadowflame Embrace' },
+    name: { pt: 'Roubo de Conhecimento', en: 'Knowledge Theft' },
     desc: {
-      pt: 'Aliados draconídeos ganham +6% ataque; queimadura e bleed causam +1 de dano.',
-      en: 'Draconid allies gain +6% attack; burn and bleed deal +1 damage.',
+      pt: 'Ao ser invocado permite ao usuário escolher uma carta da mão do adversário e puxar para a sua mão.',
+      en: 'When summoned, you choose 1 card from opponent\'s hand and steal it to your hand.',
     },
   },
   unlockTable: [

@@ -99,9 +99,8 @@ export default function App() {
   // Buscar release notes do GitHub
   const fetchReleaseNotes = async (version: string) => {
     try {
-      // Ajuste o owner/repo conforme seu projeto real
-      const owner = 'electron-react-boilerplate';
-      const repo = 'electron-react-boilerplate';
+      const owner = 'julianolr11';
+      const repo = 'Kadir-the-card-game';
       const url = `https://api.github.com/repos/${owner}/${repo}/releases/tags/v${version}`;
       const res = await fetch(url);
       if (!res.ok) throw new Error('Release notes not found');

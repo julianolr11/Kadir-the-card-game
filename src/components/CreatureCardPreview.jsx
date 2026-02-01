@@ -159,6 +159,16 @@ function CreatureCardPreview({
   const langKey = lang === 'ptbr' ? 'pt' : lang;
   if (!creature) return null;
 
+  const blessingName = creature?.defaultBlessing
+    ? (typeof creature.defaultBlessing.name === 'object' ? creature.defaultBlessing.name[langKey] : creature.defaultBlessing.name)
+    : null;
+  const blessingDesc = creature?.defaultBlessing
+    ? (typeof creature.defaultBlessing.desc === 'object' ? creature.defaultBlessing.desc[langKey] : creature.defaultBlessing.desc)
+    : null;
+  const fieldName = typeof creature.field === 'object' ? creature.field[langKey] : creature.field;
+  const fieldDesc = typeof creature.fielddesc === 'object' ? creature.fielddesc[langKey] : creature.fielddesc;
+  const shouldShowBlessing = creature?.isGuardian && blessingName && blessingDesc;
+
   // Detecta se é carta de campo
   const isFieldCard = creature.type === 'field';
   // Força classe de campo se solicitado
@@ -315,8 +325,15 @@ function CreatureCardPreview({
             {/* Campo, tipo, altura, fraqueza, HP só para criaturas */}
             {!isFieldCard && (
               <div className="card-preview-field">
-                <strong>{typeof creature.field === 'object' ? creature.field[langKey] : creature.field}</strong>{' '}
-                {typeof creature.fielddesc === 'object' ? creature.fielddesc[langKey] : creature.fielddesc}
+                {shouldShowBlessing ? (
+                  <>
+                    <strong>{blessingName}</strong> {blessingDesc}
+                  </>
+                ) : (
+                  <>
+                    <strong>{fieldName}</strong> {fieldDesc}
+                  </>
+                )}
               </div>
             )}
             {!isFieldCard && (

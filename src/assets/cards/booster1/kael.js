@@ -72,10 +72,10 @@ module.exports = {
   ],
   defaultBlessing: {
     id: 'kael_blessing',
-    name: { pt: 'Frieza Absoluta', en: 'Absolute Coldness' },
+    name: { pt: 'Ataque Peneça', en: 'Piercing Strike' },
     desc: {
-      pt: 'Criaturas de gelo ganham +3% de resistência enquanto Kael estiver em campo.',
-      en: 'Ice creatures gain +3% resistance while Kael is on the field.',
+      pt: 'Ao ser invocado, dá 1 de dano 3 vezes a criaturas aleatórias. Se houver só 1 criatura, ela toma 3 de dano direto.',
+      en: 'When summoned, deals 1 damage 3 times to random creatures. If there is only 1, it takes 3 direct damage.',
     },
   },
   unlockTable: [

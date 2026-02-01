@@ -88,10 +88,10 @@ module.exports = {
   ],
   defaultBlessing: {
     id: 'noctyra_blessing',
-    name: { pt: 'Envolvedora das Sombras', en: 'Shadow Enveloper' },
+    name: { pt: 'Drenar Vitalidade', en: 'Drain Vitality' },
     desc: {
-      pt: 'Aliados de ar ganham +5% esquiva e podem se esconder após 2 turnos em campo.',
-      en: 'Air allies gain +5% evasion and can hide after 2 turns on the field.',
+      pt: 'Ao ser invocado, rouba 1 vida do adversário e acrescenta ao usuário (se não tiver 5 completas).',
+      en: 'When summoned, steals 1 life from opponent and adds it to player (if not at full health).',
     },
   },
   unlockTable: [

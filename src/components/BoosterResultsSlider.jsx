@@ -321,11 +321,20 @@ function BoosterResultsSlider({ cards, lang, onClose }) {
                           ))}
                         </div>
                       )}
-                      {/* Campo */}
+                      {/* Campo ou Benção */}
                       {card?.field && (
                         <div className="card-preview-field">
-                          <strong>{getLocalizedText(card.field, lang)}:</strong>{' '}
-                          {getLocalizedText(card.fielddesc, lang)}
+                          {card?.isGuardian && card?.defaultBlessing ? (
+                            <>
+                              <strong>{getLocalizedText(card.defaultBlessing.name, lang)}:</strong>{' '}
+                              {getLocalizedText(card.defaultBlessing.desc, lang)}
+                            </>
+                          ) : (
+                            <>
+                              <strong>{getLocalizedText(card.field, lang)}:</strong>{' '}
+                              {getLocalizedText(card.fielddesc, lang)}
+                            </>
+                          )}
                         </div>
                       )}
                       {/* Bottom info */}

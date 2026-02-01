@@ -19,7 +19,25 @@ import poisonIcon from '../assets/img/icons/poison.png';
 import sleepIcon from '../assets/img/icons/sleep.png';
 
 function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
-  const { state, startBattle, endTurn, summonFromHand, drawPlayerCard, invokeFieldCard, startPlaying, useAbility } = useBattle();
+  const {
+    state,
+    startBattle,
+    endTurn,
+    summonFromHand,
+    drawPlayerCard,
+    invokeFieldCard,
+    startPlaying,
+    useAbility,
+    stealEnemyCard,
+    cancelStealCard,
+    returnEnemyCard,
+    cancelReturnCard,
+    poisonEnemyCard,
+    cancelPoisonCard,
+    selectFieldCardForSwap,
+    completeSwap,
+    cancelSwap,
+  } = useBattle();
   const { cardCollection } = React.useContext(AppContext);
   const [activeCardIndex, setActiveCardIndex] = React.useState(null);
   const [deckCardDrawn, setDeckCardDrawn] = React.useState(false);
@@ -303,6 +321,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
             allowFlip={false}
             currentHp={slotData?.hp}
             maxHp={slotData?.maxHp || data?.hp}
+            armor={slotData?.shield || 0}
             burn={(slotData?.statusEffects || []).find(e => e.type === 'burn')?.duration || 0}
             freeze={(slotData?.statusEffects || []).find(e => e.type === 'freeze')?.duration || 0}
             paralyze={(slotData?.statusEffects || []).find(e => e.type === 'paralyze')?.duration || 0}
@@ -585,6 +604,209 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
   }, [boardBg]);
   return (
     <>
+    {state.returnCardPending && (
+      <div style={turnModalBgStyle}>
+        <div style={turnModalStyle}>
+          <div style={{ fontWeight: 700, marginBottom: 12 }}>Escolha uma criatura para retornar à mão</div>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            {(state.ai?.field?.slots || []).map((slot, idx) => {
+              if (!slot) return null;
+              const cardData = getCardData(slot.id);
+              return (
+                <button
+                  key={`return-card-${idx}`}
+                  type="button"
+                  onClick={() => returnEnemyCard(idx)}
+                  style={{
+                    border: 'none',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    padding: 0,
+                  }}
+                  aria-label={`Retornar ${slot.name || 'criatura'}`}
+                >
+                  <div style={{ transform: 'scale(0.45)', transformOrigin: 'top center', height: 290 }}>
+                    <CreatureCardPreview
+                      creature={cardData}
+                      level={0}
+                      allowFlip={false}
+                      burn={(slot?.statusEffects || []).find(e => e.type === 'burn')?.duration || 0}
+                      freeze={(slot?.statusEffects || []).find(e => e.type === 'freeze')?.duration || 0}
+                      paralyze={(slot?.statusEffects || []).find(e => e.type === 'paralyze')?.duration || 0}
+                      poison={(slot?.statusEffects || []).find(e => e.type === 'poison')?.duration || 0}
+                      sleep={(slot?.statusEffects || []).find(e => e.type === 'sleep')?.duration || 0}
+                      bleed={(slot?.statusEffects || []).find(e => e.type === 'bleed')?.duration || 0}
+                    />
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          <button style={turnModalBtnStyle} onClick={cancelReturnCard}>Cancelar</button>
+        </div>
+      </div>
+    )}
+    {state.poisonPending && (
+      <div style={turnModalBgStyle}>
+        <div style={turnModalStyle}>
+          <div style={{ fontWeight: 700, marginBottom: 12 }}>Escolha uma criatura para envenenar</div>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            {(state.ai?.field?.slots || []).map((slot, idx) => {
+              if (!slot) return null;
+              const cardData = getCardData(slot.id);
+              return (
+                <button
+                  key={`poison-card-${idx}`}
+                  type="button"
+                  onClick={() => poisonEnemyCard(idx)}
+                  style={{
+                    border: 'none',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    padding: 0,
+                  }}
+                  aria-label={`Envenenar ${slot.name || 'criatura'}`}
+                >
+                  <div style={{ transform: 'scale(0.45)', transformOrigin: 'top center', height: 290 }}>
+                    <CreatureCardPreview
+                      creature={cardData}
+                      level={0}
+                      allowFlip={false}
+                      burn={(slot?.statusEffects || []).find(e => e.type === 'burn')?.duration || 0}
+                      freeze={(slot?.statusEffects || []).find(e => e.type === 'freeze')?.duration || 0}
+                      paralyze={(slot?.statusEffects || []).find(e => e.type === 'paralyze')?.duration || 0}
+                      poison={(slot?.statusEffects || []).find(e => e.type === 'poison')?.duration || 0}
+                      sleep={(slot?.statusEffects || []).find(e => e.type === 'sleep')?.duration || 0}
+                      bleed={(slot?.statusEffects || []).find(e => e.type === 'bleed')?.duration || 0}
+                    />
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          <button style={turnModalBtnStyle} onClick={cancelPoisonCard}>Cancelar</button>
+        </div>
+      </div>
+    )}
+    {state.stealCardPending && (
+      <div style={turnModalBgStyle}>
+        <div style={turnModalStyle}>
+          <div style={{ fontWeight: 700, marginBottom: 12 }}>Escolha uma carta da mão do oponente</div>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+            {(state.ai?.hand || []).map((_, idx) => (
+              <button
+                key={`steal-card-${idx}`}
+                type="button"
+                onClick={() => stealEnemyCard(idx)}
+                style={{
+                  border: 'none',
+                  background: 'transparent',
+                  cursor: 'pointer',
+                  padding: 0,
+                }}
+                aria-label={`Roubar carta ${idx + 1}`}
+              >
+                <div
+                  style={{
+                    width: 72,
+                    height: 100,
+                    backgroundImage: `url(${cardVerso})`,
+                    backgroundSize: 'cover',
+                    borderRadius: 8,
+                    boxShadow: '0 6px 18px rgba(0,0,0,0.45)',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                  }}
+                />
+              </button>
+            ))}
+          </div>
+          <button style={turnModalBtnStyle} onClick={cancelStealCard}>Cancelar</button>
+        </div>
+      </div>
+    )}
+    {state.swapCardPending && state.swapCardPending.step === 'selectField' && (
+      <div style={turnModalBgStyle}>
+        <div style={turnModalStyle}>
+          <div style={{ fontWeight: 700, marginBottom: 12 }}>Escolha uma criatura em campo para trocar</div>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            {(state.player?.field?.slots || []).map((slot, idx) => {
+              if (!slot) return null;
+              const cardData = getCardData(slot.id);
+              return (
+                <button
+                  key={`swap-field-${idx}`}
+                  type="button"
+                  onClick={() => selectFieldCardForSwap(idx)}
+                  style={{
+                    border: 'none',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    padding: 0,
+                  }}
+                  aria-label={`Trocar ${slot.name || 'criatura'}`}
+                >
+                  <div style={{ transform: 'scale(0.45)', transformOrigin: 'top center', height: 290 }}>
+                    <CreatureCardPreview
+                      creature={cardData}
+                      level={0}
+                      allowFlip={false}
+                      burn={(slot?.statusEffects || []).find(e => e.type === 'burn')?.duration || 0}
+                      freeze={(slot?.statusEffects || []).find(e => e.type === 'freeze')?.duration || 0}
+                      paralyze={(slot?.statusEffects || []).find(e => e.type === 'paralyze')?.duration || 0}
+                      poison={(slot?.statusEffects || []).find(e => e.type === 'poison')?.duration || 0}
+                      sleep={(slot?.statusEffects || []).find(e => e.type === 'sleep')?.duration || 0}
+                      bleed={(slot?.statusEffects || []).find(e => e.type === 'bleed')?.duration || 0}
+                    />
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          <button style={turnModalBtnStyle} onClick={cancelSwap}>Cancelar</button>
+        </div>
+      </div>
+    )}
+    {state.swapCardPending && state.swapCardPending.step === 'selectGraveyard' && (
+      <div style={turnModalBgStyle}>
+        <div style={turnModalStyle}>
+          <div style={{ fontWeight: 700, marginBottom: 12 }}>Escolha uma criatura do cemitério para trazer</div>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            {(state.player?.graveyard || []).map((creature, idx) => {
+              const cardData = getCardData(creature.id);
+              return (
+                <button
+                  key={`swap-grave-${idx}`}
+                  type="button"
+                  onClick={() => completeSwap(idx)}
+                  style={{
+                    border: 'none',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    padding: 0,
+                  }}
+                  aria-label={`Trazer ${creature.name || 'criatura'} do cemitério`}
+                >
+                  <div style={{ transform: 'scale(0.45)', transformOrigin: 'top center', opacity: 0.7, height: 290 }}>
+                    <CreatureCardPreview
+                      creature={cardData}
+                      level={0}
+                      allowFlip={false}
+                      burn={(creature?.statusEffects || []).find(e => e.type === 'burn')?.duration || 0}
+                      freeze={(creature?.statusEffects || []).find(e => e.type === 'freeze')?.duration || 0}
+                      paralyze={(creature?.statusEffects || []).find(e => e.type === 'paralyze')?.duration || 0}
+                      poison={(creature?.statusEffects || []).find(e => e.type === 'poison')?.duration || 0}
+                      sleep={(creature?.statusEffects || []).find(e => e.type === 'sleep')?.duration || 0}
+                      bleed={(creature?.statusEffects || []).find(e => e.type === 'bleed')?.duration || 0}
+                    />
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          <button style={turnModalBtnStyle} onClick={cancelSwap}>Cancelar</button>
+        </div>
+      </div>
+    )}
     <div className="battle-root">
       <div className="battle-topbar">
         <button className="battle-exit" onClick={() => onNavigate?.('home')}>Sair</button>

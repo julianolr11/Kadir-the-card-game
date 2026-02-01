@@ -51,5 +51,31 @@ module.exports = {
   ],
 
   // ===== DADOS ESTENDIDOS (Guardião) =====
-  isGuardian: false,
+  isGuardian: true,
+  defaultBlessing: {
+    id: 'seract_blessing',
+    name: { pt: 'Troca de Essência', en: 'Essence Swap' },
+    desc: {
+      pt: 'Ao ser invocado, o usuário escolhe uma carta em campo para trocar por uma carta já enviada ao cemitério.',
+      en: 'When summoned, the player chooses a field creature to swap with a creature from the graveyard.',
+    },
+  },
+  defaultSkills: [
+    {
+      name: { pt: 'Toque Congelante', en: 'Freezing Touch' },
+      cost: 2,
+      desc: {
+        pt: 'Congela o alvo por 1 turno: reduz velocidade em 30% e causa +2 de dano gélido.',
+        en: 'Freezes target for 1 turn: reduces speed by 30% and deals +2 ice damage.',
+      },
+    },
+    {
+      name: { pt: 'Cristal de Sombra', en: 'Shadow Crystal' },
+      cost: 3,
+      desc: {
+        pt: 'Cria escudo de gelo sombrio: absorve até 3 dano e reflete 50% ao atacante.',
+        en: 'Creates a shadow ice shield: absorbs up to 3 damage and reflects 50% to attacker.',
+      },
+    },
+  ],
 };

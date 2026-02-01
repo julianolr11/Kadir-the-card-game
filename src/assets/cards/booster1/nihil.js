@@ -88,10 +88,10 @@ module.exports = {
   ],
   defaultBlessing: {
     id: 'nihil_blessing',
-    name: { pt: 'Fome do Nada', en: 'Hunger of Nothingness' },
+    name: { pt: 'Veneno do Vazio', en: 'Poison of the Void' },
     desc: {
-      pt: 'Rouba 1 essência do adversário por rodada; aliados puros ganham +4% resistência.',
-      en: 'Steals 1 essence from the opponent each round; pure allies gain +4% resistance.',
+      pt: 'Ao ser invocada o usuário escolhe uma criatura do campo do oponente para receber envenenamento por 2 turnos.',
+      en: 'When summoned, you choose 1 enemy creature on the field to receive poison for 2 turns.',
     },
   },
   unlockTable: [

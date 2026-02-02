@@ -217,17 +217,17 @@ function Bestiary({ onBack }) {
               );
             })}
 
-            {/* Divisória entre Criaturas e Campos */}
-            {creatures.some(card => card.type === 'field') && (
+            {/* Divisória entre Campos e Cartas de Efeito */}
+            {creatures.some(card => card.type === 'effect') && (
               <div className="bestiary-divider">
                 <div className="bestiary-divider-line"></div>
-                <span className="bestiary-divider-label">CAMPOS</span>
+                <span className="bestiary-divider-label">CARTAS DE EFEITO</span>
                 <div className="bestiary-divider-line"></div>
               </div>
             )}
 
-            {/* Seção de Campos */}
-            {creatures.filter(card => card.type === 'field').map((card) => {
+            {/* Seção de Cartas de Efeito */}
+            {creatures.filter(card => card.type === 'effect').map((card) => {
               const owned = hasCard(card.id);
               return (
                 <div

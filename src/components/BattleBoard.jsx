@@ -10,6 +10,7 @@ import cardVerso from '../assets/img/card/verso.png';
 import '../styles/battle.css';
 import '../styles/battle-result.css';
 import '../styles/effects.css';
+import '../styles/effect-cards.css';
 import shieldIcon from '../assets/img/icons/shield.png';
 import bleedIcon from '../assets/img/icons/bleed.png';
 import burnIcon from '../assets/img/icons/burn.png';
@@ -37,6 +38,9 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
     selectFieldCardForSwap,
     completeSwap,
     cancelSwap,
+    playEffectCard,
+    selectEffectCardTarget,
+    cancelEffectCard,
   } = useBattle();
   const { cardCollection } = React.useContext(AppContext);
   const [activeCardIndex, setActiveCardIndex] = React.useState(null);
@@ -1095,6 +1099,36 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
         </div>
       </div>
 
+      {/* Seção de Cartas de Efeito */}
+      <div className="effect-card-container">
+        <div className="effect-card-title">Cartas de Efeito</div>
+        <div className="effect-hand">
+          {state.player.effectCards && state.player.effectCards.length > 0 ? (
+            state.player.effectCards.map((effectCardId, idx) => {
+              const cardData = getCardData(effectCardId);
+              if (!cardData || cardData.type !== 'effect') return null;
+
+              const cardName = typeof cardData.name === 'object' ? cardData.name.pt : cardData.name;
+
+              return (
+                <button
+                  key={`effect-${effectCardId}-${idx}`}
+                  className="effect-card-button"
+                  onClick={() => selectEffectCardTarget(idx)}
+                  title={cardName}
+                  disabled={state.activePlayer !== 'player'}
+                >
+                  <span className="effect-card-no-cost">∞</span>
+                  <img src={cardData.img} alt={cardName} />
+                </button>
+              );
+            })
+          ) : (
+            <div className="effect-hand-empty">Sem cartas de efeito</div>
+          )}
+        </div>
+      </div>
+
       {activeCardIndex !== null && state.player.hand[activeCardIndex] && (
         <div className="card-preview-overlay" onClick={() => setActiveCardIndex(null)}>
           <div className="card-preview-container" onClick={(e) => e.stopPropagation()}>
@@ -1310,6 +1344,120 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
         playerDeck={selectedDeck}
         onClose={() => onNavigate?.('home')}
       />
+    )}
+
+    {/* Modal de Seleção de Alvo para Cartas de Efeito */}
+    {state.effectCardPending && (
+      <div className="effect-target-modal" onClick={cancelEffectCard}>
+        <div className="effect-target-container" onClick={(e) => e.stopPropagation()}>
+          <div className="effect-target-title">Selecione um alvo</div>
+
+          {state.effectCardPending.targetType === 'allyMonster' && (
+            <div className="effect-target-options">
+              {(state.player?.field?.slots || []).map((creature, idx) => {
+                if (!creature) return null;
+                return (
+                  <div
+                    key={`target-ally-${idx}`}
+                    className="effect-target-option"
+                    onClick={() => playEffectCard(state.effectCardPending.handIndex, { allyIndex: idx })}
+                  >
+                    <img src={getCardData(creature.id)?.img} alt={creature.name} />
+                    <div style={{ fontSize: '12px' }}>{creature.name}</div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {state.effectCardPending.targetType === 'enemyMonster' && (
+            <div className="effect-target-options">
+              {(state.ai?.field?.slots || []).map((creature, idx) => {
+                if (!creature) return null;
+                return (
+                  <div
+                    key={`target-enemy-${idx}`}
+                    className="effect-target-option"
+                    onClick={() => playEffectCard(state.effectCardPending.handIndex, { enemyIndex: idx })}
+                  >
+                    <img src={getCardData(creature.id)?.img} alt={creature.name} />
+                    <div style={{ fontSize: '12px' }}>{creature.name}</div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {state.effectCardPending.targetType === 'graveyardCreature' && (
+            <div className="effect-target-options">
+              {(state.player?.graveyard || []).map((creature, idx) => (
+                <div
+                  key={`target-grave-${idx}`}
+                  className="effect-target-option"
+                  onClick={() => playEffectCard(state.effectCardPending.handIndex, { graveyardIndex: idx })}
+                >
+                  <img src={getCardData(creature.id)?.img} alt={creature.name} />
+                  <div style={{ fontSize: '12px' }}>{creature.name}</div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {state.effectCardPending.targetType === 'dual' && (
+            <div style={{ padding: '16px' }}>
+              <div style={{ marginBottom: '12px', color: '#c896ff' }}>Seus monstros:</div>
+              <div className="effect-target-options">
+                {(state.player?.field?.slots || []).map((creature, idx) => (
+                  <div
+                    key={`target-self-${idx}`}
+                    className="effect-target-option"
+                    onClick={() => {
+                      // Store selected ally, then let user select enemy
+                      setState(s => ({
+                        ...s,
+                        effectCardPending: {
+                          ...s.effectCardPending,
+                          selectedAllyIndex: idx
+                        }
+                      }));
+                    }}
+                  >
+                    <img src={getCardData(creature?.id)?.img} alt={creature?.name} />
+                    <div style={{ fontSize: '12px' }}>{creature?.name}</div>
+                  </div>
+                ))}
+              </div>
+
+              {state.effectCardPending.selectedAllyIndex !== undefined && (
+                <>
+                  <div style={{ marginTop: '16px', marginBottom: '12px', color: '#c896ff' }}>Monstros do adversário:</div>
+                  <div className="effect-target-options">
+                    {(state.ai?.field?.slots || []).map((creature, idx) => (
+                      <div
+                        key={`target-enemy-dual-${idx}`}
+                        className="effect-target-option"
+                        onClick={() => playEffectCard(state.effectCardPending.handIndex, {
+                          allyIndex: state.effectCardPending.selectedAllyIndex,
+                          enemyIndex: idx
+                        })}
+                      >
+                        <img src={getCardData(creature?.id)?.img} alt={creature?.name} />
+                        <div style={{ fontSize: '12px' }}>{creature?.name}</div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          <div className="effect-target-buttons">
+            <button className="effect-target-btn effect-target-btn-cancel" onClick={cancelEffectCard}>
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
     )}
     </>
   );

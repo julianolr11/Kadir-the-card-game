@@ -171,6 +171,7 @@ function CreatureCardPreview({
 
   // Detecta se é carta de campo
   const isFieldCard = creature.type === 'field';
+  const isEffectCard = creature.type === 'effect';
   // Força classe de campo se solicitado
   const forceFieldClass = creature.forceFieldClass;
   // Corrige imagem para cartas de campo
@@ -202,7 +203,7 @@ function CreatureCardPreview({
       >
         {/* FRENTE DA CARTA */}
         <div style={{ backfaceVisibility: 'hidden' }}>
-          <div className={`card-preview ${forceFieldClass ? 'card-preview-field' : colorClass[creature.element] || (isFieldCard ? 'card-preview-field' : '')} ${isHolo ? 'card-preview-holo' : ''}`}>
+          <div className={`card-preview ${forceFieldClass ? 'card-preview-field' : isEffectCard ? 'card-preview-effect' : colorClass[creature.element] || (isFieldCard ? 'card-preview-field' : '')} ${isHolo ? 'card-preview-holo' : ''}`}>
             <div className="card-preview-header">
               <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 {!isFieldCard && (
@@ -284,14 +285,19 @@ function CreatureCardPreview({
               </div>
             </div>
             {/* Se for carta de campo, mostra só lore e description */}
-            {isFieldCard ? (
+            {isFieldCard || isEffectCard ? (
               <div className="card-preview-field-desc">
                 {creature.lore && (
                   <div style={{ marginBottom: 12, fontSize: '13px', fontStyle: 'italic', color: '#ddd', lineHeight: '1.4' }}>
                     <strong>Descrição:</strong> {creature.lore}
                   </div>
                 )}
-                <strong>Efeito:</strong>
+                {isEffectCard && (
+                  <div style={{ marginBottom: 12, padding: '10px', backgroundColor: 'rgba(180,120,255,0.1)', borderRadius: '6px', borderLeft: '3px solid #c896ff' }}>
+                    <strong style={{ color: '#c896ff' }}>Sem Custo</strong>
+                  </div>
+                )}
+                <strong>{isEffectCard ? 'Efeito:' : 'Efeito:'}</strong>
                 <div style={{ whiteSpace: 'pre-line', fontSize: '13px', color: '#fff', lineHeight: '1.4' }}>{typeof creature.description === 'object' ? creature.description.pt || creature.description.en : creature.description}</div>
               </div>
             ) : (

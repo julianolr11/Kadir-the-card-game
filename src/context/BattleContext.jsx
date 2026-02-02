@@ -250,6 +250,7 @@ export function BattleProvider({ children }) {
     swapCardPending: null, // { guardianId, guardianName, step, selectedFieldSlot } se Seract foi invocado
     freezePending: null, // { guardianId, guardianName } se Mawthorn foi invocado
     healPending: null, // { guardianId, guardianName, amount } se Ekonos foi invocado
+    effectCardPending: null, // { cardId, requiresTarget, targetType } se cartade efeito foi jogada
     player: {
       orbs: 5,
       essence: 0,
@@ -269,6 +270,7 @@ export function BattleProvider({ children }) {
       graveyard: [],
     },
     sharedField: { active: false, id: null },
+    activeEffects: [], // Array de efeitos duradouros: { type, turn, duration, targetIndex, player }
     log: [],
     animations: {},
     gameResult: null, // { winner: 'player' | 'ai', kills: [{ attacker: id, target: id }, ...], playerStats, aiStats }
@@ -1702,6 +1704,69 @@ export function BattleProvider({ children }) {
     });
   }, []);
 
+  // Funções para gerenciar cartas de efeito
+  const playEffectCard = useCallback((handIndex, targetInfo = null) => {
+    setState((s) => {
+      let newState = JSON.parse(JSON.stringify(s));
+      const cardId = s.player.hand[handIndex];
+      
+      if (!cardId) return s;
+
+      // Encontra a carta de efeito
+      const allCards = Array.isArray(creaturesPool) ? creaturesPool : [];
+      const effectCard = allCards.find(c => c.id === cardId && c.type === 'effect');
+
+      if (!effectCard) return s;
+
+      // Executa o efeito
+      const { executeEffectCard } = require('../logic/ai');
+      newState = executeEffectCard(newState, effectCard, targetInfo);
+
+      // Remove a carta da mão
+      newState.player.hand = newState.player.hand.filter((_, idx) => idx !== handIndex);
+
+      // Limpa state de espera
+      newState.effectCardPending = null;
+
+      // Log
+      const effectName = typeof effectCard.name === 'object' ? effectCard.name.pt : effectCard.name;
+      log(`Jogou ${effectName}`);
+
+      return newState;
+    });
+  }, [log]);
+
+  const selectEffectCardTarget = useCallback((handIndex) => {
+    const cardId = state.player.hand[handIndex];
+    const allCards = Array.isArray(creaturesPool) ? creaturesPool : [];
+    const effectCard = allCards.find(c => c.id === cardId && c.type === 'effect');
+
+    if (!effectCard) return;
+
+    if (effectCard.targetType === 'self' || effectCard.targetType === 'allAllies' || effectCard.targetType === 'allEnemies' || effectCard.targetType === 'opponent') {
+      // Não requer seleção de alvo, jogar direto
+      playEffectCard(handIndex);
+    } else {
+      // Requer seleção de alvo
+      setState(s => ({
+        ...s,
+        effectCardPending: {
+          handIndex,
+          cardId,
+          requiresTarget: true,
+          targetType: effectCard.targetType
+        }
+      }));
+    }
+  }, [state.player.hand, playEffectCard]);
+
+  const cancelEffectCard = useCallback(() => {
+    setState(s => ({
+      ...s,
+      effectCardPending: null
+    }));
+  }, []);
+
   const value = useMemo(() => ({
     state,
     startBattle,
@@ -1727,6 +1792,9 @@ export function BattleProvider({ children }) {
     healAllyCard,
     cancelHealCard,
     log,
+    playEffectCard,
+    selectEffectCardTarget,
+    cancelEffectCard,
     startPlaying: (firstPlayer) => {
       setState(s => ({
         ...s,
@@ -1734,7 +1802,7 @@ export function BattleProvider({ children }) {
         activePlayer: firstPlayer === 'player' ? 'player' : 'ai',
       }));
     },
-  }), [state, startBattle, endTurn, drawPlayerCard, summonFromHand, invokeFieldCard, invokeFieldCardAI, useAbility, resurrectCreature, cancelResurrection, returnEnemyCard, cancelReturnCard, poisonEnemyCard, cancelPoisonCard, stealEnemyCard, cancelStealCard, selectFieldCardForSwap, completeSwap, cancelSwap, freezeEnemyCard, cancelFreezeCard, healAllyCard, cancelHealCard, log]);
+  }), [state, startBattle, endTurn, drawPlayerCard, summonFromHand, invokeFieldCard, invokeFieldCardAI, useAbility, resurrectCreature, cancelResurrection, returnEnemyCard, cancelReturnCard, poisonEnemyCard, cancelPoisonCard, stealEnemyCard, cancelStealCard, selectFieldCardForSwap, completeSwap, cancelSwap, freezeEnemyCard, cancelFreezeCard, healAllyCard, cancelHealCard, log, playEffectCard, selectEffectCardTarget, cancelEffectCard]);
 
   const applyAiSummonBlessings = useCallback((s, build, creatureData, summonSlotIndex, aiSlots, logEntries) => {
     const creatureName = creatureData.name?.pt || creatureData.name?.en || creatureData.id;

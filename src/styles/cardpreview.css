@@ -17,6 +17,27 @@
   filter: saturate(1.08) brightness(1.08) contrast(1.12);
   animation: cardPreviewOpen 0.45s cubic-bezier(.7,-0.2,.3,1.4);
 }
+
+/* CARD PREVIEW EFFECT - fundo roxo e textura */
+.card-preview.card-preview-effect {
+  width: 370px;
+  min-height: 540px;
+  border-radius: 18px;
+  box-shadow: 0 8px 48px #000c, 0 0 0 3px #c896ff66;
+  background: linear-gradient(120deg, #2a1a3a 0%, #3a2a4a 60%, #6440aa 90%, #2a1a3a 100%), url('../assets/img/card/texture-background.jpg');
+  background-blend-mode: multiply, darken;
+  position: relative;
+  padding: 22px 14px 18px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: 'Poppins', Arial, sans-serif;
+  color: #fff;
+  overflow: hidden;
+  filter: saturate(1.08) brightness(1.08) contrast(1.12);
+  animation: cardPreviewOpen 0.45s cubic-bezier(.7,-0.2,.3,1.4);
+}
+
 .card-preview-field-desc {
  background: rgba(0, 0, 0, 0.62);
   border-radius: 10px;

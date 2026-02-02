@@ -222,7 +222,7 @@ function CreatureCardPreview({
                 </span>
               </span>
               <span className="card-preview-id" style={{ fontWeight: 600, fontSize: '1.05rem', color: '#ffe6b0', marginLeft: 12 }}>
-                {isFieldCard ? `#${creature.id || '???'}` : `#${creature.num ? String(creature.num).padStart(3, '0') : '???'}`}
+                {isFieldCard ? `#${creature.id || '???'}` : isEffectCard ? `#E${String(creature.num || 0).padStart(3, '0')}` : `#${creature.num ? String(creature.num).padStart(3, '0') : '???'}`}
               </span>
             </div>
             <audio ref={swipeAudioRef} src={swipeSound} preload="auto" />

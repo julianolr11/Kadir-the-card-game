@@ -4,6 +4,7 @@
 const effectCards = [
   {
     id: 'effect_buymeacard',
+    num: 1,
     name: { pt: 'Compre uma Carta', en: 'Buy Me a Card' },
     type: 'effect',
     element: 'puro',
@@ -22,6 +23,7 @@ const effectCards = [
 
   {
     id: 'effect_change_critical',
+    num: 2,
     name: { pt: 'Troca Crítica', en: 'Change Critical' },
     type: 'effect',
     element: 'puro',
@@ -39,6 +41,7 @@ const effectCards = [
 
   {
     id: 'effect_essence_fluid',
+    num: 3,
     name: { pt: 'Fluido de Essência', en: 'Essence Fluid' },
     type: 'effect',
     element: 'puro',
@@ -57,6 +60,7 @@ const effectCards = [
 
   {
     id: 'effect_final_meteor',
+    num: 4,
     name: { pt: 'Meteoro Final', en: 'Final Meteor' },
     type: 'effect',
     element: 'puro',
@@ -75,6 +79,7 @@ const effectCards = [
 
   {
     id: 'effect_jewel_of_life',
+    num: 5,
     name: { pt: 'Joia da Vida', en: 'Jewel of Life' },
     type: 'effect',
     element: 'puro',
@@ -92,8 +97,7 @@ const effectCards = [
   },
 
   {
-    id: 'effect_protect_shield',
-    name: { pt: 'Escudo Protetor', en: 'Protect Shield' },
+    id: 'effect_protect_shield',    num: 6,    name: { pt: 'Escudo Protetor', en: 'Protect Shield' },
     type: 'effect',
     element: 'puro',
     cost: 0,
@@ -111,6 +115,7 @@ const effectCards = [
 
   {
     id: 'effect_reverse_buy',
+    num: 7,
     name: { pt: 'Compra Reversa', en: 'Reverse Buy' },
     type: 'effect',
     element: 'puro',
@@ -128,8 +133,7 @@ const effectCards = [
   },
 
   {
-    id: 'effect_spectrum_graveyard',
-    name: { pt: 'Sepultura do Espectro', en: 'Spectrum Graveyard' },
+    id: 'effect_spectrum_graveyard',    num: 8,    name: { pt: 'Sepultura do Espectro', en: 'Spectrum Graveyard' },
     type: 'effect',
     element: 'puro',
     cost: 0,
@@ -145,8 +149,7 @@ const effectCards = [
   },
 
   {
-    id: 'effect_theatre_ilusion',
-    name: { pt: 'Ilusão de Teatro', en: 'Theatre Illusion' },
+    id: 'effect_theatre_ilusion',    num: 9,    name: { pt: 'Ilusão de Teatro', en: 'Theatre Illusion' },
     type: 'effect',
     element: 'puro',
     cost: 0,
@@ -162,8 +165,7 @@ const effectCards = [
   },
 
   {
-    id: 'effect_the_great_wall',
-    name: { pt: 'O Grande Muro', en: 'The Great Wall' },
+    id: 'effect_the_great_wall',    num: 10,    name: { pt: 'O Grande Muro', en: 'The Great Wall' },
     type: 'effect',
     element: 'puro',
     cost: 0,
@@ -181,6 +183,7 @@ const effectCards = [
 
   {
     id: 'effect_void_jar',
+    num: 11,
     name: { pt: 'Frasco do Vazio', en: 'Void Jar' },
     type: 'effect',
     element: 'puro',
@@ -198,6 +201,7 @@ const effectCards = [
 
   {
     id: 'effect_wrath_of_judgement',
+    num: 12,
     name: { pt: 'Ira do Julgamento', en: 'Wrath of Judgement' },
     type: 'effect',
     element: 'puro',

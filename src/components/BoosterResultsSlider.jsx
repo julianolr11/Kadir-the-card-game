@@ -203,7 +203,7 @@ function BoosterResultsSlider({ cards, lang, onClose }) {
                             {getLocalizedText(card?.name, lang)}
                             {card?.isHolo && <span className="holo-indicator">✨</span>}
                           </span>
-                          <span className="card-preview-id">#{card?.id || '?'}</span>
+                          <span className="card-preview-id">#E{String(card?.num || 0).padStart(3, '0')}</span>
                         </div>
                         {/* Arte */}
                         <div className="card-preview-art-wrapper">

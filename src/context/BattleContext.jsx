@@ -1709,7 +1709,7 @@ export function BattleProvider({ children }) {
     setState((s) => {
       let newState = JSON.parse(JSON.stringify(s));
       const cardId = s.player.hand[handIndex];
-      
+
       if (!cardId) return s;
 
       // Encontra a carta de efeito

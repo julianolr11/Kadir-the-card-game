@@ -732,7 +732,7 @@ function DeckBuilder({ onNavigate }) {
                         const guardianId = deckData?.guardianId;
                         const guardianData = guardianId ? getGuardianData(guardianId) : null;
                         const guardianImageUrl = guardianData?.img ? guardianData.img : null;
-            
+
             return (
               <div
                 key={slotKey}

@@ -328,7 +328,7 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
   const nameInputRef = useRef(null);
   const [deckCards, setDeckCards] = useState(initialCards);
   const [selectedGuardian, setSelectedGuardian] = useState(guardianId);
-  const [guardianCardId, setGuardianCardId] = useState(null);
+  const [guardianCardId, setGuardianCardId] = useState(guardianId || null);
   const [searchTerm, setSearchTerm] = useState('');
   const [elementFilter, setElementFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
@@ -352,7 +352,7 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
   const successSoundRef = useRef(null);
   const errorSoundRef = useRef(null);
   const isFirstRender = useRef(true);
-  const lastSavedRef = useRef({ name: initialDeckName || `Deck ${deckId}`, cards: initialCards });
+  const lastSavedRef = useRef({ name: initialDeckName || `Deck ${deckId}`, cards: initialCards, guardianId: guardianId || null });
 
   const getInstanceById = (instanceId) => {
     if (!instanceId || !cardCollection) return null;
@@ -455,12 +455,12 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
   const removeCardFromDeck = (slotIndex) => {
     const instanceId = deckCards[slotIndex];
     const instance = instanceId ? getInstanceById(instanceId) : null;
-    
+
     // Se a carta removida era o guardião, limpa o guardianCardId
     if (instance && guardianCardId === instance.cardId) {
       setGuardianCardId(null);
     }
-    
+
     const newDeck = [...deckCards];
     newDeck[slotIndex] = null;
     setDeckCards(newDeck);
@@ -536,7 +536,7 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
       }
     });
     return Array.isArray(cards) ? cards : [];
-  }, [cardCollection, searchTerm, elementFilter, typeFilter, sortBy, langKey, selectedGuardian]);
+  }, [cardCollection, searchTerm, elementFilter, typeFilter, sortBy, langKey, guardianCardId]);
 
   const openCardLoadout = (cardId) => {
     const data = getCardData(cardId);
@@ -564,37 +564,28 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
-      lastSavedRef.current = { name: deckName, cards: deckCards };
+      lastSavedRef.current = { name: deckName, cards: deckCards, guardianId: guardianCardId };
       return;
     }
-    const hasChanges = lastSavedRef.current.name !== deckName || JSON.stringify(lastSavedRef.current.cards) !== JSON.stringify(deckCards);
+    const hasChanges = lastSavedRef.current.name !== deckName
+      || JSON.stringify(lastSavedRef.current.cards) !== JSON.stringify(deckCards)
+      || lastSavedRef.current.guardianId !== guardianCardId;
     if (!hasChanges) return;
     const timer = setTimeout(() => {
       if (onSave) {
-        onSave({ id: deckId, name: deckName, guardianId: selectedGuardian, cards: deckCards });
-        lastSavedRef.current = { name: deckName, cards: deckCards };
+        onSave({ id: deckId, name: deckName, guardianId: guardianCardId, cards: deckCards });
+        lastSavedRef.current = { name: deckName, cards: deckCards, guardianId: guardianCardId };
         setShowSavedToast(true);
         setTimeout(() => setShowSavedToast(false), 2000);
       }
     }, 1500);
     return () => clearTimeout(timer);
-  }, [deckCards, deckName, deckId, selectedGuardian, onSave]);
+  }, [deckCards, deckName, deckId, guardianCardId, onSave]);
 
   useEffect(() => {
     if (guardianId !== selectedGuardian) {
       setSelectedGuardian(guardianId);
-      if (guardianId && getCardInstances) {
-        const guardianInstances = getCardInstances(guardianId);
-        if (guardianInstances && guardianInstances.length > 0) {
-          const holoInstance = guardianInstances.find(inst => inst.isHolo);
-          const bestInstance = holoInstance || guardianInstances[0];
-          setDeckCards(prevCards => {
-            const newCards = [...prevCards];
-            newCards[0] = bestInstance.instanceId;
-            return newCards;
-          });
-        }
-      }
+      setGuardianCardId(guardianId || null);
     }
   }, [guardianId, getCardInstances]);
 

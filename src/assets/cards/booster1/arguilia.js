@@ -75,10 +75,10 @@ module.exports = {
   ],
   defaultBlessing: {
     id: 'arguilia_blessing',
-    name: { pt: 'Veneno Amplificado', en: 'Amplified Venom' },
+    name: { pt: 'Vitalidade das Águas', en: 'Waters Vitality' },
     desc: {
-      pt: 'Danos por veneno infligidos aumentam em 3% enquanto Arguilia estiver em campo.',
-      en: 'Poison damage dealt increases by 3% while Arguilia is on the field.',
+      pt: 'Ao ser invocada, todas as criaturas de água em campo ganham +1 de vida.',
+      en: 'When summoned, all water creatures on the field gain +1 HP.',
     },
   },
   unlockTable: [

@@ -1,0 +1,56 @@
+.update-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.update-modal {
+  background: #23272e;
+  color: #fff;
+  border-radius: 12px;
+  padding: 32px 24px;
+  min-width: 320px;
+  max-width: 90vw;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  text-align: center;
+}
+.update-modal-actions {
+  margin-top: 24px;
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+.update-modal button {
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 20px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.update-modal button:hover {
+  background: #2563eb;
+}
+.update-modal-progress-bar {
+  width: 100%;
+  height: 16px;
+  background: #444b5a;
+  border-radius: 8px;
+  margin: 16px 0 8px 0;
+  overflow: hidden;
+}
+.update-modal-progress-bar-inner {
+  height: 100%;
+  background: #22d3ee;
+  width: 0%;
+  transition: width 0.3s;
+}
+.update-modal-error {
+  color: #f87171;
+  margin: 12px 0;
+}

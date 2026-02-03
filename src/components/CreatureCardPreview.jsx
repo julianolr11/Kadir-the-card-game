@@ -137,6 +137,7 @@ function CreatureCardPreview({
   shield = 0,
   shieldTurns = 0,
   onAbilityClick = null,
+  selectedAbilityIndex = null,
   currentHp = null,
   maxHp = null,
   playerEssence = null,
@@ -159,8 +160,19 @@ function CreatureCardPreview({
   const langKey = lang === 'ptbr' ? 'pt' : lang;
   if (!creature) return null;
 
+  const blessingName = creature?.defaultBlessing
+    ? (typeof creature.defaultBlessing.name === 'object' ? creature.defaultBlessing.name[langKey] : creature.defaultBlessing.name)
+    : null;
+  const blessingDesc = creature?.defaultBlessing
+    ? (typeof creature.defaultBlessing.desc === 'object' ? creature.defaultBlessing.desc[langKey] : creature.defaultBlessing.desc)
+    : null;
+  const fieldName = typeof creature.field === 'object' ? creature.field[langKey] : creature.field;
+  const fieldDesc = typeof creature.fielddesc === 'object' ? creature.fielddesc[langKey] : creature.fielddesc;
+  const shouldShowBlessing = creature?.isGuardian && blessingName && blessingDesc;
+
   // Detecta se é carta de campo
   const isFieldCard = creature.type === 'field';
+  const isEffectCard = creature.type === 'effect';
   // Força classe de campo se solicitado
   const forceFieldClass = creature.forceFieldClass;
   // Corrige imagem para cartas de campo
@@ -192,10 +204,10 @@ function CreatureCardPreview({
       >
         {/* FRENTE DA CARTA */}
         <div style={{ backfaceVisibility: 'hidden' }}>
-          <div className={`card-preview ${forceFieldClass ? 'card-preview-field' : colorClass[creature.element] || (isFieldCard ? 'card-preview-field' : '')} ${isHolo ? 'card-preview-holo' : ''}`}>
+          <div className={`card-preview ${forceFieldClass ? 'card-preview-field' : isEffectCard ? 'card-preview-effect' : colorClass[creature.element] || (isFieldCard ? 'card-preview-field' : '')} ${isHolo ? 'card-preview-holo' : ''}`}>
             <div className="card-preview-header">
               <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                {!isFieldCard && (
+                {!isFieldCard && !isEffectCard && (
                   <img
                     src={elementIcons[creature.element]}
                     alt={creature.element}
@@ -207,11 +219,11 @@ function CreatureCardPreview({
                   {isHolo && <span className="holo-indicator">✨</span>}
                 </span>
                 <span className="card-preview-title" style={{ marginLeft: 8, color: '#fff', fontStyle: 'italic', textShadow: 'rgba(0, 0, 0, 0.667) 0px 2px 8px', fontSize: '12px' }}>
-                  {typeof creature.title === 'object' ? creature.title[langKey] : creature.title}
+                  {creature.title && (typeof creature.title === 'object' ? creature.title[langKey] : creature.title)}
                 </span>
               </span>
               <span className="card-preview-id" style={{ fontWeight: 600, fontSize: '1.05rem', color: '#ffe6b0', marginLeft: 12 }}>
-                {isFieldCard ? `#${creature.id || '???'}` : `#${creature.num ? String(creature.num).padStart(3, '0') : '???'}`}
+                {isFieldCard ? `#${creature.id || '???'}` : isEffectCard ? `#E${String(creature.num || 0).padStart(3, '0')}` : `#${creature.num ? String(creature.num).padStart(3, '0') : '???'}`}
               </span>
             </div>
             <audio ref={swipeAudioRef} src={swipeSound} preload="auto" />
@@ -274,14 +286,14 @@ function CreatureCardPreview({
               </div>
             </div>
             {/* Se for carta de campo, mostra só lore e description */}
-            {isFieldCard ? (
+            {isFieldCard || isEffectCard ? (
               <div className="card-preview-field-desc">
                 {creature.lore && (
                   <div style={{ marginBottom: 12, fontSize: '13px', fontStyle: 'italic', color: '#ddd', lineHeight: '1.4' }}>
                     <strong>Descrição:</strong> {creature.lore}
                   </div>
                 )}
-                <strong>Efeito:</strong>
+                <strong>{isEffectCard ? 'Efeito:' : 'Efeito:'}</strong>
                 <div style={{ whiteSpace: 'pre-line', fontSize: '13px', color: '#fff', lineHeight: '1.4' }}>{typeof creature.description === 'object' ? creature.description.pt || creature.description.en : creature.description}</div>
               </div>
             ) : (
@@ -291,12 +303,19 @@ function CreatureCardPreview({
                     const cost = ab.cost || (idx + 1);
                     const canAfford = playerEssence !== null ? playerEssence >= cost : true;
                     const isClickable = onAbilityClick && canAfford;
+                    const isSelected = selectedAbilityIndex === idx;
                     return (
                       <div
-                        className={`card-preview-ability${isClickable ? ' ability-clickable' : ''}${!canAfford && playerEssence !== null ? ' ability-disabled' : ''}`}
+                        className={`card-preview-ability${isClickable ? ' ability-clickable' : ''}${!canAfford && playerEssence !== null ? ' ability-disabled' : ''}${isSelected ? ' ability-selected' : ''}`}
                         key={idx}
                         onClick={() => isClickable && onAbilityClick(idx)}
-                        style={{ cursor: isClickable ? 'pointer' : 'default' }}
+                        style={{
+                          cursor: isClickable ? 'pointer' : 'default',
+                          border: isSelected ? '3px solid #c896ff' : undefined,
+                          boxShadow: isSelected ? '0 0 20px rgba(200, 150, 255, 0.8), inset 0 0 20px rgba(200, 150, 255, 0.2)' : undefined,
+                          transform: isSelected ? 'scale(1.02)' : undefined,
+                          background: isSelected ? 'linear-gradient(135deg, rgba(142, 68, 173, 0.3) 0%, rgba(142, 68, 173, 0.15) 100%)' : undefined
+                        }}
                       >
                         <span className="essence-cost-icons">
                           {[...Array(cost)].map((_, i) => (
@@ -313,13 +332,20 @@ function CreatureCardPreview({
               </div>
             )}
             {/* Campo, tipo, altura, fraqueza, HP só para criaturas */}
-            {!isFieldCard && (
+            {!isFieldCard && !isEffectCard && (
               <div className="card-preview-field">
-                <strong>{typeof creature.field === 'object' ? creature.field[langKey] : creature.field}</strong>{' '}
-                {typeof creature.fielddesc === 'object' ? creature.fielddesc[langKey] : creature.fielddesc}
+                {shouldShowBlessing ? (
+                  <>
+                    <strong>{blessingName}</strong> {blessingDesc}
+                  </>
+                ) : (
+                  <>
+                    <strong>{fieldName}</strong> {fieldDesc}
+                  </>
+                )}
               </div>
             )}
-            {!isFieldCard && (
+            {!isFieldCard && !isEffectCard && (
               <div className="card-preview-bottom">
                 <span className="card-preview-level-icon">
                   <img src={lvlIcon} alt="Nível" className="icon-bg" />

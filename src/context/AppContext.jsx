@@ -66,7 +66,7 @@ export function AppProvider({ children }) {
       const stored = localStorage.getItem('boosters');
       if (stored !== null) return Number(stored);
     }
-    return 2; // sempre começa com 2 boosters
+    return 5; // sempre começa com 5 boosters
   });
 
   // Sempre salva boosters no localStorage

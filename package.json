@@ -1,4 +1,5 @@
 {
+  "version": "0.2.4",
   "name": "electron-react-boilerplate",
   "description": "A foundation for scalable desktop apps",
   "keywords": [
@@ -52,7 +53,7 @@
     "test": "jest"
   },
   "browserslist": [
-    "extends browserslist-config-erb"
+    "last 2 Electron versions"
   ],
   "prettier": {
     "singleQuote": true,
@@ -111,7 +112,7 @@
     "react-window": "^2.2.5"
   },
   "devDependencies": {
-    "@electron/rebuild": "^3.7.1",
+    "@electron/rebuild": "^4.0.3",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.15",
     "@svgr/webpack": "^8.1.0",
     "@teamsupercell/typings-for-css-modules-loader": "^2.5.2",
@@ -134,7 +135,7 @@
     "css-minimizer-webpack-plugin": "^7.0.2",
     "detect-port": "^2.1.0",
     "electron": "^35.0.2",
-    "electron-builder": "^25.1.8",
+    "electron-builder": "^26.4.0",
     "electron-devtools-installer": "^4.0.0",
     "electronmon": "^2.0.3",
     "eslint": "^8.57.1",
@@ -176,7 +177,7 @@
     "webpack-merge": "^6.0.1"
   },
   "build": {
-    "productName": "ElectronReact",
+    "productName": "kadir11-card-game",
     "appId": "org.erb.ElectronReact",
     "asar": true,
     "afterSign": ".erb/scripts/notarize.js",
@@ -218,7 +219,25 @@
     "win": {
       "target": [
         "nsis"
-      ]
+      ],
+      "icon": "assets/iconlive.ico",
+      "artifactName": "kadir11-card-game.exe",
+      "legalTrademarks": "Kadir Card Game"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "assets/iconlive.ico",
+      "uninstallerIcon": "assets/iconlive.ico",
+      "installerHeaderIcon": "assets/iconlive.ico",
+      "installerSidebar": "src/assets/img/wallpaper/wallpaper.png",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Kadir Card Game",
+      "license": "LICENSE",
+      "artifactName": "kadir11-card-game-setup.exe",
+      "displayLanguageSelector": true
     },
     "linux": {
       "target": [
@@ -236,8 +255,8 @@
     ],
     "publish": {
       "provider": "github",
-      "owner": "electron-react-boilerplate",
-      "repo": "electron-react-boilerplate"
+      "owner": "julianolr11",
+      "repo": "Kadir-the-card-game"
     }
   },
   "collective": {

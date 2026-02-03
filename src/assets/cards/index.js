@@ -2,6 +2,9 @@
 const fieldCardsModule = require('./field/exampleFieldCards');
 const fieldCards = Array.isArray(fieldCardsModule) ? fieldCardsModule : (fieldCardsModule?.default || []);
 
+const effectCardsModule = require('./effectCards');
+const effectCards = Array.isArray(effectCardsModule) ? effectCardsModule : (effectCardsModule?.default || []);
+
 const creatures = [
   require('./booster1/draak'),
   require('./booster1/mawthorn'),
@@ -44,6 +47,12 @@ if (Array.isArray(fieldCards) && fieldCards.length > 0) {
   creatures.push(...fieldCards);
 }
 
+// Adiciona effect cards se estiverem disponíveis
+if (Array.isArray(effectCards) && effectCards.length > 0) {
+  creatures.push(...effectCards);
+}
+
 module.exports = creatures;
 module.exports.creatures = creatures;
 module.exports.fieldCards = fieldCards;
+module.exports.effectCards = effectCards;

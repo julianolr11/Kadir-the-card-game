@@ -460,7 +460,14 @@ function DeckBuilder({ onNavigate }) {
 
   // Guardião base: dados completos da carta + metas do contexto
   const guardianBase = useMemo(() => {
-    if (guardianData) return { ...guardianData, ...activeGuardian };
+    if (guardianData) {
+      return {
+        ...guardianData,
+        ...activeGuardian,
+        isGuardian: guardianData.isGuardian ?? activeGuardian?.isGuardian,
+        defaultBlessing: guardianData.defaultBlessing ?? activeGuardian?.defaultBlessing,
+      };
+    }
     return activeGuardian;
   }, [guardianData, activeGuardian]);
 

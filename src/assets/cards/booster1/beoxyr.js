@@ -76,10 +76,10 @@ module.exports = {
   ],
   defaultBlessing: {
     id: 'beoxyr_blessing',
-    name: { pt: 'Fogo que Persiste', en: 'Lingering Flame' },
+    name: { pt: 'Chama Vingativa', en: 'Vengeful Flame' },
     desc: {
-      pt: 'Aliados de fogo ganham +3% ataque e queimadura causada dura +1 turno.',
-      en: 'Fire allies gain +3% attack and applied burns last +1 turn.',
+      pt: 'Ao ser invocado, uma criatura aleatória do campo adversário recebe 2 de dano e queimadura por 2 turnos.',
+      en: 'When summoned, a random enemy creature takes 2 damage and burn for 2 turns.',
     },
   },
   unlockTable: [

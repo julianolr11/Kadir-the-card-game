@@ -71,10 +71,10 @@ module.exports = {
   ],
   defaultBlessing: {
     id: 'ignis_blessing',
-    name: { pt: 'Pele de Brasa', en: 'Ember Skin' },
+    name: { pt: 'Ressurreição Flamejante', en: 'Flaming Resurrection' },
     desc: {
-      pt: 'Criaturas de fogo recebem +3% de resistência enquanto Ignis estiver em campo.',
-      en: 'Fire creatures gain +3% resistance while Ignis is on the field.',
+      pt: 'Ao ser invocada permite ressuscitar uma criatura do cemitério e invocá-la no campo.',
+      en: 'When summoned, allows you to resurrect a creature from the graveyard and summon it to the field.',
     },
   },
   unlockTable: [

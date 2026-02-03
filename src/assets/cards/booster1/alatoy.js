@@ -71,10 +71,10 @@ module.exports = {
   ],
   defaultBlessing: {
     id: 'alatoy_blessing',
-    name: { pt: 'Proteção Aquática', en: 'Aquatic Protection' },
+    name: { pt: 'Choque Paralisante', en: 'Paralyzing Shock' },
     desc: {
-      pt: 'Criaturas de água recebem +3% de defesa enquanto Alatoy estiver em campo.',
-      en: 'Water creatures gain +3% defense while Alatoy is on the field.',
+      pt: 'Ao ser invocado, aplica paralisia a uma criatura aleatória do oponente por 2 turnos.',
+      en: 'When summoned, applies paralysis to a random enemy creature for 2 turns.',
     },
   },
   unlockTable: [

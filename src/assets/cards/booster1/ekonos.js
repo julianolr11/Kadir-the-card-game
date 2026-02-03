@@ -76,10 +76,10 @@ module.exports = {
   ],
   defaultBlessing: {
     id: 'ekonos_blessing',
-    name: { pt: 'Olhar Sem Fim', en: 'Endless Gaze' },
+    name: { pt: 'Bênção Vital', en: 'Vital Blessing' },
     desc: {
-      pt: 'Aliados puros ganham +4% crítico e detectam furtivos no primeiro turno em campo.',
-      en: 'Pure allies gain +4% crit and detect stealth on their first turn on the field.',
+      pt: 'Ao ser invocado, concede +2 de vida a uma criatura do seu campo. Se não houver nenhuma, aplica a si mesmo.',
+      en: 'When summoned, grants +2 HP to an allied creature. If there are none, applies to itself.',
     },
   },
   unlockTable: [

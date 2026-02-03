@@ -148,14 +148,18 @@ function DeckLibraryGrid({
           {(() => {
             const isField = (() => {
               const id = card.id?.toString().toLowerCase();
-              return /^f\d{3}$/.test(card.id) || id?.startsWith('field_') || (card.data?.category && String(card.data.category).toLowerCase().includes('campo'));
+              const isFieldId = /^f\d{3}$/.test(id) || id?.startsWith('field_');
+              const isFieldCategory = card.data?.category && String(card.data.category).toLowerCase().includes('campo');
+              return isFieldId || isFieldCategory;
             })();
+            const isEffect = card.data?.type === 'effect' || String(card.id).toLowerCase().startsWith('effect_');
+            if (isField || isEffect) return null;
             return (
               <button
                 className="deck-action-btn deck-action-edit"
-                disabled={isField || unavailable}
-                onClick={(e) => { e.stopPropagation(); if (!isField && !unavailable) openCardLoadout(card.id); }}
-                title={isField ? 'Carta de campo não possui habilidades editáveis' : 'Editar habilidades'}
+                disabled={unavailable}
+                onClick={(e) => { e.stopPropagation(); if (!unavailable) openCardLoadout(card.id); }}
+                title="Editar habilidades"
               >
                 ✎
               </button>
@@ -201,6 +205,11 @@ const ALL_CARD_IDS = [
 
 const getCardData = (cardId) => {
   try {
+    // Verifica se é uma carta de efeito
+    if (String(cardId).toLowerCase().startsWith('effect_')) {
+      const effectCards = require('../assets/cards/effectCards');
+      return effectCards.find(c => c.id === cardId);
+    }
     // Verifica se é uma carta de campo
     if (/^f\d{3}$/i.test(cardId) || String(cardId).toLowerCase().startsWith('field_')) {
       const fieldCards = require('../assets/cards/field/exampleFieldCards').default;
@@ -502,7 +511,9 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
       cards = cards.filter((c) => c.data.element === elementFilter);
     }
     if (typeFilter !== 'all') {
-      if (typeFilter === 'campo') {
+      if (typeFilter === 'effect') {
+        cards = cards.filter((c) => c.data?.type === 'effect');
+      } else if (typeFilter === 'campo') {
         cards = cards.filter((c) => {
           const typeNorm = normalizeType(resolveType(c.data));
           const categoryNorm = normalizeType(c.data?.category);
@@ -737,7 +748,9 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
                     <div className="card-slot-actions">
                       {(() => {
                         const isField = cardData.id === 'f001' || /^f\d{3}$/i.test(cardData.id) || (cardData.category && String(cardData.category).toLowerCase().includes('campo'));
-                        const isEffect = cardData.category && String(cardData.category).toLowerCase().includes('efeito');
+                        const isEffect = (cardData.category && String(cardData.category).toLowerCase().includes('efeito'))
+                          || cardData.type === 'effect'
+                          || String(instance.cardId).toLowerCase().startsWith('effect_');
                         const isGuardian = guardianCardId === instance.cardId;
                         const canBeGuardian = cardData.isGuardian === true && !isField && !isEffect;
                         const showGuardianButton = !isField && !isEffect;
@@ -753,14 +766,15 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
                                 👑
                               </button>
                             )}
-                            <button
-                              className="deck-action-btn deck-action-edit"
-                              disabled={isField}
-                              onClick={(e) => { e.stopPropagation(); if (!isField) openCardLoadout(instance.cardId); }}
-                              title={isField ? 'Carta de campo não possui habilidades editáveis' : 'Editar habilidades'}
-                            >
-                              ✎
-                            </button>
+                            {!isField && !isEffect && (
+                              <button
+                                className="deck-action-btn deck-action-edit"
+                                onClick={(e) => { e.stopPropagation(); openCardLoadout(instance.cardId); }}
+                                title="Editar habilidades"
+                              >
+                                ✎
+                              </button>
+                            )}
                           </>
                         );
                       })()}
@@ -793,6 +807,7 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
           </div>
           <select className="deck-library-sort" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
             <option value="all">Tipo</option>
+            <option value="effect">Efeito</option>
             <option value="campo">Campo</option>
             <option value="mistica">Mística</option>
             <option value="sombria">Sombria</option>

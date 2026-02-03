@@ -43,6 +43,11 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
         }
       }
 
+      // Filtrar cartas de campo e efeito (não ganham XP)
+      if (baseId.match(/^F\d+$/i) || baseId.toLowerCase().startsWith('field_') || baseId.toLowerCase().startsWith('effect_')) {
+        return;
+      }
+
       const instances = cardCollection[baseId] || [];
       const instance = instances.find(inst => inst.instanceId === cardId) || instances[0];
 
@@ -130,6 +135,11 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
         }
       }
 
+      // Filtrar cartas de campo e efeito (não ganham XP)
+      if (baseId.match(/^F\d+$/i) || baseId.toLowerCase().startsWith('field_') || baseId.toLowerCase().startsWith('effect_')) {
+        return;
+      }
+
       // Encontra a instância correta
       const instances = cardCollection[baseId] || [];
       const instance = instances.find(inst => inst.instanceId === cardId) || instances[0];
@@ -168,9 +178,9 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
         }
       }
 
-      // Filtrar cartas de campo (começam com F maiúsculo ou field_)
-      if (baseId.match(/^F\d+$/i) || baseId.toLowerCase().startsWith('field_')) {
-        return; // Pula cartas de campo
+      // Filtrar cartas de campo e efeito (não ganham XP)
+      if (baseId.match(/^F\d+$/i) || baseId.toLowerCase().startsWith('field_') || baseId.toLowerCase().startsWith('effect_')) {
+        return; // Pula cartas de campo e efeito
       }
 
       const instances = cardCollection[baseId] || [];

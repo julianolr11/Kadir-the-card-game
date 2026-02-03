@@ -9,7 +9,7 @@ module.exports = {
   element: 'puro',
   img: require('../../img/creatures/owlberoth_bio.webp'),
   color: 'pure',
-  hp: 4,
+  hp: 10,
   abilities: [
     {
       name: { pt: 'Olhar Místico', en: 'Mystic Gaze' },
@@ -47,6 +47,14 @@ module.exports = {
 
   // ===== DADOS ESTENDIDOS (Guardião) =====
   isGuardian: true,
+  defaultBlessing: {
+    id: 'owlberoth_blessing',
+    name: { pt: 'Expulsão Mística', en: 'Mystic Expulsion' },
+    desc: {
+      pt: 'Ao ser invocado o usuário escolhe 1 carta em campo do oponente para retornar para a mão dele.',
+      en: 'When summoned, you choose 1 enemy creature on the field to return to their hand.',
+    },
+  },
   defaultSkills: [
     {
       unlockTable: [

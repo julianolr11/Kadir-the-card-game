@@ -86,6 +86,103 @@ export function BattleProvider({ children }) {
         break;
     }
 
+    // Aplica benção do guardião se existir
+    let blessingEffect = null;
+    let hasIgnisBlessing = false;
+    let hasEkerenthBlessing = false;
+    let hasOwlberothBlessing = false;
+    let hasNihilBlessing = false;
+    let hasDrazraqBlessing = false;
+    let hasSeractBlessing = false;
+    let hasNoctyraBlessing = false;
+    let hasMawthornBlessing = false;
+    let hasAlatoyBlessing = false;
+    let hasPawferionBlessing = false;
+    let hasEkonosBlessing = false;
+    let hasBeoxyrBlessing = false;
+    let hasArguíliaBlessing = false;
+    let hasKaelBlessing = false;
+    let hasAshfangBlessing = false;
+    let hasZephyronBlessing = false;
+    if (creatureData.isGuardian && creatureData.defaultBlessing) {
+      const blessing = creatureData.defaultBlessing;
+      // Para o Griffor: escudo por 3 turnos
+      if (blessing.id === 'griffor_blessing') {
+        blessingEffect = { amount: 3, duration: 3 };
+        // Combina com shield do perk se houver
+        if (shieldOnSummon) {
+          shieldOnSummon.amount += blessingEffect.amount;
+          shieldOnSummon.duration = Math.max(shieldOnSummon.duration, blessingEffect.duration);
+        } else {
+          shieldOnSummon = blessingEffect;
+        }
+      }
+      // Para o Ignis: ressurreição de criatura do cemitério
+      if (blessing.id === 'ignis_blessing') {
+        hasIgnisBlessing = true;
+      }
+      // Para o Ekeranth: queimadura em todos os inimigos por 2 turnos
+      if (blessing.id === 'ekeranth_blessing') {
+        hasEkerenthBlessing = true;
+      }
+      // Para o Owlberoth: retornar uma criatura inimiga para a mão
+      if (blessing.id === 'owlberoth_blessing') {
+        hasOwlberothBlessing = true;
+      }
+      // Para o Nihil: envenenar uma criatura inimiga por 2 turnos
+      if (blessing.id === 'nihil_blessing') {
+        hasNihilBlessing = true;
+      }
+      // Para o Drazraq: roubar uma carta da mão do adversário
+      if (blessing.id === 'drazaq_blessing') {
+        hasDrazraqBlessing = true;
+      }
+      // Para o Seract: trocar uma criatura em campo por uma do cemitério
+      if (blessing.id === 'seract_blessing') {
+        hasSeractBlessing = true;
+      }
+      // Para o Noctyra: drena 1 vida do adversário
+      if (blessing.id === 'noctyra_blessing') {
+        hasNoctyraBlessing = true;
+      }
+      // Para o Mawthorn: congela uma criatura adversária por 3 turnos
+      if (blessing.id === 'mawthorn_blessing') {
+        hasMawthornBlessing = true;
+      }
+      // Para o Alatoy: paralisa uma criatura aleatória por 2 turnos
+      if (blessing.id === 'alatoy_blessing') {
+        hasAlatoyBlessing = true;
+      }
+      // Para o Pawferion: imunidade a debuffs para todas as criaturas aliadas por 3 turnos
+      if (blessing.id === 'pawferion_blessing') {
+        hasPawferionBlessing = true;
+      }
+      // Para o Ekonos: concede +2 HP a uma criatura aliada
+      if (blessing.id === 'ekonos_blessing') {
+        hasEkonosBlessing = true;
+      }
+      // Para o Beoxyr: dano e queimadura em uma criatura aleatória
+      if (blessing.id === 'beoxyr_blessing') {
+        hasBeoxyrBlessing = true;
+      }
+      // Para o Arguilia: +1 HP para todas as criaturas de água
+      if (blessing.id === 'arguilia_blessing') {
+        hasArguíliaBlessing = true;
+      }
+      // Para o Kael: dano múltiplo a criaturas aleatórias
+      if (blessing.id === 'kael_blessing') {
+        hasKaelBlessing = true;
+      }
+      // Para o Ashfang: dano e queimadura a uma criatura aleatória
+      if (blessing.id === 'ashfang_blessing') {
+        hasAshfangBlessing = true;
+      }
+      // Para o Zephyron: paralisa todas as criaturas adversárias por 1 turno
+      if (blessing.id === 'zephyron_blessing') {
+        hasZephyronBlessing = true;
+      }
+    }
+
     // Monta habilidades selecionadas (fallback: primeiras 2 habilidades básicas)
     let selectedAbilities = [];
     if (Array.isArray(loadout?.selectedSkills) && loadout.selectedSkills.length > 0) {
@@ -115,7 +212,7 @@ export function BattleProvider({ children }) {
 
     const hp = baseHp + hpBoost;
     const maxHp = hp;
-    return { atk, def, hp, maxHp, abilities: selectedAbilities, perkEffects: { shieldOnSummon } };
+    return { atk, def, hp, maxHp, abilities: selectedAbilities, perkEffects: { shieldOnSummon }, hasIgnisBlessing, hasEkerenthBlessing, hasOwlberothBlessing, hasNihilBlessing, hasDrazraqBlessing, hasSeractBlessing, hasNoctyraBlessing, hasMawthornBlessing, hasAlatoyBlessing, hasPawferionBlessing, hasEkonosBlessing, hasBeoxyrBlessing, hasArguíliaBlessing, hasKaelBlessing, hasAshfangBlessing, hasZephyronBlessing };
   }, [loadGuardianLoadout, cardCollection]);
 
   const playFieldChangeSound = useCallback(() => {
@@ -146,6 +243,15 @@ export function BattleProvider({ children }) {
     activePlayer: 'player', // 'player' | 'ai'
     creaturesInvokedThisTurn: 0, // Contador de criaturas invocadas no turno atual
     creaturesWithUsedAbility: new Set(), // Criaturas que já usaram habilidade este turno
+    resurrectionPending: null, // { guardianId, guardianName, availableSlots } se Ignis foi invocado e há cemitério
+    returnCardPending: null, // { guardianId, guardianName } se Owlberoth foi invocado
+    poisonPending: null, // { guardianId, guardianName } se Nihil foi invocada
+    stealCardPending: null, // { guardianId, guardianName } se Drazraq foi invocado
+    swapCardPending: null, // { guardianId, guardianName, step, selectedFieldSlot } se Seract foi invocado
+    freezePending: null, // { guardianId, guardianName } se Mawthorn foi invocado
+    healPending: null, // { guardianId, guardianName, amount } se Ekonos foi invocado
+    effectCardPending: null, // { cardId, requiresTarget, targetType } se cartade efeito foi jogada
+    drawOpponentPending: null, // { handIndex, baseId } se Compra Reversa foi jogada
     player: {
       orbs: 5,
       essence: 0,
@@ -153,6 +259,7 @@ export function BattleProvider({ children }) {
       hand: [],
       field: { slots: [null, null, null], effects: [null, null, null] },
       fieldGraveyard: [],
+      graveyard: [],
     },
     ai: {
       orbs: 5,
@@ -161,8 +268,10 @@ export function BattleProvider({ children }) {
       hand: [],
       field: { slots: [null, null, null], effects: [null, null, null] },
       fieldGraveyard: [],
+      graveyard: [],
     },
     sharedField: { active: false, id: null },
+    activeEffects: [], // Array de efeitos duradouros: { type, turn, duration, targetIndex, player }
     log: [],
     animations: {},
     gameResult: null, // { winner: 'player' | 'ai', kills: [{ attacker: id, target: id }, ...], playerStats, aiStats }
@@ -180,7 +289,8 @@ export function BattleProvider({ children }) {
         cardsKilled: [],
         cardsAssisted: [],
       },
-    }
+    },
+    lastDiscardedEffectCard: null, // Armazena id da última carta de efeito descartada (para animação)
   });
 
   // Controla música de fundo da batalha
@@ -243,6 +353,13 @@ export function BattleProvider({ children }) {
       turn: 1,
       activePlayer: 'player',
       creaturesInvokedThisTurn: 0,
+      resurrectionPending: null,
+      returnCardPending: null,
+      poisonPending: null,
+      stealCardPending: null,
+      swapCardPending: null,
+      freezePending: null,
+      healPending: null,
       player: { orbs: 5, essence: 0, deck: pDeck, hand: pHand, field: { slots: [null, null, null], effects: [null, null, null] }, graveyard: [], fieldGraveyard: [] },
       ai: { orbs: 5, essence: 0, deck: aDeck, hand: aHand, field: { slots: [null, null, null], effects: [null, null, null] }, graveyard: [], fieldGraveyard: [] },
       sharedField: { active: false, id: null },
@@ -312,7 +429,7 @@ export function BattleProvider({ children }) {
         if (d.card) {
           if ((hand?.length || 0) >= 7) {
             deck = shuffle([d.card, ...deck]);
-            log(`M├úo cheia (${side}). Carta devolvida ao baralho.`);
+            logEntries.push(`M├úo cheia (${side}). Carta devolvida ao baralho.`);
           } else {
             hand = [...hand, d.card];            // Registra carta comprada pela IA
             s.battleStats.ai.cardsDrawn = [...s.battleStats.ai.cardsDrawn, d.card];          }
@@ -328,14 +445,63 @@ export function BattleProvider({ children }) {
           return {
             ...c,
             shieldTurns: newTurns,
+            // Apenas zera o shield se a duração acabou E o shield ainda existe
             shield: newTurns <= 0 ? 0 : c.shield,
           };
         }
+        // Se não tem shieldTurns ativo, mantém o shield como está (pode ter sido reduzido em combate)
         return c;
       });
 
       const playerSlots = processShieldTurns(s.player.field.slots);
       const aiSlots = processShieldTurns(s.ai.field.slots);
+
+      // Processa criaturas temporárias (ressuscitadas) - decrementa duração e retorna ao cemitério
+      const processResurrectedCreatures = (slots, side, newState) => {
+        const processedSlots = [];
+        let logs = [];
+
+        (slots || []).forEach(c => {
+          if (!c) {
+            processedSlots.push(null);
+            return;
+          }
+
+          if (c.temporary && typeof c.resurrectDuration === 'number') {
+            const newDuration = c.resurrectDuration - 1;
+            if (newDuration <= 0) {
+              // Duração acabou, retorna ao cemitério
+              newState[side] = {
+                ...newState[side],
+                graveyard: [...(newState[side]?.graveyard || []), c]
+              };
+              logs.push(`${c.name} retornou ao cemitério!`);
+              processedSlots.push(null);
+            } else {
+              // Ainda tem duração, decrementa
+              processedSlots.push({
+                ...c,
+                resurrectDuration: newDuration
+              });
+            }
+          } else {
+            processedSlots.push(c);
+          }
+        });
+
+        return { processedSlots, logs, newState };
+      };
+
+      // Aplica processamento de ressurreição em ambos os lados
+      let resurrectionResult = processResurrectedCreatures(playerSlots, 'player', { ...s });
+      let playerSlotsAfterResurrect = resurrectionResult.processedSlots;
+      let resurrectionLogs = resurrectionResult.logs;
+      let stateAfterResurrect = resurrectionResult.newState;
+
+      resurrectionResult = processResurrectedCreatures(aiSlots, 'ai', stateAfterResurrect);
+      let aiSlotsAfterResurrect = resurrectionResult.processedSlots;
+      resurrectionLogs = [...resurrectionLogs, ...resurrectionResult.logs];
+      stateAfterResurrect = resurrectionResult.newState;
 
       // Processa status e buffs para o próximo lado (início do turno)
       const processSideStart = (curState, sideKey) => {
@@ -355,32 +521,64 @@ export function BattleProvider({ children }) {
       };
 
       const baseNextState = {
-        ...s,
+        ...stateAfterResurrect,
         activePlayer: nextActive,
         turn: nextTurn,
-        player: { ...s.player, field: { ...s.player.field, slots: playerSlots } },
-        ai: { ...s.ai, field: { ...s.ai.field, slots: aiSlots } },
+        player: { ...stateAfterResurrect.player, field: { ...stateAfterResurrect.player.field, slots: playerSlotsAfterResurrect } },
+        ai: { ...stateAfterResurrect.ai, field: { ...stateAfterResurrect.ai.field, slots: aiSlotsAfterResurrect } },
         [currentSide]: { ...currentSnapshot },
-        [side]: { ...s[side], deck, hand, essence, field, orbs },
+        [side]: { ...stateAfterResurrect[side], deck, hand, essence, field, orbs },
       };
       const processed = processSideStart(baseNextState, side);
 
       // Limpa slots com criaturas mortas (hp <= 0) após processar status/buffs
-      const cleanDeadSlots = (slots) => (slots || []).map(c => (c && c.hp <= 0 ? null : c));
-      const nsCleaned = {
-        ...processed.ns,
+      // E adiciona criaturas mortas ao graveyard
+      const moveDeadToGraveyard = (slots, side, newState) => {
+        const cleanedSlots = [];
+        const deadCreatures = [];
+
+        (slots || []).forEach(c => {
+          if (c && c.hp <= 0) {
+            deadCreatures.push(c);
+            cleanedSlots.push(null);
+          } else {
+            cleanedSlots.push(c);
+          }
+        });
+
+        // Adiciona criaturas mortas ao graveyard do lado correspondente
+        if (deadCreatures.length > 0) {
+          newState[side] = {
+            ...newState[side],
+            graveyard: [...(newState[side]?.graveyard || []), ...deadCreatures]
+          };
+        }
+
+        return { cleanedSlots, newState };
+      };
+
+      const r1 = moveDeadToGraveyard(processed.ns.player.field.slots, 'player', { ...processed.ns });
+      let nsCleaned = { ...r1.newState };
+      const playerSlotsAfterGrave = r1.cleanedSlots;
+
+      const r2 = moveDeadToGraveyard(nsCleaned.ai.field.slots, 'ai', nsCleaned);
+      nsCleaned = { ...r2.newState };
+      const aiSlotsAfterGrave = r2.cleanedSlots;
+
+      nsCleaned = {
+        ...nsCleaned,
         player: {
-          ...processed.ns.player,
+          ...nsCleaned.player,
           field: {
-            ...processed.ns.player.field,
-            slots: cleanDeadSlots(processed.ns.player.field.slots),
+            ...nsCleaned.player.field,
+            slots: playerSlotsAfterGrave,
           },
         },
         ai: {
-          ...processed.ns.ai,
+          ...nsCleaned.ai,
           field: {
-            ...processed.ns.ai.field,
-            slots: cleanDeadSlots(processed.ns.ai.field.slots),
+            ...nsCleaned.ai.field,
+            slots: aiSlotsAfterGrave,
           },
         },
       };
@@ -389,7 +587,7 @@ export function BattleProvider({ children }) {
         ...nsCleaned,
         creaturesInvokedThisTurn: 0, // Reseta contador de invocações para o próximo turno
         creaturesWithUsedAbility: new Set(), // Reseta criaturas que usaram habilidade
-        log: [...logEntries, `Fim do turno de ${s.activePlayer}.`, ...processed.logs],
+        log: [...logEntries, ...resurrectionLogs, `Fim do turno de ${s.activePlayer}.`, ...processed.logs],
       };
     });
   }, [log]);
@@ -431,18 +629,10 @@ export function BattleProvider({ children }) {
     setState((s) => {
       if (s.phase !== 'playing') return s;
       if (s.activePlayer !== 'player') return s; // por enquanto s├│ jogador manual
-      // Verifica se já invocou 1 criatura neste turno
-      if ((s.creaturesInvokedThisTurn || 0) >= 1) {
-        return {
-          ...s,
-          log: [...s.log, 'Você já invocou 1 criatura neste turno!'],
-        };
-      }
-            const hand = [...s.player.hand];
+
+      const hand = [...s.player.hand];
       const cardId = hand[index];
       if (!cardId) return s;
-      const slots = [...s.player.field.slots];
-      if (slots[slotIndex]) return s; // slot ocupado
 
       // Extrai baseId se for instanceId
       let baseId = cardId;
@@ -455,6 +645,33 @@ export function BattleProvider({ children }) {
           }
         }
       }
+
+      // Verifica se é carta de efeito - NÃO PODE SER INVOCADA
+      if (String(baseId).toLowerCase().startsWith('effect_')) {
+        return {
+          ...s,
+          log: [...s.log, 'Cartas de efeito não podem ser invocadas em slots!'],
+        };
+      }
+
+      // Verifica se é carta de campo - NÃO PODE SER INVOCADA EM SLOT NORMAL
+      if (/^f\d{3}$/i.test(baseId) || String(baseId).toLowerCase().startsWith('field_')) {
+        return {
+          ...s,
+          log: [...s.log, 'Cartas de campo devem ser invocadas com o botão específico!'],
+        };
+      }
+
+      // Verifica se já invocou 1 criatura neste turno
+      if ((s.creaturesInvokedThisTurn || 0) >= 1) {
+        return {
+          ...s,
+          log: [...s.log, 'Você já invocou 1 criatura neste turno!'],
+        };
+      }
+
+      const slots = [...s.player.field.slots];
+      if (slots[slotIndex]) return s; // slot ocupado
 
       // Busca dados da criatura no creaturesPool usando baseId
       const creatureData = creaturesPool.find(c => c.id === baseId);
@@ -469,6 +686,7 @@ export function BattleProvider({ children }) {
       // Cria estrutura completa da criatura
       const creature = {
         id: cardId, // Mantém o instanceId original para identificação única
+        baseId: baseId, // ID da base da criatura para carregar dados
         name: creatureData.name?.pt || creatureData.name?.en || baseId,
         element: creatureData.element || 'puro',
         hp: build.hp,
@@ -485,7 +703,8 @@ export function BattleProvider({ children }) {
 
       slots[slotIndex] = creature;
       hand.splice(index, 1);
-      return {
+
+      const newState = {
         ...s,
         creaturesInvokedThisTurn: (s.creaturesInvokedThisTurn || 0) + 1,
         player: {
@@ -502,9 +721,773 @@ export function BattleProvider({ children }) {
         },
         log: [...s.log, `Invocou ${creature.name} no slot ${slotIndex + 1}.`],
       };
+
+      // Se for Ignis, ativa o efeito de ressurreição
+      if (build.hasIgnisBlessing) {
+        if ((s.player.graveyard || []).length > 0) {
+          const availableSlots = slots.reduce((acc, slot, idx) => {
+            if (!slot) acc.push(idx);
+            return acc;
+          }, []);
+
+          newState.resurrectionPending = {
+            guardianId: baseId,
+            guardianName: creature.name,
+            availableSlots,
+          };
+          newState.log.push(`${creature.name} oferece ressuscitar uma criatura do cemitério!`);
+        } else {
+          newState.log.push(`${creature.name} tenta ressuscitar uma criatura, mas o cemitério está vazio.`);
+        }
+      }
+
+      // Se for Ekeranth, aplica queimadura em todos os inimigos
+      if (build.hasEkerenthBlessing) {
+        const aiSlots = newState.ai?.field?.slots || [];
+        const updatedAiSlots = aiSlots.map(slot => {
+          if (!slot) return slot;
+          const burnStatusEffect = slot.statusEffects?.find(e => e.type === 'burn');
+          const newStatusEffects = slot.statusEffects ? [...slot.statusEffects] : [];
+
+          if (burnStatusEffect) {
+            // Atualiza queimadura existente
+            burnStatusEffect.duration = Math.max(burnStatusEffect.duration, 2);
+          } else {
+            // Adiciona nova queimadura
+            newStatusEffects.push({
+              type: 'burn',
+              duration: 2,
+              source: creature.name,
+            });
+          }
+
+          return { ...slot, statusEffects: newStatusEffects };
+        });
+
+        newState.ai = { ...newState.ai, field: { ...newState.ai.field, slots: updatedAiSlots } };
+        newState.log.push(`Todos os inimigos foram queimados por 2 turnos!`);
+      }
+
+      // Se for Owlberoth, ativa o efeito de retornar uma criatura
+      if (build.hasOwlberothBlessing) {
+        const enemyCreatures = (newState.ai?.field?.slots || []).filter(slot => slot !== null && slot !== undefined);
+        if (enemyCreatures.length > 0) {
+          newState.returnCardPending = {
+            guardianId: baseId,
+            guardianName: creature.name,
+          };
+          newState.log.push(`${creature.name} permite que você retorne uma criatura do oponente para a mão!`);
+        }
+      }
+
+      // Se for Nihil, ativa o efeito de envenenamento
+      if (build.hasNihilBlessing) {
+        const enemyCreatures = (newState.ai?.field?.slots || []).filter(slot => slot !== null && slot !== undefined);
+        if (enemyCreatures.length > 0) {
+          newState.poisonPending = {
+            guardianId: baseId,
+            guardianName: creature.name,
+          };
+          newState.log.push(`${creature.name} oferece envenenar uma criatura do oponente por 2 turnos!`);
+        }
+      }
+
+      // Se for Drazraq, ativa o efeito de roubo de carta
+      if (build.hasDrazraqBlessing) {
+        const aiHand = newState.ai?.hand || [];
+        if (aiHand.length > 0) {
+          newState.stealCardPending = {
+            guardianId: baseId,
+            guardianName: creature.name,
+          };
+          newState.log.push(`${creature.name} oferece roubar uma carta da mão do oponente!`);
+        }
+      }
+
+      // Se for Seract, ativa o efeito de troca de essência
+      if (build.hasSeractBlessing) {
+        const graveyard = newState.player?.graveyard || [];
+        const fieldWithCreatures = slots.reduce((acc, slot, idx) => {
+          if (slot !== null && slot !== undefined) acc.push(idx);
+          return acc;
+        }, []);
+
+        if (graveyard.length > 0 && fieldWithCreatures.length > 0) {
+          newState.swapCardPending = {
+            guardianId: baseId,
+            guardianName: creature.name,
+            step: 'selectField', // 'selectField' ou 'selectGraveyard'
+            selectedFieldSlot: null,
+          };
+          newState.log.push(`${creature.name} oferece trocar uma criatura em campo por uma do cemitério!`);
+        }
+      }
+
+      // Se for Noctyra, drena 1 vida do adversário se o jogador não tiver 5 orbs
+      if (build.hasNoctyraBlessing) {
+        const currentPlayerOrbs = newState.player?.orbs || 0;
+        const currentAiOrbs = newState.ai?.orbs || 0;
+
+        if (currentPlayerOrbs < 5 && currentAiOrbs > 0) {
+          // Rouba 1 vida do adversário e adiciona ao jogador
+          newState.player.orbs = Math.min(currentPlayerOrbs + 1, 5);
+          newState.ai.orbs = Math.max(currentAiOrbs - 1, 0);
+          newState.log.push(`${creature.name} drenou 1 vida do adversário!`);
+        } else if (currentPlayerOrbs >= 5) {
+          newState.log.push(`${creature.name} não pode drenar vida - você já está com vida máxima!`);
+        } else if (currentAiOrbs <= 0) {
+          newState.log.push(`${creature.name} não pode drenar vida - adversário sem vida!`);
+        }
+      }
+
+      // Se for Mawthorn, ativa o efeito de congelamento
+      if (build.hasMawthornBlessing) {
+        const enemyCreatures = (newState.ai?.field?.slots || []).filter(slot => slot !== null && slot !== undefined);
+        if (enemyCreatures.length > 0) {
+          newState.freezePending = {
+            guardianId: baseId,
+            guardianName: creature.name,
+          };
+          newState.log.push(`${creature.name} oferece congelar uma criatura do oponente por 3 turnos!`);
+        }
+      }
+
+      // Se for Alatoy, aplica paralisia em uma criatura aleatória do adversário
+      if (build.hasAlatoyBlessing) {
+        const aiSlots = [...(newState.ai?.field?.slots || [])];
+        const enemyIndices = aiSlots.map((slot, idx) => slot ? idx : null).filter(idx => idx !== null);
+
+        if (enemyIndices.length > 0) {
+          // Escolhe uma criatura aleatória
+          const randomIndex = enemyIndices[Math.floor(Math.random() * enemyIndices.length)];
+          const targetCreature = aiSlots[randomIndex];
+
+          // Aplica paralisia
+          const paralyzeStatusEffect = targetCreature.statusEffects?.find(e => e.type === 'paralyze');
+          const newStatusEffects = targetCreature.statusEffects ? [...targetCreature.statusEffects] : [];
+
+          if (paralyzeStatusEffect) {
+            // Atualiza paralisia existente
+            paralyzeStatusEffect.duration = Math.max(paralyzeStatusEffect.duration, 2);
+          } else {
+            // Adiciona nova paralisia
+            newStatusEffects.push({
+              type: 'paralyze',
+              duration: 2,
+              source: creature.name,
+            });
+          }
+
+          aiSlots[randomIndex] = { ...targetCreature, statusEffects: newStatusEffects };
+          newState.ai = { ...newState.ai, field: { ...newState.ai.field, slots: aiSlots } };
+          newState.log.push(`${creature.name} paralisou ${targetCreature.name} por 2 turnos!`);
+        }
+      }
+
+      // Se for Pawferion, concede imunidade a debuffs para todas as criaturas aliadas por 3 turnos
+      if (build.hasPawferionBlessing) {
+        const playerSlots = [...(newState.player?.field?.slots || [])];
+        const updatedPlayerSlots = playerSlots.map(slot => {
+          if (!slot) return slot;
+
+          // Adiciona imunidade a debuffs
+          return {
+            ...slot,
+            debuffImmunity: 3, // Duração de 3 turnos
+          };
+        });
+
+        newState.player = { ...newState.player, field: { ...newState.player.field, slots: updatedPlayerSlots } };
+        newState.log.push(`${creature.name} concedeu imunidade a debuffs para todas as criaturas aliadas por 3 turnos!`);
+      }
+
+      // Se for Ekonos, ativa o efeito de cura
+      if (build.hasEkonosBlessing) {
+        const playerSlots = [...(newState.player?.field?.slots || [])];
+        const alliedCreatures = playerSlots.filter((slot, idx) => slot !== null && slot !== undefined && idx !== slotIndex); // Exclui o próprio Ekonos
+
+        if (alliedCreatures.length > 0) {
+          // Tem outras criaturas, permite escolher
+          newState.healPending = {
+            guardianId: baseId,
+            guardianName: creature.name,
+            amount: 2,
+            ekonosSlot: slotIndex,
+          };
+          newState.log.push(`${creature.name} oferece curar uma criatura aliada em +2 HP!`);
+        } else {
+          // Não tem outras criaturas, cura a si mesmo
+          const ekonosCreature = playerSlots[slotIndex];
+          if (ekonosCreature) {
+            ekonosCreature.hp = Math.min(ekonosCreature.hp + 2, ekonosCreature.maxHp);
+            playerSlots[slotIndex] = ekonosCreature;
+            newState.player = { ...newState.player, field: { ...newState.player.field, slots: playerSlots } };
+            newState.log.push(`${creature.name} curou a si mesmo em +2 HP!`);
+          }
+        }
+      }
+
+      // Se for Beoxyr, aplica dano e queimadura em uma criatura aleatória do adversário
+      if (build.hasBeoxyrBlessing) {
+        const aiSlots = [...(newState.ai?.field?.slots || [])];
+        const enemyIndices = aiSlots.map((slot, idx) => slot ? idx : null).filter(idx => idx !== null);
+
+        if (enemyIndices.length > 0) {
+          // Escolhe uma criatura aleatória
+          const randomIndex = enemyIndices[Math.floor(Math.random() * enemyIndices.length)];
+          const targetCreature = aiSlots[randomIndex];
+
+          // Aplica dano
+          targetCreature.hp = Math.max(0, targetCreature.hp - 2);
+
+          // Aplica queimadura
+          const burnStatusEffect = targetCreature.statusEffects?.find(e => e.type === 'burn');
+          const newStatusEffects = targetCreature.statusEffects ? [...targetCreature.statusEffects] : [];
+
+          if (burnStatusEffect) {
+            // Atualiza queimadura existente
+            burnStatusEffect.duration = Math.max(burnStatusEffect.duration, 2);
+          } else {
+            // Adiciona nova queimadura
+            newStatusEffects.push({
+              type: 'burn',
+              duration: 2,
+              source: creature.name,
+            });
+          }
+
+          targetCreature.statusEffects = newStatusEffects;
+          aiSlots[randomIndex] = targetCreature;
+          newState.ai = { ...newState.ai, field: { ...newState.ai.field, slots: aiSlots } };
+          newState.log.push(`${creature.name} causou 2 de dano e queimou ${targetCreature.name} por 2 turnos!`);
+        }
+      }
+
+      // Se for Arguilia, concede +1 HP para todas as criaturas de água em campo
+      if (build.hasArguíliaBlessing) {
+        const playerSlots = [...(newState.player?.field?.slots || [])];
+        let healedCount = 0;
+
+        const updatedPlayerSlots = playerSlots.map(slot => {
+          if (!slot) return slot;
+
+          // Verifica se a criatura é de água
+          if (slot.element === 'agua' || (creaturesPool.find(c => c.id === baseId || c.id.split('-')[0] === baseId)?.element === 'agua')) {
+            healedCount++;
+            // Se o HP está no máximo, aumenta ambos. Senão, apenas o HP até o máximo
+            if (slot.hp >= slot.maxHp) {
+              return {
+                ...slot,
+                hp: slot.hp + 1,
+                maxHp: slot.maxHp + 1,
+              };
+            } else {
+              return {
+                ...slot,
+                hp: Math.min(slot.hp + 1, slot.maxHp),
+              };
+            }
+          }
+          return slot;
+        });
+
+        newState.player = { ...newState.player, field: { ...newState.player.field, slots: updatedPlayerSlots } };
+        if (healedCount > 0) {
+          newState.log.push(`${creature.name} concedeu +1 HP para ${healedCount} criatura(s) de água!`);
+        }
+      }
+
+      // Se for Kael, aplica dano múltiplo a criaturas aleatórias
+      if (build.hasKaelBlessing) {
+        const aiSlots = [...(newState.ai?.field?.slots || [])];
+        const enemyIndices = aiSlots.map((slot, idx) => slot ? idx : null).filter(idx => idx !== null);
+
+        if (enemyIndices.length > 0) {
+          if (enemyIndices.length === 1) {
+            // Se há apenas 1 criatura, toma 3 de dano direto
+            const targetIndex = enemyIndices[0];
+            const targetCreature = aiSlots[targetIndex];
+            targetCreature.hp = Math.max(0, targetCreature.hp - 3);
+            aiSlots[targetIndex] = targetCreature;
+            newState.log.push(`${creature.name} causou 3 de dano direto a ${targetCreature.name}!`);
+          } else {
+            // Se há más de 1, faz 1 de dano 3 vezes a criaturas aleatórias
+            for (let i = 0; i < 3; i++) {
+              const randomIndex = enemyIndices[Math.floor(Math.random() * enemyIndices.length)];
+              const targetCreature = aiSlots[randomIndex];
+              targetCreature.hp = Math.max(0, targetCreature.hp - 1);
+              aiSlots[randomIndex] = targetCreature;
+            }
+            newState.log.push(`${creature.name} causou 1 de dano 3 vezes a criaturas aleatórias!`);
+          }
+          newState.ai = { ...newState.ai, field: { ...newState.ai.field, slots: aiSlots } };
+        }
+      }
+
+      // Se for Ashfang, aplica dano e queimadura a uma criatura aleatória
+      if (build.hasAshfangBlessing) {
+        const aiSlots = [...(newState.ai?.field?.slots || [])];
+        const enemyIndices = aiSlots.map((slot, idx) => slot ? idx : null).filter(idx => idx !== null);
+
+        if (enemyIndices.length > 0) {
+          // Escolhe uma criatura aleatória
+          const randomIndex = enemyIndices[Math.floor(Math.random() * enemyIndices.length)];
+          const targetCreature = aiSlots[randomIndex];
+
+          // Aplica dano
+          targetCreature.hp = Math.max(0, targetCreature.hp - 1);
+
+          // Aplica queimadura por 3 turnos
+          const burnStatusEffect = targetCreature.statusEffects?.find(e => e.type === 'burn');
+          const newStatusEffects = targetCreature.statusEffects ? [...targetCreature.statusEffects] : [];
+
+          if (burnStatusEffect) {
+            // Atualiza queimadura existente
+            burnStatusEffect.duration = Math.max(burnStatusEffect.duration, 3);
+          } else {
+            // Adiciona nova queimadura
+            newStatusEffects.push({
+              type: 'burn',
+              duration: 3,
+              source: creature.name,
+            });
+          }
+
+          targetCreature.statusEffects = newStatusEffects;
+          aiSlots[randomIndex] = targetCreature;
+          newState.ai = { ...newState.ai, field: { ...newState.ai.field, slots: aiSlots } };
+          newState.log.push(`${creature.name} causou 1 de dano e queimou ${targetCreature.name} por 3 turnos!`);
+        }
+      }
+
+      // Se for Zephyron, paralisa todas as criaturas adversárias por 1 turno
+      if (build.hasZephyronBlessing) {
+        const aiSlots = newState.ai?.field?.slots || [];
+        const updatedAiSlots = aiSlots.map(slot => {
+          if (!slot) return slot;
+          const paralyzeStatusEffect = slot.statusEffects?.find(e => e.type === 'paralyze');
+          const newStatusEffects = slot.statusEffects ? [...slot.statusEffects] : [];
+
+          if (paralyzeStatusEffect) {
+            // Atualiza paralisia existente
+            paralyzeStatusEffect.duration = Math.max(paralyzeStatusEffect.duration, 1);
+          } else {
+            // Adiciona nova paralisia
+            newStatusEffects.push({
+              type: 'paralyze',
+              duration: 1,
+              source: creature.name,
+            });
+          }
+
+          return { ...slot, statusEffects: newStatusEffects };
+        });
+
+        newState.ai = { ...newState.ai, field: { ...newState.ai.field, slots: updatedAiSlots } };
+        newState.log.push(`${creature.name} paralisou todas as criaturas adversárias por 1 turno!`);
+      }
+
+      return newState;
     });
   }, [resolveCreatureBuild, cardCollection]);
 
+  // Ressuscita uma criatura do cemitério (benção do Ignis)
+  const resurrectCreature = useCallback((graveyardIndex, targetSlotIndex) => {
+    setState((s) => {
+      if (!s.resurrectionPending) return s;
+
+      const graveyard = [...(s.player.graveyard || [])];
+      if (graveyardIndex < 0 || graveyardIndex >= graveyard.length) return s;
+
+      const ressurectedCreature = graveyard[graveyardIndex];
+      graveyard.splice(graveyardIndex, 1);
+
+      // Gera novo instanceId mas preserva o baseId
+      const baseId = ressurectedCreature.baseId || ressurectedCreature.id;
+      const newInstanceId = `${baseId}-${Date.now()}-${Math.floor(Math.random()*1000)}`;
+      const restoredCreature = { ...ressurectedCreature, id: newInstanceId, baseId: baseId };
+
+      const newLog = [...s.log, `${ressurectedCreature.name} foi ressuscitado!`];
+
+      // Se houver slot disponível
+      if (targetSlotIndex >= 0 && targetSlotIndex < 3) {
+        const slots = [...s.player.field.slots];
+        if (slots[targetSlotIndex]) {
+          newLog.push('Slot ocupado!');
+          return { ...s, log: newLog };
+        }
+
+        slots[targetSlotIndex] = restoredCreature;
+        return {
+          ...s,
+          player: { ...s.player, graveyard, field: { ...s.player.field, slots } },
+          resurrectionPending: null,
+          log: newLog,
+        };
+      }
+
+      // Sem slot disponível, vai para a mão
+      const hand = [...s.player.hand, newInstanceId];
+      newLog.push(`${ressurectedCreature.name} foi para a mão.`);
+      return {
+        ...s,
+        player: { ...s.player, graveyard, hand },
+        resurrectionPending: null,
+        log: newLog,
+      };
+    });
+  }, []);
+
+  // Cancela ressurreição
+  const cancelResurrection = useCallback(() => {
+    setState((s) => {
+      if (!s.resurrectionPending) return s;
+      return {
+        ...s,
+        resurrectionPending: null,
+        log: [...s.log, 'Ressurreição cancelada.'],
+      };
+    });
+  }, []);
+
+  // Retorna uma criatura inimiga para a mão (benção do Owlberoth)
+  const returnEnemyCard = useCallback((slotIndex) => {
+    setState((s) => {
+      if (!s.returnCardPending) return s;
+
+      const aiSlots = [...(s.ai?.field?.slots || [])];
+      if (slotIndex < 0 || slotIndex >= aiSlots.length) return s;
+
+      const returnedCreature = aiSlots[slotIndex];
+      if (!returnedCreature) return s;
+
+      // Adiciona animação de retorno à mão
+      const creatureId = returnedCreature.id;
+      const newAnimations = {
+        ...(s.animations || {}),
+        [creatureId]: { type: 'returningToHand', owner: 'ai', slotIndex }
+      };
+
+      // Remove a criatura do slot
+      aiSlots[slotIndex] = null;
+
+      // Adiciona à mão do inimigo (simulado - em um jogo real isso seria controlado pela IA)
+      const aiHand = [...(s.ai?.hand || []), returnedCreature.id];
+
+      const newLog = [...s.log, `${returnedCreature.name} foi retornado para a mão do oponente!`];
+
+      // Remove animação após 800ms
+      setTimeout(() => {
+        setState(s2 => {
+          const anims = { ...(s2.animations || {}) };
+          delete anims[creatureId];
+          return { ...s2, animations: anims };
+        });
+      }, 800);
+
+      return {
+        ...s,
+        ai: { ...s.ai, field: { ...s.ai.field, slots: aiSlots }, hand: aiHand },
+        returnCardPending: null,
+        animations: newAnimations,
+        log: newLog,
+      };
+    });
+  }, []);
+
+  // Cancela retorno de carta
+  const cancelReturnCard = useCallback(() => {
+    setState((s) => {
+      if (!s.returnCardPending) return s;
+      return {
+        ...s,
+        returnCardPending: null,
+        log: [...s.log, 'Ação cancelada.'],
+      };
+    });
+  }, []);
+
+  // Aplica envenenamento em uma criatura inimiga (benção do Nihil)
+  const poisonEnemyCard = useCallback((slotIndex) => {
+    setState((s) => {
+      if (!s.poisonPending) return s;
+
+      const aiSlots = [...(s.ai?.field?.slots || [])];
+      if (slotIndex < 0 || slotIndex >= aiSlots.length) return s;
+
+      const targetCreature = aiSlots[slotIndex];
+      if (!targetCreature) return s;
+
+      // Aplica envenenamento
+      const poisonStatusEffect = targetCreature.statusEffects?.find(e => e.type === 'poison');
+      const newStatusEffects = targetCreature.statusEffects ? [...targetCreature.statusEffects] : [];
+
+      if (poisonStatusEffect) {
+        // Atualiza envenenamento existente
+        poisonStatusEffect.duration = Math.max(poisonStatusEffect.duration, 2);
+      } else {
+        // Adiciona novo envenenamento
+        newStatusEffects.push({
+          type: 'poison',
+          duration: 2,
+          source: s.poisonPending.guardianName,
+        });
+      }
+
+      aiSlots[slotIndex] = { ...targetCreature, statusEffects: newStatusEffects };
+
+      const newLog = [...s.log, `${targetCreature.name} foi envenenado por 2 turnos!`];
+
+      return {
+        ...s,
+        ai: { ...s.ai, field: { ...s.ai.field, slots: aiSlots } },
+        poisonPending: null,
+        log: newLog,
+      };
+    });
+  }, []);
+
+  // Cancela envenenamento
+  const cancelPoisonCard = useCallback(() => {
+    setState((s) => {
+      if (!s.poisonPending) return s;
+      return {
+        ...s,
+        poisonPending: null,
+        log: [...s.log, 'Ação cancelada.'],
+      };
+    });
+  }, []);
+
+  // Rouba uma carta da mão do inimigo (benção do Drazraq)
+  const stealEnemyCard = useCallback((handIndex) => {
+    setState((s) => {
+      if (!s.stealCardPending) return s;
+
+      const aiHand = [...(s.ai?.hand || [])];
+      if (handIndex < 0 || handIndex >= aiHand.length) return s;
+
+      const stolenCard = aiHand[handIndex];
+      if (!stolenCard) return s;
+
+      // Remove a carta da mão do inimigo
+      aiHand.splice(handIndex, 1);
+
+      // Adiciona à mão do jogador
+      const playerHand = [...(s.player?.hand || []), stolenCard];
+
+      const newLog = [...s.log, `${s.stealCardPending.guardianName} roubou uma carta da mão do oponente!`];
+
+      return {
+        ...s,
+        player: { ...s.player, hand: playerHand },
+        ai: { ...s.ai, hand: aiHand },
+        stealCardPending: null,
+        log: newLog,
+      };
+    });
+  }, []);
+
+  // Cancela roubo de carta
+  const cancelStealCard = useCallback(() => {
+    setState((s) => {
+      if (!s.stealCardPending) return s;
+      return {
+        ...s,
+        stealCardPending: null,
+        log: [...s.log, 'Ação cancelada.'],
+      };
+    });
+  }, []);
+
+  // Seleciona a criatura em campo para trocar (benção do Seract) - Passo 1
+  const selectFieldCardForSwap = useCallback((slotIndex) => {
+    setState((s) => {
+      if (!s.swapCardPending) return s;
+      if (s.swapCardPending.step !== 'selectField') return s;
+
+      const slots = [...(s.player?.field?.slots || [])];
+      if (slotIndex < 0 || slotIndex >= slots.length) return s;
+
+      const selectedCreature = slots[slotIndex];
+      if (!selectedCreature) return s;
+
+      return {
+        ...s,
+        swapCardPending: {
+          ...s.swapCardPending,
+          step: 'selectGraveyard',
+          selectedFieldSlot: slotIndex,
+          selectedCreatureName: selectedCreature.name,
+        },
+        log: [...s.log, `Selecionou ${selectedCreature.name} para trocar. Escolha uma criatura do cemitério.`],
+      };
+    });
+  }, []);
+
+  // Executa a troca de criatura (benção do Seract) - Passo 2
+  const completeSwap = useCallback((graveyardIndex) => {
+    setState((s) => {
+      if (!s.swapCardPending) return s;
+      if (s.swapCardPending.step !== 'selectGraveyard') return s;
+
+      const graveyard = [...(s.player?.graveyard || [])];
+      if (graveyardIndex < 0 || graveyardIndex >= graveyard.length) return s;
+
+      const fieldSlotIndex = s.swapCardPending.selectedFieldSlot;
+      const slots = [...(s.player?.field?.slots || [])];
+      if (fieldSlotIndex < 0 || fieldSlotIndex >= slots.length) return s;
+
+      const graveyardCreature = graveyard[graveyardIndex];
+      const fieldCreature = slots[fieldSlotIndex];
+
+      if (!graveyardCreature || !fieldCreature) return s;
+
+      // Remove do cemitério
+      graveyard.splice(graveyardIndex, 1);
+
+      // Gera novo instanceId para a criatura do cemitério, mas preserva o baseId
+      const baseId = graveyardCreature.baseId || graveyardCreature.id;
+      const newInstanceId = `${baseId}-${Date.now()}-${Math.floor(Math.random()*1000)}`;
+
+      // Encontra a definição da criatura para restaurar life ao máximo
+      const creatureDefinition = Object.values(require('../assets/creaturesData'))
+        .flat()
+        .find(c => c.id === baseId);
+      const maxHp = creatureDefinition?.hp || graveyardCreature.maxHp || graveyardCreature.hp || 10;
+
+      const restoredCreature = {
+        ...graveyardCreature,
+        id: newInstanceId,
+        baseId: baseId,
+        hp: maxHp,  // Restaura vida ao máximo
+        maxHp: maxHp,
+        temporary: false,  // Remove flag de temporária (se houver)
+        resurrectDuration: undefined  // Remove duração (se houver)
+      };
+
+      // Troca: coloca criatura restaurada no campo e envia a antiga para cemitério
+      slots[fieldSlotIndex] = restoredCreature;
+      graveyard.push(fieldCreature);
+
+      console.log('SERACT SWAP - Criatura trocada:', {
+        novaCreatura: graveyardCreature.name,
+        criaturaDescartada: fieldCreature.name
+      });
+
+      const newLog = [...s.log, `${graveyardCreature.name} foi trazido do cemitério, e ${fieldCreature.name} foi enviado para o cemitério!`];
+
+      return {
+        ...s,
+        player: { ...s.player, graveyard, field: { ...s.player.field, slots } },
+        swapCardPending: null,
+        log: newLog,
+      };
+    });
+  }, []);
+
+  // Cancela a troca de criatura
+  const cancelSwap = useCallback(() => {
+    setState((s) => {
+      if (!s.swapCardPending) return s;
+      return {
+        ...s,
+        swapCardPending: null,
+        log: [...s.log, 'Troca cancelada.'],
+      };
+    });
+  }, []);
+
+  // Aplica congelamento em uma criatura inimiga (benção do Mawthorn)
+  const freezeEnemyCard = useCallback((slotIndex) => {
+    setState((s) => {
+      if (!s.freezePending) return s;
+
+      const aiSlots = [...(s.ai?.field?.slots || [])];
+      if (slotIndex < 0 || slotIndex >= aiSlots.length) return s;
+
+      const targetCreature = aiSlots[slotIndex];
+      if (!targetCreature) return s;
+
+      // Aplica congelamento
+      const freezeStatusEffect = targetCreature.statusEffects?.find(e => e.type === 'freeze');
+      const newStatusEffects = targetCreature.statusEffects ? [...targetCreature.statusEffects] : [];
+
+      if (freezeStatusEffect) {
+        // Atualiza congelamento existente
+        freezeStatusEffect.duration = Math.max(freezeStatusEffect.duration, 3);
+      } else {
+        // Adiciona novo congelamento
+        newStatusEffects.push({
+          type: 'freeze',
+          duration: 3,
+          source: s.freezePending.guardianName,
+        });
+      }
+
+      aiSlots[slotIndex] = { ...targetCreature, statusEffects: newStatusEffects };
+
+      const newLog = [...s.log, `${targetCreature.name} foi congelado por 3 turnos!`];
+
+      return {
+        ...s,
+        ai: { ...s.ai, field: { ...s.ai.field, slots: aiSlots } },
+        freezePending: null,
+        log: newLog,
+      };
+    });
+  }, []);
+
+  // Cancela congelamento
+  const cancelFreezeCard = useCallback(() => {
+    setState((s) => {
+      if (!s.freezePending) return s;
+      return {
+        ...s,
+        freezePending: null,
+        log: [...s.log, 'Ação cancelada.'],
+      };
+    });
+  }, []);
+
+  // Cura uma criatura aliada (benção do Ekonos)
+  const healAllyCard = useCallback((slotIndex) => {
+    setState((s) => {
+      if (!s.healPending) return s;
+
+      const playerSlots = [...(s.player?.field?.slots || [])];
+      if (slotIndex < 0 || slotIndex >= playerSlots.length) return s;
+
+      const targetCreature = playerSlots[slotIndex];
+      if (!targetCreature) return s;
+
+      // Aplica cura
+      const healAmount = s.healPending.amount || 2;
+      targetCreature.hp = Math.min(targetCreature.hp + healAmount, targetCreature.maxHp);
+      playerSlots[slotIndex] = targetCreature;
+
+      const newLog = [...s.log, `${targetCreature.name} foi curado em +${healAmount} HP!`];
+
+      return {
+        ...s,
+        player: { ...s.player, field: { ...s.player.field, slots: playerSlots } },
+        healPending: null,
+        log: newLog,
+      };
+    });
+  }, []);
+
+  // Cancela cura
+  const cancelHealCard = useCallback(() => {
+    setState((s) => {
+      if (!s.healPending) return s;
+      return {
+        ...s,
+        healPending: null,
+        log: [...s.log, 'Ação cancelada.'],
+      };
+    });
+  }, []);
 
   // Invoca carta de campo (field) para o sharedField
 
@@ -671,6 +1654,16 @@ export function BattleProvider({ children }) {
       // Usa IDs das criaturas instanciadas
       const attackerId = attacker.id;
       const targetId = target.id;
+
+      console.log('ATAQUE - Criatura:', {
+        nome: attacker.name,
+        id: attackerId,
+        hp: attacker.hp,
+        alvo: target.name,
+        targetId: targetId,
+        danoBase: typeof ability.damage === 'number' ? ability.damage : (ability.cost * 2 + 1),
+        habilidade: ability.name?.pt || ability.name?.en || 'Desconhecida'
+      });
 
       // Parsing simples de efeitos pela descrição
       const descText = (ability.desc?.pt || ability.desc?.en || '').toLowerCase();
@@ -870,6 +1863,336 @@ export function BattleProvider({ children }) {
     });
   }, []);
 
+  // Funções para gerenciar cartas de efeito
+  const playEffectCard = useCallback((handIndex, targetInfo = null) => {
+    setState((s) => {
+      let newState = JSON.parse(JSON.stringify(s));
+      const cardId = s.player.hand[handIndex];
+
+      if (!cardId) return s;
+
+      // Busca o baseId: pode ser direto um baseId ou um instanceId
+      let baseId = null;
+
+      // Primeiro, verifica se é um baseId direto (effect_xxx)
+      if (String(cardId).toLowerCase().startsWith('effect_')) {
+        baseId = cardId;
+      } else {
+        // Senão, busca no cardCollection
+        Object.keys(cardCollection).forEach(key => {
+          const instances = cardCollection[key];
+          if (instances.some(inst => inst.instanceId === cardId)) {
+            baseId = key;
+          }
+        });
+      }
+
+      if (!baseId) {
+        console.warn(`BaseId not found for instance: ${cardId}`);
+        return s;
+      }
+
+      // Encontra a carta de efeito no arquivo correto
+      let effectCard = null;
+      if (String(baseId).toLowerCase().startsWith('effect_')) {
+        try {
+          const effectCards = require('../assets/cards/effectCards');
+          effectCard = effectCards.find(c => c.id === baseId);
+        } catch (e) {
+          console.warn(`Effect card not found in playEffectCard: ${baseId}`, e);
+          return s;
+        }
+      }
+
+      if (!effectCard) {
+        console.warn(`Effect card is null: ${baseId}`);
+        return s;
+      }
+
+      // Executa o efeito
+      const { executeEffectCard } = require('../logic/ai');
+      newState = executeEffectCard(newState, effectCard, targetInfo);
+
+      // Restaura creaturesWithUsedAbility como Set (foi perdido em JSON.parse/stringify)
+      newState.creaturesWithUsedAbility = new Set(s.creaturesWithUsedAbility || []);
+
+      // Limpa pendência da Compra Reversa (se houver)
+      newState.drawOpponentPending = null;
+
+      // Remove a carta da mão
+      newState.player.hand = newState.player.hand.filter((_, idx) => idx !== handIndex);
+
+      // Limpa state de espera
+      newState.effectCardPending = null;
+
+      // Armazena a última carta descartada para animação
+      newState.lastDiscardedEffectCard = cardId;
+
+      // Remove a flag de animação após 800ms (duração da animação)
+      setTimeout(() => {
+        setState(s => ({
+          ...s,
+          lastDiscardedEffectCard: null
+        }));
+      }, 800);
+
+      // Log
+      const effectName = typeof effectCard.name === 'object' ? effectCard.name.pt : effectCard.name;
+      log(`Jogou ${effectName}`);
+
+      return newState;
+    });
+  }, [cardCollection, log]);
+
+  const selectEffectCardTarget = useCallback((handIndex) => {
+    const cardId = state.player.hand[handIndex];
+    console.log('1. selectEffectCardTarget chamado. handIndex:', handIndex, 'cardId:', cardId);
+
+    // Busca o baseId: pode ser direto um baseId ou um instanceId
+    let baseId = null;
+
+    // Primeiro, verifica se é um baseId direto (effect_xxx)
+    if (String(cardId).toLowerCase().startsWith('effect_')) {
+      baseId = cardId;
+      console.log('2. BaseId encontrado direto:', baseId);
+    } else {
+      // Senão, busca no cardCollection
+      Object.keys(cardCollection).forEach(key => {
+        const instances = cardCollection[key];
+        if (instances.some(inst => inst.instanceId === cardId)) {
+          baseId = key;
+        }
+      });
+      console.log('2. BaseId encontrado na coleção:', baseId);
+    }
+
+    // Busca carta de efeito no arquivo correto
+    let effectCard = null;
+    if (baseId && String(baseId).toLowerCase().startsWith('effect_')) {
+      try {
+        const effectCards = require('../assets/cards/effectCards');
+        effectCard = effectCards.find(c => c.id === baseId);
+        console.log('3. Carta de efeito encontrada:', effectCard);
+      } catch (e) {
+        console.warn(`Effect card not found: ${baseId}`, e);
+        return;
+      }
+    }
+
+    if (!effectCard) {
+      console.warn(`Effect card not found for baseId: ${baseId}`);
+      return;
+    }
+
+    // Compra Reversa: aguarda clique no baralho do adversário
+    if (effectCard.effectType === 'drawOpponent') {
+      setState(s => ({
+        ...s,
+        drawOpponentPending: { handIndex, baseId }
+      }));
+      return;
+    }
+
+    console.log('4. targetType:', effectCard.targetType);
+
+    if (effectCard.targetType === 'self' || effectCard.targetType === 'allAllies' || effectCard.targetType === 'allEnemies' || effectCard.targetType === 'opponent') {
+      // Não requer seleção de alvo, jogar direto
+      console.log('5. Jogando carta diretamente (sem alvo)');
+      playEffectCard(handIndex);
+    } else {
+      // Requer seleção de alvo
+      console.log('5. Setando effectCardPending:', {
+        handIndex,
+        baseId,
+        requiresTarget: true,
+        targetType: effectCard.targetType
+      });
+      setState(s => {
+        console.log('6. setState executado. Estado anterior effectCardPending:', s.effectCardPending);
+        return {
+          ...s,
+          effectCardPending: {
+            handIndex,
+            baseId,
+            requiresTarget: true,
+            targetType: effectCard.targetType
+          }
+        };
+      });
+    }
+  }, [state.player.hand, cardCollection, playEffectCard]);
+
+  const cancelEffectCard = useCallback(() => {
+    setState(s => ({
+      ...s,
+      effectCardPending: null
+    }));
+  }, []);
+
+  const cancelDrawOpponent = useCallback(() => {
+    setState(s => ({
+      ...s,
+      drawOpponentPending: null
+    }));
+  }, []);
+
+  const updateEffectCardTarget = useCallback((allyIndex) => {
+    setState(s => ({
+      ...s,
+      effectCardPending: {
+        ...s.effectCardPending,
+        selectedAllyIndex: allyIndex
+      }
+    }));
+  }, []);
+
+  // Funções para ataque espectral (Sepultura do Espectro)
+  const selectSpectralAbility = useCallback((abilityIndex) => {
+    setState(s => ({
+      ...s,
+      spectralAttackPending: {
+        ...s.spectralAttackPending,
+        selectedAbility: abilityIndex
+      }
+    }));
+  }, []);
+
+  const executeSpectralAttack = useCallback((targetSlotIndex) => {
+    setState(s => {
+      if (!s.spectralAttackPending) return s;
+
+      if (s.spectralAttackPending.resolving) return s;
+
+      const { creature, selectedAbility } = s.spectralAttackPending;
+      const ability = creature.abilities?.[selectedAbility];
+
+      if (!ability) return s;
+
+      // Executa o ataque usando a lógica padrão
+      const target = s.ai.field.slots[targetSlotIndex];
+      if (!target || target.hp <= 0) return s;
+
+      // Aplica dano do ataque espectral
+      const baseDamage = typeof ability.damage === 'number' ? ability.damage : (ability.cost * 2 + 1);
+      const result = effectRegistry.applyDamage(s, {
+        attackerId: creature.id,
+        targetId: target.id,
+        baseDamage,
+        attackerElement: creature.element,
+        ignoreShield: false,
+      });
+
+      const abilityName = typeof ability.name === 'object' ? ability.name.pt : ability.name;
+      const creatureName = typeof creature.name === 'object' ? creature.name.pt : creature.name;
+
+      const nextState = {
+        ...result.newState,
+        spectralAttackPending: {
+          ...s.spectralAttackPending,
+          selectedAbility: undefined,
+          resolving: true,
+        },
+        log: [...result.newState.log, `${creatureName} atacou do cemitério com ${abilityName}!`]
+      };
+
+      // Mostra animação de dano
+      const animPayload = {
+        type: 'damage',
+        amount: result.damageDealt,
+        hasAdvantage: !!result.hasAdvantage,
+        hasDisadvantage: !!result.hasDisadvantage,
+        shieldHit: !!result.shieldHit,
+        shieldBroken: !!result.shieldBroken,
+      };
+
+      nextState.animations = {
+        ...nextState.animations,
+        [target.id]: animPayload,
+      };
+
+      // Remove animação de dano após 900ms
+      setTimeout(() => {
+        setState(s2 => {
+          const anims = { ...(s2.animations || {}) };
+          if (anims[target.id]?.type === 'damage') {
+            delete anims[target.id];
+          }
+          return { ...s2, animations: anims };
+        });
+      }, 900);
+
+      // Processa morte se necessário
+      if (result.died) {
+        setTimeout(() => {
+          setState(s2 => {
+            // Adiciona animação de morte
+            const stateWithDeath = {
+              ...s2,
+              animations: {
+                ...(s2.animations || {}),
+                [target.id]: { death: true },
+              },
+            };
+
+            // Aguarda 600ms (duração da animação de morte) para remover do campo
+            setTimeout(() => {
+              setState(s3 => {
+                const updated = { ...s3 };
+                updated.ai.field.slots = updated.ai.field.slots.map(slot => slot?.id === target.id ? null : slot);
+                return updated;
+              });
+            }, 600);
+
+            return stateWithDeath;
+          });
+        }, 400);
+
+        // Adiciona ao cemitério e diminui orbs
+        nextState.ai.graveyard = [...(nextState.ai.graveyard || []), target];
+        nextState.ai.orbs = Math.max(0, (nextState.ai.orbs || 5) - 1);
+        nextState.log.push(`${target.name} foi derrotado! ${nextState.ai.orbs === 0 ? '⚰️ FIM DE JOGO!' : '⚰️ -1 orbe'}`);
+
+        // Adiciona ao killFeed
+        nextState.killFeed = [...(nextState.killFeed || []), {
+          turn: nextState.turn,
+          attacker: creature?.name || 'Espectro',
+          attackerId: creature.id,
+          target: target.name,
+          targetId: target.id,
+          hadAdvantage: !!result.hasAdvantage,
+        }];
+
+        // Verifica se o jogo acabou
+        if (nextState.ai.orbs === 0) {
+          nextState.phase = 'ended';
+          nextState.gameResult = {
+            winner: 'player',
+            loser: 'ai',
+            kills: nextState.killFeed,
+            turns: nextState.turn,
+            stats: nextState.battleStats,
+          };
+        }
+      }
+
+      setTimeout(() => {
+        setState(s2 => ({
+          ...s2,
+          spectralAttackPending: null
+        }));
+      }, result.died ? 1400 : 700);
+
+      return nextState;
+    });
+  }, []);
+
+  const cancelSpectralAttack = useCallback(() => {
+    setState(s => ({
+      ...s,
+      spectralAttackPending: null
+    }));
+  }, []);
+
   const value = useMemo(() => ({
     state,
     startBattle,
@@ -879,7 +2202,30 @@ export function BattleProvider({ children }) {
     invokeFieldCard,
     invokeFieldCardAI,
     useAbility,
+    resurrectCreature,
+    cancelResurrection,
+    returnEnemyCard,
+    cancelReturnCard,
+    poisonEnemyCard,
+    cancelPoisonCard,
+    stealEnemyCard,
+    cancelStealCard,
+    selectFieldCardForSwap,
+    completeSwap,
+    cancelSwap,
+    freezeEnemyCard,
+    cancelFreezeCard,
+    healAllyCard,
+    cancelHealCard,
     log,
+    playEffectCard,
+    selectEffectCardTarget,
+    updateEffectCardTarget,
+    cancelEffectCard,
+    cancelDrawOpponent,
+    selectSpectralAbility,
+    executeSpectralAttack,
+    cancelSpectralAttack,
     startPlaying: (firstPlayer) => {
       setState(s => ({
         ...s,
@@ -887,7 +2233,234 @@ export function BattleProvider({ children }) {
         activePlayer: firstPlayer === 'player' ? 'player' : 'ai',
       }));
     },
-  }), [state, startBattle, endTurn, drawPlayerCard, summonFromHand, invokeFieldCard, invokeFieldCardAI, useAbility, log]);
+  }), [state, startBattle, endTurn, drawPlayerCard, summonFromHand, invokeFieldCard, invokeFieldCardAI, useAbility, resurrectCreature, cancelResurrection, returnEnemyCard, cancelReturnCard, poisonEnemyCard, cancelPoisonCard, stealEnemyCard, cancelStealCard, selectFieldCardForSwap, completeSwap, cancelSwap, freezeEnemyCard, cancelFreezeCard, healAllyCard, cancelHealCard, log, playEffectCard, selectEffectCardTarget, updateEffectCardTarget, cancelEffectCard, cancelDrawOpponent, selectSpectralAbility, executeSpectralAttack, cancelSpectralAttack]);
+
+  const applyAiSummonBlessings = useCallback((s, build, creatureData, summonSlotIndex, aiSlots, logEntries) => {
+    const creatureName = creatureData.name?.pt || creatureData.name?.en || creatureData.id;
+    let nextLog = logEntries;
+
+    const applyStatusEffect = (targetCreature, type, duration, sourceName) => {
+      const newStatusEffects = targetCreature.statusEffects ? [...targetCreature.statusEffects] : [];
+      const existing = newStatusEffects.find(e => e.type === type);
+      if (existing) {
+        existing.duration = Math.max(existing.duration, duration);
+      } else {
+        newStatusEffects.push({ type, duration, source: sourceName });
+      }
+      return { ...targetCreature, statusEffects: newStatusEffects };
+    };
+
+    const getRandomIndex = (indices) => indices[Math.floor(Math.random() * indices.length)];
+
+    // Ekeranth: queimadura em todos os inimigos (jogador)
+    if (build.hasEkerenthBlessing) {
+      const playerSlots = [...(s.player?.field?.slots || [])];
+      const updated = playerSlots.map((slot) => {
+        if (!slot) return slot;
+        return applyStatusEffect(slot, 'burn', 2, creatureName);
+      });
+      s.player = { ...s.player, field: { ...s.player.field, slots: updated } };
+      nextLog = [...nextLog, 'Todos os seus inimigos foram queimados por 2 turnos!'];
+    }
+
+    // Owlberoth: retorna criatura inimiga (jogador) para a mão
+    if (build.hasOwlberothBlessing) {
+      const playerSlots = [...(s.player?.field?.slots || [])];
+      const indices = playerSlots.map((slot, idx) => (slot ? idx : null)).filter(idx => idx !== null);
+      if (indices.length > 0) {
+        const idx = getRandomIndex(indices);
+        const returned = playerSlots[idx];
+        playerSlots[idx] = null;
+        const playerHand = [...(s.player?.hand || []), returned.id];
+        s.player = { ...s.player, hand: playerHand, field: { ...s.player.field, slots: playerSlots } };
+        nextLog = [...nextLog, `${creatureName} retornou ${returned.name} para a sua mão!`];
+      }
+    }
+
+    // Nihil: envenena criatura inimiga (jogador)
+    if (build.hasNihilBlessing) {
+      const playerSlots = [...(s.player?.field?.slots || [])];
+      const indices = playerSlots.map((slot, idx) => (slot ? idx : null)).filter(idx => idx !== null);
+      if (indices.length > 0) {
+        const idx = getRandomIndex(indices);
+        const target = playerSlots[idx];
+        playerSlots[idx] = applyStatusEffect(target, 'poison', 2, creatureName);
+        s.player = { ...s.player, field: { ...s.player.field, slots: playerSlots } };
+        nextLog = [...nextLog, `${creatureName} envenenou ${target.name} por 2 turnos!`];
+      }
+    }
+
+    // Drazraq: rouba carta da mão do jogador
+    if (build.hasDrazraqBlessing) {
+      const playerHand = [...(s.player?.hand || [])];
+      if (playerHand.length > 0) {
+        const idx = Math.floor(Math.random() * playerHand.length);
+        const stolen = playerHand[idx];
+        playerHand.splice(idx, 1);
+        const aiHand = [...(s.ai?.hand || []), stolen];
+        s.player = { ...s.player, hand: playerHand };
+        s.ai = { ...s.ai, hand: aiHand };
+        nextLog = [...nextLog, `${creatureName} roubou uma carta da sua mão!`];
+      }
+    }
+
+    // Seract: troca uma criatura em campo por uma do cemitério (lado IA)
+    if (build.hasSeractBlessing) {
+      const aiGraveyard = [...(s.ai?.graveyard || [])];
+      const indices = aiSlots.map((slot, idx) => (slot ? idx : null)).filter(idx => idx !== null);
+      if (aiGraveyard.length > 0 && indices.length > 0) {
+        const fieldIdx = getRandomIndex(indices);
+        const graveIdx = Math.floor(Math.random() * aiGraveyard.length);
+        const fieldCreature = aiSlots[fieldIdx];
+        const graveCreature = aiGraveyard[graveIdx];
+        aiGraveyard.splice(graveIdx, 1);
+        aiSlots[fieldIdx] = graveCreature;
+        aiGraveyard.push(fieldCreature);
+        s.ai = { ...s.ai, graveyard: aiGraveyard, field: { ...s.ai.field, slots: aiSlots } };
+        nextLog = [...nextLog, `${creatureName} trocou ${fieldCreature.name} pelo retorno de ${graveCreature.name}!`];
+      }
+    }
+
+    // Noctyra: drena 1 vida do jogador se IA não estiver com 5 orbs
+    if (build.hasNoctyraBlessing) {
+      const aiOrbs = s.ai?.orbs || 0;
+      const playerOrbs = s.player?.orbs || 0;
+      if (aiOrbs < 5 && playerOrbs > 1) {
+        s.ai = { ...s.ai, orbs: Math.min(aiOrbs + 1, 5) };
+        s.player = { ...s.player, orbs: Math.max(playerOrbs - 1, 0) };
+        nextLog = [...nextLog, `${creatureName} drenou 1 vida do seu guardião!`];
+      }
+    }
+
+    // Mawthorn: congela criatura inimiga (jogador)
+    if (build.hasMawthornBlessing) {
+      const playerSlots = [...(s.player?.field?.slots || [])];
+      const indices = playerSlots.map((slot, idx) => (slot ? idx : null)).filter(idx => idx !== null);
+      if (indices.length > 0) {
+        const idx = getRandomIndex(indices);
+        const target = playerSlots[idx];
+        playerSlots[idx] = applyStatusEffect(target, 'freeze', 3, creatureName);
+        s.player = { ...s.player, field: { ...s.player.field, slots: playerSlots } };
+        nextLog = [...nextLog, `${creatureName} congelou ${target.name} por 3 turnos!`];
+      }
+    }
+
+    // Alatoy: paralisa criatura inimiga (jogador)
+    if (build.hasAlatoyBlessing) {
+      const playerSlots = [...(s.player?.field?.slots || [])];
+      const indices = playerSlots.map((slot, idx) => (slot ? idx : null)).filter(idx => idx !== null);
+      if (indices.length > 0) {
+        const idx = getRandomIndex(indices);
+        const target = playerSlots[idx];
+        playerSlots[idx] = applyStatusEffect(target, 'paralyze', 2, creatureName);
+        s.player = { ...s.player, field: { ...s.player.field, slots: playerSlots } };
+        nextLog = [...nextLog, `${creatureName} paralisou ${target.name} por 2 turnos!`];
+      }
+    }
+
+    // Pawferion: imunidade a debuffs para aliados (IA)
+    if (build.hasPawferionBlessing) {
+      const updated = aiSlots.map(slot => (slot ? { ...slot, debuffImmunity: 3 } : slot));
+      aiSlots.splice(0, aiSlots.length, ...updated);
+      nextLog = [...nextLog, `${creatureName} concedeu imunidade a debuffs para a IA por 3 turnos!`];
+    }
+
+    // Ekonos: cura criatura aliada (IA)
+    if (build.hasEkonosBlessing) {
+      const indices = aiSlots.map((slot, idx) => (slot ? idx : null)).filter(idx => idx !== null && idx !== summonSlotIndex);
+      let targetIdx = summonSlotIndex;
+      if (indices.length > 0) {
+        targetIdx = getRandomIndex(indices);
+      }
+      const target = aiSlots[targetIdx];
+      if (target) {
+        aiSlots[targetIdx] = { ...target, hp: Math.min((target.hp || 0) + 2, target.maxHp || target.hp || 0) };
+        nextLog = [...nextLog, `${creatureName} curou ${aiSlots[targetIdx].name} em +2 HP!`];
+      }
+    }
+
+    // Beoxyr: dano + queimadura em criatura inimiga (jogador)
+    if (build.hasBeoxyrBlessing) {
+      const playerSlots = [...(s.player?.field?.slots || [])];
+      const indices = playerSlots.map((slot, idx) => (slot ? idx : null)).filter(idx => idx !== null);
+      if (indices.length > 0) {
+        const idx = getRandomIndex(indices);
+        const target = playerSlots[idx];
+        target.hp = Math.max(0, target.hp - 2);
+        playerSlots[idx] = applyStatusEffect(target, 'burn', 2, creatureName);
+        s.player = { ...s.player, field: { ...s.player.field, slots: playerSlots } };
+        nextLog = [...nextLog, `${creatureName} causou 2 de dano e queimou ${target.name} por 2 turnos!`];
+      }
+    }
+
+    // Arguilia: +1 HP para criaturas de água (IA)
+    if (build.hasArguíliaBlessing) {
+      let count = 0;
+      const updated = aiSlots.map((slot) => {
+        if (!slot) return slot;
+        if (slot.element === 'agua') {
+          count += 1;
+          if (slot.hp >= slot.maxHp) {
+            return { ...slot, hp: slot.hp + 1, maxHp: slot.maxHp + 1 };
+          }
+          return { ...slot, hp: Math.min(slot.hp + 1, slot.maxHp) };
+        }
+        return slot;
+      });
+      aiSlots.splice(0, aiSlots.length, ...updated);
+      if (count > 0) nextLog = [...nextLog, `${creatureName} concedeu +1 HP para ${count} criatura(s) de água da IA!`];
+    }
+
+    // Kael: 1 dano 3 vezes ou 3 de dano direto
+    if (build.hasKaelBlessing) {
+      const playerSlots = [...(s.player?.field?.slots || [])];
+      const indices = playerSlots.map((slot, idx) => (slot ? idx : null)).filter(idx => idx !== null);
+      if (indices.length === 1) {
+        const idx = indices[0];
+        const target = playerSlots[idx];
+        target.hp = Math.max(0, target.hp - 3);
+        playerSlots[idx] = target;
+        s.player = { ...s.player, field: { ...s.player.field, slots: playerSlots } };
+        nextLog = [...nextLog, `${creatureName} causou 3 de dano direto a ${target.name}!`];
+      } else if (indices.length > 1) {
+        for (let i = 0; i < 3; i += 1) {
+          const idx = getRandomIndex(indices);
+          const target = playerSlots[idx];
+          target.hp = Math.max(0, target.hp - 1);
+          playerSlots[idx] = target;
+        }
+        s.player = { ...s.player, field: { ...s.player.field, slots: playerSlots } };
+        nextLog = [...nextLog, `${creatureName} causou 1 de dano 3 vezes a criaturas aleatórias!`];
+      }
+    }
+
+    // Zephyron: paralisa todas as criaturas do jogador por 1 turno
+    if (build.hasZephyronBlessing) {
+      const playerSlots = [...(s.player?.field?.slots || [])];
+      const updated = playerSlots.map((slot) => {
+        if (!slot) return slot;
+        return applyStatusEffect(slot, 'paralyze', 1, creatureName);
+      });
+      s.player = { ...s.player, field: { ...s.player.field, slots: updated } };
+      nextLog = [...nextLog, `${creatureName} paralisou todas as suas criaturas por 1 turno!`];
+    }
+
+    // Ashfang: 1 de dano + queimadura 3 turnos
+    if (build.hasAshfangBlessing) {
+      const playerSlots = [...(s.player?.field?.slots || [])];
+      const indices = playerSlots.map((slot, idx) => (slot ? idx : null)).filter(idx => idx !== null);
+      if (indices.length > 0) {
+        const idx = getRandomIndex(indices);
+        const target = playerSlots[idx];
+        target.hp = Math.max(0, target.hp - 1);
+        playerSlots[idx] = applyStatusEffect(target, 'burn', 3, creatureName);
+        s.player = { ...s.player, field: { ...s.player.field, slots: playerSlots } };
+        nextLog = [...nextLog, `${creatureName} causou 1 de dano e queimou ${target.name} por 3 turnos!`];
+      }
+    }
+
+    return { logEntries: nextLog };
+  }, []);
 
   const performAiTurn = useCallback(() => {
     setState((s) => {
@@ -979,6 +2552,7 @@ export function BattleProvider({ children }) {
           const instanceId = `${cardId}-${Date.now()}-${Math.floor(Math.random()*1000)}`;
           slots[slotIndex] = {
             id: instanceId,
+            baseId: cardId,
             name: creatureData.name?.pt || creatureData.name?.en || cardId,
             element: creatureData.element || 'puro',
             hp: build.hp,
@@ -992,35 +2566,57 @@ export function BattleProvider({ children }) {
             shieldTurns: build.perkEffects?.shieldOnSummon?.duration || 0,
             statusEffects: [],
           };
+          const aiBlessingResult = applyAiSummonBlessings(s, build, creatureData, slotIndex, slots, logEntries);
+          logEntries = aiBlessingResult.logEntries;
           updated = true;
           logEntries = [...logEntries, `IA invocou ${cardId} no slot ${slotIndex + 1}.`];
           // Registra invocação nas estatísticas
           s.battleStats.ai.cardsSummoned = [...s.battleStats.ai.cardsSummoned, cardId];
         }
       } else if (emptyIndex >= 0 && hand.length > 0 && canInvokeCreature) {
-        const cardId = hand.shift();
-        const creatureData = creaturesPool.find(c => c.id === cardId) || {};
-        const build = resolveCreatureBuild(creatureData);
-        const instanceId = `${cardId}-${Date.now()}-${Math.floor(Math.random()*1000)}`;
-        slots[emptyIndex] = {
-          id: instanceId,
-          name: creatureData.name?.pt || creatureData.name?.en || cardId,
-          element: creatureData.element || 'puro',
-          hp: build.hp,
-          maxHp: build.maxHp,
-          atk: build.atk,
-          def: build.def,
-          abilities: build.abilities,
-          buffs: [],
-          debuffs: [],
+        // Procura a primeira carta que NÃO seja de campo ou efeito
+        let cardToInvoke = null;
+        let cardIndex = -1;
+
+        for (let i = 0; i < hand.length; i++) {
+          const cId = hand[i];
+          // Pula cartas de efeito e campo
+          if (String(cId).toLowerCase().startsWith('effect_') || /^f\d{3}$/i.test(cId) || String(cId).toLowerCase().startsWith('field_')) {
+            continue;
+          }
+          cardToInvoke = cId;
+          cardIndex = i;
+          break;
+        }
+
+        if (cardToInvoke) {
+          hand.splice(cardIndex, 1);
+          const creatureData = creaturesPool.find(c => c.id === cardToInvoke) || {};
+          const build = resolveCreatureBuild(creatureData);
+          const instanceId = `${cardToInvoke}-${Date.now()}-${Math.floor(Math.random()*1000)}`;
+          slots[emptyIndex] = {
+            id: instanceId,
+            baseId: cardToInvoke,
+            name: creatureData.name?.pt || creatureData.name?.en || cardToInvoke,
+            element: creatureData.element || 'puro',
+            hp: build.hp,
+            maxHp: build.maxHp,
+            atk: build.atk,
+            def: build.def,
+            abilities: build.abilities,
+            buffs: [],
+            debuffs: [],
           shield: build.perkEffects?.shieldOnSummon?.amount || 0,
           shieldTurns: build.perkEffects?.shieldOnSummon?.duration || 0,
           statusEffects: [],
         };
+        const aiBlessingResult = applyAiSummonBlessings(s, build, creatureData, emptyIndex, slots, logEntries);
+        logEntries = aiBlessingResult.logEntries;
         updated = true;
-        logEntries = [...logEntries, `IA invocou ${cardId} no slot ${emptyIndex + 1}.`];
+        logEntries = [...logEntries, `IA invocou ${cardToInvoke} no slot ${emptyIndex + 1}.`];
         // Registra invocação nas estatísticas
-        s.battleStats.ai.cardsSummoned = [...s.battleStats.ai.cardsSummoned, cardId];
+        s.battleStats.ai.cardsSummoned = [...s.battleStats.ai.cardsSummoned, cardToInvoke];
+        }
       } else {
         logEntries = [...logEntries, 'IA nao fez acao.'];
       }

@@ -9,7 +9,7 @@ module.exports = {
   element: 'puro',
   img: require('../../img/creatures/griffor_bio.webp'),
   color: 'pure',
-  hp: 4,
+  hp: 5,
   abilities: [
     {
       name: { pt: 'Voo Sagrado', en: 'Sacred Flight' },
@@ -71,10 +71,10 @@ module.exports = {
   ],
   defaultBlessing: {
     id: 'griffor_blessing',
-    name: { pt: 'Ferocidade Selvagem', en: 'Wild Ferocity' },
+    name: { pt: 'Escudo Celestial', en: 'Celestial Shield' },
     desc: {
-      pt: 'Criaturas de fogo ganham +4% de ataque enquanto Griffor estiver em campo.',
-      en: 'Fire creatures gain +4% attack while Griffor is on the field.',
+      pt: 'Ao ser invocado ganha escudo por 3 turnos impedindo qualquer ataque adversário.',
+      en: 'When summoned, gains a shield for 3 turns preventing any enemy attacks.',
     },
   },
   unlockTable: [

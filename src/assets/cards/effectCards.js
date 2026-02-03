@@ -101,7 +101,7 @@ const effectCards = [
     type: 'effect',
     element: 'puro',
     cost: 0,
-    img: 'assets/img/effect-cards/protect-shield_resultado.webp',
+    img: require('../img/effect-cards/protect-shield_resultado.webp'),
     description: {
       pt: 'Dá +2 de escudo para uma criatura no seu campo',
       en: 'Grants +2 shield to one creature on your field'

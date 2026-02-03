@@ -137,18 +137,6 @@
 .holo-indicator {
   font-size: 14px;
   margin-left: 4px;
-  animation: holo-pulse 2s ease-in-out infinite;
-}
-
-@keyframes holo-pulse {
-  0%, 100% {
-    opacity: 0.6;
-    text-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
-  }
-  50% {
-    opacity: 1;
-    text-shadow: 0 0 16px rgba(255, 215, 0, 0.8);
-  }
 }
 
 .slider-card-holo-badge {

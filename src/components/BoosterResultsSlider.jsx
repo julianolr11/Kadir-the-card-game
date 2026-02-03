@@ -215,10 +215,6 @@ function BoosterResultsSlider({ cards, lang, onClose }) {
                         </div>
                         {/* Tipo e Descrição */}
                         <div className="card-preview-field-desc">
-                          <div className="effect-card-type-label">
-                            <span className="effect-type-badge">Tipo effect</span>
-                            <span className="effect-cost-badge">Sem Custo</span>
-                          </div>
                           <strong>Efeito:</strong>
                           <div style={{ whiteSpace: 'pre-line', marginTop: '8px' }}>
                             {getLocalizedText(card.description, lang)}

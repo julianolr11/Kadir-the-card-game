@@ -40,7 +40,14 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
     cancelSwap,
     playEffectCard,
     selectEffectCardTarget,
+    updateEffectCardTarget,
     cancelEffectCard,
+    selectSpectralAbility,
+    executeSpectralAttack,
+    cancelSpectralAttack,
+    resurrectCreature,
+    cancelResurrection,
+    cancelDrawOpponent,
   } = useBattle();
   const { cardCollection } = React.useContext(AppContext);
   const [activeCardIndex, setActiveCardIndex] = React.useState(null);
@@ -56,8 +63,12 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
   const [selectedCreature, setSelectedCreature] = React.useState(null); // { slotIndex, creature } - abre modal de habilidades
   const [selectedAbility, setSelectedAbility] = React.useState(null); // { slotIndex, abilityIndex } - entra em modo targeting
   const [selectedFieldCreature, setSelectedFieldCreature] = React.useState(null); // { slotIndex, creature } - preview da carta em campo
+  const [spectralAnimationState, setSpectralAnimationState] = React.useState(null); // 'appearing', 'present', 'disappearing', null
+  const [spectralRenderCreature, setSpectralRenderCreature] = React.useState(null); // mantém criatura para animar saída
   // Estado unificado para o drawer do cemitério
   const [graveyardOpen, setGraveyardOpen] = React.useState(false);
+  const [essenceAnimating, setEssenceAnimating] = React.useState(false); // Animação de ganho de essência
+  const prevEssenceRef = React.useRef(state.player.essence);
 
   // estilos simples para modal centralizado
   const turnModalBgStyle = {
@@ -127,6 +138,20 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
     const { baseId } = resolveCardId(cardId);
     if (!baseId) return null;
     if (cardCache[baseId]) return cardCache[baseId];
+    // Se for carta de efeito, busca no arquivo correto
+    if (String(baseId).toLowerCase().startsWith('effect_')) {
+      try {
+        const effectCards = require('../assets/cards/effectCards');
+        const effectCard = effectCards.find(c => c.id === baseId);
+        if (effectCard) {
+          cardCache[baseId] = effectCard;
+          return effectCard;
+        }
+      } catch (e) {
+        console.warn(`Effect card not found: ${baseId}`, e);
+        return null;
+      }
+    }
     // Se for carta de campo, busca no arquivo correto
     if (isFieldId(baseId)) {
       try {
@@ -179,7 +204,16 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
         setOpponentDeckCardDrawn(true);
       }, 100);
     }
-  }, [state.activePlayer]);
+  }, [state.activePlayer, state.turn]); // Adiciona state.turn para resetar a cada turno
+
+  // Detecta ganho de essência e ativa animação
+  useEffect(() => {
+    if (state.player.essence > prevEssenceRef.current) {
+      setEssenceAnimating(true);
+      setTimeout(() => setEssenceAnimating(false), 600);
+    }
+    prevEssenceRef.current = state.player.essence;
+  }, [state.player.essence]);
 
   const renderOrbs = (count) => {
     const remaining = Number.isFinite(count) ? Math.max(0, count) : 0;
@@ -262,7 +296,9 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
       );
     }
     // ...código original para criaturas...
-    const data = getCardData(cardId);
+    // Usa baseId se disponível, caso contrário usa cardId
+    const dataCardId = slotData?.baseId || cardId;
+    const data = getCardData(dataCardId);
     if (!data) return <div className={`card-chip card-chip-${variant}`}><div className="card-chip-label">{cardId}</div></div>;
     const name = typeof data?.name === 'object' ? data?.name?.pt || data?.name?.en : data?.name || cardId;
     const title = typeof data?.title === 'object' ? data?.title?.pt || data?.title?.en : data?.title || '';
@@ -446,31 +482,45 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
     }
   };
 
-  const renderSlots = (slots = [], owner = 'player') => (
-    <div className={`slots slots-${owner}`}>
+  const renderSlots = (slots = [], owner = 'player', spectralSlot = null) => {
+    let slotsClass = '';
+    if (owner === 'player' && spectralAnimationState === 'appearing') {
+      slotsClass = ' slots-shift-left';
+    } else if (owner === 'player' && spectralAnimationState === 'disappearing') {
+      slotsClass = ' slots-shift-right';
+    }
+
+    return (
+    <div className={`slots slots-${owner}${slotsClass}`}>
       {slots.map((slot, i) => {
         const isTargetable = selectedAbility && owner !== state.activePlayer && slot && slot.hp > 0;
+        const isSpectralTargetable = state.spectralAttackPending?.selectedAbility !== undefined && owner !== state.activePlayer && slot && slot.hp > 0;
         const isPlayerCreature = owner === 'player' && slot && slot.hp > 0 && state.activePlayer === 'player';
         const isDying = slot && state.animations && state.animations[slot.id]?.death;
         const isAttacking = slot && state.animations && state.animations[slot.id]?.type === 'attacking';
+        const isReturning = slot && state.animations && state.animations[slot.id]?.type === 'returningToHand';
+        const returningClass = isReturning ? ` returning-to-hand-${state.animations[slot.id].owner}` : '';
         return (
           <div
             key={i}
-            className={`slot ${slot ? 'occupied' : 'empty'}${isTargetable ? ' slot-targetable' : ''}${isPlayerCreature ? ' slot-clickable' : ''}${isDying ? ' slot-death-animation' : ''}${isAttacking ? ' slot-attacking' : ''}`}
+            className={`slot ${slot ? 'occupied' : 'empty'}${isTargetable || isSpectralTargetable ? ' slot-targetable' : ''}${isPlayerCreature ? ' slot-clickable' : ''}${isDying ? ' slot-death-animation' : ''}${isAttacking ? ' slot-attacking' : ''}${returningClass}`}
             onMouseEnter={() => slot && setHoveredCard({ cardId: slot.id, source: 'slot', owner, index: i })}
             onMouseLeave={() => setHoveredCard(null)}
             onClick={() => {
               if (isTargetable && selectedAbility) {
-                // Executa habilidade no alvo
+                // Executa habilidade normal no alvo
                 useAbility('player', selectedAbility.slotIndex, selectedAbility.abilityIndex, 'ai', i);
                 setSelectedAbility(null);
                 setSelectedCreature(null);
+              } else if (isSpectralTargetable && state.spectralAttackPending?.selectedAbility !== undefined) {
+                // Executa ataque espectral no alvo
+                executeSpectralAttack(i);
               } else if (isPlayerCreature) {
                 // Abre preview da carta em campo
                 setSelectedFieldCreature({ slotIndex: i, creature: slot });
               }
             }}
-            style={{ cursor: isTargetable ? 'crosshair' : (isPlayerCreature ? 'pointer' : 'default') }}
+            style={{ cursor: isTargetable || isSpectralTargetable ? 'crosshair' : (isPlayerCreature ? 'pointer' : 'default') }}
           >
             {slot ? (
             <div style={{ position: 'relative' }}>
@@ -522,8 +572,44 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
         </div>
       );
       })}
+
+      {/* Slot Espectral (Criatura Temporária) */}
+      {spectralSlot && (
+        <div
+          className={`slot occupied slot-spectral${spectralAnimationState === 'appearing' ? ' spectral-slot-appearing' : ''}${spectralAnimationState === 'disappearing' ? ' spectral-slot-disappearing' : ''}`}
+          onMouseEnter={() => spectralSlot && setHoveredCard({ cardId: spectralSlot.id, source: 'spectral', owner: 'spectral', index: -1 })}
+          onMouseLeave={() => setHoveredCard(null)}
+          onClick={() => {
+            // Ao clicar no slot espectral, abre modal de habilidades
+            setSelectedCreature({ slotIndex: -1, creature: spectralSlot, isSpectral: true });
+          }}
+          style={{ cursor: 'pointer' }}
+        >
+          <div style={{ position: 'relative' }}>
+            {/* Indicador de Criatura Espectral */}
+            <div className="spectral-badge">👻</div>
+            {renderCardChip(spectralSlot.id, 'slot', spectralSlot)}
+            {/* Efeito Espectral sobre a carta */}
+            <div className="spectral-card-overlay" />
+            <div className="status-icons-overlay">
+              {/* Escudo */}
+              {spectralSlot.shield > 0 && (
+                <img src={shieldIcon} alt="shield" className="status-icon" />
+              )}
+              {/* Status effects */}
+              {(spectralSlot.statusEffects || []).map((se, idx) => {
+                const icon = statusIconFor(se.type);
+                return icon ? (
+                  <img key={idx} src={icon} alt={se.type} className="status-icon" />
+                ) : null;
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-  );
+    );
+  };
 
   const onSummon = (handIndex, slotIndex) => {
     summonFromHand(handIndex, slotIndex);
@@ -606,6 +692,31 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
       return () => clearTimeout(t);
     }
   }, [boardBg]);
+
+  // Rastreia aparecimento e desaparecimento do slot espectral
+  useEffect(() => {
+    const incomingSpectral = state.spectralAttackPending?.creature || null;
+
+    if (incomingSpectral) {
+      setSpectralRenderCreature(incomingSpectral);
+      if (spectralAnimationState !== 'appearing' && spectralAnimationState !== 'present') {
+        setSpectralAnimationState('appearing');
+        setTimeout(() => setSpectralAnimationState('present'), 800);
+      }
+      return;
+    }
+
+    if (!incomingSpectral && spectralRenderCreature) {
+      if (spectralAnimationState !== 'disappearing') {
+        setSpectralAnimationState('disappearing');
+        setTimeout(() => {
+          setSpectralAnimationState(null);
+          setSpectralRenderCreature(null);
+        }, 800);
+      }
+    }
+  }, [state.spectralAttackPending?.creature, spectralAnimationState, spectralRenderCreature]);
+
   return (
     <>
     {state.returnCardPending && (
@@ -724,7 +835,6 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
               </button>
             ))}
           </div>
-          <button style={turnModalBtnStyle} onClick={cancelStealCard}>Cancelar</button>
         </div>
       </div>
     )}
@@ -811,6 +921,64 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
         </div>
       </div>
     )}
+    {/* Modal para ressurreição do Ignis */}
+    {state.resurrectionPending && (
+      <div style={turnModalBgStyle}>
+        <div style={turnModalStyle}>
+          <div style={{ fontWeight: 700, marginBottom: 12 }}>
+            {state.resurrectionPending.availableSlots?.length > 0
+              ? 'Escolha uma criatura do cemitério para ressuscitar'
+              : 'Escolha uma criatura do cemitério para ressuscitar (irá para a mão)'}
+          </div>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            {(state.player?.graveyard || []).map((creature, idx) => {
+              const cardData = getCardData(creature.id);
+              return (
+                <button
+                  key={`resurrect-grave-${idx}`}
+                  type="button"
+                  onClick={() => {
+                    // Se há slots disponíveis, mostra escolha de slot; senão ressuscita direto na mão
+                    if (state.resurrectionPending.availableSlots?.length > 0) {
+                      // Aqui você teria que abrir um novo modal para escolher o slot
+                      // Por enquanto, vou colocar um valor padrão (primeiro slot disponível)
+                      resurrectCreature(idx, state.resurrectionPending.availableSlots[0]);
+                    } else {
+                      // Sem slots, vai para a mão (targetSlotIndex = -1)
+                      resurrectCreature(idx, -1);
+                    }
+                  }}
+                  style={{
+                    border: 'none',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    padding: 0,
+                  }}
+                  aria-label={`Ressuscitar ${creature.name || 'criatura'}`}
+                >
+                  <div style={{ transform: 'scale(0.45)', transformOrigin: 'top center', opacity: 0.7, height: 290 }}>
+                    <CreatureCardPreview
+                      creature={cardData}
+                      level={0}
+                      allowFlip={false}
+                      burn={(creature?.statusEffects || []).find(e => e.type === 'burn')?.duration || 0}
+                      freeze={(creature?.statusEffects || []).find(e => e.type === 'freeze')?.duration || 0}
+                      paralyze={(creature?.statusEffects || []).find(e => e.type === 'paralyze')?.duration || 0}
+                      poison={(creature?.statusEffects || []).find(e => e.type === 'poison')?.duration || 0}
+                      sleep={(creature?.statusEffects || []).find(e => e.type === 'sleep')?.duration || 0}
+                      bleed={(creature?.statusEffects || []).find(e => e.type === 'bleed')?.duration || 0}
+                    />
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          <button style={turnModalBtnStyle} onClick={cancelResurrection}>
+            Cancelar
+          </button>
+        </div>
+      </div>
+    )}
     <div className="battle-root">
       <div className="battle-topbar">
         <button className="battle-exit" onClick={() => onNavigate?.('home')}>Sair</button>
@@ -834,10 +1002,27 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
         <div style={{ position: 'relative', display: 'inline-block' }}>
           <div
             className={`opponent-deck-card-back ${opponentDeckCardDrawn ? 'drawn' : ''}`}
-            style={{ backgroundImage: `url(${cardVerso})` }}
+            style={{
+              backgroundImage: `url(${cardVerso})`,
+              cursor: state.drawOpponentPending ? 'pointer' : 'default'
+            }}
+            onClick={() => {
+              if (!state.drawOpponentPending) return;
+              if (!state.ai?.deck?.length) return;
+              setOpponentDeckCardDrawn(false);
+              setTimeout(() => setOpponentDeckCardDrawn(true), 50);
+              playEffectCard(state.drawOpponentPending.handIndex);
+            }}
           />
           <div className="deck-count-pill deck-count-enemy">Cartas: {state.ai.deck.length}</div>
         </div>
+
+        {state.drawOpponentPending && (
+          <div className="deck-draw-indicator" style={{ marginTop: 6 }}>
+            <div className="deck-draw-indicator-arrow">&uarr;</div>
+            <div className="deck-draw-indicator-text">Roubar</div>
+          </div>
+        )}
 
       </div>
 
@@ -1017,14 +1202,14 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
 
         <div className="side player-side">
           {/* side-header removido */}
-          {renderSlots(state.player.field.slots, 'player')}
+          {renderSlots(state.player.field.slots, 'player', spectralRenderCreature)}
         </div>
 
         <div className="player-orbs">
           {renderOrbs(state.player.orbs)}
         </div>
 
-        <div className="player-essence">
+        <div className={`player-essence ${essenceAnimating ? 'essence-gain' : ''}`}>
           <img src={essenceIcon} alt="essência" />
           <span>{state.player.essence}</span>
         </div>
@@ -1080,16 +1265,21 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
       </div>
 
       <div className="hand">
-        <div className="hand-title">Sua m├úo ({state.player.hand.length}/7)</div>
+        <div className="hand-title">Sua mão ({state.player.hand.length}/7)</div>
         <div className="hand-cards">
           {state.player.hand.map((cid, i) => {
             const isActive = activeCardIndex === i;
+            const isDiscarding = state.lastDiscardedEffectCard && cid === state.lastDiscardedEffectCard;
 
             return (
               <div
                 key={`${cid}-${i}`}
-                className={`hand-card${isActive ? ' active' : ''}`}
-                onClick={() => setActiveCardIndex(isActive ? null : i)}                onMouseEnter={() => setHoveredCard({ cardId: cid, source: 'hand', index: i })}
+                className={`hand-card${isActive ? ' active' : ''}${isDiscarding ? ' effect-card-discard' : ''}`}
+                onClick={() => {
+                  // Sempre abre o preview ao clicar
+                  setActiveCardIndex(isActive ? null : i);
+                }}
+                onMouseEnter={() => setHoveredCard({ cardId: cid, source: 'hand', index: i })}
                 onMouseLeave={() => setHoveredCard(null)}              >
                 {renderCardChip(cid, 'hand')}
               </div>
@@ -1099,38 +1289,9 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
         </div>
       </div>
 
-      {/* Seção de Cartas de Efeito */}
-      <div className="effect-card-container">
-        <div className="effect-card-title">Cartas de Efeito</div>
-        <div className="effect-hand">
-          {state.player.effectCards && state.player.effectCards.length > 0 ? (
-            state.player.effectCards.map((effectCardId, idx) => {
-              const cardData = getCardData(effectCardId);
-              if (!cardData || cardData.type !== 'effect') return null;
-
-              const cardName = typeof cardData.name === 'object' ? cardData.name.pt : cardData.name;
-
-              return (
-                <button
-                  key={`effect-${effectCardId}-${idx}`}
-                  className="effect-card-button"
-                  onClick={() => selectEffectCardTarget(idx)}
-                  title={cardName}
-                  disabled={state.activePlayer !== 'player'}
-                >
-                  <span className="effect-card-no-cost">∞</span>
-                  <img src={cardData.img} alt={cardName} />
-                </button>
-              );
-            })
-          ) : (
-            <div className="effect-hand-empty">Sem cartas de efeito</div>
-          )}
-        </div>
-      </div>
-
       {activeCardIndex !== null && state.player.hand[activeCardIndex] && (
         <div className="card-preview-overlay" onClick={() => setActiveCardIndex(null)}>
+
           <div className="card-preview-container" onClick={(e) => e.stopPropagation()}>
             {(() => {
               const handId = state.player.hand[activeCardIndex];
@@ -1143,6 +1304,30 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
               }
               if (!isHolo && cardCollection && Array.isArray(cardCollection[handId]) && cardCollection[handId].length > 0) {
                 isHolo = !!cardCollection[handId][0].isHolo;
+              }
+              // Se for carta de efeito, mostrar preview especial
+              if (cardData?.type === 'effect') {
+                return (
+                  <div style={{ width: 370 }}>
+                    <div className={`card-preview card-preview-field ${isHolo ? 'card-preview-holo' : ''}`}>
+                      <div className="card-preview-header">
+                        <span className="card-preview-name" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          {typeof cardData.name === 'object' ? cardData.name.pt || cardData.name.en : cardData.name}
+                          {isHolo && <span className="holo-indicator">✨</span>}
+                        </span>
+                        <span className="card-preview-id">#{cardData.num || cardData.id}</span>
+                      </div>
+                      <div className="card-preview-art-wrapper">
+                        <img src={cardData.img} alt={typeof cardData.name === 'object' ? cardData.name.pt || cardData.name.en : cardData.name} className="card-preview-art" />
+                      </div>
+                      <div className="card-preview-field-desc">
+                        <div style={{ marginBottom: 8, fontSize: '14px', color: '#a87fff', fontWeight: 600 }}>Carta de Efeito</div>
+                        <strong>Efeito:</strong>
+                        <div style={{ whiteSpace: 'pre-line', fontSize: '13px', color: '#fff', lineHeight: '1.4', marginTop: 8 }}>{typeof cardData.description === 'object' ? cardData.description.pt || cardData.description.en : cardData.description}</div>
+                      </div>
+                    </div>
+                  </div>
+                );
               }
               // Se for carta de campo, mostrar preview especial (com holo)
               if (cardData?.type === 'field') {
@@ -1187,6 +1372,23 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
             {(() => {
               const handId = state.player.hand[activeCardIndex];
               const cardData = getCardData(handId);
+              // Se for carta de efeito
+              if (cardData?.type === 'effect') {
+                return (
+                  <div className="card-preview-actions">
+                    <button
+                      className="summon-button"
+                      onClick={() => {
+                        selectEffectCardTarget(activeCardIndex);
+                        setActiveCardIndex(null);
+                      }}
+                      disabled={state.activePlayer !== 'player'}
+                    >
+                      Usar Efeito
+                    </button>
+                  </div>
+                );
+              }
               // Se for carta de campo
               if (cardData?.type === 'field') {
                 // Mesmo padrão das criaturas: passar apenas index
@@ -1252,15 +1454,48 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
             // Busca HP atual do slot se for criatura em campo
             let currentHp = null;
             let maxHp = null;
+            let statusEffects = {};
+            let shield = 0;
             if (hoveredCard.source === 'slot' && hoveredCard.owner && hoveredCard.index !== undefined) {
               const slot = state[hoveredCard.owner]?.field?.slots?.[hoveredCard.index];
               if (slot) {
                 currentHp = slot.hp;
                 maxHp = slot.maxHp || cardData?.hp;
+                shield = slot.shield || 0;
+                // Extrai os status effects
+                statusEffects = {
+                  burn: (slot.statusEffects || []).find(e => e.type === 'burn')?.duration || 0,
+                  freeze: (slot.statusEffects || []).find(e => e.type === 'freeze')?.duration || 0,
+                  paralyze: (slot.statusEffects || []).find(e => e.type === 'paralyze')?.duration || 0,
+                  poison: (slot.statusEffects || []).find(e => e.type === 'poison')?.duration || 0,
+                  sleep: (slot.statusEffects || []).find(e => e.type === 'sleep')?.duration || 0,
+                  bleed: (slot.statusEffects || []).find(e => e.type === 'bleed')?.duration || 0,
+                };
               }
             }
 
             if (!cardData) return null;
+
+            // Se for carta de efeito ou campo, usar preview especial simplificado
+            if (cardData.type === 'effect' || cardData.type === 'field') {
+              return (
+                <div style={{ transform: 'scale(0.75)', transformOrigin: 'top left', maxWidth: 280 }}>
+                  <div className="card-preview card-preview-field">
+                    <div className="card-preview-header">
+                      <span className="card-preview-name">
+                        {typeof cardData.name === 'object' ? cardData.name.pt || cardData.name.en : cardData.name}
+                      </span>
+                    </div>
+                    <div className="card-preview-art-wrapper" style={{ height: 140 }}>
+                      <img src={cardData.img} alt={typeof cardData.name === 'object' ? cardData.name.pt || cardData.name.en : cardData.name} className="card-preview-art" />
+                    </div>
+                    <div className="card-preview-field-desc" style={{ fontSize: '11px', padding: '8px' }}>
+                      {typeof cardData.description === 'object' ? cardData.description.pt || cardData.description.en : cardData.description}
+                    </div>
+                  </div>
+                </div>
+              );
+            }
 
             return (
               <div style={{ transform: 'scale(0.95)', transformOrigin: 'top left' }}>
@@ -1272,6 +1507,13 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
                   allowFlip={false}
                   currentHp={currentHp}
                   maxHp={maxHp}
+                  armor={shield}
+                  burn={statusEffects.burn}
+                  freeze={statusEffects.freeze}
+                  paralyze={statusEffects.paralyze}
+                  poison={statusEffects.poison}
+                  sleep={statusEffects.sleep}
+                  bleed={statusEffects.bleed}
                 />
               </div>
             );
@@ -1288,6 +1530,48 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
         </div>
       </div>
     )}
+
+    {/* Modal de Habilidades da Criatura Espectral */}
+    {selectedCreature && selectedCreature.isSpectral && (() => {
+      const creature = selectedCreature.creature;
+      const cardData = getCardData(creature.id);
+
+      return (
+        <div className="card-preview-overlay" onClick={() => setSelectedCreature(null)}>
+          <div className="card-preview-container" onClick={(e) => e.stopPropagation()}>
+            <CreatureCardPreview
+              creature={cardData}
+              onClose={() => setSelectedCreature(null)}
+              level={creature.level || 1}
+              allowFlip={false}
+              armor={creature.shield || 0}
+              burn={(creature.statusEffects || []).find(e => e.type === 'burn')?.duration || 0}
+              freeze={(creature.statusEffects || []).find(e => e.type === 'freeze')?.duration || 0}
+              paralyze={(creature.statusEffects || []).find(e => e.type === 'paralyze')?.duration || 0}
+              poison={(creature.statusEffects || []).find(e => e.type === 'poison')?.duration || 0}
+              sleep={(creature.statusEffects || []).find(e => e.type === 'sleep')?.duration || 0}
+              bleed={(creature.statusEffects || []).find(e => e.type === 'bleed')?.duration || 0}
+              onAbilityClick={(abilityIndex) => {
+                const ability = creature.abilities[abilityIndex];
+                if (!ability) return;
+                const cost = ability.cost || 0;
+                const canAfford = (state.player.essence || 0) >= cost;
+                const isIncapacitated = (creature.statusEffects || []).some(e => ['paralyze', 'freeze', 'sleep'].includes(e.type) && e.duration > 0);
+                if (!canAfford || isIncapacitated) return;
+
+                // Seleciona a habilidade como um ataque espectral
+                selectSpectralAbility(abilityIndex);
+                setSelectedCreature(null);
+              }}
+              currentHp={creature.hp}
+              maxHp={creature.maxHp}
+              playerEssence={state.player.essence}
+            />
+          </div>
+        </div>
+      );
+    })()}
+
     {selectedFieldCreature && (() => {
       const { instance } = resolveCardId(selectedFieldCreature.creature.id);
       const cardData = getCardData(selectedFieldCreature.creature.id);
@@ -1354,52 +1638,88 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
 
           {state.effectCardPending.targetType === 'allyMonster' && (
             <div className="effect-target-options">
-              {(state.player?.field?.slots || []).map((creature, idx) => {
-                if (!creature) return null;
-                return (
-                  <div
-                    key={`target-ally-${idx}`}
-                    className="effect-target-option"
-                    onClick={() => playEffectCard(state.effectCardPending.handIndex, { allyIndex: idx })}
-                  >
-                    <img src={getCardData(creature.id)?.img} alt={creature.name} />
-                    <div style={{ fontSize: '12px' }}>{creature.name}</div>
-                  </div>
-                );
-              })}
+              {(state.player?.field?.slots || []).filter(slot => slot !== null).length === 0 ? (
+                <div style={{
+                  padding: '20px',
+                  color: '#ffaaaa',
+                  textAlign: 'center',
+                  fontSize: '14px',
+                  fontStyle: 'italic'
+                }}>
+                  Você não tem monstros em campo
+                </div>
+              ) : (
+                (state.player?.field?.slots || []).map((creature, idx) => {
+                  if (!creature) return null;
+                  return (
+                    <div
+                      key={`target-ally-${idx}`}
+                      className="effect-target-option"
+                      onClick={() => playEffectCard(state.effectCardPending.handIndex, { allyIndex: idx })}
+                    >
+                      <img src={getCardData(creature.id)?.img} alt={creature.name} />
+                      <div style={{ fontSize: '12px' }}>{creature.name}</div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           )}
 
           {state.effectCardPending.targetType === 'enemyMonster' && (
             <div className="effect-target-options">
-              {(state.ai?.field?.slots || []).map((creature, idx) => {
-                if (!creature) return null;
-                return (
-                  <div
-                    key={`target-enemy-${idx}`}
-                    className="effect-target-option"
-                    onClick={() => playEffectCard(state.effectCardPending.handIndex, { enemyIndex: idx })}
-                  >
-                    <img src={getCardData(creature.id)?.img} alt={creature.name} />
-                    <div style={{ fontSize: '12px' }}>{creature.name}</div>
-                  </div>
-                );
-              })}
+              {(state.ai?.field?.slots || []).filter(slot => slot !== null).length === 0 ? (
+                <div style={{
+                  padding: '20px',
+                  color: '#ffaaaa',
+                  textAlign: 'center',
+                  fontSize: '14px',
+                  fontStyle: 'italic'
+                }}>
+                  O adversário não tem monstros em campo
+                </div>
+              ) : (
+                (state.ai?.field?.slots || []).map((creature, idx) => {
+                  if (!creature) return null;
+                  return (
+                    <div
+                      key={`target-enemy-${idx}`}
+                      className="effect-target-option"
+                      onClick={() => playEffectCard(state.effectCardPending.handIndex, { enemyIndex: idx })}
+                    >
+                      <img src={getCardData(creature.id)?.img} alt={creature.name} />
+                      <div style={{ fontSize: '12px' }}>{creature.name}</div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           )}
 
           {state.effectCardPending.targetType === 'graveyardCreature' && (
             <div className="effect-target-options">
-              {(state.player?.graveyard || []).map((creature, idx) => (
-                <div
-                  key={`target-grave-${idx}`}
-                  className="effect-target-option"
-                  onClick={() => playEffectCard(state.effectCardPending.handIndex, { graveyardIndex: idx })}
-                >
-                  <img src={getCardData(creature.id)?.img} alt={creature.name} />
-                  <div style={{ fontSize: '12px' }}>{creature.name}</div>
+              {(state.player?.graveyard || []).length === 0 ? (
+                <div style={{
+                  padding: '20px',
+                  color: '#ffaaaa',
+                  textAlign: 'center',
+                  fontSize: '14px',
+                  fontStyle: 'italic'
+                }}>
+                  Não há criaturas no cemitério
                 </div>
-              ))}
+              ) : (
+                (state.player?.graveyard || []).map((creature, idx) => (
+                  <div
+                    key={`target-grave-${idx}`}
+                    className="effect-target-option"
+                    onClick={() => playEffectCard(state.effectCardPending.handIndex, { graveyardIndex: idx })}
+                  >
+                    <img src={getCardData(creature.id)?.img} alt={creature.name} />
+                    <div style={{ fontSize: '12px' }}>{creature.name}</div>
+                  </div>
+                ))
+              )}
             </div>
           )}
 
@@ -1407,44 +1727,65 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
             <div style={{ padding: '16px' }}>
               <div style={{ marginBottom: '12px', color: '#c896ff' }}>Seus monstros:</div>
               <div className="effect-target-options">
-                {(state.player?.field?.slots || []).map((creature, idx) => (
-                  <div
-                    key={`target-self-${idx}`}
-                    className="effect-target-option"
-                    onClick={() => {
-                      // Store selected ally, then let user select enemy
-                      setState(s => ({
-                        ...s,
-                        effectCardPending: {
-                          ...s.effectCardPending,
-                          selectedAllyIndex: idx
-                        }
-                      }));
-                    }}
-                  >
-                    <img src={getCardData(creature?.id)?.img} alt={creature?.name} />
-                    <div style={{ fontSize: '12px' }}>{creature?.name}</div>
+                {(state.player?.field?.slots || []).filter(slot => slot !== null).length === 0 ? (
+                  <div style={{
+                    padding: '20px',
+                    color: '#ffaaaa',
+                    textAlign: 'center',
+                    fontSize: '14px',
+                    fontStyle: 'italic'
+                  }}>
+                    Você não tem monstros em campo para trocar
                   </div>
-                ))}
+                ) : (
+                  (state.player?.field?.slots || []).map((creature, idx) => {
+                    if (!creature) return null;
+                    return (
+                      <div
+                        key={`target-self-${idx}`}
+                        className="effect-target-option"
+                        onClick={() => updateEffectCardTarget(idx)}
+                      >
+                        <img src={getCardData(creature?.id)?.img} alt={creature?.name} />
+                        <div style={{ fontSize: '12px' }}>{creature?.name}</div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
 
               {state.effectCardPending.selectedAllyIndex !== undefined && (
                 <>
                   <div style={{ marginTop: '16px', marginBottom: '12px', color: '#c896ff' }}>Monstros do adversário:</div>
                   <div className="effect-target-options">
-                    {(state.ai?.field?.slots || []).map((creature, idx) => (
-                      <div
-                        key={`target-enemy-dual-${idx}`}
-                        className="effect-target-option"
-                        onClick={() => playEffectCard(state.effectCardPending.handIndex, {
-                          allyIndex: state.effectCardPending.selectedAllyIndex,
-                          enemyIndex: idx
-                        })}
-                      >
-                        <img src={getCardData(creature?.id)?.img} alt={creature?.name} />
-                        <div style={{ fontSize: '12px' }}>{creature?.name}</div>
+                    {(state.ai?.field?.slots || []).filter(slot => slot !== null).length === 0 ? (
+                      <div style={{
+                        padding: '20px',
+                        color: '#ffaaaa',
+                        textAlign: 'center',
+                        fontSize: '14px',
+                        fontStyle: 'italic'
+                      }}>
+                        O adversário não tem monstros em campo para trocar
                       </div>
-                    ))}
+                    ) : (
+                      (state.ai?.field?.slots || []).map((creature, idx) => {
+                        if (!creature) return null;
+                        return (
+                          <div
+                            key={`target-enemy-dual-${idx}`}
+                            className="effect-target-option"
+                            onClick={() => playEffectCard(state.effectCardPending.handIndex, {
+                              allyIndex: state.effectCardPending.selectedAllyIndex,
+                              enemyIndex: idx
+                            })}
+                          >
+                            <img src={getCardData(creature?.id)?.img} alt={creature?.name} />
+                            <div style={{ fontSize: '12px' }}>{creature?.name}</div>
+                          </div>
+                        );
+                      })
+                    )}
                   </div>
                 </>
               )}
@@ -1459,6 +1800,9 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
         </div>
       </div>
     )}
+
+    {/* Modal Espectral Removido - Agora usando Slot no Campo */}
+
     </>
   );
 }

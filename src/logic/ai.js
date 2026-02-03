@@ -36,26 +36,36 @@ export function executeEffectCard(state, effectCard, targetInfo = null) {
   switch (effectCard.effectType) {
     case 'draw':
       // Compra +N cartas do baralho
-      newState.playerDeck.cardsDrawn = (newState.playerDeck.cardsDrawn || 0) + effectCard.effectValue;
+      if (!newState.player) newState.player = {};
+      newState.player.cardsDrawn = (newState.player.cardsDrawn || 0) + effectCard.effectValue;
       break;
 
     case 'essence':
       // Adiciona essência ao player
-      newState.playerEssence = (newState.playerEssence || 0) + effectCard.effectValue;
+      newState.player = {
+        ...newState.player,
+        essence: Math.min(10, (newState.player?.essence || 0) + effectCard.effectValue)
+      };
       break;
 
     case 'heal':
-      // Cura o player
-      newState.playerHP = Math.min(
-        newState.playerHP + effectCard.effectValue,
-        newState.playerMaxHP || 20
-      );
+      // Cura o player (adiciona orbes)
+      // Determina qual lado recebe o heal baseado no activePlayer
+      const healSide = newState.activePlayer || 'player';
+      const maxOrbs = 5; // Máximo de orbes
+      newState[healSide] = {
+        ...newState[healSide],
+        orbs: Math.min(
+          (newState[healSide]?.orbs || 0) + effectCard.effectValue,
+          maxOrbs
+        )
+      };
       break;
 
     case 'damageAll':
       // Causa dano a todos os monstros inimigos
-      if (newState.enemyField && Array.isArray(newState.enemyField)) {
-        newState.enemyField = newState.enemyField.map(creature => {
+      if (newState.ai?.field?.slots && Array.isArray(newState.ai.field.slots)) {
+        newState.ai.field.slots = newState.ai.field.slots.map(creature => {
           if (creature) {
             return {
               ...creature,
@@ -69,33 +79,52 @@ export function executeEffectCard(state, effectCard, targetInfo = null) {
 
     case 'destroyAll':
       // Manda todos os monstros inimigos ao cemitério
-      if (newState.enemyField && Array.isArray(newState.enemyField)) {
-        newState.enemyField = newState.enemyField.map(creature => null);
+      if (newState.ai?.field?.slots && Array.isArray(newState.ai.field.slots)) {
+        const destroyed = newState.ai.field.slots.filter(c => c !== null);
+        if (!newState.ai.graveyard) newState.ai.graveyard = [];
+        newState.ai.graveyard.push(...destroyed);
+        newState.ai.field.slots = newState.ai.field.slots.map(creature => null);
       }
-      if (!newState.graveyard) newState.graveyard = [];
-      // Adicionar criaturas ao cemitério inimigo
       break;
 
     case 'drawOpponent':
-      // Compra +N cartas do baralho do adversário
-      newState.enemyDeck = newState.enemyDeck || {};
-      newState.enemyDeck.cardsDrawn = (newState.enemyDeck.cardsDrawn || 0) + effectCard.effectValue;
+      // Compra Reversa: puxa cartas do baralho do adversário para a mão do jogador
+      if (newState.ai?.deck && newState.player?.hand) {
+        const aiDeck = [...newState.ai.deck];
+        const playerHand = [...newState.player.hand];
+
+        for (let i = 0; i < effectCard.effectValue; i++) {
+          if (aiDeck.length > 0 && playerHand.length < 7) {
+            const drawnCard = aiDeck.shift();
+            playerHand.push(drawnCard);
+          }
+        }
+
+        newState.ai = {
+          ...newState.ai,
+          deck: aiDeck
+        };
+        newState.player = {
+          ...newState.player,
+          hand: playerHand
+        };
+      }
       break;
 
     case 'shield':
       // Adiciona escudo a uma criatura aliada específica
-      if (targetInfo && newState.playerField && newState.playerField[targetInfo.allyIndex]) {
-        newState.playerField[targetInfo.allyIndex] = {
-          ...newState.playerField[targetInfo.allyIndex],
-          shield: (newState.playerField[targetInfo.allyIndex].shield || 0) + effectCard.effectValue
+      if (targetInfo && newState.player?.field?.slots && newState.player.field.slots[targetInfo.allyIndex]) {
+        newState.player.field.slots[targetInfo.allyIndex] = {
+          ...newState.player.field.slots[targetInfo.allyIndex],
+          shield: (newState.player.field.slots[targetInfo.allyIndex].shield || 0) + effectCard.effectValue
         };
       }
       break;
 
     case 'shieldAll':
       // Adiciona escudo a todas as criaturas aliadas por N turnos
-      if (newState.playerField && Array.isArray(newState.playerField)) {
-        newState.playerField = newState.playerField.map(creature => {
+      if (newState.player?.field?.slots && Array.isArray(newState.player.field.slots)) {
+        newState.player.field.slots = newState.player.field.slots.map(creature => {
           if (creature) {
             return {
               ...creature,
@@ -111,17 +140,35 @@ export function executeEffectCard(state, effectCard, targetInfo = null) {
     case 'swap':
       // Troca uma criatura aliada por uma criatura inimiga
       if (targetInfo && targetInfo.allyIndex !== undefined && targetInfo.enemyIndex !== undefined) {
-        const temp = newState.playerField[targetInfo.allyIndex];
-        newState.playerField[targetInfo.allyIndex] = newState.enemyField[targetInfo.enemyIndex];
-        newState.enemyField[targetInfo.enemyIndex] = temp;
+        // Garante que os campos existem
+        if (!newState.player?.field?.slots || !newState.ai?.field?.slots) break;
+
+        console.log('SWAP - Antes:', {
+          playerSlot: targetInfo.allyIndex,
+          playerCreature: newState.player.field.slots[targetInfo.allyIndex]?.name,
+          aiSlot: targetInfo.enemyIndex,
+          aiCreature: newState.ai.field.slots[targetInfo.enemyIndex]?.name
+        });
+
+        // Realiza a troca
+        const temp = newState.player.field.slots[targetInfo.allyIndex];
+        newState.player.field.slots[targetInfo.allyIndex] = newState.ai.field.slots[targetInfo.enemyIndex];
+        newState.ai.field.slots[targetInfo.enemyIndex] = temp;
+
+        console.log('SWAP - Depois:', {
+          playerSlot: targetInfo.allyIndex,
+          playerCreature: newState.player.field.slots[targetInfo.allyIndex]?.name,
+          aiSlot: targetInfo.enemyIndex,
+          aiCreature: newState.ai.field.slots[targetInfo.enemyIndex]?.name
+        });
       }
       break;
 
     case 'control':
       // Controla uma criatura inimiga por N turnos
-      if (targetInfo && newState.enemyField && newState.enemyField[targetInfo.enemyIndex]) {
-        newState.enemyField[targetInfo.enemyIndex] = {
-          ...newState.enemyField[targetInfo.enemyIndex],
+      if (targetInfo && newState.ai?.field?.slots && newState.ai.field.slots[targetInfo.enemyIndex]) {
+        newState.ai.field.slots[targetInfo.enemyIndex] = {
+          ...newState.ai.field.slots[targetInfo.enemyIndex],
           controlledBy: 'player',
           controlDuration: effectCard.duration
         };
@@ -129,29 +176,25 @@ export function executeEffectCard(state, effectCard, targetInfo = null) {
       break;
 
     case 'resurrect':
-      // Ressuscita uma criatura do cemitério por N turnos
-      if (targetInfo && newState.graveyard && newState.graveyard[targetInfo.graveyardIndex]) {
-        const resurrectedCreature = {
-          ...newState.graveyard[targetInfo.graveyardIndex],
-          temporary: true,
-          resurrectDuration: effectCard.duration
+      // Sepultura do Espectro: permite atacar uma vez do cemitério sem trazer a criatura
+      if (targetInfo && newState.player?.graveyard && newState.player.graveyard[targetInfo.graveyardIndex]) {
+        const graveyardCreature = newState.player.graveyard[targetInfo.graveyardIndex];
+
+        // Ao invés de trazer ao campo, marca para ataque especial (sem step)
+        newState.spectralAttackPending = {
+          creatureIndex: targetInfo.graveyardIndex,
+          creature: graveyardCreature
+          // selectedAbility será definido quando o jogador clicar na habilidade
         };
-        // Adicionar ao campo do player
-        if (newState.playerField) {
-          const emptySlot = newState.playerField.findIndex(slot => !slot);
-          if (emptySlot >= 0) {
-            newState.playerField[emptySlot] = resurrectedCreature;
-          }
-        }
       }
       break;
 
     case 'damageBuff':
       // Aumenta dano de uma criatura aliada por N turnos
-      if (targetInfo && newState.playerField && newState.playerField[targetInfo.allyIndex]) {
-        newState.playerField[targetInfo.allyIndex] = {
-          ...newState.playerField[targetInfo.allyIndex],
-          damageBuff: (newState.playerField[targetInfo.allyIndex].damageBuff || 0) + effectCard.effectValue,
+      if (targetInfo && newState.player?.field?.slots && newState.player.field.slots[targetInfo.allyIndex]) {
+        newState.player.field.slots[targetInfo.allyIndex] = {
+          ...newState.player.field.slots[targetInfo.allyIndex],
+          damageBuff: (newState.player.field.slots[targetInfo.allyIndex].damageBuff || 0) + effectCard.effectValue,
           damageBuffDuration: effectCard.duration
         };
       }

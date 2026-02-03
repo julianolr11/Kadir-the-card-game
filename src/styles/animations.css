@@ -37,3 +37,125 @@
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
+/* Return to hand animation */
+@keyframes returnToHand {
+  0% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.8) translateY(-30px);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(0.3) translateY(-200px);
+    opacity: 0;
+  }
+}
+
+@keyframes returnToHandPlayer {
+  0% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.8) translateY(30px);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(0.3) translateY(200px);
+    opacity: 0;
+  }
+}
+
+.returning-to-hand-ai {
+  animation: returnToHand 0.8s ease-out forwards;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.returning-to-hand-player {
+  animation: returnToHandPlayer 0.8s ease-out forwards;
+  pointer-events: none;
+  z-index: 100;
+}
+
+/* Spectral Slot Appearance Animation */
+@keyframes spectralSlotAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+    filter: blur(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes spectralSlotDisappear {
+  from {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+    filter: blur(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.3) rotate(180deg);
+    filter: blur(15px);
+  }
+}
+
+.spectral-slot-appearing {
+  animation: spectralSlotAppear 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.spectral-slot-disappearing {
+  animation: spectralSlotDisappear 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes spectralOverlay {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+@keyframes spectralOverlayOut {
+  0% {
+    opacity: 0.6;
+    filter: blur(0);
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    filter: blur(8px);
+    transform: scale(1.05);
+  }
+}
+
+@keyframes spectralWaveOut {
+  0% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes spectralCardVanish {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.85);
+    filter: blur(6px);
+  }
+}

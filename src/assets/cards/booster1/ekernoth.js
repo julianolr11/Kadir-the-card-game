@@ -10,7 +10,7 @@ module.exports = {
   element: 'agua',
   img: require('../../img/creatures/ekernoth_bio.webp'),
   color: 'water',
-  hp: 9,
+  hp: 13,
   abilities: [
     {
       name: { pt: 'Garra Marinada', en: 'Brine Claw' },

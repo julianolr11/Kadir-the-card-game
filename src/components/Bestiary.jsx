@@ -181,7 +181,7 @@ function Bestiary({ onBack }) {
           {/* Coluna Direita - Lista de todas as cartas */}
           <div className="bestiary-grid">
             {/* Label de Criaturas */}
-            {creatures.some(card => card.type !== 'field') && (
+            {creatures.some(card => card.type !== 'field' && card.type !== 'effect') && (
               <div className="bestiary-divider bestiary-divider-top">
                 <div className="bestiary-divider-line"></div>
                 <span className="bestiary-divider-label">CRIATURAS</span>
@@ -190,7 +190,44 @@ function Bestiary({ onBack }) {
             )}
 
             {/* Seção de Criaturas */}
-            {creatures.filter(card => card.type !== 'field').map((card) => {
+            {creatures.filter(card => card.type !== 'field' && card.type !== 'effect').map((card) => {
+              const owned = hasCard(card.id);
+              return (
+                <div
+                  key={card.id}
+                  className={`bestiary-card-item ${owned ? 'owned' : 'locked'} ${selectedCard?.id === card.id ? 'selected' : ''}`}
+                  onClick={() => {
+                    if (pageFlipAudioRef.current) {
+                      pageFlipAudioRef.current.currentTime = 0;
+                      pageFlipAudioRef.current.volume = (effectsVolume ?? 50) / 100;
+                      pageFlipAudioRef.current.play().catch(() => {});
+                    }
+                    setSelectedCard(card);
+                  }}
+                >
+                  {owned ? (
+                    <img src={card.img} alt={getText(card.name, lang)} className="bestiary-card-img" />
+                  ) : (
+                    <div className="bestiary-card-locked">
+                      <span className="bestiary-question-mark">?</span>
+                    </div>
+                  )}
+                  <div className={`bestiary-card-border bestiary-card-border-${card.element || 'neutral'}`} />
+                </div>
+              );
+            })}
+
+            {/* Divisória para Cartas de Campo */}
+            {creatures.some(card => card.type === 'field') && (
+              <div className="bestiary-divider">
+                <div className="bestiary-divider-line"></div>
+                <span className="bestiary-divider-label">CARTAS DE CAMPO</span>
+                <div className="bestiary-divider-line"></div>
+              </div>
+            )}
+
+            {/* Seção de Cartas de Campo */}
+            {creatures.filter(card => card.type === 'field').map((card) => {
               const owned = hasCard(card.id);
               return (
                 <div

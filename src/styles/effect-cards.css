@@ -124,7 +124,7 @@
   border: 2px solid rgba(180, 120, 255, 0.4);
   border-radius: 16px;
   padding: 24px;
-  max-width: 600px;
+  min-width: 600px;
   max-height: 80vh;
   overflow-y: auto;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
@@ -142,7 +142,7 @@
 
 .effect-target-options {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 12px;
   margin-bottom: 20px;
 }
@@ -222,4 +222,92 @@
   padding: 2px 6px;
   border-radius: 3px;
   font-weight: 600;
+}
+/* Animações de Efeitos Visuais */
+@keyframes effectFlash {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.3);
+  }
+}
+
+@keyframes effectGlow {
+  0% {
+    box-shadow: inset 0 0 0 0 rgba(180, 120, 255, 0.8);
+  }
+  50% {
+    box-shadow: inset 0 0 20px 10px rgba(180, 120, 255, 0.4);
+  }
+  100% {
+    box-shadow: inset 0 0 0 0 rgba(180, 120, 255, 0);
+  }
+}
+
+.effect-activation {
+  position: fixed;
+  pointer-events: none;
+  animation: effectFlash 0.8s ease-out forwards;
+}
+
+.effect-applied {
+  animation: effectGlow 1s ease-out;
+}
+/* Spectral Attack (Sepultura do Espectro) */
+.spectral-attack-container {
+  background: linear-gradient(135deg, rgba(15, 10, 25, 0.98) 0%, rgba(35, 15, 45, 0.98) 100%);
+  border-radius: 16px;
+  padding: 20px;
+  max-width: 70vw;
+  max-height: 75vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 50px rgba(142, 68, 173, 0.6),
+              0 0 100px rgba(142, 68, 173, 0.4) inset;
+  border: 3px solid #8e44ad;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: spectralAppear 0.4s ease-out;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+@keyframes spectralAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.spectral-preview-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+  background: rgba(142, 68, 173, 0.1);
+  border-radius: 12px;
+  border: 2px solid rgba(142, 68, 173, 0.3);
+  box-shadow: 0 0 20px rgba(142, 68, 173, 0.2);
+}
+
+.spectral-abilities-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.spectral-ability-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

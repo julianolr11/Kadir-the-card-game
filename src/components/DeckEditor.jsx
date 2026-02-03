@@ -328,6 +328,7 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
   const nameInputRef = useRef(null);
   const [deckCards, setDeckCards] = useState(initialCards);
   const [selectedGuardian, setSelectedGuardian] = useState(guardianId);
+  const [guardianCardId, setGuardianCardId] = useState(guardianId || null);
   const [searchTerm, setSearchTerm] = useState('');
   const [elementFilter, setElementFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
@@ -351,7 +352,7 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
   const successSoundRef = useRef(null);
   const errorSoundRef = useRef(null);
   const isFirstRender = useRef(true);
-  const lastSavedRef = useRef({ name: initialDeckName || `Deck ${deckId}`, cards: initialCards });
+  const lastSavedRef = useRef({ name: initialDeckName || `Deck ${deckId}`, cards: initialCards, guardianId: guardianId || null });
 
   const getInstanceById = (instanceId) => {
     if (!instanceId || !cardCollection) return null;
@@ -452,6 +453,14 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
   };
 
   const removeCardFromDeck = (slotIndex) => {
+    const instanceId = deckCards[slotIndex];
+    const instance = instanceId ? getInstanceById(instanceId) : null;
+
+    // Se a carta removida era o guardião, limpa o guardianCardId
+    if (instance && guardianCardId === instance.cardId) {
+      setGuardianCardId(null);
+    }
+
     const newDeck = [...deckCards];
     newDeck[slotIndex] = null;
     setDeckCards(newDeck);
@@ -527,7 +536,7 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
       }
     });
     return Array.isArray(cards) ? cards : [];
-  }, [cardCollection, searchTerm, elementFilter, typeFilter, sortBy, langKey, selectedGuardian]);
+  }, [cardCollection, searchTerm, elementFilter, typeFilter, sortBy, langKey, guardianCardId]);
 
   const openCardLoadout = (cardId) => {
     const data = getCardData(cardId);
@@ -555,37 +564,28 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
-      lastSavedRef.current = { name: deckName, cards: deckCards };
+      lastSavedRef.current = { name: deckName, cards: deckCards, guardianId: guardianCardId };
       return;
     }
-    const hasChanges = lastSavedRef.current.name !== deckName || JSON.stringify(lastSavedRef.current.cards) !== JSON.stringify(deckCards);
+    const hasChanges = lastSavedRef.current.name !== deckName
+      || JSON.stringify(lastSavedRef.current.cards) !== JSON.stringify(deckCards)
+      || lastSavedRef.current.guardianId !== guardianCardId;
     if (!hasChanges) return;
     const timer = setTimeout(() => {
       if (onSave) {
-        onSave({ id: deckId, name: deckName, guardianId: selectedGuardian, cards: deckCards });
-        lastSavedRef.current = { name: deckName, cards: deckCards };
+        onSave({ id: deckId, name: deckName, guardianId: guardianCardId, cards: deckCards });
+        lastSavedRef.current = { name: deckName, cards: deckCards, guardianId: guardianCardId };
         setShowSavedToast(true);
         setTimeout(() => setShowSavedToast(false), 2000);
       }
     }, 1500);
     return () => clearTimeout(timer);
-  }, [deckCards, deckName, deckId, selectedGuardian, onSave]);
+  }, [deckCards, deckName, deckId, guardianCardId, onSave]);
 
   useEffect(() => {
     if (guardianId !== selectedGuardian) {
       setSelectedGuardian(guardianId);
-      if (guardianId && getCardInstances) {
-        const guardianInstances = getCardInstances(guardianId);
-        if (guardianInstances && guardianInstances.length > 0) {
-          const holoInstance = guardianInstances.find(inst => inst.isHolo);
-          const bestInstance = holoInstance || guardianInstances[0];
-          setDeckCards(prevCards => {
-            const newCards = [...prevCards];
-            newCards[0] = bestInstance.instanceId;
-            return newCards;
-          });
-        }
-      }
+      setGuardianCardId(guardianId || null);
     }
   }, [guardianId, getCardInstances]);
 
@@ -642,10 +642,18 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
     }
   }, [editingName]);
 
+  const toggleGuardian = (cardId) => {
+    if (guardianCardId === cardId) {
+      setGuardianCardId(null);
+    } else {
+      setGuardianCardId(cardId);
+    }
+  };
+
   const handleSaveName = () => {
     setEditingName(false);
     if (onSave) {
-      onSave({ id: deckId, name: deckName, guardianId: selectedGuardian, cards: deckCards });
+      onSave({ id: deckId, name: deckName, guardianId: guardianCardId, cards: deckCards });
       lastSavedRef.current = { name: deckName, cards: deckCards };
       setShowSavedToast(true);
       setTimeout(() => setShowSavedToast(false), 1500);
@@ -684,9 +692,6 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
             }
           }}>✕</button>
         </div>
-        <div className="deck-editor-guardian-section">
-          <span className="guardian-label">Guardião: {selectedGuardian || 'Não selecionado'}</span>
-        </div>
         <div className="deck-editor-slots-container">
           <div className="deck-editor-slots-grid">
             {Array.from({ length: 20 }).map((_, idx) => {
@@ -696,10 +701,10 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
               const isDragOver = dragOverSlot === idx;
               const canDrop = draggedCardId && (canAddCard(draggedCardId) || deckCards.some(id => { const inst = getInstanceById(id); return inst && inst.cardId === draggedCardId; }));
               return (
-                <div key={idx} className={`deck-slot ${cardData ? 'filled' : 'empty'} ${isDragOver ? (canDrop ? 'drag-over-valid' : 'drag-over-invalid') : ''}`} onDragOver={(e) => handleDragOver(e, idx)} onDrop={(e) => handleDrop(e, idx)} onDragLeave={() => setDragOverSlot(null)}>
+                <div key={idx} className={`card-slot ${cardData ? 'filled' : 'empty'} ${isDragOver ? (canDrop ? 'drag-over-valid' : 'drag-over-invalid') : ''}`} onDragOver={(e) => handleDragOver(e, idx)} onDrop={(e) => handleDrop(e, idx)} onDragLeave={() => setDragOverSlot(null)}>
                   {cardData ? (
                     <>
-                    <div className="deck-slot-card" draggable onDragStart={(e) => handleDragStart(e, instance.cardId, true, instanceId)} onDragEnd={handleDragEnd}>
+                    <div className="card-slot-card" draggable onDragStart={(e) => handleDragStart(e, instance.cardId, true, instanceId)} onDragEnd={handleDragEnd}>
                       {cardData.id === 'f001' ? (
                         <div className="slider-card-wrapper active" style={{ transform: 'scale(0.33)', transformOrigin: 'center', pointerEvents: 'none' }}>
                           <div className="card-preview card-preview-field">
@@ -730,20 +735,38 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
                         </div>
                       )}
                     </div>
-                    {/* Ações: ícones Editar + Remover lado a lado (visíveis apenas no hover) */}
-                    <div className="deck-slot-actions">
+                    {/* Ações: ícones Coroa + Editar + Remover lado a lado (visíveis apenas no hover) */}
+                    <div className="card-slot-actions">
                       {(() => {
                         const isField = cardData.id === 'f001' || /^f\d{3}$/i.test(cardData.id) || (cardData.category && String(cardData.category).toLowerCase().includes('campo'));
-                        const isEffect = cardData.type === 'effect' || String(instance.cardId).toLowerCase().startsWith('effect_');
-                        if (isField || isEffect) return null;
+                        const isEffect = (cardData.category && String(cardData.category).toLowerCase().includes('efeito'))
+                          || cardData.type === 'effect'
+                          || String(instance.cardId).toLowerCase().startsWith('effect_');
+                        const isGuardian = guardianCardId === instance.cardId;
+                        const canBeGuardian = cardData.isGuardian === true && !isField && !isEffect;
+                        const showGuardianButton = !isField && !isEffect;
                         return (
-                          <button
-                            className="deck-action-btn deck-action-edit"
-                            onClick={(e) => { e.stopPropagation(); openCardLoadout(instance.cardId); }}
-                            title="Editar habilidades"
-                          >
-                            ✎
-                          </button>
+                          <>
+                            {showGuardianButton && (
+                              <button
+                                className={`deck-action-btn deck-action-guardian ${isGuardian ? 'active' : ''}`}
+                                disabled={!canBeGuardian}
+                                onClick={(e) => { e.stopPropagation(); if (canBeGuardian) toggleGuardian(instance.cardId); }}
+                                title={!canBeGuardian ? 'Apenas criaturas guardiãs podem ser selecionadas' : (isGuardian ? 'Remover como guardião' : 'Definir como guardião')}
+                              >
+                                👑
+                              </button>
+                            )}
+                            {!isField && !isEffect && (
+                              <button
+                                className="deck-action-btn deck-action-edit"
+                                onClick={(e) => { e.stopPropagation(); openCardLoadout(instance.cardId); }}
+                                title="Editar habilidades"
+                              >
+                                ✎
+                              </button>
+                            )}
+                          </>
                         );
                       })()}
                       <button
@@ -756,7 +779,7 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
                     </div>
                     </>
                   ) : (
-                    <div className="deck-slot-placeholder"><span className="deck-slot-plus">+</span></div>
+                    <div className="card-slot-placeholder"><span className="card-slot-plus">+</span></div>
                   )}
                 </div>
               );

@@ -190,6 +190,11 @@ function CreatureCardPreview({
     imageSrc = creature.image || '';
   }
 
+  // Normaliza caminhos para assets públicos (ex: assets/img/...)
+  if (typeof imageSrc === 'string' && imageSrc.startsWith('assets/')) {
+    imageSrc = `/${imageSrc}`;
+  }
+
   return (
     <div style={{ position: 'relative', display: 'flex', perspective: '1000px' }}>
       <audio ref={swipeAudioRef} src={swipeSound} preload="auto" />

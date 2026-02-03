@@ -72,10 +72,14 @@
 }
 
 .deckbuilder-body {
-  display: grid;
-  grid-template-columns: 380px 1fr;
-  gap: 20px;
-  align-items: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  flex: 1;
+  justify-content: center;
 }
 
 .deckbuilder-guardian {
@@ -666,19 +670,22 @@
 
 .deckbuilder-slots {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
+  width: 100%;
 }
 
 .deck-slot {
   position: relative;
-  border-radius: 14px;
+  border-radius: 16px;
   background: linear-gradient(160deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
-  box-shadow: 0 10px 30px #000a, 0 0 0 1px #ffffff10 inset;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
   overflow: hidden;
   transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
   display: flex;
   flex-direction: column;
+  padding: 0;
+  min-height: 240px;
 }
 
 .deck-slot::after {
@@ -693,8 +700,8 @@
 }
 
 .deck-slot:hover {
-  transform: translateY(-2px) scale(1.01);
-  box-shadow: 0 16px 36px #000c, 0 0 0 1px #ffffff18 inset;
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.18) inset, 0 0 20px rgba(144, 97, 249, 0.2);
 }
 
 .deck-slot:hover::after {
@@ -724,8 +731,9 @@
 
 .deck-slot-title {
   font-weight: 800;
-  font-size: 18px;
+  font-size: 17px;
   color: #f6e8ff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .deck-slot-status {
@@ -736,17 +744,17 @@
 .deck-slot-cta {
   margin: auto;
   width: 100%;
-  max-width: 200px;
+  max-width: 180px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  padding: 18px 24px;
+  padding: 16px 20px;
   border-radius: 14px;
-  border: 2px dashed rgba(144, 97, 249, 0.5);
-  background: linear-gradient(135deg, rgba(144, 97, 249, 0.15), rgba(122, 90, 248, 0.1));
+  border: 2px dashed rgba(144, 97, 249, 0.6);
+  background: linear-gradient(135deg, rgba(144, 97, 249, 0.2), rgba(122, 90, 248, 0.15));
   color: #f6e8ff;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   cursor: pointer !important;
   transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -1107,12 +1115,14 @@
   font-weight: 300;
 }
 
-/* Ações: ícones Editar + Remover lado a lado (visíveis apenas no hover) */
+/* Ações: ícones em 2 linhas - Coroa em cima, Editar e Remover embaixo */
 .deck-slot-actions {
   position: absolute;
   top: 60%;
   left: 50%;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
   gap: 8px;
   opacity: 0;
   transform: translate(-50%, -50%) scale(0.96);
@@ -1121,7 +1131,103 @@
   pointer-events: none;
 }
 
+.deck-slot-actions .deck-action-guardian {
+  grid-column: 1 / -1;
+  justify-self: center;
+}
+
 .deck-slot:hover .deck-slot-actions {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+  pointer-events: auto;
+}
+
+/* === Card Slots (DeckEditor) === */
+.card-slot {
+  aspect-ratio: 369 / 550;
+  width: 100%;
+  border-radius: 8px;
+  border: 2px dashed rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.02);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.card-slot.empty:hover {
+  border-color: rgba(122, 90, 248, 0.6);
+  background: rgba(122, 90, 248, 0.05);
+}
+
+.card-slot.filled {
+  border: 2px solid rgba(255, 230, 176, 0.3);
+  background: rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+}
+
+.card-slot.filled:hover {
+  border-color: rgba(255, 100, 100, 0.6);
+  transform: scale(0.98);
+}
+
+.card-slot.drag-over-valid {
+  border-color: rgba(122, 90, 248, 0.8);
+  background: rgba(122, 90, 248, 0.15);
+  animation: pulseGlow 0.6s ease-in-out infinite;
+}
+
+.card-slot.drag-over-invalid {
+  border-color: rgba(255, 100, 100, 0.8);
+  background: rgba(255, 100, 100, 0.1);
+  animation: shake 0.3s ease;
+}
+
+.card-slot-card {
+  cursor: grab;
+}
+
+.card-slot-card:active {
+  cursor: grabbing;
+}
+
+.card-slot-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.card-slot-plus {
+  font-size: 48px;
+  color: rgba(255, 255, 255, 0.2);
+  font-weight: 300;
+}
+
+.card-slot-actions {
+  position: absolute;
+  top: 60%;
+  left: 50%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 8px;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.96);
+  transition: opacity 160ms ease, transform 160ms ease;
+  z-index: 30;
+  pointer-events: none;
+}
+
+.card-slot-actions .deck-action-guardian {
+  grid-column: 1 / -1;
+  justify-self: center;
+}
+
+.card-slot:hover .card-slot-actions {
   opacity: 1;
   transform: translate(-50%, -50%) scale(1);
   pointer-events: auto;
@@ -1438,6 +1544,29 @@
   transform: translateY(-1px);
   filter: brightness(1.05);
   box-shadow: 0 6px 14px rgba(220, 38, 38, 0.45);
+}
+
+.deck-action-guardian {
+  background: linear-gradient(135deg, #1f1f1f, #2d2d2d);
+  border-color: rgba(100, 100, 100, 0.6);
+  font-size: 16px;
+}
+
+.deck-action-guardian:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.15);
+  box-shadow: 0 6px 14px rgba(100, 100, 100, 0.45);
+}
+
+.deck-action-guardian.active {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  border-color: rgba(251, 191, 36, 0.8);
+  box-shadow: 0 6px 16px rgba(251, 191, 36, 0.6);
+}
+
+.deck-action-guardian.active:hover:not(:disabled) {
+  filter: brightness(1.1);
+  box-shadow: 0 8px 20px rgba(251, 191, 36, 0.7);
 }
 
 @keyframes actionFadeIn {

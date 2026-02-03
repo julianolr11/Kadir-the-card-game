@@ -16,7 +16,7 @@ import '../styles/deckbuilder.css';
 
 const GUARDIANS_DATA = require('../assets/guardiansData');
 
-const MAX_DECKS = 3;
+const MAX_DECKS = 4;
 
 // Mock de progressão do jogador
 const MOCK_PLAYER_PROGRESS = {
@@ -689,7 +689,7 @@ function DeckBuilder({ onNavigate }) {
 
         <div className="deckbuilder-titles">
           <h1>Meus Decks</h1>
-          <p>Máximo de 3 decks. Cada deck usa 1 guardião + 20 cartas.</p>
+          <p>Máximo de 4 decks. Cada deck usa 1 guardião + 20 cartas.</p>
         </div>
       </div>
 
@@ -716,74 +716,25 @@ function DeckBuilder({ onNavigate }) {
       )}
 
       <div className="deckbuilder-body">
-        <div className="deckbuilder-guardian">
-          {activeGuardian ? (
-            <div
-              className="guardian-card-wrapper"
-              onMouseEnter={() => setHovering(true)}
-              onMouseLeave={() => setHovering(false)}
-              onClick={() => setShowLoadoutModal(true)}
-              style={{ position: 'relative', cursor: 'pointer' }}
-            >
-              <div
-                style={{
-                  transform: 'scale(0.92)',
-                  transformOrigin: 'top center',
-                  marginBottom: '-44px',
-                  filter: hovering ? 'blur(4px)' : 'blur(0)',
-                  transition: 'filter 200ms ease',
-                }}
-              >
-                <CreatureCardPreview
-                  creature={currentGuardianForDisplay}
-                  onClose={null}
-                  level={guardianProgress.level}
-                  isHolo={getSelectedGuardianInstance().isHolo}
-                  allowFlip={false}
-                />
-              </div>
-              <button
-                className="guardian-loadout-btn"
-                style={{
-                  opacity: hovering ? 1 : 0,
-                  visibility: hovering ? 'visible' : 'hidden',
-                  transition: 'opacity 200ms ease, visibility 200ms ease',
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  zIndex: 10,
-                }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowLoadoutModal(true);
-                }}
-              >
-                Mudar habilidades
-              </button>
-            </div>
-          ) : (
-            <div className="guardian-card-empty">
-              <div className="guardian-empty-text">Nenhum guardião ativo</div>
-            </div>
-          )}
-          <button
-            className="guardian-change-btn"
-            onClick={handleChangeGuardian}
-          >
-            Trocar guardião
-          </button>
-        </div>
-
         <div className="deckbuilder-slots">
           {Array.from({ length: MAX_DECKS }).map((_, idx) => {
             const slot = slots[idx];
             const slotKey = `slot-${idx}`;
             const isOpening = openingSlotId === idx;
+                        const deckData = slot ? getDeck(slot.id) : null;
+                        const guardianId = deckData?.guardianId;
+                        const guardianData = guardianId ? getGuardianData(guardianId) : null;
+                        const guardianImageUrl = guardianData?.img ? guardianData.img : null;
+            
             return (
               <div
                 key={slotKey}
                 className={`deck-slot${slot ? ' deck-slot-filled' : ' deck-slot-empty'}${isOpening ? ' deck-slot-opening' : ''}`}
+                              style={guardianImageUrl ? {
+                                backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.7)), url(${guardianImageUrl})`,
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
+                              } : {}}
               >
                 <div className="deck-slot-top">
                   <div className="deck-slot-title">

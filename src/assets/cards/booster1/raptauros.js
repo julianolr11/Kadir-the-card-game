@@ -10,7 +10,7 @@ module.exports = {
   element: 'terra',
   img: require('../../img/creatures/raptauros_bio.webp'),
   color: 'earth',
-  hp: 5,
+  hp: 8,
   abilities: [
     {
       name: { pt: 'Investida das Dunas', en: 'Dune Charge' },

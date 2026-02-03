@@ -9,7 +9,7 @@ module.exports = {
   element: 'puro',
   img: require('../../img/creatures/owlberoth_bio.webp'),
   color: 'pure',
-  hp: 4,
+  hp: 10,
   abilities: [
     {
       name: { pt: 'Olhar Místico', en: 'Mystic Gaze' },

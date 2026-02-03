@@ -1,5 +1,5 @@
 # Script para fazer upload do release
-cd "c:\Users\julia\Kadir-card-game\kadiroms\release\build"
+Set-Location "c:\Users\julia\Kadir-card-game\kadiroms\release\build"
 
 $ghPath = "C:\Users\julia\AppData\Local\GitHubDesktop\bin\gh.exe"
 

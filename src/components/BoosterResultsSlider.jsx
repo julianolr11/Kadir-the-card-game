@@ -186,6 +186,45 @@ function BoosterResultsSlider({ cards, lang, onClose }) {
                   wrapperClass += ' next';
                 }
 
+                // Exibição especial para cartas de efeito
+                if (card?.type === 'effect') {
+                  return (
+                    <div key={`${card?.id || idx}-${idx}`} className={wrapperClass}>
+                      <div className={`card-preview card-preview-effect ${card?.isHolo ? 'card-preview-holo' : ''}`}>
+                        {/* Badge NEW */}
+                        {isNewCard(card) && (
+                          <div className="card-badge-new">
+                            {lang === 'en' ? 'NEW' : 'NOVA'}
+                          </div>
+                        )}
+                        {/* Header */}
+                        <div className="card-preview-header">
+                          <span className="card-preview-name" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            {getLocalizedText(card?.name, lang)}
+                            {card?.isHolo && <span className="holo-indicator">✨</span>}
+                          </span>
+                          <span className="card-preview-id">#E{String(card?.num || 0).padStart(3, '0')}</span>
+                        </div>
+                        {/* Arte */}
+                        <div className="card-preview-art-wrapper">
+                          {card?.img ? (
+                            <img src={card.img} alt={getLocalizedText(card?.name, lang)} className="card-preview-art" />
+                          ) : (
+                            <div style={{width: '100%', height: '100%', backgroundColor: '#333'}} />
+                          )}
+                        </div>
+                        {/* Tipo e Descrição */}
+                        <div className="card-preview-field-desc">
+                          <strong>Efeito:</strong>
+                          <div style={{ whiteSpace: 'pre-line', marginTop: '8px' }}>
+                            {getLocalizedText(card.description, lang)}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
                 // Exibição especial para cartas de campo
                 if (card?.type === 'field') {
                   return (

@@ -10,7 +10,7 @@ module.exports = {
   element: 'ar',
   img: require('../../img/creatures/zephyron_bio.webp'),
   color: 'air',
-  hp: 6,
+  hp: 7,
   abilities: [
     {
       name: { pt: 'Golpe de Ciclone', en: 'Cyclone Strike' },

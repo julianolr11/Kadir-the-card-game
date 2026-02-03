@@ -250,6 +250,8 @@ export function BattleProvider({ children }) {
     swapCardPending: null, // { guardianId, guardianName, step, selectedFieldSlot } se Seract foi invocado
     freezePending: null, // { guardianId, guardianName } se Mawthorn foi invocado
     healPending: null, // { guardianId, guardianName, amount } se Ekonos foi invocado
+    effectCardPending: null, // { cardId, requiresTarget, targetType } se cartade efeito foi jogada
+    drawOpponentPending: null, // { handIndex, baseId } se Compra Reversa foi jogada
     player: {
       orbs: 5,
       essence: 0,
@@ -269,6 +271,7 @@ export function BattleProvider({ children }) {
       graveyard: [],
     },
     sharedField: { active: false, id: null },
+    activeEffects: [], // Array de efeitos duradouros: { type, turn, duration, targetIndex, player }
     log: [],
     animations: {},
     gameResult: null, // { winner: 'player' | 'ai', kills: [{ attacker: id, target: id }, ...], playerStats, aiStats }
@@ -286,7 +289,8 @@ export function BattleProvider({ children }) {
         cardsKilled: [],
         cardsAssisted: [],
       },
-    }
+    },
+    lastDiscardedEffectCard: null, // Armazena id da última carta de efeito descartada (para animação)
   });
 
   // Controla música de fundo da batalha
@@ -441,14 +445,63 @@ export function BattleProvider({ children }) {
           return {
             ...c,
             shieldTurns: newTurns,
+            // Apenas zera o shield se a duração acabou E o shield ainda existe
             shield: newTurns <= 0 ? 0 : c.shield,
           };
         }
+        // Se não tem shieldTurns ativo, mantém o shield como está (pode ter sido reduzido em combate)
         return c;
       });
 
       const playerSlots = processShieldTurns(s.player.field.slots);
       const aiSlots = processShieldTurns(s.ai.field.slots);
+
+      // Processa criaturas temporárias (ressuscitadas) - decrementa duração e retorna ao cemitério
+      const processResurrectedCreatures = (slots, side, newState) => {
+        const processedSlots = [];
+        let logs = [];
+
+        (slots || []).forEach(c => {
+          if (!c) {
+            processedSlots.push(null);
+            return;
+          }
+
+          if (c.temporary && typeof c.resurrectDuration === 'number') {
+            const newDuration = c.resurrectDuration - 1;
+            if (newDuration <= 0) {
+              // Duração acabou, retorna ao cemitério
+              newState[side] = {
+                ...newState[side],
+                graveyard: [...(newState[side]?.graveyard || []), c]
+              };
+              logs.push(`${c.name} retornou ao cemitério!`);
+              processedSlots.push(null);
+            } else {
+              // Ainda tem duração, decrementa
+              processedSlots.push({
+                ...c,
+                resurrectDuration: newDuration
+              });
+            }
+          } else {
+            processedSlots.push(c);
+          }
+        });
+
+        return { processedSlots, logs, newState };
+      };
+
+      // Aplica processamento de ressurreição em ambos os lados
+      let resurrectionResult = processResurrectedCreatures(playerSlots, 'player', { ...s });
+      let playerSlotsAfterResurrect = resurrectionResult.processedSlots;
+      let resurrectionLogs = resurrectionResult.logs;
+      let stateAfterResurrect = resurrectionResult.newState;
+
+      resurrectionResult = processResurrectedCreatures(aiSlots, 'ai', stateAfterResurrect);
+      let aiSlotsAfterResurrect = resurrectionResult.processedSlots;
+      resurrectionLogs = [...resurrectionLogs, ...resurrectionResult.logs];
+      stateAfterResurrect = resurrectionResult.newState;
 
       // Processa status e buffs para o próximo lado (início do turno)
       const processSideStart = (curState, sideKey) => {
@@ -468,32 +521,64 @@ export function BattleProvider({ children }) {
       };
 
       const baseNextState = {
-        ...s,
+        ...stateAfterResurrect,
         activePlayer: nextActive,
         turn: nextTurn,
-        player: { ...s.player, field: { ...s.player.field, slots: playerSlots } },
-        ai: { ...s.ai, field: { ...s.ai.field, slots: aiSlots } },
+        player: { ...stateAfterResurrect.player, field: { ...stateAfterResurrect.player.field, slots: playerSlotsAfterResurrect } },
+        ai: { ...stateAfterResurrect.ai, field: { ...stateAfterResurrect.ai.field, slots: aiSlotsAfterResurrect } },
         [currentSide]: { ...currentSnapshot },
-        [side]: { ...s[side], deck, hand, essence, field, orbs },
+        [side]: { ...stateAfterResurrect[side], deck, hand, essence, field, orbs },
       };
       const processed = processSideStart(baseNextState, side);
 
       // Limpa slots com criaturas mortas (hp <= 0) após processar status/buffs
-      const cleanDeadSlots = (slots) => (slots || []).map(c => (c && c.hp <= 0 ? null : c));
-      const nsCleaned = {
-        ...processed.ns,
+      // E adiciona criaturas mortas ao graveyard
+      const moveDeadToGraveyard = (slots, side, newState) => {
+        const cleanedSlots = [];
+        const deadCreatures = [];
+
+        (slots || []).forEach(c => {
+          if (c && c.hp <= 0) {
+            deadCreatures.push(c);
+            cleanedSlots.push(null);
+          } else {
+            cleanedSlots.push(c);
+          }
+        });
+
+        // Adiciona criaturas mortas ao graveyard do lado correspondente
+        if (deadCreatures.length > 0) {
+          newState[side] = {
+            ...newState[side],
+            graveyard: [...(newState[side]?.graveyard || []), ...deadCreatures]
+          };
+        }
+
+        return { cleanedSlots, newState };
+      };
+
+      const r1 = moveDeadToGraveyard(processed.ns.player.field.slots, 'player', { ...processed.ns });
+      let nsCleaned = { ...r1.newState };
+      const playerSlotsAfterGrave = r1.cleanedSlots;
+
+      const r2 = moveDeadToGraveyard(nsCleaned.ai.field.slots, 'ai', nsCleaned);
+      nsCleaned = { ...r2.newState };
+      const aiSlotsAfterGrave = r2.cleanedSlots;
+
+      nsCleaned = {
+        ...nsCleaned,
         player: {
-          ...processed.ns.player,
+          ...nsCleaned.player,
           field: {
-            ...processed.ns.player.field,
-            slots: cleanDeadSlots(processed.ns.player.field.slots),
+            ...nsCleaned.player.field,
+            slots: playerSlotsAfterGrave,
           },
         },
         ai: {
-          ...processed.ns.ai,
+          ...nsCleaned.ai,
           field: {
-            ...processed.ns.ai.field,
-            slots: cleanDeadSlots(processed.ns.ai.field.slots),
+            ...nsCleaned.ai.field,
+            slots: aiSlotsAfterGrave,
           },
         },
       };
@@ -502,7 +587,7 @@ export function BattleProvider({ children }) {
         ...nsCleaned,
         creaturesInvokedThisTurn: 0, // Reseta contador de invocações para o próximo turno
         creaturesWithUsedAbility: new Set(), // Reseta criaturas que usaram habilidade
-        log: [...logEntries, `Fim do turno de ${s.activePlayer}.`, ...processed.logs],
+        log: [...logEntries, ...resurrectionLogs, `Fim do turno de ${s.activePlayer}.`, ...processed.logs],
       };
     });
   }, [log]);
@@ -544,18 +629,10 @@ export function BattleProvider({ children }) {
     setState((s) => {
       if (s.phase !== 'playing') return s;
       if (s.activePlayer !== 'player') return s; // por enquanto s├│ jogador manual
-      // Verifica se já invocou 1 criatura neste turno
-      if ((s.creaturesInvokedThisTurn || 0) >= 1) {
-        return {
-          ...s,
-          log: [...s.log, 'Você já invocou 1 criatura neste turno!'],
-        };
-      }
-            const hand = [...s.player.hand];
+
+      const hand = [...s.player.hand];
       const cardId = hand[index];
       if (!cardId) return s;
-      const slots = [...s.player.field.slots];
-      if (slots[slotIndex]) return s; // slot ocupado
 
       // Extrai baseId se for instanceId
       let baseId = cardId;
@@ -568,6 +645,33 @@ export function BattleProvider({ children }) {
           }
         }
       }
+
+      // Verifica se é carta de efeito - NÃO PODE SER INVOCADA
+      if (String(baseId).toLowerCase().startsWith('effect_')) {
+        return {
+          ...s,
+          log: [...s.log, 'Cartas de efeito não podem ser invocadas em slots!'],
+        };
+      }
+
+      // Verifica se é carta de campo - NÃO PODE SER INVOCADA EM SLOT NORMAL
+      if (/^f\d{3}$/i.test(baseId) || String(baseId).toLowerCase().startsWith('field_')) {
+        return {
+          ...s,
+          log: [...s.log, 'Cartas de campo devem ser invocadas com o botão específico!'],
+        };
+      }
+
+      // Verifica se já invocou 1 criatura neste turno
+      if ((s.creaturesInvokedThisTurn || 0) >= 1) {
+        return {
+          ...s,
+          log: [...s.log, 'Você já invocou 1 criatura neste turno!'],
+        };
+      }
+
+      const slots = [...s.player.field.slots];
+      if (slots[slotIndex]) return s; // slot ocupado
 
       // Busca dados da criatura no creaturesPool usando baseId
       const creatureData = creaturesPool.find(c => c.id === baseId);
@@ -582,6 +686,7 @@ export function BattleProvider({ children }) {
       // Cria estrutura completa da criatura
       const creature = {
         id: cardId, // Mantém o instanceId original para identificação única
+        baseId: baseId, // ID da base da criatura para carregar dados
         name: creatureData.name?.pt || creatureData.name?.en || baseId,
         element: creatureData.element || 'puro',
         hp: build.hp,
@@ -618,18 +723,22 @@ export function BattleProvider({ children }) {
       };
 
       // Se for Ignis, ativa o efeito de ressurreição
-      if (build.hasIgnisBlessing && (s.player.graveyard || []).length > 0) {
-        const availableSlots = slots.reduce((acc, slot, idx) => {
-          if (!slot) acc.push(idx);
-          return acc;
-        }, []);
+      if (build.hasIgnisBlessing) {
+        if ((s.player.graveyard || []).length > 0) {
+          const availableSlots = slots.reduce((acc, slot, idx) => {
+            if (!slot) acc.push(idx);
+            return acc;
+          }, []);
 
-        newState.resurrectionPending = {
-          guardianId: baseId,
-          guardianName: creature.name,
-          availableSlots,
-        };
-        newState.log.push(`${creature.name} oferece ressuscitar uma criatura do cemitério!`);
+          newState.resurrectionPending = {
+            guardianId: baseId,
+            guardianName: creature.name,
+            availableSlots,
+          };
+          newState.log.push(`${creature.name} oferece ressuscitar uma criatura do cemitério!`);
+        } else {
+          newState.log.push(`${creature.name} tenta ressuscitar uma criatura, mas o cemitério está vazio.`);
+        }
       }
 
       // Se for Ekeranth, aplica queimadura em todos os inimigos
@@ -993,6 +1102,11 @@ export function BattleProvider({ children }) {
       const ressurectedCreature = graveyard[graveyardIndex];
       graveyard.splice(graveyardIndex, 1);
 
+      // Gera novo instanceId mas preserva o baseId
+      const baseId = ressurectedCreature.baseId || ressurectedCreature.id;
+      const newInstanceId = `${baseId}-${Date.now()}-${Math.floor(Math.random()*1000)}`;
+      const restoredCreature = { ...ressurectedCreature, id: newInstanceId, baseId: baseId };
+
       const newLog = [...s.log, `${ressurectedCreature.name} foi ressuscitado!`];
 
       // Se houver slot disponível
@@ -1003,7 +1117,7 @@ export function BattleProvider({ children }) {
           return { ...s, log: newLog };
         }
 
-        slots[targetSlotIndex] = ressurectedCreature;
+        slots[targetSlotIndex] = restoredCreature;
         return {
           ...s,
           player: { ...s.player, graveyard, field: { ...s.player.field, slots } },
@@ -1013,7 +1127,7 @@ export function BattleProvider({ children }) {
       }
 
       // Sem slot disponível, vai para a mão
-      const hand = [...s.player.hand, ressurectedCreature.id];
+      const hand = [...s.player.hand, newInstanceId];
       newLog.push(`${ressurectedCreature.name} foi para a mão.`);
       return {
         ...s,
@@ -1047,6 +1161,13 @@ export function BattleProvider({ children }) {
       const returnedCreature = aiSlots[slotIndex];
       if (!returnedCreature) return s;
 
+      // Adiciona animação de retorno à mão
+      const creatureId = returnedCreature.id;
+      const newAnimations = {
+        ...(s.animations || {}),
+        [creatureId]: { type: 'returningToHand', owner: 'ai', slotIndex }
+      };
+
       // Remove a criatura do slot
       aiSlots[slotIndex] = null;
 
@@ -1055,10 +1176,20 @@ export function BattleProvider({ children }) {
 
       const newLog = [...s.log, `${returnedCreature.name} foi retornado para a mão do oponente!`];
 
+      // Remove animação após 800ms
+      setTimeout(() => {
+        setState(s2 => {
+          const anims = { ...(s2.animations || {}) };
+          delete anims[creatureId];
+          return { ...s2, animations: anims };
+        });
+      }, 800);
+
       return {
         ...s,
         ai: { ...s.ai, field: { ...s.ai.field, slots: aiSlots }, hand: aiHand },
         returnCardPending: null,
+        animations: newAnimations,
         log: newLog,
       };
     });
@@ -1215,14 +1346,34 @@ export function BattleProvider({ children }) {
       // Remove do cemitério
       graveyard.splice(graveyardIndex, 1);
 
-      // Gera novo instanceId para a criatura do cemitério
-      const baseId = graveyardCreature.id.includes('-') ? graveyardCreature.id.split('-')[0] : graveyardCreature.id;
+      // Gera novo instanceId para a criatura do cemitério, mas preserva o baseId
+      const baseId = graveyardCreature.baseId || graveyardCreature.id;
       const newInstanceId = `${baseId}-${Date.now()}-${Math.floor(Math.random()*1000)}`;
-      const restoredCreature = { ...graveyardCreature, id: newInstanceId };
+
+      // Encontra a definição da criatura para restaurar life ao máximo
+      const creatureDefinition = Object.values(require('../assets/creaturesData'))
+        .flat()
+        .find(c => c.id === baseId);
+      const maxHp = creatureDefinition?.hp || graveyardCreature.maxHp || graveyardCreature.hp || 10;
+
+      const restoredCreature = {
+        ...graveyardCreature,
+        id: newInstanceId,
+        baseId: baseId,
+        hp: maxHp,  // Restaura vida ao máximo
+        maxHp: maxHp,
+        temporary: false,  // Remove flag de temporária (se houver)
+        resurrectDuration: undefined  // Remove duração (se houver)
+      };
 
       // Troca: coloca criatura restaurada no campo e envia a antiga para cemitério
       slots[fieldSlotIndex] = restoredCreature;
       graveyard.push(fieldCreature);
+
+      console.log('SERACT SWAP - Criatura trocada:', {
+        novaCreatura: graveyardCreature.name,
+        criaturaDescartada: fieldCreature.name
+      });
 
       const newLog = [...s.log, `${graveyardCreature.name} foi trazido do cemitério, e ${fieldCreature.name} foi enviado para o cemitério!`];
 
@@ -1504,6 +1655,16 @@ export function BattleProvider({ children }) {
       const attackerId = attacker.id;
       const targetId = target.id;
 
+      console.log('ATAQUE - Criatura:', {
+        nome: attacker.name,
+        id: attackerId,
+        hp: attacker.hp,
+        alvo: target.name,
+        targetId: targetId,
+        danoBase: typeof ability.damage === 'number' ? ability.damage : (ability.cost * 2 + 1),
+        habilidade: ability.name?.pt || ability.name?.en || 'Desconhecida'
+      });
+
       // Parsing simples de efeitos pela descrição
       const descText = (ability.desc?.pt || ability.desc?.en || '').toLowerCase();
       const mappings = [
@@ -1702,6 +1863,336 @@ export function BattleProvider({ children }) {
     });
   }, []);
 
+  // Funções para gerenciar cartas de efeito
+  const playEffectCard = useCallback((handIndex, targetInfo = null) => {
+    setState((s) => {
+      let newState = JSON.parse(JSON.stringify(s));
+      const cardId = s.player.hand[handIndex];
+
+      if (!cardId) return s;
+
+      // Busca o baseId: pode ser direto um baseId ou um instanceId
+      let baseId = null;
+
+      // Primeiro, verifica se é um baseId direto (effect_xxx)
+      if (String(cardId).toLowerCase().startsWith('effect_')) {
+        baseId = cardId;
+      } else {
+        // Senão, busca no cardCollection
+        Object.keys(cardCollection).forEach(key => {
+          const instances = cardCollection[key];
+          if (instances.some(inst => inst.instanceId === cardId)) {
+            baseId = key;
+          }
+        });
+      }
+
+      if (!baseId) {
+        console.warn(`BaseId not found for instance: ${cardId}`);
+        return s;
+      }
+
+      // Encontra a carta de efeito no arquivo correto
+      let effectCard = null;
+      if (String(baseId).toLowerCase().startsWith('effect_')) {
+        try {
+          const effectCards = require('../assets/cards/effectCards');
+          effectCard = effectCards.find(c => c.id === baseId);
+        } catch (e) {
+          console.warn(`Effect card not found in playEffectCard: ${baseId}`, e);
+          return s;
+        }
+      }
+
+      if (!effectCard) {
+        console.warn(`Effect card is null: ${baseId}`);
+        return s;
+      }
+
+      // Executa o efeito
+      const { executeEffectCard } = require('../logic/ai');
+      newState = executeEffectCard(newState, effectCard, targetInfo);
+
+      // Restaura creaturesWithUsedAbility como Set (foi perdido em JSON.parse/stringify)
+      newState.creaturesWithUsedAbility = new Set(s.creaturesWithUsedAbility || []);
+
+      // Limpa pendência da Compra Reversa (se houver)
+      newState.drawOpponentPending = null;
+
+      // Remove a carta da mão
+      newState.player.hand = newState.player.hand.filter((_, idx) => idx !== handIndex);
+
+      // Limpa state de espera
+      newState.effectCardPending = null;
+
+      // Armazena a última carta descartada para animação
+      newState.lastDiscardedEffectCard = cardId;
+
+      // Remove a flag de animação após 800ms (duração da animação)
+      setTimeout(() => {
+        setState(s => ({
+          ...s,
+          lastDiscardedEffectCard: null
+        }));
+      }, 800);
+
+      // Log
+      const effectName = typeof effectCard.name === 'object' ? effectCard.name.pt : effectCard.name;
+      log(`Jogou ${effectName}`);
+
+      return newState;
+    });
+  }, [cardCollection, log]);
+
+  const selectEffectCardTarget = useCallback((handIndex) => {
+    const cardId = state.player.hand[handIndex];
+    console.log('1. selectEffectCardTarget chamado. handIndex:', handIndex, 'cardId:', cardId);
+
+    // Busca o baseId: pode ser direto um baseId ou um instanceId
+    let baseId = null;
+
+    // Primeiro, verifica se é um baseId direto (effect_xxx)
+    if (String(cardId).toLowerCase().startsWith('effect_')) {
+      baseId = cardId;
+      console.log('2. BaseId encontrado direto:', baseId);
+    } else {
+      // Senão, busca no cardCollection
+      Object.keys(cardCollection).forEach(key => {
+        const instances = cardCollection[key];
+        if (instances.some(inst => inst.instanceId === cardId)) {
+          baseId = key;
+        }
+      });
+      console.log('2. BaseId encontrado na coleção:', baseId);
+    }
+
+    // Busca carta de efeito no arquivo correto
+    let effectCard = null;
+    if (baseId && String(baseId).toLowerCase().startsWith('effect_')) {
+      try {
+        const effectCards = require('../assets/cards/effectCards');
+        effectCard = effectCards.find(c => c.id === baseId);
+        console.log('3. Carta de efeito encontrada:', effectCard);
+      } catch (e) {
+        console.warn(`Effect card not found: ${baseId}`, e);
+        return;
+      }
+    }
+
+    if (!effectCard) {
+      console.warn(`Effect card not found for baseId: ${baseId}`);
+      return;
+    }
+
+    // Compra Reversa: aguarda clique no baralho do adversário
+    if (effectCard.effectType === 'drawOpponent') {
+      setState(s => ({
+        ...s,
+        drawOpponentPending: { handIndex, baseId }
+      }));
+      return;
+    }
+
+    console.log('4. targetType:', effectCard.targetType);
+
+    if (effectCard.targetType === 'self' || effectCard.targetType === 'allAllies' || effectCard.targetType === 'allEnemies' || effectCard.targetType === 'opponent') {
+      // Não requer seleção de alvo, jogar direto
+      console.log('5. Jogando carta diretamente (sem alvo)');
+      playEffectCard(handIndex);
+    } else {
+      // Requer seleção de alvo
+      console.log('5. Setando effectCardPending:', {
+        handIndex,
+        baseId,
+        requiresTarget: true,
+        targetType: effectCard.targetType
+      });
+      setState(s => {
+        console.log('6. setState executado. Estado anterior effectCardPending:', s.effectCardPending);
+        return {
+          ...s,
+          effectCardPending: {
+            handIndex,
+            baseId,
+            requiresTarget: true,
+            targetType: effectCard.targetType
+          }
+        };
+      });
+    }
+  }, [state.player.hand, cardCollection, playEffectCard]);
+
+  const cancelEffectCard = useCallback(() => {
+    setState(s => ({
+      ...s,
+      effectCardPending: null
+    }));
+  }, []);
+
+  const cancelDrawOpponent = useCallback(() => {
+    setState(s => ({
+      ...s,
+      drawOpponentPending: null
+    }));
+  }, []);
+
+  const updateEffectCardTarget = useCallback((allyIndex) => {
+    setState(s => ({
+      ...s,
+      effectCardPending: {
+        ...s.effectCardPending,
+        selectedAllyIndex: allyIndex
+      }
+    }));
+  }, []);
+
+  // Funções para ataque espectral (Sepultura do Espectro)
+  const selectSpectralAbility = useCallback((abilityIndex) => {
+    setState(s => ({
+      ...s,
+      spectralAttackPending: {
+        ...s.spectralAttackPending,
+        selectedAbility: abilityIndex
+      }
+    }));
+  }, []);
+
+  const executeSpectralAttack = useCallback((targetSlotIndex) => {
+    setState(s => {
+      if (!s.spectralAttackPending) return s;
+
+      if (s.spectralAttackPending.resolving) return s;
+
+      const { creature, selectedAbility } = s.spectralAttackPending;
+      const ability = creature.abilities?.[selectedAbility];
+
+      if (!ability) return s;
+
+      // Executa o ataque usando a lógica padrão
+      const target = s.ai.field.slots[targetSlotIndex];
+      if (!target || target.hp <= 0) return s;
+
+      // Aplica dano do ataque espectral
+      const baseDamage = typeof ability.damage === 'number' ? ability.damage : (ability.cost * 2 + 1);
+      const result = effectRegistry.applyDamage(s, {
+        attackerId: creature.id,
+        targetId: target.id,
+        baseDamage,
+        attackerElement: creature.element,
+        ignoreShield: false,
+      });
+
+      const abilityName = typeof ability.name === 'object' ? ability.name.pt : ability.name;
+      const creatureName = typeof creature.name === 'object' ? creature.name.pt : creature.name;
+
+      const nextState = {
+        ...result.newState,
+        spectralAttackPending: {
+          ...s.spectralAttackPending,
+          selectedAbility: undefined,
+          resolving: true,
+        },
+        log: [...result.newState.log, `${creatureName} atacou do cemitério com ${abilityName}!`]
+      };
+
+      // Mostra animação de dano
+      const animPayload = {
+        type: 'damage',
+        amount: result.damageDealt,
+        hasAdvantage: !!result.hasAdvantage,
+        hasDisadvantage: !!result.hasDisadvantage,
+        shieldHit: !!result.shieldHit,
+        shieldBroken: !!result.shieldBroken,
+      };
+
+      nextState.animations = {
+        ...nextState.animations,
+        [target.id]: animPayload,
+      };
+
+      // Remove animação de dano após 900ms
+      setTimeout(() => {
+        setState(s2 => {
+          const anims = { ...(s2.animations || {}) };
+          if (anims[target.id]?.type === 'damage') {
+            delete anims[target.id];
+          }
+          return { ...s2, animations: anims };
+        });
+      }, 900);
+
+      // Processa morte se necessário
+      if (result.died) {
+        setTimeout(() => {
+          setState(s2 => {
+            // Adiciona animação de morte
+            const stateWithDeath = {
+              ...s2,
+              animations: {
+                ...(s2.animations || {}),
+                [target.id]: { death: true },
+              },
+            };
+
+            // Aguarda 600ms (duração da animação de morte) para remover do campo
+            setTimeout(() => {
+              setState(s3 => {
+                const updated = { ...s3 };
+                updated.ai.field.slots = updated.ai.field.slots.map(slot => slot?.id === target.id ? null : slot);
+                return updated;
+              });
+            }, 600);
+
+            return stateWithDeath;
+          });
+        }, 400);
+
+        // Adiciona ao cemitério e diminui orbs
+        nextState.ai.graveyard = [...(nextState.ai.graveyard || []), target];
+        nextState.ai.orbs = Math.max(0, (nextState.ai.orbs || 5) - 1);
+        nextState.log.push(`${target.name} foi derrotado! ${nextState.ai.orbs === 0 ? '⚰️ FIM DE JOGO!' : '⚰️ -1 orbe'}`);
+
+        // Adiciona ao killFeed
+        nextState.killFeed = [...(nextState.killFeed || []), {
+          turn: nextState.turn,
+          attacker: creature?.name || 'Espectro',
+          attackerId: creature.id,
+          target: target.name,
+          targetId: target.id,
+          hadAdvantage: !!result.hasAdvantage,
+        }];
+
+        // Verifica se o jogo acabou
+        if (nextState.ai.orbs === 0) {
+          nextState.phase = 'ended';
+          nextState.gameResult = {
+            winner: 'player',
+            loser: 'ai',
+            kills: nextState.killFeed,
+            turns: nextState.turn,
+            stats: nextState.battleStats,
+          };
+        }
+      }
+
+      setTimeout(() => {
+        setState(s2 => ({
+          ...s2,
+          spectralAttackPending: null
+        }));
+      }, result.died ? 1400 : 700);
+
+      return nextState;
+    });
+  }, []);
+
+  const cancelSpectralAttack = useCallback(() => {
+    setState(s => ({
+      ...s,
+      spectralAttackPending: null
+    }));
+  }, []);
+
   const value = useMemo(() => ({
     state,
     startBattle,
@@ -1727,6 +2218,14 @@ export function BattleProvider({ children }) {
     healAllyCard,
     cancelHealCard,
     log,
+    playEffectCard,
+    selectEffectCardTarget,
+    updateEffectCardTarget,
+    cancelEffectCard,
+    cancelDrawOpponent,
+    selectSpectralAbility,
+    executeSpectralAttack,
+    cancelSpectralAttack,
     startPlaying: (firstPlayer) => {
       setState(s => ({
         ...s,
@@ -1734,7 +2233,7 @@ export function BattleProvider({ children }) {
         activePlayer: firstPlayer === 'player' ? 'player' : 'ai',
       }));
     },
-  }), [state, startBattle, endTurn, drawPlayerCard, summonFromHand, invokeFieldCard, invokeFieldCardAI, useAbility, resurrectCreature, cancelResurrection, returnEnemyCard, cancelReturnCard, poisonEnemyCard, cancelPoisonCard, stealEnemyCard, cancelStealCard, selectFieldCardForSwap, completeSwap, cancelSwap, freezeEnemyCard, cancelFreezeCard, healAllyCard, cancelHealCard, log]);
+  }), [state, startBattle, endTurn, drawPlayerCard, summonFromHand, invokeFieldCard, invokeFieldCardAI, useAbility, resurrectCreature, cancelResurrection, returnEnemyCard, cancelReturnCard, poisonEnemyCard, cancelPoisonCard, stealEnemyCard, cancelStealCard, selectFieldCardForSwap, completeSwap, cancelSwap, freezeEnemyCard, cancelFreezeCard, healAllyCard, cancelHealCard, log, playEffectCard, selectEffectCardTarget, updateEffectCardTarget, cancelEffectCard, cancelDrawOpponent, selectSpectralAbility, executeSpectralAttack, cancelSpectralAttack]);
 
   const applyAiSummonBlessings = useCallback((s, build, creatureData, summonSlotIndex, aiSlots, logEntries) => {
     const creatureName = creatureData.name?.pt || creatureData.name?.en || creatureData.id;
@@ -1826,7 +2325,7 @@ export function BattleProvider({ children }) {
     if (build.hasNoctyraBlessing) {
       const aiOrbs = s.ai?.orbs || 0;
       const playerOrbs = s.player?.orbs || 0;
-      if (aiOrbs < 5 && playerOrbs > 0) {
+      if (aiOrbs < 5 && playerOrbs > 1) {
         s.ai = { ...s.ai, orbs: Math.min(aiOrbs + 1, 5) };
         s.player = { ...s.player, orbs: Math.max(playerOrbs - 1, 0) };
         nextLog = [...nextLog, `${creatureName} drenou 1 vida do seu guardião!`];
@@ -2053,6 +2552,7 @@ export function BattleProvider({ children }) {
           const instanceId = `${cardId}-${Date.now()}-${Math.floor(Math.random()*1000)}`;
           slots[slotIndex] = {
             id: instanceId,
+            baseId: cardId,
             name: creatureData.name?.pt || creatureData.name?.en || cardId,
             element: creatureData.element || 'puro',
             hp: build.hp,
@@ -2074,21 +2574,38 @@ export function BattleProvider({ children }) {
           s.battleStats.ai.cardsSummoned = [...s.battleStats.ai.cardsSummoned, cardId];
         }
       } else if (emptyIndex >= 0 && hand.length > 0 && canInvokeCreature) {
-        const cardId = hand.shift();
-        const creatureData = creaturesPool.find(c => c.id === cardId) || {};
-        const build = resolveCreatureBuild(creatureData);
-        const instanceId = `${cardId}-${Date.now()}-${Math.floor(Math.random()*1000)}`;
-        slots[emptyIndex] = {
-          id: instanceId,
-          name: creatureData.name?.pt || creatureData.name?.en || cardId,
-          element: creatureData.element || 'puro',
-          hp: build.hp,
-          maxHp: build.maxHp,
-          atk: build.atk,
-          def: build.def,
-          abilities: build.abilities,
-          buffs: [],
-          debuffs: [],
+        // Procura a primeira carta que NÃO seja de campo ou efeito
+        let cardToInvoke = null;
+        let cardIndex = -1;
+
+        for (let i = 0; i < hand.length; i++) {
+          const cId = hand[i];
+          // Pula cartas de efeito e campo
+          if (String(cId).toLowerCase().startsWith('effect_') || /^f\d{3}$/i.test(cId) || String(cId).toLowerCase().startsWith('field_')) {
+            continue;
+          }
+          cardToInvoke = cId;
+          cardIndex = i;
+          break;
+        }
+
+        if (cardToInvoke) {
+          hand.splice(cardIndex, 1);
+          const creatureData = creaturesPool.find(c => c.id === cardToInvoke) || {};
+          const build = resolveCreatureBuild(creatureData);
+          const instanceId = `${cardToInvoke}-${Date.now()}-${Math.floor(Math.random()*1000)}`;
+          slots[emptyIndex] = {
+            id: instanceId,
+            baseId: cardToInvoke,
+            name: creatureData.name?.pt || creatureData.name?.en || cardToInvoke,
+            element: creatureData.element || 'puro',
+            hp: build.hp,
+            maxHp: build.maxHp,
+            atk: build.atk,
+            def: build.def,
+            abilities: build.abilities,
+            buffs: [],
+            debuffs: [],
           shield: build.perkEffects?.shieldOnSummon?.amount || 0,
           shieldTurns: build.perkEffects?.shieldOnSummon?.duration || 0,
           statusEffects: [],
@@ -2096,9 +2613,10 @@ export function BattleProvider({ children }) {
         const aiBlessingResult = applyAiSummonBlessings(s, build, creatureData, emptyIndex, slots, logEntries);
         logEntries = aiBlessingResult.logEntries;
         updated = true;
-        logEntries = [...logEntries, `IA invocou ${cardId} no slot ${emptyIndex + 1}.`];
+        logEntries = [...logEntries, `IA invocou ${cardToInvoke} no slot ${emptyIndex + 1}.`];
         // Registra invocação nas estatísticas
-        s.battleStats.ai.cardsSummoned = [...s.battleStats.ai.cardsSummoned, cardId];
+        s.battleStats.ai.cardsSummoned = [...s.battleStats.ai.cardsSummoned, cardToInvoke];
+        }
       } else {
         logEntries = [...logEntries, 'IA nao fez acao.'];
       }

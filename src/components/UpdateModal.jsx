@@ -29,10 +29,11 @@ const translations = {
   },
 };
 
-// Novidades da versão 0.2.7
+// Novidades da versão 0.2.8
 const updateNotes = {
   pt: [
-    '🎬 Wallpaper animado agora incluído (corrigido problema de atualização)',
+    '🔧 Sistema de download de atualizações corrigido',
+    '🎬 Wallpaper animado agora incluído',
     '🔥 Três novos guardiões adicionados: Arigus, Roenhell e Moar',
     '🖼️ Melhorias na renderização de imagens de cartas de efeito',
     '📚 Layout aprimorado do Bestiário com ícones de elementos',
@@ -42,7 +43,8 @@ const updateNotes = {
     '🎨 Interface mais clara e responsiva em todas as resoluções',
   ],
   en: [
-    '🎬 Animated wallpaper now included (fixed update issue)',
+    '🔧 Update download system fixed',
+    '🎬 Animated wallpaper now included',
     '🔥 Three new guardians added: Arigus, Roenhell, and Moar',
     '🖼️ Improved rendering of effect card images',
     '📚 Enhanced Bestiary layout with element icons',
@@ -70,7 +72,7 @@ export default function UpdateModal({
         {!downloading && !error && !showNotes && (
           <>
             <p>{t.message}</p>
-            <p style={{ fontSize: '0.9em', color: '#999', marginTop: '8px' }}>{t.version}: 0.2.7</p>
+            <p style={{ fontSize: '0.9em', color: '#999', marginTop: '8px' }}>{t.version}: 0.2.8</p>
             <div className="update-modal-actions">
               <button
                 type="button"

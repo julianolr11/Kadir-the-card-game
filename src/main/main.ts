@@ -124,43 +124,71 @@ const createWindow = async () => {
     return { action: 'deny' };
   });
 
+  // Configurar autoUpdater
+  autoUpdater.autoDownload = false; // Não baixar automaticamente, só quando usuário clicar
+  autoUpdater.autoInstallOnAppQuit = true; // Instalar ao sair do app
+  log.info('AutoUpdater configurado');
+
   // O update será iniciado manualmente via IPC do renderer
   // IPC handlers para update
   ipcMain.handle('update-check', async () => {
     try {
+      log.info('IPC: Checking for updates...');
       const result = await autoUpdater.checkForUpdates();
+      log.info('Check result:', result);
       if (result && result.updateInfo && result.updateInfo.version !== app.getVersion()) {
+        log.info(`Update available: ${result.updateInfo.version} (current: ${app.getVersion()})`);
         return { updateAvailable: true, info: result.updateInfo };
       }
+      log.info('No update available');
       return { updateAvailable: false };
-    } catch (err) {
+    } catch (err: any) {
+      log.error('Update check error:', err);
       return { updateAvailable: false, error: err?.message || 'Update check failed' };
     }
   });
 
   ipcMain.handle('update-download', async () => {
     try {
+      log.info('Iniciando download da atualização...');
       await autoUpdater.downloadUpdate();
+      log.info('Download iniciado com sucesso');
       return { started: true };
-    } catch (err) {
+    } catch (err: any) {
+      log.error('Erro ao iniciar download:', err);
       return { started: false, error: err?.message || 'Download failed' };
     }
   });
 
   // Eventos de progresso e status
+  autoUpdater.on('checking-for-update', () => {
+    log.info('Checking for update...');
+  });
+
+  autoUpdater.on('update-available', (info) => {
+    log.info('Update available:', info);
+  });
+
+  autoUpdater.on('update-not-available', (info) => {
+    log.info('Update not available:', info);
+  });
+
   autoUpdater.on('download-progress', (progressObj) => {
+    log.info(`Download speed: ${progressObj.bytesPerSecond} - Downloaded ${progressObj.percent}%`);
     if (mainWindow) {
       mainWindow.webContents.send('update-download-progress', progressObj);
     }
   });
 
   autoUpdater.on('update-downloaded', (info) => {
+    log.info('Update downloaded:', info);
     if (mainWindow) {
       mainWindow.webContents.send('update-downloaded', info);
     }
   });
 
   autoUpdater.on('error', (err) => {
+    log.error('AutoUpdater error:', err);
     if (mainWindow) {
       mainWindow.webContents.send('update-error', err?.message || 'Update error');
     }

@@ -68,7 +68,7 @@ export default function UpdateModal({
         {!downloading && !error && !showNotes && (
           <>
             <p>{t.message}</p>
-            <p style={{ fontSize: '0.9em', color: '#999', marginTop: '8px' }}>{t.version}: 1.2.6</p>
+            <p style={{ fontSize: '0.9em', color: '#999', marginTop: '8px' }}>{t.version}: 0.2.6</p>
             <div className="update-modal-actions">
               <button
                 type="button"

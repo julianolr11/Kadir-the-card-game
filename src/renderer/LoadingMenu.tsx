@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import OptionsModal from '../components/OptionsModal';
 import ExitModal from '../components/ExitModal';
 import '../styles/animations.css';
@@ -20,6 +20,8 @@ const appVersion = pkg.version || '1.0.0';
 function LoadingMenu({ onNavigate, menuMusicRef, introMusicRef }: LoadingMenuProps) {
   const [showOptions, setShowOptions] = useState(false);
   const [showExit, setShowExit] = useState(false);
+  const [videoError, setVideoError] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   // Pausa a música do menu quando entra em LoadingMenu
   useEffect(() => {
@@ -27,6 +29,18 @@ function LoadingMenu({ onNavigate, menuMusicRef, introMusicRef }: LoadingMenuPro
       menuMusicRef.current.pause();
     }
   }, [menuMusicRef]);
+
+  const handleVideoError = () => {
+    setVideoError(true);
+  };
+
+  const handleVideoLoaded = () => {
+    if (videoRef.current) {
+      videoRef.current.play().catch(() => {
+        setVideoError(true);
+      });
+    }
+  };
 
   const handleIniciar = () => {
     // Para a música intro
@@ -75,20 +89,49 @@ function LoadingMenu({ onNavigate, menuMusicRef, introMusicRef }: LoadingMenuPro
       >
         v{appVersion}
       </div>
-      <img
-        src={wallpaper}
-        alt="Menu"
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-          filter: 'brightness(0.9)',
-        }}
-        className="fade-in"
-      />
+      
+      {/* Vídeo do wallpaper em loop */}
+      {!videoError && (
+        <video
+          ref={videoRef}
+          src="/assets/img/wallpaper/wallpaper-menu.mp4"
+          autoPlay
+          loop
+          muted
+          playsInline
+          onError={handleVideoError}
+          onLoadedData={handleVideoLoaded}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            filter: 'brightness(0.9)',
+          }}
+          className="fade-in"
+        />
+      )}
+      
+      {/* Fallback: Imagem estática caso vídeo falhe */}
+      {videoError && (
+        <img
+          src={wallpaper}
+          alt="Menu"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            filter: 'brightness(0.9)',
+          }}
+          className="fade-in"
+        />
+      )}
+      
       <div className="vinheta" />
       <div
         style={{

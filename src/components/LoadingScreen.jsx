@@ -106,7 +106,7 @@ function LoadingScreen({ onFinish, menuMusicRef }) {
       {!videoError && (
         <video
           ref={videoRef}
-          src="/assets/img/wallpaper/wallpaper-animated.mp4"
+          src="/assets/img/wallpaper/wallpaper-menu.mp4"
           autoPlay
           loop
           muted

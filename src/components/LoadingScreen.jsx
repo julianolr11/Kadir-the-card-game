@@ -4,7 +4,8 @@ import menuMusic from '../assets/sounds/music/menu.mp3';
 import { AppContext } from '../context/AppContext';
 import '../styles/animations.css';
 import '../styles/vinheta.css';
-import wallpaper from '../assets/img/wallpaper/wallpaper.png';
+import wallpaperAnimated from '../assets/img/wallpaper/wallpaper-animated.mp4';
+import wallpaperStatic from '../assets/img/wallpaper/wallpaper.png';
 import OptionsModal from './OptionsModal';
 import ExitModal from './ExitModal';
 import StartFlow from './StartFlow';
@@ -28,6 +29,7 @@ function LoadingScreen({ onFinish, menuMusicRef }) {
   const [showStart, setShowStart] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
   const [showExit, setShowExit] = useState(false);
+  const [wallpaperTransition, setWallpaperTransition] = useState('video'); // 'video' ou 'image'
   // audioRef removido - intro agora é global no App
   // menuAudioRef removido, agora usa menuMusicRef global
   const keyClickAudioRef = useRef(null);
@@ -35,11 +37,19 @@ function LoadingScreen({ onFinish, menuMusicRef }) {
   const t = translations[lang] || translations.ptbr;
 
   useEffect(() => {
+    // Transição do vídeo para a imagem após 4 segundos
+    const transitionTimer = setTimeout(() => {
+      setWallpaperTransition('transitioning');
+    }, 4000);
+
     const timer = setTimeout(() => {
+      setWallpaperTransition('image');
       setShowMenu(true);
       if (onFinish) onFinish();
     }, 5000); // 5 segundos
+
     return () => {
+      clearTimeout(transitionTimer);
       clearTimeout(timer);
     };
   }, [onFinish, musicVolume]);
@@ -77,9 +87,14 @@ function LoadingScreen({ onFinish, menuMusicRef }) {
     >
       {/* Áudio da intro agora é global no App.tsx */}
       {/* menuMusicRef é global, não precisa de <audio> local */}
-      <img
-        src={wallpaper}
-        alt="Loading"
+      
+      {/* Wallpaper Animado (Vídeo) - Transição para imagem estática */}
+      <video
+        src={wallpaperAnimated}
+        autoPlay
+        loop
+        muted
+        playsInline
         style={{
           position: 'absolute',
           top: 0,
@@ -88,9 +103,31 @@ function LoadingScreen({ onFinish, menuMusicRef }) {
           height: '100%',
           objectFit: 'cover',
           filter: 'brightness(0.9)',
+          opacity: wallpaperTransition === 'video' ? 1 : wallpaperTransition === 'transitioning' ? 1 : 0,
+          transition: wallpaperTransition === 'transitioning' ? 'opacity 1s ease-in' : 'none',
         }}
-        className="fade-in"
+        className={wallpaperTransition === 'transitioning' ? 'wallpaper-video-out' : 'fade-in'}
       />
+
+      {/* Wallpaper Estático (Imagem) - Aparece após transição */}
+      {wallpaperTransition !== 'video' && (
+        <img
+          src={wallpaperStatic}
+          alt="Wallpaper"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            filter: 'brightness(0.9)',
+            opacity: wallpaperTransition === 'image' ? 1 : 0,
+            transition: wallpaperTransition === 'transitioning' ? 'opacity 1s ease-out' : 'none',
+          }}
+          className={wallpaperTransition === 'transitioning' ? 'wallpaper-image-in' : ''}
+        />
+      )}
       <div className="vinheta" />
       {showMenu && (
         <>

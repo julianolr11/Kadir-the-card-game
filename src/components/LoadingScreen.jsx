@@ -4,7 +4,6 @@ import menuMusic from '../assets/sounds/music/menu.mp3';
 import { AppContext } from '../context/AppContext';
 import '../styles/animations.css';
 import '../styles/vinheta.css';
-import wallpaperAnimated from '../assets/img/wallpaper/wallpaper-animated.mp4';
 import wallpaperStatic from '../assets/img/wallpaper/wallpaper.png';
 import OptionsModal from './OptionsModal';
 import ExitModal from './ExitModal';
@@ -87,10 +86,10 @@ function LoadingScreen({ onFinish, menuMusicRef }) {
     >
       {/* Áudio da intro agora é global no App.tsx */}
       {/* menuMusicRef é global, não precisa de <audio> local */}
-      
+
       {/* Wallpaper Animado (Vídeo) - Transição para imagem estática */}
       <video
-        src={wallpaperAnimated}
+        src="/assets/img/wallpaper/wallpaper-animated.mp4"
         autoPlay
         loop
         muted

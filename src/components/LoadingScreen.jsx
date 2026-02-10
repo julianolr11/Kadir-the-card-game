@@ -86,7 +86,7 @@ function LoadingScreen({ onFinish, menuMusicRef }) {
     >
       {/* Áudio da intro agora é global no App.tsx */}
       {/* menuMusicRef é global, não precisa de <audio> local */}
-      
+
       {/* Wallpaper Animado (Vídeo) - Transição para imagem estática */}
       <video
         src="/assets/img/wallpaper/wallpaper-animated.mp4"

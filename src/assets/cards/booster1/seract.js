@@ -3,7 +3,7 @@ module.exports = {
   id: 'seract',
   title: { pt: 'Calamidade Gélida', en: 'Frozen Calamity' },
   num: 31,
-  height: 0.15,
+  height: 2.1,
   weakness: 'puro',
   name: { pt: 'Seract', en: 'Seract' },
   type: { pt: 'Sombria', en: 'Shadow' },

@@ -184,9 +184,16 @@ const configuration: webpack.Configuration = {
     compress: true,
     hot: true,
     headers: { 'Access-Control-Allow-Origin': '*' },
-    static: {
-      publicPath: '/',
-    },
+    static: [
+      {
+        directory: path.join(webpackPaths.rootPath, 'public'),
+        publicPath: '/',
+      },
+      {
+        directory: webpackPaths.distRendererPath,
+        publicPath: '/',
+      },
+    ],
     historyApiFallback: {
       verbose: true,
     },

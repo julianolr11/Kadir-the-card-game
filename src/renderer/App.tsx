@@ -144,8 +144,8 @@ export default function App() {
 
   return (
     <AppProvider>
-      <IntroMusicPlayer ref={introMusicRef} />
-      {screen !== 'battle' && <MenuMusicPlayer ref={menuMusicRef} />}
+      {(screen === 'loading' || screen === 'menu') && <IntroMusicPlayer ref={introMusicRef} />}
+      {screen !== 'battle' && screen !== 'loading' && <MenuMusicPlayer ref={menuMusicRef} />}
       {checkingUpdate && (
         <div style={{
           position: 'fixed',

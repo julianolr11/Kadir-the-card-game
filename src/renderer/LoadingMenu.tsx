@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import OptionsModal from '../components/OptionsModal';
 import ExitModal from '../components/ExitModal';
 import '../styles/animations.css';
@@ -20,6 +20,13 @@ const appVersion = pkg.version || '1.0.0';
 function LoadingMenu({ onNavigate, menuMusicRef, introMusicRef }: LoadingMenuProps) {
   const [showOptions, setShowOptions] = useState(false);
   const [showExit, setShowExit] = useState(false);
+
+  // Pausa a música do menu quando entra em LoadingMenu
+  useEffect(() => {
+    if (menuMusicRef?.current) {
+      menuMusicRef.current.pause();
+    }
+  }, [menuMusicRef]);
 
   const handleIniciar = () => {
     // Para a música intro

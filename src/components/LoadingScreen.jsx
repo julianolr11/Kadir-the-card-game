@@ -28,15 +28,14 @@ function LoadingScreen({ onFinish, menuMusicRef }) {
   const [showStart, setShowStart] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
   const [showExit, setShowExit] = useState(false);
-  const [wallpaperTransition, setWallpaperTransition] = useState('video'); // 'video' ou 'image'
-  // audioRef removido - intro agora é global no App
-  // menuAudioRef removido, agora usa menuMusicRef global
+  const [wallpaperTransition, setWallpaperTransition] = useState('video');
+  const [videoError, setVideoError] = useState(false);
+  const videoRef = useRef(null);
   const keyClickAudioRef = useRef(null);
   const { musicVolume, lang, effectsVolume } = useContext(AppContext);
   const t = translations[lang] || translations.ptbr;
 
   useEffect(() => {
-    // Transição do vídeo para a imagem após 4 segundos
     const transitionTimer = setTimeout(() => {
       setWallpaperTransition('transitioning');
     }, 4000);
@@ -45,13 +44,29 @@ function LoadingScreen({ onFinish, menuMusicRef }) {
       setWallpaperTransition('image');
       setShowMenu(true);
       if (onFinish) onFinish();
-    }, 5000); // 5 segundos
+    }, 5000);
 
     return () => {
       clearTimeout(transitionTimer);
       clearTimeout(timer);
     };
   }, [onFinish, musicVolume]);
+
+  const handleVideoError = (e) => {
+    setVideoError(true);
+    setWallpaperTransition('image');
+  };
+
+  const handleVideoLoaded = () => {
+    console.log('Vídeo carregado com sucesso');
+    if (videoRef.current) {
+      videoRef.current.play().catch(err => {
+        console.error('Erro ao reproduzir vídeo:', err);
+        setVideoError(true);
+        setWallpaperTransition('image');
+      });
+    }
+  };
 
   const playClick = () => {
     if (keyClickAudioRef.current) {
@@ -88,28 +103,33 @@ function LoadingScreen({ onFinish, menuMusicRef }) {
       {/* menuMusicRef é global, não precisa de <audio> local */}
 
       {/* Wallpaper Animado (Vídeo) - Transição para imagem estática */}
-      <video
-        src="/assets/img/wallpaper/wallpaper-animated.mp4"
-        autoPlay
-        loop
-        muted
-        playsInline
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-          filter: 'brightness(0.9)',
-          opacity: wallpaperTransition === 'video' ? 1 : wallpaperTransition === 'transitioning' ? 1 : 0,
-          transition: wallpaperTransition === 'transitioning' ? 'opacity 1s ease-in' : 'none',
-        }}
-        className={wallpaperTransition === 'transitioning' ? 'wallpaper-video-out' : 'fade-in'}
-      />
+      {!videoError && (
+        <video
+          ref={videoRef}
+          src="/assets/img/wallpaper/wallpaper-animated.mp4"
+          autoPlay
+          loop
+          muted
+          playsInline
+          onError={handleVideoError}
+          onLoadedData={handleVideoLoaded}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            filter: 'brightness(0.9)',
+            opacity: wallpaperTransition === 'video' ? 1 : wallpaperTransition === 'transitioning' ? 1 : 0,
+            transition: wallpaperTransition === 'transitioning' ? 'opacity 1s ease-in' : 'none',
+          }}
+          className={wallpaperTransition === 'transitioning' ? 'wallpaper-video-out' : 'fade-in'}
+        />
+      )}
 
       {/* Wallpaper Estático (Imagem) - Aparece após transição */}
-      {wallpaperTransition !== 'video' && (
+      {(wallpaperTransition !== 'video' || videoError) && (
         <img
           src={wallpaperStatic}
           alt="Wallpaper"

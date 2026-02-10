@@ -21,6 +21,7 @@ function LoadingMenu({ onNavigate, menuMusicRef, introMusicRef }: LoadingMenuPro
   const [showOptions, setShowOptions] = useState(false);
   const [showExit, setShowExit] = useState(false);
   const [videoError, setVideoError] = useState(false);
+  const [videoOpacity, setVideoOpacity] = useState(1);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // Pausa a música do menu quando entra em LoadingMenu
@@ -39,6 +40,25 @@ function LoadingMenu({ onNavigate, menuMusicRef, introMusicRef }: LoadingMenuPro
       videoRef.current.play().catch(() => {
         setVideoError(true);
       });
+    }
+  };
+
+  const handleTimeUpdate = () => {
+    if (!videoRef.current) return;
+    const video = videoRef.current;
+    const timeRemaining = video.duration - video.currentTime;
+    
+    // Fade out nos últimos 0.5s
+    if (timeRemaining <= 0.5 && timeRemaining > 0) {
+      setVideoOpacity(timeRemaining * 2); // 0.5s -> opacity 1 to 0
+    }
+    // Fade in nos primeiros 0.5s
+    else if (video.currentTime <= 0.5) {
+      setVideoOpacity(video.currentTime * 2); // 0 to 0.5s -> opacity 0 to 1
+    }
+    // Opacidade normal no meio
+    else if (videoOpacity !== 1) {
+      setVideoOpacity(1);
     }
   };
 
@@ -89,7 +109,7 @@ function LoadingMenu({ onNavigate, menuMusicRef, introMusicRef }: LoadingMenuPro
       >
         v{appVersion}
       </div>
-      
+
       {/* Vídeo do wallpaper em loop */}
       {!videoError && (
         <video
@@ -101,6 +121,7 @@ function LoadingMenu({ onNavigate, menuMusicRef, introMusicRef }: LoadingMenuPro
           playsInline
           onError={handleVideoError}
           onLoadedData={handleVideoLoaded}
+          onTimeUpdate={handleTimeUpdate}
           style={{
             position: 'absolute',
             top: 0,
@@ -109,11 +130,13 @@ function LoadingMenu({ onNavigate, menuMusicRef, introMusicRef }: LoadingMenuPro
             height: '100%',
             objectFit: 'cover',
             filter: 'brightness(0.9)',
+            opacity: videoOpacity,
+            transition: 'opacity 0.5s ease-in-out',
           }}
           className="fade-in"
         />
       )}
-      
+
       {/* Fallback: Imagem estática caso vídeo falhe */}
       {videoError && (
         <img
@@ -131,7 +154,7 @@ function LoadingMenu({ onNavigate, menuMusicRef, introMusicRef }: LoadingMenuPro
           className="fade-in"
         />
       )}
-      
+
       <div className="vinheta" />
       <div
         style={{

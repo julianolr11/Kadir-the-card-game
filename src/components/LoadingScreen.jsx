@@ -30,6 +30,7 @@ function LoadingScreen({ onFinish, menuMusicRef }) {
   const [showExit, setShowExit] = useState(false);
   const [wallpaperTransition, setWallpaperTransition] = useState('video');
   const [videoError, setVideoError] = useState(false);
+  const [videoOpacity, setVideoOpacity] = useState(1);
   const videoRef = useRef(null);
   const keyClickAudioRef = useRef(null);
   const { musicVolume, lang, effectsVolume } = useContext(AppContext);
@@ -65,6 +66,25 @@ function LoadingScreen({ onFinish, menuMusicRef }) {
         setVideoError(true);
         setWallpaperTransition('image');
       });
+    }
+  };
+
+  const handleTimeUpdate = () => {
+    if (!videoRef.current) return;
+    const video = videoRef.current;
+    const timeRemaining = video.duration - video.currentTime;
+    
+    // Fade out nos últimos 0.5s
+    if (timeRemaining <= 0.5 && timeRemaining > 0) {
+      setVideoOpacity(timeRemaining * 2); // 0.5s -> opacity 1 to 0
+    }
+    // Fade in nos primeiros 0.5s
+    else if (video.currentTime <= 0.5) {
+      setVideoOpacity(video.currentTime * 2); // 0 to 0.5s -> opacity 0 to 1
+    }
+    // Opacidade normal no meio
+    else if (videoOpacity !== 1) {
+      setVideoOpacity(1);
     }
   };
 
@@ -113,6 +133,7 @@ function LoadingScreen({ onFinish, menuMusicRef }) {
           playsInline
           onError={handleVideoError}
           onLoadedData={handleVideoLoaded}
+          onTimeUpdate={handleTimeUpdate}
           style={{
             position: 'absolute',
             top: 0,
@@ -121,8 +142,8 @@ function LoadingScreen({ onFinish, menuMusicRef }) {
             height: '100%',
             objectFit: 'cover',
             filter: 'brightness(0.9)',
-            opacity: wallpaperTransition === 'video' ? 1 : wallpaperTransition === 'transitioning' ? 1 : 0,
-            transition: wallpaperTransition === 'transitioning' ? 'opacity 1s ease-in' : 'none',
+            opacity: wallpaperTransition === 'video' ? videoOpacity : wallpaperTransition === 'transitioning' ? videoOpacity : 0,
+            transition: wallpaperTransition === 'transitioning' ? 'opacity 1s ease-in' : 'opacity 0.5s ease-in-out',
           }}
           className={wallpaperTransition === 'transitioning' ? 'wallpaper-video-out' : 'fade-in'}
         />

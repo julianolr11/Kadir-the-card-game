@@ -40,7 +40,7 @@ export default function SplashScreen({ onFinish }) {
     <div className={`splash-screen ${fadeOut ? 'fade-out' : ''}`}>
       <video
         className="splash-video"
-        src={require('../assets/img/wallpaper/Rastro.mp4')}
+        src={require('../assets/img/wallpaper/rastro.mp4')}
         autoPlay
         muted
         playsInline

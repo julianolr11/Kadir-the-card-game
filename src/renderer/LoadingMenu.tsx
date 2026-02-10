@@ -32,12 +32,21 @@ function LoadingMenu({ onNavigate, menuMusicRef, introMusicRef }: LoadingMenuPro
   }, [menuMusicRef]);
 
   const handleVideoError = () => {
+    console.error('ERRO NO VÍDEO LoadingMenu');
+    console.error('Video error details:', {
+      src: videoRef.current?.src,
+      error: videoRef.current?.error,
+      networkState: videoRef.current?.networkState,
+      readyState: videoRef.current?.readyState
+    });
     setVideoError(true);
   };
 
   const handleVideoLoaded = () => {
+    console.log('✅ Vídeo LoadingMenu carregado com sucesso!');
     if (videoRef.current) {
       videoRef.current.play().catch(() => {
+        console.error('Erro ao reproduzir vídeo no LoadingMenu');
         setVideoError(true);
       });
     }

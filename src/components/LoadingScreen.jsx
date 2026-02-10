@@ -54,12 +54,19 @@ function LoadingScreen({ onFinish, menuMusicRef }) {
   }, [onFinish, musicVolume]);
 
   const handleVideoError = (e) => {
+    console.error('ERRO NO VÍDEO LoadingScreen:', e);
+    console.error('Video error details:', {
+      src: videoRef.current?.src,
+      error: videoRef.current?.error,
+      networkState: videoRef.current?.networkState,
+      readyState: videoRef.current?.readyState
+    });
     setVideoError(true);
     setWallpaperTransition('image');
   };
 
   const handleVideoLoaded = () => {
-    console.log('Vídeo carregado com sucesso');
+    console.log('✅ Vídeo LoadingScreen carregado com sucesso!');
     if (videoRef.current) {
       videoRef.current.play().catch(err => {
         console.error('Erro ao reproduzir vídeo:', err);

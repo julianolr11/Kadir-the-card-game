@@ -216,6 +216,25 @@ const effectCards = [
     targetType: 'allyMonster', // Requer seleção de alvo (monstro aliado)
     duration: 1, // Dura 1 turno
     color: 'pure'
+  },
+
+  {
+    id: 'effect_essence_ritual',
+    num: 13,
+    name: { pt: 'Ritual da Essencia', en: 'Essence Ritual' },
+    type: 'effect',
+    element: 'puro',
+    cost: 0,
+    img: require('../img/effect-cards/essence_ritual_resultado.webp'),
+    description: {
+      pt: 'Sacrifique uma carta da sua mao para obter +1 de essencia',
+      en: 'Sacrifice one card from your hand to gain +1 essence'
+    },
+    effectType: 'essenceSacrifice',
+    effectValue: 1,
+    targetType: 'handSacrifice',
+    duration: 0,
+    color: 'pure'
   }
 ];
 

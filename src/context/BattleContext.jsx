@@ -1919,8 +1919,15 @@ export function BattleProvider({ children }) {
       // Limpa pendência da Compra Reversa (se houver)
       newState.drawOpponentPending = null;
 
-      // Remove a carta da mão
-      newState.player.hand = newState.player.hand.filter((_, idx) => idx !== handIndex);
+      // Remove a carta da mao
+      if (targetInfo?.sacrificeCardId) {
+        const effectIndex = newState.player.hand.indexOf(cardId);
+        if (effectIndex !== -1) {
+          newState.player.hand.splice(effectIndex, 1);
+        }
+      } else {
+        newState.player.hand = newState.player.hand.filter((_, idx) => idx !== handIndex);
+      }
 
       // Limpa state de espera
       newState.effectCardPending = null;

@@ -1723,6 +1723,41 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
             </div>
           )}
 
+          {state.effectCardPending.targetType === 'handSacrifice' && (
+            <div className="effect-target-options">
+              {(state.player?.hand || []).filter((_, idx) => idx !== state.effectCardPending.handIndex).length === 0 ? (
+                <div style={{
+                  padding: '20px',
+                  color: '#ffaaaa',
+                  textAlign: 'center',
+                  fontSize: '14px',
+                  fontStyle: 'italic'
+                }}>
+                  Voce nao tem outras cartas na mao
+                </div>
+              ) : (
+                (state.player?.hand || []).map((cardId, idx) => {
+                  if (idx === state.effectCardPending.handIndex) return null;
+                  const cardData = getCardData(cardId);
+                  const cardName = cardData?.name?.pt || cardData?.name?.en || cardData?.name || cardId;
+                  return (
+                    <div
+                      key={`target-hand-${idx}`}
+                      className="effect-target-option"
+                      onClick={() => playEffectCard(state.effectCardPending.handIndex, {
+                        sacrificeIndex: idx,
+                        sacrificeCardId: cardId
+                      })}
+                    >
+                      {cardData?.img && <img src={cardData.img} alt={cardName} />}
+                      <div style={{ fontSize: '12px' }}>{cardName}</div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          )}
+
           {state.effectCardPending.targetType === 'dual' && (
             <div style={{ padding: '16px' }}>
               <div style={{ marginBottom: '12px', color: '#c896ff' }}>Seus monstros:</div>

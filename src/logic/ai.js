@@ -48,6 +48,22 @@ export function executeEffectCard(state, effectCard, targetInfo = null) {
       };
       break;
 
+    case 'essenceSacrifice':
+      // Sacrifica uma carta da mao para ganhar +1 essencia
+      if (newState.player?.hand && targetInfo?.sacrificeCardId) {
+        const hand = [...newState.player.hand];
+        const sacrificeIndex = hand.findIndex((id) => id === targetInfo.sacrificeCardId);
+        if (sacrificeIndex !== -1) {
+          hand.splice(sacrificeIndex, 1);
+          newState.player = {
+            ...newState.player,
+            hand,
+            essence: Math.min(10, (newState.player?.essence || 0) + (effectCard.effectValue || 1))
+          };
+        }
+      }
+      break;
+
     case 'heal':
       // Cura o player (adiciona orbes)
       // Determina qual lado recebe o heal baseado no activePlayer

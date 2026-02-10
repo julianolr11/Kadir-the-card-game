@@ -47,14 +47,14 @@ function LoadingMenu({ onNavigate, menuMusicRef, introMusicRef }: LoadingMenuPro
     if (!videoRef.current) return;
     const video = videoRef.current;
     const timeRemaining = video.duration - video.currentTime;
-    const fadeDuration = 1.5; // 1.5 segundos de fade
+    const fadeDuration = 2.5; // 2.5 segundos de fade
 
-    // Fade out nos últimos 1.5s
+    // Fade out nos últimos 2.5s
     if (timeRemaining <= fadeDuration && timeRemaining > 0) {
       const fadeProgress = timeRemaining / fadeDuration;
       setVideoOpacity(fadeProgress);
     }
-    // Fade in nos primeiros 1.5s
+    // Fade in nos primeiros 2.5s
     else if (video.currentTime <= fadeDuration) {
       const fadeProgress = video.currentTime / fadeDuration;
       setVideoOpacity(fadeProgress);
@@ -134,7 +134,7 @@ function LoadingMenu({ onNavigate, menuMusicRef, introMusicRef }: LoadingMenuPro
             objectFit: 'cover',
             filter: 'brightness(0.9)',
             opacity: videoOpacity,
-            transition: 'opacity 1.5s ease-in-out',
+            transition: 'opacity 2.5s ease-in-out',
           }}
           className="fade-in"
         />

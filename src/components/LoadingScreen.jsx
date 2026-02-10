@@ -73,14 +73,14 @@ function LoadingScreen({ onFinish, menuMusicRef }) {
     if (!videoRef.current) return;
     const video = videoRef.current;
     const timeRemaining = video.duration - video.currentTime;
-    const fadeDuration = 1.5; // 1.5 segundos de fade
+    const fadeDuration = 2.5; // 2.5 segundos de fade
 
-    // Fade out nos últimos 1.5s
+    // Fade out nos últimos 2.5s
     if (timeRemaining <= fadeDuration && timeRemaining > 0) {
       const fadeProgress = timeRemaining / fadeDuration;
       setVideoOpacity(fadeProgress);
     }
-    // Fade in nos primeiros 1.5s
+    // Fade in nos primeiros 2.5s
     else if (video.currentTime <= fadeDuration) {
       const fadeProgress = video.currentTime / fadeDuration;
       setVideoOpacity(fadeProgress);
@@ -146,7 +146,7 @@ function LoadingScreen({ onFinish, menuMusicRef }) {
             objectFit: 'cover',
             filter: 'brightness(0.9)',
             opacity: wallpaperTransition === 'video' ? videoOpacity : wallpaperTransition === 'transitioning' ? videoOpacity : 0,
-            transition: wallpaperTransition === 'transitioning' ? 'opacity 1s ease-in' : 'opacity 1.5s ease-in-out',
+            transition: wallpaperTransition === 'transitioning' ? 'opacity 1s ease-in' : 'opacity 2.5s ease-in-out',
           }}
           className={wallpaperTransition === 'transitioning' ? 'wallpaper-video-out' : 'fade-in'}
         />

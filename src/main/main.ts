@@ -160,6 +160,11 @@ const createWindow = async () => {
     }
   });
 
+  ipcMain.handle('quit-and-install', () => {
+    log.info('Reiniciando para instalar atualização...');
+    autoUpdater.quitAndInstall();
+  });
+
   // Eventos de progresso e status
   autoUpdater.on('checking-for-update', () => {
     log.info('Checking for update...');

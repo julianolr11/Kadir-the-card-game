@@ -24,6 +24,7 @@ const electronHandler = {
     // --- Update helpers ---
     checkForUpdate: () => ipcRenderer.invoke('update-check'),
     downloadUpdate: () => ipcRenderer.invoke('update-download'),
+    quitAndInstall: () => ipcRenderer.invoke('quit-and-install'),
     onUpdateProgress: (cb: (progress: any) => void) => {
       ipcRenderer.on('update-download-progress', (_event, progress) => cb(progress));
     },

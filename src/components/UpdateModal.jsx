@@ -14,6 +14,10 @@ const translations = {
     error: 'Erro ao baixar atualização:',
     whatsnew: 'Novidades da versão',
     closeNotes: 'Fechar',
+    updateReady: 'Atualização pronta!',
+    updateReadyMessage: 'A atualização foi baixada. Clique em "Reiniciar Agora" para aplicar.',
+    restartNow: 'Reiniciar Agora',
+    restartLater: 'Mais Tarde',
   },
   en: {
     title: 'Update available',
@@ -24,6 +28,13 @@ const translations = {
     downloading: 'Downloading update...',
     progress: 'Progress',
     error: 'Error downloading update:',
+    whatsnew: 'What\\'s new',
+    closeNotes: 'Close',
+    updateReady: 'Update ready!',
+    updateReadyMessage: 'The update has been downloaded. Click \"Restart Now\" to apply it.',
+    restartNow: 'Restart Now',
+    restartLater: 'Later',
+  },
     whatsnew: 'Release notes',
     closeNotes: 'Close',
   },
@@ -56,11 +67,13 @@ const updateNotes = {
 };
 
 export default function UpdateModal({
-  open, onUpdate, onCancel, progress, error, lang, downloading,
+  open, onUpdate, onRestart, onCancel, progress, error, lang, downloading,
 }) {
   const t = translations[lang] || translations.pt;
   const notes = updateNotes[lang] || updateNotes.pt;
   const [showNotes, setShowNotes] = useState(false);
+
+  const updateReady = progress === 100 && !downloading && !error;
 
   if (!open) return null;
 
@@ -133,6 +146,29 @@ export default function UpdateModal({
           </>
         )}
 
+        {updateReady && (
+          <>
+            <h3 style={{ marginTop: '16px', color: '#4caf50' }}>{t.updateReady}</h3>
+            <p>{t.updateReadyMessage}</p>
+            <div className="update-modal-actions">
+              <button
+                type="button"
+                onClick={onRestart}
+                className="update-btn-primary"
+              >
+                {t.restartNow}
+              </button>
+              <button
+                type="button"
+                onClick={onCancel}
+                className="update-btn-secondary"
+              >
+                {t.restartLater}
+              </button>
+            </div>
+          </>
+        )}
+
         {error && <p className="update-modal-error">{t.error} {error}</p>}
 
         {downloading && (
@@ -161,6 +197,7 @@ export default function UpdateModal({
 UpdateModal.propTypes = {
   open: PropTypes.bool.isRequired,
   onUpdate: PropTypes.func.isRequired,
+  onRestart: PropTypes.func.isRequired,
   onCancel: PropTypes.func.isRequired,
   progress: PropTypes.number,
   error: PropTypes.string,

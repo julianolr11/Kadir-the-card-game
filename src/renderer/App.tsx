@@ -83,12 +83,8 @@ export default function App() {
     // Quando terminar download
     window.electron?.ipcRenderer?.onUpdateDownloaded?.(() => {
       setUpdateDownloading(false);
-      setUpdateModalOpen(false);
       setUpdateProgress(100);
-      // Buscar release notes do GitHub e exibir modal
-      if (updateVersion) {
-        fetchReleaseNotes(updateVersion);
-      }
+      // Não fecha o modal - mostra botão de reiniciar
     });
     return () => {
       if (overlayTimeout) clearTimeout(overlayTimeout);
@@ -126,6 +122,11 @@ export default function App() {
     setUpdateDownloading(false);
     setUpdateError('');
     setUpdateProgress(0);
+  };
+
+  // Handler: reiniciar agora para instalar atualização
+  const handleRestartNow = () => {
+    window.electron?.ipcRenderer?.quitAndInstall?.();
   };
 
   // Navegação central
@@ -166,6 +167,7 @@ export default function App() {
       <UpdateModal
         open={updateModalOpen}
         onUpdate={handleUpdate}
+        onRestart={handleRestartNow}
         onCancel={handleCancelUpdate}
         progress={updateProgress}
         error={updateError}

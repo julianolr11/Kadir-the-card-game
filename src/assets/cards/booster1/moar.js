@@ -10,7 +10,7 @@ module.exports = {
   element: 'puro',
   img: require('../../img/creatures/moar_bio.webp'),
   color: 'pure',
-  hp: 6,
+  hp: 11,
   abilities: [
     {
       name: { pt: 'Lamina de Neve', en: 'Snow Blade' },

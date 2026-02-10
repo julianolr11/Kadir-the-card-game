@@ -1118,7 +1118,7 @@ function DeckBuilder({ onNavigate }) {
         <DeckEditor
           deckId={slots[editingDeckIndex].id}
           deckName={slots[editingDeckIndex].name}
-          guardianId={activeGuardian?.id || activeGuardian?.name}
+          guardianId={getDeck?.(slots[editingDeckIndex].id)?.guardianId || activeGuardian?.id || activeGuardian?.name}
           initialCards={
             getDeck?.(slots[editingDeckIndex].id)?.cards || (() => {
               // Novo deck: adicionar guardião no primeiro slot (melhor instância)

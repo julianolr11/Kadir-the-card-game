@@ -208,7 +208,7 @@ function BoosterResultsSlider({ cards, lang, onClose }) {
                         {/* Arte */}
                         <div className="card-preview-art-wrapper">
                           {card?.img ? (
-                            <img src={card.img} alt={getLocalizedText(card?.name, lang)} className="card-preview-art" />
+                            <img src={typeof card.img === 'string' ? card.img : (card.img?.default || '')} alt={getLocalizedText(card?.name, lang)} className="card-preview-art" />
                           ) : (
                             <div style={{width: '100%', height: '100%', backgroundColor: '#333'}} />
                           )}
@@ -247,7 +247,7 @@ function BoosterResultsSlider({ cards, lang, onClose }) {
                         {/* Arte */}
                         <div className="card-preview-art-wrapper">
                           {card?.img ? (
-                            <img src={card.img} alt={getLocalizedText(card?.name, lang)} className="card-preview-art" />
+                            <img src={typeof card.img === 'string' ? card.img : (card.img?.default || '')} alt={getLocalizedText(card?.name, lang)} className="card-preview-art" />
                           ) : (
                             <div style={{width: '100%', height: '100%', backgroundColor: '#333'}} />
                           )}
@@ -323,7 +323,7 @@ function BoosterResultsSlider({ cards, lang, onClose }) {
                       <div className="card-preview-art-wrapper">
                         {card?.img && (
                           <img
-                            src={card.img}
+                            src={typeof card.img === 'string' ? card.img : (card.img?.default || '')}
                             alt={getLocalizedText(card?.name, lang)}
                             className="card-preview-art"
                           />

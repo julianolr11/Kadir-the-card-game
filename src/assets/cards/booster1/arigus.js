@@ -10,7 +10,7 @@ module.exports = {
   element: 'agua',
   img: require('../../img/creatures/arigus_bio.webp'),
   color: 'water',
-  hp: 5,
+  hp: 8,
   abilities: [
     {
       name: { pt: 'Investida Glacial', en: 'Glacial Charge' },

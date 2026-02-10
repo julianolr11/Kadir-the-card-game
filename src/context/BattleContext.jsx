@@ -104,6 +104,9 @@ export function BattleProvider({ children }) {
     let hasKaelBlessing = false;
     let hasAshfangBlessing = false;
     let hasZephyronBlessing = false;
+    let hasArigusBlessing = false;
+    let hasRoenhellBlessing = false;
+    let hasMoarBlessing = false;
     if (creatureData.isGuardian && creatureData.defaultBlessing) {
       const blessing = creatureData.defaultBlessing;
       // Para o Griffor: escudo por 3 turnos
@@ -181,6 +184,18 @@ export function BattleProvider({ children }) {
       if (blessing.id === 'zephyron_blessing') {
         hasZephyronBlessing = true;
       }
+      // Para o Arigus: retorna criatura adversária aleatória para a mão
+      if (blessing.id === 'arigus_blessing') {
+        hasArigusBlessing = true;
+      }
+      // Para o Roenhell: pode atacar 2 vezes sem gastar mana
+      if (blessing.id === 'roenhell_blessing') {
+        hasRoenhellBlessing = true;
+      }
+      // Para o Moar: congela todos os oponentes por 2 turnos
+      if (blessing.id === 'moar_blessing') {
+        hasMoarBlessing = true;
+      }
     }
 
     // Monta habilidades selecionadas (fallback: primeiras 2 habilidades básicas)
@@ -212,7 +227,7 @@ export function BattleProvider({ children }) {
 
     const hp = baseHp + hpBoost;
     const maxHp = hp;
-    return { atk, def, hp, maxHp, abilities: selectedAbilities, perkEffects: { shieldOnSummon }, hasIgnisBlessing, hasEkerenthBlessing, hasOwlberothBlessing, hasNihilBlessing, hasDrazraqBlessing, hasSeractBlessing, hasNoctyraBlessing, hasMawthornBlessing, hasAlatoyBlessing, hasPawferionBlessing, hasEkonosBlessing, hasBeoxyrBlessing, hasArguíliaBlessing, hasKaelBlessing, hasAshfangBlessing, hasZephyronBlessing };
+    return { atk, def, hp, maxHp, abilities: selectedAbilities, perkEffects: { shieldOnSummon }, hasIgnisBlessing, hasEkerenthBlessing, hasOwlberothBlessing, hasNihilBlessing, hasDrazraqBlessing, hasSeractBlessing, hasNoctyraBlessing, hasMawthornBlessing, hasAlatoyBlessing, hasPawferionBlessing, hasEkonosBlessing, hasBeoxyrBlessing, hasArguíliaBlessing, hasKaelBlessing, hasAshfangBlessing, hasZephyronBlessing, hasArigusBlessing, hasRoenhellBlessing, hasMoarBlessing };
   }, [loadGuardianLoadout, cardCollection]);
 
   const playFieldChangeSound = useCallback(() => {
@@ -456,6 +471,25 @@ export function BattleProvider({ children }) {
       const playerSlots = processShieldTurns(s.player.field.slots);
       const aiSlots = processShieldTurns(s.ai.field.slots);
 
+      // Processa expiração de buffs temporários (Roenhell: bonusAbilityUses)
+      const processAbilityUseBuffs = (slots) => (slots || []).map((c) => {
+        if (!c) return c;
+        if (typeof c.abilityUseBuffTurns === 'number' && c.abilityUseBuffTurns > 0) {
+          const newBuffTurns = c.abilityUseBuffTurns - 1;
+          return {
+            ...c,
+            abilityUseBuffTurns: newBuffTurns,
+            // Limpa os bônus quando a duração termina
+            bonusAbilityUses: newBuffTurns <= 0 ? 0 : c.bonusAbilityUses,
+            freeAbilityUses: newBuffTurns <= 0 ? 0 : c.freeAbilityUses,
+          };
+        }
+        return c;
+      });
+
+      const playerSlotsAfterBuffs = processAbilityUseBuffs(playerSlots);
+      const aiSlotsAfterBuffs = processAbilityUseBuffs(aiSlots);
+
       // Processa criaturas temporárias (ressuscitadas) - decrementa duração e retorna ao cemitério
       const processResurrectedCreatures = (slots, side, newState) => {
         const processedSlots = [];
@@ -493,12 +527,12 @@ export function BattleProvider({ children }) {
       };
 
       // Aplica processamento de ressurreição em ambos os lados
-      let resurrectionResult = processResurrectedCreatures(playerSlots, 'player', { ...s });
+      let resurrectionResult = processResurrectedCreatures(playerSlotsAfterBuffs, 'player', { ...s });
       let playerSlotsAfterResurrect = resurrectionResult.processedSlots;
       let resurrectionLogs = resurrectionResult.logs;
       let stateAfterResurrect = resurrectionResult.newState;
 
-      resurrectionResult = processResurrectedCreatures(aiSlots, 'ai', stateAfterResurrect);
+      resurrectionResult = processResurrectedCreatures(aiSlotsAfterBuffs, 'ai', stateAfterResurrect);
       let aiSlotsAfterResurrect = resurrectionResult.processedSlots;
       resurrectionLogs = [...resurrectionLogs, ...resurrectionResult.logs];
       stateAfterResurrect = resurrectionResult.newState;
@@ -1087,6 +1121,55 @@ export function BattleProvider({ children }) {
         newState.log.push(`${creature.name} paralisou todas as criaturas adversárias por 1 turno!`);
       }
 
+      // Se for Moar, congela todas as criaturas do oponente por 2 turnos
+      if (build.hasMoarBlessing) {
+        const aiSlots = newState.ai?.field?.slots || [];
+        const updatedAiSlots = aiSlots.map(slot => {
+          if (!slot) return slot;
+          const freezeStatusEffect = slot.statusEffects?.find(e => e.type === 'freeze');
+          const newStatusEffects = slot.statusEffects ? [...slot.statusEffects] : [];
+
+          if (freezeStatusEffect) {
+            freezeStatusEffect.duration = Math.max(freezeStatusEffect.duration, 2);
+          } else {
+            newStatusEffects.push({
+              type: 'freeze',
+              duration: 2,
+              source: creature.name,
+            });
+          }
+
+          return { ...slot, statusEffects: newStatusEffects };
+        });
+
+        newState.ai = { ...newState.ai, field: { ...newState.ai.field, slots: updatedAiSlots } };
+        newState.log.push(`${creature.name} congelou todas as criaturas adversárias por 2 turnos!`);
+      }
+
+      // Se for Arigus, retorna uma criatura adversária aleatória para a mão
+      if (build.hasArigusBlessing) {
+        const aiSlots = [...(newState.ai?.field?.slots || [])];
+        const enemyIndices = aiSlots.map((slot, idx) => slot ? idx : null).filter(idx => idx !== null);
+
+        if (enemyIndices.length > 0) {
+          const randomIndex = enemyIndices[Math.floor(Math.random() * enemyIndices.length)];
+          const returnedCreature = aiSlots[randomIndex];
+          aiSlots[randomIndex] = null;
+
+          const aiHand = [...(newState.ai?.hand || []), returnedCreature.id];
+          newState.ai = { ...newState.ai, hand: aiHand, field: { ...newState.ai.field, slots: aiSlots } };
+          newState.log.push(`${creature.name} retornou ${returnedCreature.name} para a mão do oponente!`);
+        }
+      }
+
+      // Se for Roenhell, permite atacar 2 vezes neste turno sem gastar mana
+      if (build.hasRoenhellBlessing) {
+        creature.bonusAbilityUses = 1;
+        creature.freeAbilityUses = 2;
+        creature.abilityUseBuffTurns = 1;
+        newState.log.push(`${creature.name} pode atacar 2 vezes neste turno sem consumir mana!`);
+      }
+
       return newState;
     });
   }, [resolveCreatureBuild, cardCollection]);
@@ -1128,7 +1211,7 @@ export function BattleProvider({ children }) {
 
       // Sem slot disponível, vai para a mão
       const hand = [...s.player.hand, newInstanceId];
-      newLog.push(`${ressurectedCreature.name} foi para a mão.`);
+      newLog.push(`${ressurectedCreature.name} foi??ara a mão.`);
       return {
         ...s,
         player: { ...s.player, graveyard, hand },
@@ -1616,7 +1699,10 @@ export function BattleProvider({ children }) {
       if (!attacker || attacker.hp <= 0) return s;
 
       // Verifica se a criatura já usou uma habilidade este turno
-      if (s.creaturesWithUsedAbility && s.creaturesWithUsedAbility.has(attacker.id)) {
+      const alreadyUsedAbility = s.creaturesWithUsedAbility && s.creaturesWithUsedAbility.has(attacker.id);
+      const hasBonus = (attacker.bonusAbilityUses || 0) > 0;
+
+      if (alreadyUsedAbility && !hasBonus) {
         return {
           ...s,
           log: [...s.log, `${attacker.name} já usou uma habilidade neste turno!`],
@@ -1634,7 +1720,10 @@ export function BattleProvider({ children }) {
 
       // Valida custo de essência
       const essence = s[playerSide].essence || 0;
-      const cost = ability.cost || 0;
+      const normalCost = ability.cost || 0;
+      const hasFree = (attacker.freeAbilityUses || 0) > 0;
+      const cost = hasFree ? 0 : normalCost;
+
       if (essence < cost) {
         return {
           ...s,
@@ -1699,9 +1788,24 @@ export function BattleProvider({ children }) {
       const updatedUsedAbilities = new Set(s.creaturesWithUsedAbility || []);
       updatedUsedAbilities.add(attackerId);
 
+      // Atualiza bônus temporários (Roenhell)
+      const updatedAttacker = { ...attacker };
+      if (hasFree) {
+        updatedAttacker.freeAbilityUses = (updatedAttacker.freeAbilityUses || 2) - 1;
+      }
+      if (hasBonus) {
+        updatedAttacker.bonusAbilityUses = (updatedAttacker.bonusAbilityUses || 1) - 1;
+      }
+
+      // Atualiza o attacker nos slots do jogador
+      const updatedSlots = s[playerSide].field.slots.map((slot, idx) =>
+        idx === slotIndex ? updatedAttacker : slot
+      );
+
       // PASSO 1: Mostra animação de ataque no atacante
       const stateWithAttackAnim = {
         ...s,
+        [playerSide]: { ...s[playerSide], field: { ...s[playerSide].field, slots: updatedSlots } },
         animations: {
           ...(s.animations || {}),
           [attackerId]: { type: 'attacking' },
@@ -2362,6 +2466,52 @@ export function BattleProvider({ children }) {
         playerSlots[idx] = applyStatusEffect(target, 'paralyze', 2, creatureName);
         s.player = { ...s.player, field: { ...s.player.field, slots: playerSlots } };
         nextLog = [...nextLog, `${creatureName} paralisou ${target.name} por 2 turnos!`];
+      }
+    }
+
+    // Roenhell (IA): permite atacar 2 vezes sem gastar mana
+    if (build.hasRoenhellBlessing) {
+      // A criatura já foi criada, apenas marca para ter bônus
+      const creature = creatureData;
+      creature.bonusAbilityUses = 1;
+      creature.freeAbilityUses = 2;
+      creature.abilityUseBuffTurns = 1;
+      nextLog = [...nextLog, `${creatureName} pode atacar 2 vezes neste turno sem consumir mana!`];
+    }
+
+    // Moar (IA): congela todas as criaturas do jogador por 2 turnos
+    if (build.hasMoarBlessing) {
+      const playerSlots = [...(s.player?.field?.slots || [])];
+      const updated = playerSlots.map(slot => {
+        if (!slot) return slot;
+        const freezeStatusEffect = slot.statusEffects?.find(e => e.type === 'freeze');
+        const newStatusEffects = slot.statusEffects ? [...slot.statusEffects] : [];
+
+        if (freezeStatusEffect) {
+          freezeStatusEffect.duration = Math.max(freezeStatusEffect.duration, 2);
+        } else {
+          newStatusEffects.push({
+            type: 'freeze',
+            duration: 2,
+            source: creatureName,
+          });
+        }
+        return { ...slot, statusEffects: newStatusEffects };
+      });
+      s.player = { ...s.player, field: { ...s.player.field, slots: updated } };
+      nextLog = [...nextLog, `${creatureName} congelou todas as suas criaturas por 2 turnos!`];
+    }
+
+    // Arigus (IA): retorna criatura aleatória do jogador para a mão
+    if (build.hasArigusBlessing) {
+      const playerSlots = [...(s.player?.field?.slots || [])];
+      const indices = playerSlots.map((slot, idx) => (slot ? idx : null)).filter(idx => idx !== null);
+      if (indices.length > 0) {
+        const idx = getRandomIndex(indices);
+        const returned = playerSlots[idx];
+        playerSlots[idx] = null;
+        s.player = { ...s.player, hand: [...(s.player?.hand || []), returned.id], field: { ...s.player.field, slots: playerSlots } };
+        nextLog = [...nextLog, `${creatureName} retornou ${returned.name} para a sua mão!`];
       }
     }
 

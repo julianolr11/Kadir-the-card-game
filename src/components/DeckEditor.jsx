@@ -582,12 +582,13 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
     return () => clearTimeout(timer);
   }, [deckCards, deckName, deckId, guardianCardId, onSave]);
 
+  // Sincroniza guardianId quando a prop mudar (ex: ao abrir deck diferente)
   useEffect(() => {
     if (guardianId !== selectedGuardian) {
       setSelectedGuardian(guardianId);
       setGuardianCardId(guardianId || null);
     }
-  }, [guardianId, getCardInstances]);
+  }, [guardianId]);
 
   const handleDragStart = (e, cardIdOrInstanceId, fromSlot = false, instanceId = null) => {
     if (fromSlot) {

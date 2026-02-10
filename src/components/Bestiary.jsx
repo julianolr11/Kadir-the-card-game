@@ -6,6 +6,27 @@ import background3D from '../assets/img/wallpaper/3d-menu-overlay.png';
 import { AppContext } from '../context/AppContext';
 import creatures from '../assets/cards';
 
+// Imports dos ícones de elementos
+import aguaIcon from '../assets/img/elements/agua.png';
+import arIcon from '../assets/img/elements/ar.png';
+import fogoIcon from '../assets/img/elements/fogo.png';
+import puroIcon from '../assets/img/elements/puro.png';
+import terraIcon from '../assets/img/elements/terra.png';
+
+// Mapeamento de elementos para ícones
+const elementIcons = {
+  agua: aguaIcon,
+  water: aguaIcon,
+  ar: arIcon,
+  air: arIcon,
+  fogo: fogoIcon,
+  fire: fogoIcon,
+  puro: puroIcon,
+  pure: puroIcon,
+  terra: terraIcon,
+  earth: terraIcon,
+};
+
 // Helper para extrair texto traduzido
 const getText = (field, lang = 'ptbr') => {
   if (!field) return '';
@@ -95,10 +116,21 @@ function Bestiary({ onBack }) {
       <div className={`creature-preview-container ${isFading ? 'fade-out' : 'fade-in'}`}>
         <div className={`creature-preview-card creature-preview-border-${displayCard.element || 'neutral'}`}>
           <div className="creature-preview-header">
-            <h2 className="creature-preview-name">{getText(displayCard.name, lang)}</h2>
-            <span className="creature-preview-element">
-              {displayCard.element || 'Neutral'}
-            </span>
+            <div className="creature-preview-name-group">
+              <h2 className="creature-preview-name">
+                {getText(displayCard.name, lang)}
+                {displayCard.title && (
+                  <span className="creature-preview-title">{getText(displayCard.title, lang)}</span>
+                )}
+              </h2>
+            </div>
+            {displayCard.element && elementIcons[displayCard.element] && (
+              <img
+                src={elementIcons[displayCard.element]}
+                alt={displayCard.element}
+                className="creature-preview-element-icon"
+              />
+            )}
           </div>
 
           <div className="creature-preview-image-wrapper">
@@ -206,7 +238,7 @@ function Bestiary({ onBack }) {
                   }}
                 >
                   {owned ? (
-                    <img src={card.img} alt={getText(card.name, lang)} className="bestiary-card-img" />
+                    <img src={typeof card.img === 'string' ? card.img : (card.img?.default || '')} alt={getText(card.name, lang)} className="bestiary-card-img" />
                   ) : (
                     <div className="bestiary-card-locked">
                       <span className="bestiary-question-mark">?</span>
@@ -243,7 +275,7 @@ function Bestiary({ onBack }) {
                   }}
                 >
                   {owned ? (
-                    <img src={card.img} alt={getText(card.name, lang)} className="bestiary-card-img" />
+                    <img src={typeof card.img === 'string' ? card.img : (card.img?.default || '')} alt={getText(card.name, lang)} className="bestiary-card-img" />
                   ) : (
                     <div className="bestiary-card-locked">
                       <span className="bestiary-question-mark">?</span>
@@ -280,7 +312,11 @@ function Bestiary({ onBack }) {
                   }}
                 >
                   {owned ? (
-                    <img src={card.img} alt={getText(card.name, lang)} className="bestiary-card-img" />
+                    <img
+                      src={typeof card.img === 'string' ? card.img : (card.img?.default || '')}
+                      alt={getText(card.name, lang)}
+                      className="bestiary-card-img"
+                    />
                   ) : (
                     <div className="bestiary-card-locked">
                       <span className="bestiary-question-mark">?</span>

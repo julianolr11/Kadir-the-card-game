@@ -10,7 +10,7 @@ module.exports = {
   element: 'terra',
   img: require('../../img/creatures/roenhell_bio.webp'),
   color: 'earth',
-  hp: 6,
+  hp: 10,
   abilities: [
     {
       name: { pt: 'Investida Rochosa', en: 'Rock Charge' },

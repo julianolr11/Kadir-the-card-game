@@ -190,6 +190,17 @@ function CreatureCardPreview({
     imageSrc = creature.image || '';
   }
 
+  // DEBUG: Log para verificar imagens problemáticas
+  if (creature.id === 'effect_jewel_of_life' || (creature.name && creature.name.pt === 'Joia da Vida')) {
+    console.log('🔍 Joia da Vida - Debug:', {
+      id: creature.id,
+      name: creature.name,
+      img: creature.img,
+      imageSrc: imageSrc,
+      type: creature.type
+    });
+  }
+
   // Normaliza caminhos para assets públicos (ex: assets/img/...)
   if (typeof imageSrc === 'string' && imageSrc.startsWith('assets/')) {
     imageSrc = `/${imageSrc}`;

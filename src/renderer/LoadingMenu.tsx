@@ -92,6 +92,7 @@ function LoadingMenu({ onNavigate, menuMusicRef, introMusicRef }: LoadingMenuPro
 
   return (
     <div
+      className="menu-fade-in"
       style={{
         position: 'fixed',
         inset: 0,

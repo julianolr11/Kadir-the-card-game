@@ -116,6 +116,7 @@ function LoadingScreen({ onFinish, menuMusicRef }) {
 
   return (
     <div
+      className={showMenu ? 'loading-screen-exit' : ''}
       style={{
         position: 'fixed',
         inset: 0,

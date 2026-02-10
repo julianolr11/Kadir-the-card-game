@@ -76,8 +76,8 @@ const createWindow = async () => {
 
   mainWindow = new BrowserWindow({
     show: false,
-    width: 1280,
-    height: 720,
+    width: 1920,
+    height: 1080,
     resizable: true,
     frame: false, // Remove barra de ferramentas e botões
     icon: iconPath,

@@ -29,25 +29,27 @@ const translations = {
   },
 };
 
-// Novidades da versão 1.2.6
+// Novidades da versão 0.2.7
 const updateNotes = {
   pt: [
-    'Três novos guardiões adicionados: Arigus, Roenhell e Moar',
-    'Melhorias na renderização de imagens de cartas de efeito',
-    'Layout aprimorado do Bestiário com ícones de elementos',
-    'Exibição de título da criatura no Bestiário',
-    'Correção: Guardião selecionado no DeckBuilder agora persiste corretamente',
-    'Ajustes de balanceamento: HP dos novos guardiões ajustado',
-    'Interface mais clara e responsiva em todas as resoluções',
+    '🎬 Wallpaper animado agora incluído (corrigido problema de atualização)',
+    '🔥 Três novos guardiões adicionados: Arigus, Roenhell e Moar',
+    '🖼️ Melhorias na renderização de imagens de cartas de efeito',
+    '📚 Layout aprimorado do Bestiário com ícones de elementos',
+    '🏷️ Exibição de título da criatura no Bestiário',
+    '✅ Correção: Guardião selecionado no DeckBuilder agora persiste corretamente',
+    '⚖️ Ajustes de balanceamento: HP dos novos guardiões ajustado',
+    '🎨 Interface mais clara e responsiva em todas as resoluções',
   ],
   en: [
-    'Three new guardians added: Arigus, Roenhell, and Moar',
-    'Improved rendering of effect card images',
-    'Enhanced Bestiary layout with element icons',
-    'Creature title display in Bestiary',
-    'Fix: Guardian selected in DeckBuilder now persists correctly',
-    'Balance adjustments: HP of new guardians adjusted',
-    'Clearer and more responsive interface at all resolutions',
+    '🎬 Animated wallpaper now included (fixed update issue)',
+    '🔥 Three new guardians added: Arigus, Roenhell, and Moar',
+    '🖼️ Improved rendering of effect card images',
+    '📚 Enhanced Bestiary layout with element icons',
+    '🏷️ Creature title display in Bestiary',
+    '✅ Fix: Guardian selected in DeckBuilder now persists correctly',
+    '⚖️ Balance adjustments: HP of new guardians adjusted',
+    '🎨 Clearer and more responsive interface at all resolutions',
   ],
 };
 
@@ -68,7 +70,7 @@ export default function UpdateModal({
         {!downloading && !error && !showNotes && (
           <>
             <p>{t.message}</p>
-            <p style={{ fontSize: '0.9em', color: '#999', marginTop: '8px' }}>{t.version}: 0.2.6</p>
+            <p style={{ fontSize: '0.9em', color: '#999', marginTop: '8px' }}>{t.version}: 0.2.7</p>
             <div className="update-modal-actions">
               <button
                 type="button"

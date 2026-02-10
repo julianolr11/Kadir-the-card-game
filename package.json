@@ -1,5 +1,5 @@
 {
-  "version": "0.2.6",
+  "version": "0.2.7",
   "name": "electron-react-boilerplate",
   "description": "A foundation for scalable desktop apps",
   "keywords": [
@@ -251,7 +251,12 @@
       "output": "release/build"
     },
     "extraResources": [
-      "./assets/**"
+      "./assets/**",
+      {
+        "from": "public/assets",
+        "to": "assets",
+        "filter": ["**/*"]
+      }
     ],
     "publish": {
       "provider": "github",

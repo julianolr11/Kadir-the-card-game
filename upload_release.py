@@ -6,7 +6,7 @@ import sys
 # Configuração
 OWNER = "julianolr11"
 REPO = "Kadir-the-card-game"
-TAG = "v1.2.3"
+TAG = "v0.2.6"
 BUILD_DIR = r"c:\Users\julia\Kadir-card-game\kadiroms\release\build"
 
 # Arquivos para upload

@@ -962,3 +962,83 @@ html, body, #root {
   font-size: 1.1rem;
 }
 
+/* Botão do Shop (Lado Esquerdo) */
+.shop-nav-btn {
+  position: fixed;
+  top: 50%;
+  left: 32px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 24px;
+  background: rgba(30, 22, 40, 0.9);
+  border: 2px solid #ffe6b0;
+  border-radius: 12px;
+  color: #ffe6b0;
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 50;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+.shop-nav-btn:hover {
+  background: rgba(40, 32, 50, 0.95);
+  border-color: #fff6b0;
+  box-shadow: 0 6px 24px rgba(255, 230, 176, 0.4);
+  transform: translateY(-50%) translateX(-4px);
+}
+
+.shop-nav-arrow {
+  font-size: 1.8rem;
+  font-weight: bold;
+  transition: transform 0.3s ease;
+}
+
+.shop-nav-btn:hover .shop-nav-arrow {
+  transform: translateX(-4px);
+}
+
+.shop-nav-text {
+  font-size: 1.1rem;
+}
+
+/* Display de Moedas no canto superior esquerdo */
+.home-coins-display {
+  position: fixed;
+  top: 24px;
+  left: 32px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: rgba(30, 22, 40, 0.9);
+  border: 2px solid #f39c12;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  z-index: 80;
+  transition: all 0.3s ease;
+}
+
+.home-coins-display:hover {
+  box-shadow: 0 6px 24px rgba(243, 156, 18, 0.4);
+}
+
+.home-coin-icon {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 8px rgba(243, 156, 18, 0.6));
+}
+
+.home-coin-amount {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #f39c12;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+}
+

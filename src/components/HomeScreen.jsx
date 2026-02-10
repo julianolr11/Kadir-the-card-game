@@ -15,6 +15,7 @@ import creatures from '../assets/cards';
 import BoosterResultsSlider from './BoosterResultsSlider';
 import DeckSelectModal from './DeckSelectModal';
 import Bestiary from './Bestiary';
+import Shop from './Shop';
 
 // Função para carregar dados da carta do guardião
 const getGuardianCardData = (guardianId) => {
@@ -220,6 +221,7 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
   const {
     activeGuardian,
     boosters = 0,
+    coins = 0,
     lang = 'ptbr',
     setBoosters,
     addCardsFromBooster,
@@ -238,6 +240,8 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
   const [showDeckModal, setShowDeckModal] = useState(false);
   const [showBestiary, setShowBestiary] = useState(false);
   const bestiaryAudioRef = useRef(null);
+  const [showShop, setShowShop] = useState(false);
+  const shopAudioRef = useRef(null);
 
   // Cheat code detector
   useEffect(() => {
@@ -385,9 +389,24 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
     setShowBestiary(true);
   }
 
+  function handleShopClick() {
+    if (shopAudioRef.current) {
+      shopAudioRef.current.currentTime = 0;
+      shopAudioRef.current.volume = (effectsVolume ?? 50) / 100;
+      shopAudioRef.current.play().catch(() => {});
+    }
+    setShowShop(true);
+  }
+
   return (
     <div className="home-screen-container">
-      <div className={`screen-wrapper ${showBestiary ? 'slide-to-left' : 'center'}`}>
+      {/* Tela do Shop */}
+      <div className={`screen-wrapper ${showShop ? 'center' : 'slide-to-left'}`}>
+        <Shop onBack={() => setShowShop(false)} />
+      </div>
+
+      {/* Tela Principal (HomeScreen) */}
+      <div className={`screen-wrapper ${showBestiary ? 'slide-to-left' : showShop ? 'slide-to-right' : 'center'}`}>
         <div className="home-screen">
       {/* Áudio de vela queimando em loop - key força recriação do elemento */}
       <audio
@@ -400,6 +419,17 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
       <div className="main-menu-background">
         <div className="main-menu-bg-base" />
       </div>
+      
+      {/* Display de moedas no canto superior esquerdo */}
+      <div className="home-coins-display">
+        <img 
+          src={require('../assets/img/icons/head.png')} 
+          alt="Moedas" 
+          className="home-coin-icon" 
+        />
+        <span className="home-coin-amount">{coins?.toLocaleString() || 0}</span>
+      </div>
+      
       {/* Efeitos de vela animada dentro de container responsivo */}
       <div className="candle-container-16x9">
         <div className="candle-glow" />
@@ -547,7 +577,23 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
           </button>
         </div>
 
-        {/* Botão do Bestiário */}
+        {/* Botão do Shop (Lado Esquerdo) */}
+        <audio ref={shopAudioRef} src={movingTableSound} preload="auto" />
+        <button
+          className="shop-nav-btn"
+          onClick={handleShopClick}
+          onMouseEnter={() => {
+            if (shopAudioRef.current) {
+              shopAudioRef.current.currentTime = 0;
+              shopAudioRef.current.play().catch(() => {});
+            }
+          }}
+        >
+          <span className="shop-nav-arrow">←</span>
+          <span className="shop-nav-text">Shop</span>
+        </button>
+
+        {/* Botão do Bestiário (Lado Direito) */}
         <audio ref={bestiaryAudioRef} src={movingTableSound} preload="auto" />
         <button
           className="bestiary-nav-btn"

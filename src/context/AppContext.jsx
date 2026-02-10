@@ -77,6 +77,48 @@ export function AppProvider({ children }) {
     }
   };
 
+  // ===== COINS SYSTEM =====
+  const [coins, setCoins] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('playerCoins');
+      if (stored !== null) return Number(stored);
+    }
+    return 1000; // começa com 1000 moedas
+  });
+
+  // Sempre salva coins no localStorage
+  const updateCoins = (value) => {
+    setCoins(value);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('playerCoins', value);
+    }
+  };
+
+  // Adicionar moedas (recompensas, etc)
+  const addCoins = (amount) => {
+    updateCoins(coins + amount);
+  };
+
+  // Gastar moedas (compras)
+  const spendCoins = (amount) => {
+    if (coins >= amount) {
+      updateCoins(coins - amount);
+      return true;
+    }
+    return false;
+  };
+
+  // Comprar boosters com moedas
+  const purchaseBooster = (quantity = 1, cost) => {
+    if (coins >= cost) {
+      updateCoins(coins - cost);
+      updateBoosters(boosters + quantity);
+      return true;
+    }
+    return false;
+  };
+  // ===== END COINS SYSTEM =====
+
   // ===== CARD COLLECTION SYSTEM =====
   // Coleção de cartas: { cardId: [{ instanceId, xp, level, isHolo }, ...] }
   const [cardCollection, setCardCollection] = useState(() => {
@@ -312,6 +354,12 @@ export function AppProvider({ children }) {
       setActiveGuardian: updateActiveGuardian,
       boosters,
       setBoosters: updateBoosters,
+      // Coins System
+      coins,
+      setCoins: updateCoins,
+      addCoins,
+      spendCoins,
+      purchaseBooster,
       // Card Collection
       cardCollection,
       setCardCollection: updateCardCollection,
@@ -343,6 +391,7 @@ export function AppProvider({ children }) {
       setEffectsVolume,
       activeGuardian,
       boosters,
+      coins,
       cardCollection,
       decks,
       guardianLoadouts,

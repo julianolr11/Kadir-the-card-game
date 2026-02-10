@@ -47,14 +47,17 @@ function LoadingMenu({ onNavigate, menuMusicRef, introMusicRef }: LoadingMenuPro
     if (!videoRef.current) return;
     const video = videoRef.current;
     const timeRemaining = video.duration - video.currentTime;
-    
-    // Fade out nos últimos 0.5s
-    if (timeRemaining <= 0.5 && timeRemaining > 0) {
-      setVideoOpacity(timeRemaining * 2); // 0.5s -> opacity 1 to 0
+    const fadeDuration = 1.5; // 1.5 segundos de fade
+
+    // Fade out nos últimos 1.5s
+    if (timeRemaining <= fadeDuration && timeRemaining > 0) {
+      const fadeProgress = timeRemaining / fadeDuration;
+      setVideoOpacity(fadeProgress);
     }
-    // Fade in nos primeiros 0.5s
-    else if (video.currentTime <= 0.5) {
-      setVideoOpacity(video.currentTime * 2); // 0 to 0.5s -> opacity 0 to 1
+    // Fade in nos primeiros 1.5s
+    else if (video.currentTime <= fadeDuration) {
+      const fadeProgress = video.currentTime / fadeDuration;
+      setVideoOpacity(fadeProgress);
     }
     // Opacidade normal no meio
     else if (videoOpacity !== 1) {
@@ -131,7 +134,7 @@ function LoadingMenu({ onNavigate, menuMusicRef, introMusicRef }: LoadingMenuPro
             objectFit: 'cover',
             filter: 'brightness(0.9)',
             opacity: videoOpacity,
-            transition: 'opacity 0.5s ease-in-out',
+            transition: 'opacity 1.5s ease-in-out',
           }}
           className="fade-in"
         />

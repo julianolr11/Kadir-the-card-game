@@ -28,21 +28,20 @@ const translations = {
     downloading: 'Downloading update...',
     progress: 'Progress',
     error: 'Error downloading update:',
-    whatsnew: 'What\\'s new',
+    whatsnew: "What's new",
     closeNotes: 'Close',
     updateReady: 'Update ready!',
-    updateReadyMessage: 'The update has been downloaded. Click \"Restart Now\" to apply it.',
+    updateReadyMessage: 'The update has been downloaded. Click "Restart Now" to apply it.',
     restartNow: 'Restart Now',
     restartLater: 'Later',
   },
-    whatsnew: 'Release notes',
-    closeNotes: 'Close',
-  },
 };
 
-// Novidades da versão 0.2.8
+// Novidades da versão 0.2.9
 const updateNotes = {
   pt: [
+    '🔄 Botão "Reiniciar Agora" após download completo',
+    '✅ Atualização aplicada automaticamente ao reiniciar',
     '🔧 Sistema de download de atualizações corrigido',
     '🎬 Wallpaper animado agora incluído',
     '🔥 Três novos guardiões adicionados: Arigus, Roenhell e Moar',
@@ -54,7 +53,9 @@ const updateNotes = {
     '🎨 Interface mais clara e responsiva em todas as resoluções',
   ],
   en: [
-    '🔧 Update download system fixed',
+    '� "Restart Now" button after download completes',
+    '✅ Update applied automatically on restart',
+    '�🔧 Update download system fixed',
     '🎬 Animated wallpaper now included',
     '🔥 Three new guardians added: Arigus, Roenhell, and Moar',
     '🖼️ Improved rendering of effect card images',
@@ -85,7 +86,7 @@ export default function UpdateModal({
         {!downloading && !error && !showNotes && (
           <>
             <p>{t.message}</p>
-            <p style={{ fontSize: '0.9em', color: '#999', marginTop: '8px' }}>{t.version}: 0.2.8</p>
+            <p style={{ fontSize: '0.9em', color: '#999', marginTop: '8px' }}>{t.version}: 0.2.9</p>
             <div className="update-modal-actions">
               <button
                 type="button"

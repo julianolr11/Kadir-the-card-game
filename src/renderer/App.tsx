@@ -5,6 +5,7 @@ import UpdateNotesModal from '../components/UpdateNotesModal';
 import MenuMusicPlayer from '../components/MenuMusicPlayer';
 import IntroMusicPlayer from '../components/IntroMusicPlayer';
 import LoadingScreen from '../components/LoadingScreen';
+import SplashScreen from '../components/SplashScreen';
 import HomeScreen from '../components/HomeScreen';
 import StartFlow from '../components/StartFlow';
 import DeckBuilder from '../components/DeckBuilder';
@@ -17,6 +18,7 @@ import LoadingMenu from './LoadingMenu';
 
 // linha removida: declaração duplicada de useState
 export default function App() {
+  const [showSplash, setShowSplash] = useState(true);
   const [screen, setScreen] = useState('loading');
   const [checkingUpdate, setCheckingUpdate] = useState(false);
   const [battleDeck, setBattleDeck] = useState(null);
@@ -147,6 +149,14 @@ export default function App() {
     else if (route === 'sair') window.close();
     else setScreen('home');
   };
+
+  const handleSplashFinish = () => {
+    setShowSplash(false);
+  };
+
+  if (showSplash) {
+    return <SplashScreen onFinish={handleSplashFinish} />;
+  }
 
   return (
     <AppProvider>

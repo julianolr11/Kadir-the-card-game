@@ -1,0 +1,89 @@
+/* Splash Screen - Logo da Produtora */
+
+.splash-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #000000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  cursor: pointer;
+  animation: splash-fade-in 0.5s ease-in;
+}
+
+.splash-screen.fade-out {
+  animation: splash-fade-out 0.5s ease-out forwards;
+}
+
+.splash-video {
+  max-width: 80%;
+  max-height: 80%;
+  object-fit: contain;
+  user-select: none;
+  pointer-events: none;
+}
+
+.splash-skip-hint {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+  animation: hint-fade-in 1s ease-in 2s forwards;
+}
+
+.splash-skip-hint span {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* Animações */
+
+@keyframes splash-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes splash-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes hint-fade-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* Responsivo */
+
+@media (max-width: 768px) {
+  .splash-video {
+    max-width: 90%;
+    max-height: 90%;
+  }
+
+  .splash-skip-hint span {
+    font-size: 12px;
+  }
+}

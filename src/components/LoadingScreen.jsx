@@ -37,18 +37,13 @@ function LoadingScreen({ onFinish, menuMusicRef }) {
   const t = translations[lang] || translations.ptbr;
 
   useEffect(() => {
-    const transitionTimer = setTimeout(() => {
-      setWallpaperTransition('transitioning');
-    }, 4000);
-
+    // Mantém o vídeo rodando sem transição até trocar para o menu
     const timer = setTimeout(() => {
-      setWallpaperTransition('image');
       setShowMenu(true);
       if (onFinish) onFinish();
     }, 5000);
 
     return () => {
-      clearTimeout(transitionTimer);
       clearTimeout(timer);
     };
   }, [onFinish, musicVolume]);
@@ -152,15 +147,15 @@ function LoadingScreen({ onFinish, menuMusicRef }) {
             height: '100%',
             objectFit: 'cover',
             filter: 'brightness(0.9)',
-            opacity: wallpaperTransition === 'video' ? videoOpacity : wallpaperTransition === 'transitioning' ? videoOpacity : 0,
-            transition: wallpaperTransition === 'transitioning' ? 'opacity 1s ease-in' : 'opacity 2.5s ease-in-out',
+            opacity: videoOpacity,
+            transition: 'opacity 2.5s ease-in-out',
           }}
-          className={wallpaperTransition === 'transitioning' ? 'wallpaper-video-out' : 'fade-in'}
+          className="fade-in"
         />
       )}
 
-      {/* Wallpaper Estático (Imagem) - Aparece após transição */}
-      {(wallpaperTransition !== 'video' || videoError) && (
+      {/* Wallpaper Estático (Imagem) - Fallback apenas se houver erro */}
+      {videoError && (
         <img
           src={wallpaperStatic}
           alt="Wallpaper"

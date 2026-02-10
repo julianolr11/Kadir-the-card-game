@@ -124,14 +124,26 @@ const createWindow = async () => {
     return { action: 'deny' };
   });
 
-  // Configurar autoUpdater
-  autoUpdater.autoDownload = false; // Não baixar automaticamente, só quando usuário clicar
-  autoUpdater.autoInstallOnAppQuit = true; // Instalar ao sair do app
-  log.info('AutoUpdater configurado');
+  // Detectar se está rodando via Steam
+  const isSteamBuild = !!(process.env.SteamAppId || process.env.SteamGameId);
+  log.info(`Steam detected: ${isSteamBuild}`);
+
+  // Configurar autoUpdater APENAS se NÃO estiver na Steam
+  if (!isSteamBuild) {
+    autoUpdater.autoDownload = false; // Não baixar automaticamente, só quando usuário clicar
+    autoUpdater.autoInstallOnAppQuit = true; // Instalar ao sair do app
+    log.info('AutoUpdater configurado (modo standalone)');
+  } else {
+    log.info('AutoUpdater DESABILITADO (rodando via Steam)');
+  }
 
   // O update será iniciado manualmente via IPC do renderer
-  // IPC handlers para update
+  // IPC handlers para update (retorna sem fazer nada se Steam)
   ipcMain.handle('update-check', async () => {
+    if (isSteamBuild) {
+      log.info('Update check bloqueado - rodando via Steam');
+      return { updateAvailable: false, steamBuild: true };
+    }
     try {
       log.info('IPC: Checking for updates...');
       const result = await autoUpdater.checkForUpdates();
@@ -149,6 +161,10 @@ const createWindow = async () => {
   });
 
   ipcMain.handle('update-download', async () => {
+    if (isSteamBuild) {
+      log.info('Update download bloqueado - rodando via Steam');
+      return { started: false, steamBuild: true };
+    }
     try {
       log.info('Iniciando download da atualização...');
       await autoUpdater.downloadUpdate();
@@ -161,43 +177,49 @@ const createWindow = async () => {
   });
 
   ipcMain.handle('quit-and-install', () => {
+    if (isSteamBuild) {
+      log.info('Quit-and-install bloqueado - rodando via Steam');
+      return;
+    }
     log.info('Reiniciando para instalar atualização...');
     autoUpdater.quitAndInstall();
   });
 
-  // Eventos de progresso e status
-  autoUpdater.on('checking-for-update', () => {
-    log.info('Checking for update...');
-  });
+  // Eventos de progresso e status (apenas se não estiver na Steam)
+  if (!isSteamBuild) {
+    autoUpdater.on('checking-for-update', () => {
+      log.info('Checking for update...');
+    });
 
-  autoUpdater.on('update-available', (info) => {
-    log.info('Update available:', info);
-  });
+    autoUpdater.on('update-available', (info) => {
+      log.info('Update available:', info);
+    });
 
-  autoUpdater.on('update-not-available', (info) => {
-    log.info('Update not available:', info);
-  });
+    autoUpdater.on('update-not-available', (info) => {
+      log.info('Update not available:', info);
+    });
 
-  autoUpdater.on('download-progress', (progressObj) => {
-    log.info(`Download speed: ${progressObj.bytesPerSecond} - Downloaded ${progressObj.percent}%`);
-    if (mainWindow) {
-      mainWindow.webContents.send('update-download-progress', progressObj);
-    }
-  });
+    autoUpdater.on('download-progress', (progressObj) => {
+      log.info(`Download speed: ${progressObj.bytesPerSecond} - Downloaded ${progressObj.percent}%`);
+      if (mainWindow) {
+        mainWindow.webContents.send('update-download-progress', progressObj);
+      }
+    });
 
-  autoUpdater.on('update-downloaded', (info) => {
-    log.info('Update downloaded:', info);
-    if (mainWindow) {
-      mainWindow.webContents.send('update-downloaded', info);
-    }
-  });
+    autoUpdater.on('update-downloaded', (info) => {
+      log.info('Update downloaded:', info);
+      if (mainWindow) {
+        mainWindow.webContents.send('update-downloaded', info);
+      }
+    });
 
-  autoUpdater.on('error', (err) => {
-    log.error('AutoUpdater error:', err);
-    if (mainWindow) {
-      mainWindow.webContents.send('update-error', err?.message || 'Update error');
-    }
-  });
+    autoUpdater.on('error', (err) => {
+      log.error('AutoUpdater error:', err);
+      if (mainWindow) {
+        mainWindow.webContents.send('update-error', err?.message || 'Update error');
+      }
+    });
+  }
 };
 
 /**

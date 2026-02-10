@@ -64,6 +64,11 @@ export default function App() {
         minDelay
       ]).then(([res]) => {
         setCheckingUpdate(false);
+        // Se estiver na Steam, não mostra modal de update
+        if (res?.steamBuild) {
+          console.log('Steam build detected - update system disabled');
+          return;
+        }
         if (res?.updateAvailable) {
           setUpdateModalOpen(true);
           setUpdateVersion(res.info?.version || '');

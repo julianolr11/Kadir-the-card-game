@@ -1,7 +1,27 @@
 
-# Kadir Card Game
+# Kadir Card Game 🎮
 
 Jogo de cartas digital com criaturas, elementos e efeitos visuais/holográficos, feito em React + Electron.
+
+## 🎮 Versão Oficial
+
+**Este jogo está disponível oficialmente na Steam:**
+
+- ✅ **Instalação automática** - Um clique e pronto
+- ✅ **Updates automáticos** - Sempre a versão mais recente
+- ✅ **Cloud Saves** - Seu progresso salvo na nuvem
+- ✅ **Conquistas Steam** - Achievements desbloqueáveis
+- ✅ **Suporte oficial** - Atualizações e bugfixes garantidos
+- 💰 **[Steam Store]** _(em breve)_
+
+**Compilar manualmente (não recomendado):**
+- ⚠️ Requer Node.js, npm, conhecimento técnico
+- ⚠️ Sem updates automáticos
+- ⚠️ Sem features Steam (conquistas, cloud saves)
+- ✅ Código aberto para fins educacionais
+- ✅ Totalmente gratuito (porém trabalhoso)
+
+---
 
 ## Visão Geral
 

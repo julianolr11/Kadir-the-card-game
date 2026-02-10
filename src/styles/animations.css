@@ -159,3 +159,29 @@
     filter: blur(6px);
   }
 }
+/* Wallpaper transition animations */
+.wallpaper-video-out {
+  animation: wallpaperVideoOut 1s ease-in forwards;
+}
+
+.wallpaper-image-in {
+  animation: wallpaperImageIn 1s ease-out forwards;
+}
+
+@keyframes wallpaperVideoOut {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes wallpaperImageIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}

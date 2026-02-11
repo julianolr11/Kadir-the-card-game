@@ -1,0 +1,283 @@
+/* Card Recycler Panel */
+.card-recycler-panel {
+  background: linear-gradient(135deg, rgba(20, 15, 35, 0.95), rgba(30, 20, 50, 0.95));
+  border: 2px solid rgba(168, 126, 45, 0.4);
+  border-radius: 12px;
+  padding: 20px;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 600px;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+}
+
+/* Header do Recycler */
+.recycler-header {
+  border-bottom: 2px solid rgba(168, 126, 45, 0.3);
+  padding-bottom: 12px;
+}
+
+.recycler-header h2 {
+  margin: 0;
+  font-size: 1.3rem;
+  color: #f39c12;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  font-weight: 700;
+}
+
+.recycler-header p {
+  margin: 6px 0 0 0;
+  font-size: 0.9rem;
+  color: #d0a574;
+  opacity: 0.85;
+}
+
+/* Seções de Raridade */
+.recycler-rarities {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Header do Rarity */
+.rarity-header-btn {
+  background: linear-gradient(90deg, rgba(60, 40, 90, 0.6), rgba(40, 30, 70, 0.4));
+  border: 2px solid;
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.rarity-header-btn:hover {
+  background: linear-gradient(90deg, rgba(80, 50, 110, 0.8), rgba(60, 40, 90, 0.6));
+  transform: translateX(2px);
+}
+
+.rarity-header-btn .rarity-label {
+  flex: 1;
+  text-align: left;
+}
+
+.rarity-header-btn .rarity-count {
+  font-size: 0.85rem;
+  opacity: 0.75;
+  margin: 0 8px;
+}
+
+.rarity-header-btn .expand-icon {
+  font-size: 0.75rem;
+  transition: transform 0.2s ease;
+}
+
+/* Cards List */
+.rarity-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 0 8px 12px;
+  border-left: 3px solid rgba(168, 126, 45, 0.4);
+  margin-left: 6px;
+}
+
+.recycled-card-item {
+  background: linear-gradient(90deg, rgba(50, 35, 80, 0.5), rgba(35, 25, 60, 0.3));
+  border: 1px solid rgba(168, 126, 45, 0.2);
+  border-radius: 6px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.recycled-card-item:hover {
+  background: linear-gradient(90deg, rgba(70, 50, 100, 0.7), rgba(50, 35, 80, 0.5));
+  border-color: rgba(168, 126, 45, 0.4);
+  transform: translateX(2px);
+}
+
+.recycled-card-item.selected {
+  background: linear-gradient(90deg, rgba(100, 70, 150, 0.8), rgba(80, 50, 120, 0.6));
+  border-color: rgba(168, 126, 45, 0.6);
+  box-shadow: 0 0 12px rgba(168, 126, 45, 0.3);
+}
+
+/* Checkbox */
+.card-item-checkbox {
+  flex-shrink: 0;
+}
+
+.card-item-checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #f39c12;
+}
+
+/* Info do Card */
+.card-item-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.card-item-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #ffe6b0;
+}
+
+.card-item-level {
+  font-size: 0.8rem;
+  color: #b8956a;
+  opacity: 0.8;
+}
+
+/* Value */
+.card-item-value {
+  flex-shrink: 0;
+  background: rgba(243, 156, 18, 0.15);
+  border: 1px solid rgba(243, 156, 18, 0.3);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #f39c12;
+}
+
+.coin-icon {
+  margin-left: 4px;
+}
+
+/* Empty State */
+.rarity-empty {
+  padding: 12px;
+  text-align: center;
+  color: #888;
+  font-size: 0.9rem;
+  font-style: italic;
+  opacity: 0.6;
+}
+
+/* Footer do Recycler */
+.recycler-footer {
+  border-top: 2px solid rgba(168, 126, 45, 0.3);
+  padding-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.recycler-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95rem;
+  padding: 0 4px;
+}
+
+.selected-count {
+  color: #b8956a;
+}
+
+.total-coins {
+  color: #f39c12;
+  font-weight: 600;
+}
+
+.total-coins strong {
+  color: #ffd700;
+  text-shadow: 0 0 8px rgba(243, 156, 18, 0.5);
+}
+
+/* Botão Reciclar */
+.recycle-button {
+  background: linear-gradient(135deg, #f39c12, #e67e22);
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 12px rgba(243, 156, 18, 0.3);
+}
+
+.recycle-button:hover:not(.disabled) {
+  background: linear-gradient(135deg, #ffb84d, #f39c12);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(243, 156, 18, 0.4);
+}
+
+.recycle-button:active:not(.disabled) {
+  transform: translateY(0);
+}
+
+.recycle-button.disabled {
+  background: linear-gradient(135deg, #666, #555);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.recycle-button.recycling {
+  background: linear-gradient(135deg, #9b59b6, #8e44ad);
+  animation: recycling-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes recycling-pulse {
+  0%, 100% {
+    box-shadow: 0 4px 12px rgba(155, 89, 182, 0.3);
+  }
+  50% {
+    box-shadow: 0 6px 20px rgba(155, 89, 182, 0.6);
+  }
+}
+
+/* Scrollbar customizada */
+.card-recycler-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.card-recycler-panel::-webkit-scrollbar-track {
+  background: rgba(168, 126, 45, 0.1);
+  border-radius: 3px;
+}
+
+.card-recycler-panel::-webkit-scrollbar-thumb {
+  background: rgba(168, 126, 45, 0.4);
+  border-radius: 3px;
+}
+
+.card-recycler-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 126, 45, 0.6);
+}
+
+.rarity-cards-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.rarity-cards-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.rarity-cards-list::-webkit-scrollbar-thumb {
+  background: rgba(168, 126, 45, 0.3);
+  border-radius: 2px;
+}

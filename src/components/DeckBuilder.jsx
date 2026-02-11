@@ -3,6 +3,7 @@ import { AppContext } from '../context/AppContext';
 import CreatureCardPreview from './CreatureCardPreview';
 import DeckEditor from './DeckEditor';
 import GuardianSelectModal from './GuardianSelectModal';
+import CardRecycler from './CardRecycler';
 import lvlIcon from '../assets/img/icons/lvlicon.png';
 import soulEssence from '../assets/img/icons/soul-essence.png';
 import burnIcon from '../assets/img/icons/burn.png';
@@ -272,6 +273,7 @@ function DeckBuilder({ onNavigate }) {
   const [deckNameInput, setDeckNameInput] = useState('');
   const [showGuardianSelectModal, setShowGuardianSelectModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [showRecycler, setShowRecycler] = useState(false);
 
   // Calcular quantidade total de cartas
   const totalCards = useMemo(() => {
@@ -695,9 +697,17 @@ function DeckBuilder({ onNavigate }) {
         </button>
 
         <div className="deckbuilder-titles">
-          <h1>Meus Decks</h1>
-          <p>Máximo de 4 decks. Cada deck usa 1 guardião + 20 cartas.</p>
+          <h1>{showRecycler ? 'Reciclar Cartas' : 'Meus Decks'}</h1>
+          <p>{showRecycler ? 'Converta cartas repetidas em moedas' : 'Máximo de 4 decks. Cada deck usa 1 guardião + 20 cartas.'}</p>
         </div>
+
+        <button 
+          className="recycler-toggle-btn"
+          onClick={() => setShowRecycler(!showRecycler)}
+          title={showRecycler ? 'Ver decks' : 'Reciclar cartas'}
+        >
+          {showRecycler ? '← Voltar' : 'Reciclar 🪙'}
+        </button>
       </div>
 
       {/* Mensagem de erro */}
@@ -723,15 +733,18 @@ function DeckBuilder({ onNavigate }) {
       )}
 
       <div className="deckbuilder-body">
-        <div className="deckbuilder-slots">
-          {Array.from({ length: MAX_DECKS }).map((_, idx) => {
-            const slot = slots[idx];
-            const slotKey = `slot-${idx}`;
-            const isOpening = openingSlotId === idx;
-                        const deckData = slot ? getDeck(slot.id) : null;
-                        const guardianId = deckData?.guardianId;
-                        const guardianData = guardianId ? getGuardianData(guardianId) : null;
-                        const guardianImageUrl = guardianData?.img ? guardianData.img : null;
+        {showRecycler ? (
+          <CardRecycler lang={lang} />
+        ) : (
+          <div className="deckbuilder-slots">
+            {Array.from({ length: MAX_DECKS }).map((_, idx) => {
+              const slot = slots[idx];
+              const slotKey = `slot-${idx}`;
+              const isOpening = openingSlotId === idx;
+                          const deckData = slot ? getDeck(slot.id) : null;
+                          const guardianId = deckData?.guardianId;
+                          const guardianData = guardianId ? getGuardianData(guardianId) : null;
+                          const guardianImageUrl = guardianData?.img ? guardianData.img : null;
 
             return (
               <div
@@ -785,6 +798,7 @@ function DeckBuilder({ onNavigate }) {
             );
           })}
         </div>
+        )}
       </div>
 
       {/* Modal de Loadout */}

@@ -16,6 +16,7 @@ import BoosterResultsSlider from './BoosterResultsSlider';
 import DeckSelectModal from './DeckSelectModal';
 import Bestiary from './Bestiary';
 import Shop from './Shop';
+import { getRollRarity, RARITY_TIERS } from '../assets/rarityData.js';
 
 // Função para carregar dados da carta do guardião
 const getGuardianCardData = (guardianId) => {
@@ -342,6 +343,7 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
     const selected = pool.slice(0, 5).map((card) => ({
       ...card,
       isHolo: Math.random() < 0.05,
+      rarity: getRollRarity(), // Adiciona raridade aleatória ao card
     }));
     return selected;
   }

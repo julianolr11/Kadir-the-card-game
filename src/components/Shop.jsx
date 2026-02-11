@@ -13,7 +13,7 @@ const SHOP_PRODUCTS = [
     description: { pt: '5 cartas aleatórias', en: '5 random cards' },
     quantity: 1,
     price: 150,
-    image: require('../assets/img/card/card-back.webp'),
+    image: require('../assets/img/card/verso.png'),
   },
   {
     id: 'booster_5',
@@ -22,7 +22,7 @@ const SHOP_PRODUCTS = [
     quantity: 5,
     price: 700,
     discount: 7,
-    image: require('../assets/img/card/card-back.webp'),
+    image: require('../assets/img/card/verso.png'),
   },
   {
     id: 'booster_10',
@@ -31,7 +31,7 @@ const SHOP_PRODUCTS = [
     quantity: 10,
     price: 1300,
     discount: 13,
-    image: require('../assets/img/card/card-back.webp'),
+    image: require('../assets/img/card/verso.png'),
   },
 ];
 

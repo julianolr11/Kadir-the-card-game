@@ -419,17 +419,17 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
       <div className="main-menu-background">
         <div className="main-menu-bg-base" />
       </div>
-      
+
       {/* Display de moedas no canto superior esquerdo */}
       <div className="home-coins-display">
-        <img 
-          src={require('../assets/img/icons/head.png')} 
-          alt="Moedas" 
-          className="home-coin-icon" 
+        <img
+          src={require('../assets/img/icons/head.png')}
+          alt="Moedas"
+          className="home-coin-icon"
         />
         <span className="home-coin-amount">{coins?.toLocaleString() || 0}</span>
       </div>
-      
+
       {/* Efeitos de vela animada dentro de container responsivo */}
       <div className="candle-container-16x9">
         <div className="candle-glow" />

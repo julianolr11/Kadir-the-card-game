@@ -1,17 +1,30 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { AppContext } from '../context/AppContext';
 import '../styles/battle-result.css';
 import levelIcon from '../assets/img/icons/lvlicon.png';
 import CreatureCardPreview from './CreatureCardPreview.jsx';
 import swordIcon from '../assets/img/icons/sword.png';
+import coinIcon from '../assets/img/icons/head.png';
 import creaturesPool from '../assets/cards';
 
 export default function BattleResultModal({ gameResult, killFeed, playerDeck, onClose, battleStats }) {
-  const { cardCollection, updateCardInstanceXp, setBoosters, boosters } = useContext(AppContext);
+  const { cardCollection, updateCardInstanceXp, setBoosters, boosters, addCoins } = useContext(AppContext);
 
   const isPlayerWon = gameResult?.winner === 'player';
   const playerCards = Array.isArray(playerDeck) ? playerDeck : [];
   const [expandedCards, setExpandedCards] = useState({});
+
+  // Valores de moedas por resultado
+  const COINS_VICTORY = 200;
+  const COINS_DEFEAT = 50; // 1/4 de vitória
+  const coinsEarned = isPlayerWon ? COINS_VICTORY : COINS_DEFEAT;
+
+  // Award moedas quando o modal monta (apenas uma vez)
+  useEffect(() => {
+    if (addCoins && coinsEarned > 0) {
+      addCoins(coinsEarned);
+    }
+  }, []); // Array vazio = executa apenas ao montar
 
   // Função para calcular XP necessário por nível (mesma do AppContext)
   const getXpForLevel = (level) => {
@@ -329,12 +342,25 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
               <div className="stat-value">{killFeed?.length || 0}</div>
             </div>
           </div>
-          {isPlayerWon && (
-            <div className="battle-result-booster-panel">
-              <img src={require('../assets/img/card/booster.png')} alt="Booster adquirido" className="battle-result-booster-img" />
-              <span className="battle-result-booster-label">Booster adquirido!</span>
+          
+          {/* Painel de Recompensas */}
+          <div className="battle-result-rewards">
+            {/* Moedas */}
+            <div className="battle-result-coins-panel">
+              <img src={coinIcon} alt="Moedas" className="battle-result-coin-img" />
+              <span className="battle-result-coins-label">
+                +{coinsEarned} moedas
+              </span>
             </div>
-          )}
+            
+            {/* Booster (apenas vitória) */}
+            {isPlayerWon && (
+              <div className="battle-result-booster-panel">
+                <img src={require('../assets/img/card/booster.png')} alt="Booster adquirido" className="battle-result-booster-img" />
+                <span className="battle-result-booster-label">Booster adquirido!</span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Kill Feed */}

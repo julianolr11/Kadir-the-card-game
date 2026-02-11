@@ -343,7 +343,6 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
   const [showInstanceSelector, setShowInstanceSelector] = useState(false);
   const [selectedCardForInstance, setSelectedCardForInstance] = useState(null);
   const [instanceSlotIndex, setInstanceSlotIndex] = useState(null);
-  const [selectedInstanceForRecycle, setSelectedInstanceForRecycle] = useState(null);
   const [recyclingInProgress, setRecyclingInProgress] = useState(false);
   const [hoveredCardForInstances, setHoveredCardForInstances] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
@@ -450,8 +449,6 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
     if (selectedCardForInstance && instanceId) {
       finishAddingCardToDeck(instanceId, instanceSlotIndex);
     }
-    // Rastreia a instância selecionada para mostrar no painel de recicler
-    setSelectedInstanceForRecycle(instanceId);
     setShowInstanceSelector(false);
     setSelectedCardForInstance(null);
     setInstanceSlotIndex(null);

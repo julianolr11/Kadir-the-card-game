@@ -86,7 +86,7 @@ function CardRecycler({ lang = 'ptbr' }) {
 
       // Limpa seleção
       setSelectedCards(new Set());
-      
+
       // Feedback visual
       setTimeout(() => setRecyclingInProgress(false), 500);
     } catch (error) {
@@ -133,8 +133,8 @@ function CardRecycler({ lang = 'ptbr' }) {
                   cards.map((card, idx) => {
                     const key = `${card.creatureId}_${idx}`;
                     const isSelected = selectedCards.has(key);
-                    const cardName = typeof card.name === 'object' 
-                      ? card.name[langKey] 
+                    const cardName = typeof card.name === 'object'
+                      ? card.name[langKey]
                       : card.name;
 
                     return (

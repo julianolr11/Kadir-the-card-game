@@ -701,7 +701,7 @@ function DeckBuilder({ onNavigate }) {
           <p>{showRecycler ? 'Converta cartas repetidas em moedas' : 'Máximo de 4 decks. Cada deck usa 1 guardião + 20 cartas.'}</p>
         </div>
 
-        <button 
+        <button
           className="recycler-toggle-btn"
           onClick={() => setShowRecycler(!showRecycler)}
           title={showRecycler ? 'Ver decks' : 'Reciclar cartas'}

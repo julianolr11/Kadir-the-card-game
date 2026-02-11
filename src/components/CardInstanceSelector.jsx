@@ -1,4 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useContext } from 'react';
+import { AppContext } from '../context/AppContext';
+import { getCreatureRarity } from '../assets/rarityData.js';
 import '../styles/card-instance-selector.css';
 import lvlIcon from '../assets/img/icons/lvlicon.png';
 import heartIcon from '../assets/img/icons/hearticon.png';
@@ -25,9 +27,34 @@ function CardInstanceSelector({
   title = 'Selecione uma cópia',
   lang = 'ptbr',
 }) {
+  const { addCoins, removeCardInstance } = useContext(AppContext);
   const [selectedInstanceId, setSelectedInstanceId] = useState(
     instances?.[0]?.instanceId || null
   );
+  const [recyclingInProgress, setRecyclingInProgress] = useState(false);
+
+  // Calcula valor da carta baseado em raridade, nível e holo
+  const calculateCardValue = (instance) => {
+    const rarity = getCreatureRarity(cardId);
+    let baseValue = rarity.value || 100;
+
+    // Bônus por nível (10% por nível acima de 1)
+    const levelBonus = instance.level > 1 ? baseValue * (instance.level - 1) * 0.1 : 0;
+    let totalValue = baseValue + levelBonus;
+
+    // Multiplicador holo para cartas raras ou melhores
+    const isRareOrBetter = ['rare', 'epic', 'legendary'].includes(rarity.rarity);
+    if (instance.isHolo && isRareOrBetter) {
+      totalValue *= 1.75;
+    }
+
+    return Math.floor(totalValue);
+  };
+
+  const selectedInstance = sortedInstances.find(
+    (inst) => inst.instanceId === selectedInstanceId
+  );
+  const selectedInstanceValue = selectedInstance ? calculateCardValue(selectedInstance) : 0;
 
   const sortedInstances = useMemo(() => {
     if (!instances) return [];
@@ -45,6 +72,28 @@ function CardInstanceSelector({
   const handleConfirm = () => {
     if (selectedInstanceId) {
       onSelect(selectedInstanceId);
+    }
+  };
+
+  const handleRecycleCard = async () => {
+    if (!selectedInstance || recyclingInProgress) return;
+
+    setRecyclingInProgress(true);
+    try {
+      // Adiciona as moedas
+      addCoins(selectedInstanceValue);
+
+      // Remove a carta da coleção
+      removeCardInstance(cardId, selectedInstanceId);
+
+      // Espera um pouco para o feedback visual
+      setTimeout(() => {
+        setRecyclingInProgress(false);
+        onClose();
+      }, 500);
+    } catch (error) {
+      console.error('Erro ao reciclar carta:', error);
+      setRecyclingInProgress(false);
     }
   };
 
@@ -123,6 +172,12 @@ function CardInstanceSelector({
                       <span className="stat-label">Adquirida</span>
                       <span className="stat-value">{formatDate(instance.acquiredAt)}</span>
                     </div>
+                    <div className="stat-block">
+                      <span className="stat-label">Valor</span>
+                      <span className="stat-value stat-recycle">
+                        +{calculateCardValue(instance)} 🪙
+                      </span>
+                    </div>
                   </div>
 
                   {/* Selection indicator */}
@@ -143,19 +198,33 @@ function CardInstanceSelector({
 
         {/* Actions */}
         <div className="instance-selector-actions">
-          <button
-            className="instance-selector-btn instance-selector-btn-cancel"
-            onClick={onClose}
-          >
-            {lang === 'en' ? 'Cancel' : 'Cancelar'}
-          </button>
-          <button
-            className="instance-selector-btn instance-selector-btn-confirm"
-            onClick={handleConfirm}
-            disabled={!selectedInstanceId}
-          >
-            {lang === 'en' ? 'Select' : 'Selecionar'}
-          </button>
+          <div className="recycle-value-display">
+            <span className="recycle-label">Valor da carta:</span>
+            <span className="recycle-amount">+{selectedInstanceValue} 🪙</span>
+          </div>
+          <div className="action-buttons">
+            <button
+              className="instance-selector-btn instance-selector-btn-cancel"
+              onClick={onClose}
+            >
+              {lang === 'en' ? 'Cancel' : 'Cancelar'}
+            </button>
+            <button
+              className="instance-selector-btn instance-selector-btn-recycle"
+              onClick={handleRecycleCard}
+              disabled={!selectedInstanceId || recyclingInProgress}
+              title={recyclingInProgress ? 'Reciclando...' : 'Reciclar esta carta para moedas'}
+            >
+              {recyclingInProgress ? '♻️ Reciclando...' : '♻️ Reciclar'}
+            </button>
+            <button
+              className="instance-selector-btn instance-selector-btn-confirm"
+              onClick={handleConfirm}
+              disabled={!selectedInstanceId}
+            >
+              {lang === 'en' ? 'Select' : 'Selecionar'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

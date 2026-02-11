@@ -24,13 +24,14 @@ function CardInstanceSelector({
   instances,
   onSelect,
   onClose,
-  onRecycleSelect,
+  onRecycle,
   title = 'Selecione uma cópia',
   lang = 'ptbr',
 }) {
   const [selectedInstanceId, setSelectedInstanceId] = useState(
     instances?.[0]?.instanceId || null
   );
+  const [recyclingInstanceId, setRecyclingInstanceId] = useState(null);
 
   // Calcula valor da carta baseado em raridade, nível e holo
   const calculateCardValue = (instance) => {
@@ -71,6 +72,27 @@ function CardInstanceSelector({
   const handleConfirm = () => {
     if (selectedInstanceId) {
       onSelect(selectedInstanceId);
+    }
+  };
+
+  const handleRecycle = (instanceId, e) => {
+    e.stopPropagation();
+    if (onRecycle && instanceId) {
+      setRecyclingInstanceId(instanceId);
+      const instance = sortedInstances.find(inst => inst.instanceId === instanceId);
+      const value = calculateCardValue(instance);
+
+      // Toca som de moeda
+      const coinSound = new Audio(require('../assets/sounds/effects/coin-flip.mp3'));
+      coinSound.volume = 0.5;
+      coinSound.play().catch(() => {});
+
+      onRecycle(cardId, instanceId, value);
+
+      // Reset visual após 500ms
+      setTimeout(() => {
+        setRecyclingInstanceId(null);
+      }, 500);
     }
   };
 
@@ -139,20 +161,17 @@ function CardInstanceSelector({
                       <span className="stat-value">{instance.level}</span>
                     </div>
                     <div className="stat-block">
-                      <span className="stat-label">XP</span>
-                      <span className="stat-value">
-                        {instance.xp}
-                        <span className="xp-max">/100</span>
-                      </span>
-                    </div>
-                    <div className="stat-block">
                       <span className="stat-label">Adquirida</span>
                       <span className="stat-value">{formatDate(instance.acquiredAt)}</span>
                     </div>
-                    <div className="stat-block">
-                      <span className="stat-label">Valor</span>
+                    <div
+                      className="stat-block stat-block-recycle"
+                      onClick={(e) => handleRecycle(instance.instanceId, e)}
+                      title="Clique para reciclar esta carta"
+                    >
+                      <span className="stat-label">♻️ Reciclar</span>
                       <span className="stat-value stat-recycle">
-                        +{calculateCardValue(instance)} 🪙
+                        {recyclingInstanceId === instance.instanceId ? '...' : `+${calculateCardValue(instance)} 🪙`}
                       </span>
                     </div>
                   </div>

@@ -485,23 +485,21 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
     return Math.floor(totalValue);
   };
 
-  // Recicla a instância selecionada
-  const handleRecycleFromPanel = async () => {
-    if (!selectedInstanceForRecycle || !selectedCardForInstance || recyclingInProgress) return;
+  // Recicla a instância quando clicada no stat-block
+  const handleRecycleInstance = async (cardId, instanceId, value) => {
+    if (!instanceId || !cardId || recyclingInProgress) return;
     setRecyclingInProgress(true);
     try {
-      const instance = getInstanceById(selectedInstanceForRecycle);
-      if (instance && addCoins && removeCardInstance) {
-        const value = calculateCardValue(selectedCardForInstance, instance);
+      if (addCoins && removeCardInstance) {
         // Adiciona moedas
         addCoins(value);
         // Remove a instância da coleção
-        removeCardInstance(selectedCardForInstance, selectedInstanceForRecycle);
+        removeCardInstance(cardId, instanceId);
+        // Apenas reseta o estado de reciclagem, mantém o modal aberto
+        setTimeout(() => {
+          setRecyclingInProgress(false);
+        }, 300);
       }
-      setTimeout(() => {
-        setRecyclingInProgress(false);
-        setSelectedInstanceForRecycle(null);
-      }, 500);
     } catch (error) {
       console.error('Erro ao reciclar:', error);
       setRecyclingInProgress(false);
@@ -944,36 +942,17 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
           </div>
         )}
         {showInstanceSelector && selectedCardForInstance && (
-          <CardInstanceSelector cardId={selectedCardForInstance} cardData={getCardData(selectedCardForInstance)} instances={getAvailableInstances(selectedCardForInstance)} onSelect={handleInstanceSelected} onClose={() => setShowInstanceSelector(false)} title={lang === 'ptbr' ? 'Selecione uma cópia para o deck' : 'Select a card copy for deck'} lang={lang} />
+          <CardInstanceSelector
+            cardId={selectedCardForInstance}
+            cardData={getCardData(selectedCardForInstance)}
+            instances={getAvailableInstances(selectedCardForInstance)}
+            onSelect={handleInstanceSelected}
+            onRecycle={handleRecycleInstance}
+            onClose={() => setShowInstanceSelector(false)}
+            title={lang === 'ptbr' ? 'Selecione uma cópia para o deck' : 'Select a card copy for deck'}
+            lang={lang}
+          />
         )}
-
-        {/* Painel de Reciclar Carta */}
-        {showInstanceSelector && selectedInstanceForRecycle && selectedCardForInstance && (() => {
-          const instance = getInstanceById(selectedInstanceForRecycle);
-          const cardValue = calculateCardValue(selectedCardForInstance, instance);
-          const cardName = getName(getCardData(selectedCardForInstance)?.name, lang);
-          return (
-            <div className="recycle-panel-bottom">
-              <div className="recycle-panel-content">
-                <div className="recycle-panel-info">
-                  <span className="recycle-panel-label">Reciclar carta:</span>
-                  <span className="recycle-panel-name">{cardName}</span>
-                </div>
-                <div className="recycle-panel-value">
-                  <span className="recycle-value-amount">+{cardValue} 🪙</span>
-                </div>
-                <button
-                  className="recycle-panel-btn"
-                  onClick={handleRecycleFromPanel}
-                  disabled={recyclingInProgress}
-                  title={recyclingInProgress ? 'Reciclando...' : 'Reciclar carta para moedas'}
-                >
-                  {recyclingInProgress ? '♻️ Reciclando...' : '♻️ Reciclar'}
-                </button>
-              </div>
-            </div>
-          );
-        })()}
 
         {/* Modal de Loadout para Criatura */}
         {showCardLoadoutModal && editingCardData && editingCardId && (

@@ -188,6 +188,29 @@
   border-radius: 6px;
 }
 
+.stat-block-recycle {
+  cursor: pointer;
+  background: linear-gradient(135deg, rgba(243, 156, 18, 0.08), rgba(230, 126, 34, 0.06));
+  border: 1px solid rgba(243, 156, 18, 0.2);
+  transition: all 0.2s ease;
+}
+
+.stat-block-recycle:hover {
+  background: linear-gradient(135deg, rgba(243, 156, 18, 0.15), rgba(230, 126, 34, 0.1));
+  border-color: rgba(243, 156, 18, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(243, 156, 18, 0.2);
+}
+
+.stat-block-recycle:active {
+  transform: translateY(0);
+}
+
+.stat-block-recycle .stat-label {
+  color: #d0a574;
+  font-weight: 700;
+}
+
 .stat-label {
   font-size: 11px;
   color: #a0aec0;
@@ -199,6 +222,13 @@
   font-size: 16px;
   font-weight: 600;
   color: #4a90e2;
+}
+
+.stat-recycle {
+  color: #f39c12 !important;
+  font-size: 17px;
+  font-weight: 700;
+  text-shadow: 0 0 8px rgba(243, 156, 18, 0.3);
 }
 
 .xp-max {
@@ -297,7 +327,7 @@
   }
 
   .instance-stats {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
   }
 
   .instance-selector-btn {

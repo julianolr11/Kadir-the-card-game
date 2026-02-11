@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { getCreatureRarity } from '../assets/rarityData.js';
 // Error Boundary para capturar erros do react-window
 class GridErrorBoundary extends React.Component {
   constructor(props) {
@@ -321,7 +322,7 @@ const getName = (nameObj, lang = 'ptbr') => {
 };
 
 function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCards = [], onClose, onSave }) {
-  const { lang = 'ptbr', getCardInstances, cardCollection, saveGuardianLoadout, loadGuardianLoadout } = React.useContext(AppContext) || {};
+  const { lang = 'ptbr', getCardInstances, cardCollection, saveGuardianLoadout, loadGuardianLoadout, addCoins, removeCardInstance } = React.useContext(AppContext) || {};
   const langKey = lang === 'en' ? 'en' : 'pt';
   const [deckName, setDeckName] = useState(initialDeckName || `Deck ${deckId}`);
   const [editingName, setEditingName] = useState(false);
@@ -342,6 +343,8 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
   const [showInstanceSelector, setShowInstanceSelector] = useState(false);
   const [selectedCardForInstance, setSelectedCardForInstance] = useState(null);
   const [instanceSlotIndex, setInstanceSlotIndex] = useState(null);
+  const [selectedInstanceForRecycle, setSelectedInstanceForRecycle] = useState(null);
+  const [recyclingInProgress, setRecyclingInProgress] = useState(false);
   const [hoveredCardForInstances, setHoveredCardForInstances] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [showCardLoadoutModal, setShowCardLoadoutModal] = useState(false);
@@ -447,6 +450,8 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
     if (selectedCardForInstance && instanceId) {
       finishAddingCardToDeck(instanceId, instanceSlotIndex);
     }
+    // Rastreia a instância selecionada para mostrar no painel de recicler
+    setSelectedInstanceForRecycle(instanceId);
     setShowInstanceSelector(false);
     setSelectedCardForInstance(null);
     setInstanceSlotIndex(null);
@@ -464,6 +469,43 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
     const newDeck = [...deckCards];
     newDeck[slotIndex] = null;
     setDeckCards(newDeck);
+  };
+
+  // Calcula valor da carta baseado em raridade, nível e holo
+  const calculateCardValue = (cardId, instance) => {
+    if (!cardId || !instance) return 0;
+    const rarity = getCreatureRarity(cardId);
+    let baseValue = rarity.value || 100;
+    const levelBonus = instance.level > 1 ? baseValue * (instance.level - 1) * 0.1 : 0;
+    let totalValue = baseValue + levelBonus;
+    const isRareOrBetter = ['rare', 'epic', 'legendary'].includes(rarity.rarity);
+    if (instance.isHolo && isRareOrBetter) {
+      totalValue *= 1.75;
+    }
+    return Math.floor(totalValue);
+  };
+
+  // Recicla a instância selecionada
+  const handleRecycleFromPanel = async () => {
+    if (!selectedInstanceForRecycle || !selectedCardForInstance || recyclingInProgress) return;
+    setRecyclingInProgress(true);
+    try {
+      const instance = getInstanceById(selectedInstanceForRecycle);
+      if (instance && addCoins && removeCardInstance) {
+        const value = calculateCardValue(selectedCardForInstance, instance);
+        // Adiciona moedas
+        addCoins(value);
+        // Remove a instância da coleção
+        removeCardInstance(selectedCardForInstance, selectedInstanceForRecycle);
+      }
+      setTimeout(() => {
+        setRecyclingInProgress(false);
+        setSelectedInstanceForRecycle(null);
+      }, 500);
+    } catch (error) {
+      console.error('Erro ao reciclar:', error);
+      setRecyclingInProgress(false);
+    }
   };
 
   const moveCard = (fromIndex, toIndex) => {
@@ -904,6 +946,34 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
         {showInstanceSelector && selectedCardForInstance && (
           <CardInstanceSelector cardId={selectedCardForInstance} cardData={getCardData(selectedCardForInstance)} instances={getAvailableInstances(selectedCardForInstance)} onSelect={handleInstanceSelected} onClose={() => setShowInstanceSelector(false)} title={lang === 'ptbr' ? 'Selecione uma cópia para o deck' : 'Select a card copy for deck'} lang={lang} />
         )}
+
+        {/* Painel de Reciclar Carta */}
+        {showInstanceSelector && selectedInstanceForRecycle && selectedCardForInstance && (() => {
+          const instance = getInstanceById(selectedInstanceForRecycle);
+          const cardValue = calculateCardValue(selectedCardForInstance, instance);
+          const cardName = getName(getCardData(selectedCardForInstance)?.name, lang);
+          return (
+            <div className="recycle-panel-bottom">
+              <div className="recycle-panel-content">
+                <div className="recycle-panel-info">
+                  <span className="recycle-panel-label">Reciclar carta:</span>
+                  <span className="recycle-panel-name">{cardName}</span>
+                </div>
+                <div className="recycle-panel-value">
+                  <span className="recycle-value-amount">+{cardValue} 🪙</span>
+                </div>
+                <button
+                  className="recycle-panel-btn"
+                  onClick={handleRecycleFromPanel}
+                  disabled={recyclingInProgress}
+                  title={recyclingInProgress ? 'Reciclando...' : 'Reciclar carta para moedas'}
+                >
+                  {recyclingInProgress ? '♻️ Reciclando...' : '♻️ Reciclar'}
+                </button>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Modal de Loadout para Criatura */}
         {showCardLoadoutModal && editingCardData && editingCardId && (

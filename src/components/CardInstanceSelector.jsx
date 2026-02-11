@@ -1,5 +1,4 @@
-import React, { useState, useMemo, useContext } from 'react';
-import { AppContext } from '../context/AppContext';
+import React, { useState, useMemo } from 'react';
 import { getCreatureRarity } from '../assets/rarityData.js';
 import '../styles/card-instance-selector.css';
 import lvlIcon from '../assets/img/icons/lvlicon.png';
@@ -15,6 +14,7 @@ import heartIcon from '../assets/img/icons/hearticon.png';
  *   instances: array - Array de instâncias do tipo { instanceId, xp, level, isHolo, acquiredAt }
  *   onSelect: function(instanceId) - Callback quando seleciona uma instância
  *   onClose: function() - Callback para fechar o modal
+ *   onRecycleSelect: function(cardId, instanceId) - Callback para reciclar (opcional)
  *   title?: string - Título do modal (padrão: "Selecione uma cópia")
  *   lang?: string - Idioma (ptbr|en)
  */
@@ -24,14 +24,13 @@ function CardInstanceSelector({
   instances,
   onSelect,
   onClose,
+  onRecycleSelect,
   title = 'Selecione uma cópia',
   lang = 'ptbr',
 }) {
-  const { addCoins, removeCardInstance } = useContext(AppContext);
   const [selectedInstanceId, setSelectedInstanceId] = useState(
     instances?.[0]?.instanceId || null
   );
-  const [recyclingInProgress, setRecyclingInProgress] = useState(false);
 
   // Calcula valor da carta baseado em raridade, nível e holo
   const calculateCardValue = (instance) => {
@@ -51,11 +50,6 @@ function CardInstanceSelector({
     return Math.floor(totalValue);
   };
 
-  const selectedInstance = sortedInstances.find(
-    (inst) => inst.instanceId === selectedInstanceId
-  );
-  const selectedInstanceValue = selectedInstance ? calculateCardValue(selectedInstance) : 0;
-
   const sortedInstances = useMemo(() => {
     if (!instances) return [];
     // Ordena por level descendente, depois por XP descendente
@@ -65,6 +59,11 @@ function CardInstanceSelector({
     });
   }, [instances]);
 
+  const selectedInstance = sortedInstances.find(
+    (inst) => inst.instanceId === selectedInstanceId
+  );
+  const selectedInstanceValue = selectedInstance ? calculateCardValue(selectedInstance) : 0;
+
   const handleSelectInstance = (instanceId) => {
     setSelectedInstanceId(instanceId);
   };
@@ -72,28 +71,6 @@ function CardInstanceSelector({
   const handleConfirm = () => {
     if (selectedInstanceId) {
       onSelect(selectedInstanceId);
-    }
-  };
-
-  const handleRecycleCard = async () => {
-    if (!selectedInstance || recyclingInProgress) return;
-
-    setRecyclingInProgress(true);
-    try {
-      // Adiciona as moedas
-      addCoins(selectedInstanceValue);
-
-      // Remove a carta da coleção
-      removeCardInstance(cardId, selectedInstanceId);
-
-      // Espera um pouco para o feedback visual
-      setTimeout(() => {
-        setRecyclingInProgress(false);
-        onClose();
-      }, 500);
-    } catch (error) {
-      console.error('Erro ao reciclar carta:', error);
-      setRecyclingInProgress(false);
     }
   };
 
@@ -198,33 +175,19 @@ function CardInstanceSelector({
 
         {/* Actions */}
         <div className="instance-selector-actions">
-          <div className="recycle-value-display">
-            <span className="recycle-label">Valor da carta:</span>
-            <span className="recycle-amount">+{selectedInstanceValue} 🪙</span>
-          </div>
-          <div className="action-buttons">
-            <button
-              className="instance-selector-btn instance-selector-btn-cancel"
-              onClick={onClose}
-            >
-              {lang === 'en' ? 'Cancel' : 'Cancelar'}
-            </button>
-            <button
-              className="instance-selector-btn instance-selector-btn-recycle"
-              onClick={handleRecycleCard}
-              disabled={!selectedInstanceId || recyclingInProgress}
-              title={recyclingInProgress ? 'Reciclando...' : 'Reciclar esta carta para moedas'}
-            >
-              {recyclingInProgress ? '♻️ Reciclando...' : '♻️ Reciclar'}
-            </button>
-            <button
-              className="instance-selector-btn instance-selector-btn-confirm"
-              onClick={handleConfirm}
-              disabled={!selectedInstanceId}
-            >
-              {lang === 'en' ? 'Select' : 'Selecionar'}
-            </button>
-          </div>
+          <button
+            className="instance-selector-btn instance-selector-btn-cancel"
+            onClick={onClose}
+          >
+            {lang === 'en' ? 'Cancel' : 'Cancelar'}
+          </button>
+          <button
+            className="instance-selector-btn instance-selector-btn-confirm"
+            onClick={handleConfirm}
+            disabled={!selectedInstanceId}
+          >
+            {lang === 'en' ? 'Select' : 'Selecionar'}
+          </button>
         </div>
       </div>
     </div>

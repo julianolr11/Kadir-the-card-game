@@ -342,7 +342,7 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
               <div className="stat-value">{killFeed?.length || 0}</div>
             </div>
           </div>
-          
+
           {/* Painel de Recompensas */}
           <div className="battle-result-rewards">
             {/* Moedas */}
@@ -352,7 +352,7 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
                 +{coinsEarned} moedas
               </span>
             </div>
-            
+
             {/* Booster (apenas vitória) */}
             {isPlayerWon && (
               <div className="battle-result-booster-panel">

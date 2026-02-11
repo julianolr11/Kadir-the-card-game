@@ -16,6 +16,7 @@ import terra from '../assets/img/elements/terra.png';
 import puro from '../assets/img/elements/puro.png';
 import ar from '../assets/img/elements/ar.png';
 import '../styles/cardpreview.css';
+import { getCreatureRarity, RARITY_CONFIG } from '../assets/rarityData.js';
 
 import swipeSound from '../assets/sounds/effects/swipe.MP3';
 
@@ -206,6 +207,11 @@ function CreatureCardPreview({
     imageSrc = `/${imageSrc}`;
   }
 
+  // Obtém raridade da criatura
+  const creatureRarityData = !isFieldCard && !isEffectCard ? getCreatureRarity(creature.id) : null;
+  const rarityClass = creatureRarityData ? `rarity-${creatureRarityData.rarity}` : '';
+  const rarityConfig = creatureRarityData?.config;
+
   return (
     <div style={{ position: 'relative', display: 'flex', perspective: '1000px' }}>
       <audio ref={swipeAudioRef} src={swipeSound} preload="auto" />
@@ -220,7 +226,7 @@ function CreatureCardPreview({
       >
         {/* FRENTE DA CARTA */}
         <div style={{ backfaceVisibility: 'hidden' }}>
-          <div className={`card-preview ${forceFieldClass ? 'card-preview-field' : isEffectCard ? 'card-preview-effect' : colorClass[creature.element] || (isFieldCard ? 'card-preview-field' : '')} ${isHolo ? 'card-preview-holo' : ''}`}>
+          <div className={`card-preview ${forceFieldClass ? 'card-preview-field' : isEffectCard ? 'card-preview-effect' : colorClass[creature.element] || (isFieldCard ? 'card-preview-field' : '')} ${isHolo ? 'card-preview-holo' : ''} ${rarityClass}`}>
             <div className="card-preview-header">
               <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 {!isFieldCard && !isEffectCard && (
@@ -243,6 +249,12 @@ function CreatureCardPreview({
               </span>
             </div>
             <audio ref={swipeAudioRef} src={swipeSound} preload="auto" />
+            {/* Badge de Raridade */}
+            {creatureRarityData && !isFieldCard && !isEffectCard && (
+              <div className={`card-rarity-badge rarity-${creatureRarityData.rarity}`}>
+                {creatureRarityData.config.name}
+              </div>
+            )}
             <div className="card-preview-art-wrapper">
               <img
                 src={imageSrc}

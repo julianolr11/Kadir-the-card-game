@@ -7,6 +7,83 @@
   height: 236px;
 }
 
+/* Burn / Fire effect (enhanced) */
+.burn-gradient {
+  position: absolute;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  border-radius: 10px;
+  mix-blend-mode: screen;
+  opacity: 0.46;
+  z-index: 50006;
+  background: linear-gradient(to top, rgba(190,40,20,0.98) 0%, rgba(230,100,30,0.7) 36%, rgba(255,160,60,0.28) 72%, rgba(255,220,140,0) 100%);
+  box-shadow: 0 12px 48px rgba(230,100,40,0.28), inset 0 -10px 28px rgba(200,60,20,0.22);
+  animation: burn-pulse 1.8s ease-in-out infinite;
+}
+
+/* Flame element base (applies transform/animation to pseudo-elements) */
+.burn-flame {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+  z-index: 50008;
+  transform-origin: 50% 100%;
+  will-change: transform, opacity;
+  animation-name: flame-slow;
+  animation-iteration-count: infinite;
+  animation-timing-function: cubic-bezier(.25,.8,.25,1);
+  animation-fill-mode: both;
+}
+
+@keyframes burn-pulse {
+  0% { opacity: 0.36; transform: translate(-50%, -50%) scaleY(1); }
+  45% { opacity: 0.56; transform: translate(-50%, -48%) scaleY(1.03); }
+  100% { opacity: 0.36; transform: translate(-50%, -50%) scaleY(1); }
+}
+
+
+  /* More flame-like core + glow */
+  .burn-flame::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: 0px;
+    transform: translateX(-50%) translateY(6%);
+    width: 30%;
+    height: 78%;
+    /* teardrop / tapered shape using elliptical radii */
+    border-radius: 50% 50% 40% 40% / 70% 70% 30% 30%;
+    background: radial-gradient(circle at 50% 18%, rgba(255,250,200,1) 0%, rgba(255,210,100,1) 28%, rgba(255,150,50,1) 52%, rgba(220,60,30,0.95) 72%, rgba(0,0,0,0) 100%);
+    filter: blur(0.6px) saturate(1.05);
+    transform-origin: 50% 100%;
+  }
+
+  .burn-flame::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -2px;
+    transform: translateX(-50%) translateY(8%);
+    width: 120%;
+    height: 110%;
+    border-radius: 50% 50% 30% 30% / 70% 70% 30% 30%;
+    background: radial-gradient(circle at 50% 30%, rgba(255,140,50,0.28) 0%, rgba(220,70,40,0.08) 55%, transparent 100%);
+    filter: blur(12px) saturate(1.18);
+    opacity: 0.96;
+  }
+
+
+
+@keyframes flame-slow {
+  0% { transform: translateY(0px) scaleX(1) scaleY(0.96) translateX(0px); opacity: 0; }
+  20% { transform: translateY(-3px) scaleX(0.94) scaleY(1.06) translateX(-0.8px); opacity: 0.95; }
+  45% { transform: translateY(-6px) scaleX(0.9) scaleY(1.12) translateX(-1.4px); opacity: 0.7; }
+  70% { transform: translateY(-5px) scaleX(0.93) scaleY(1.08) translateX(1px); opacity: 0.9; }
+  100% { transform: translateY(0px) scaleX(1) scaleY(0.96) translateX(0px); opacity: 0; }
+}
+
+/* small floating embers using box-shadow on pseudo-elements can be added later if desired */
+
 .graveyard-card-wrapper .card-preview,
 .graveyard-card-wrapper .card-preview.card-preview-field {
   transform: scale(0.4);
@@ -109,6 +186,8 @@
 
 .slot.slot-death-animation {
   animation: creature-death 0.6s ease-out forwards !important;
+  /* elevate stacking so death visuals render above inner card elements */
+  z-index: 50020;
 }
 
 /* ===== ANIMAÇÃO DE ATAQUE DA CRIATURA ===== */
@@ -196,6 +275,7 @@
   animation: slash-line 0.3s ease-out 0.15s forwards;
   pointer-events: none;
   border-radius: inherit;
+  z-index: 50030;
 }
 
 @keyframes slash-line {
@@ -208,6 +288,101 @@
     transform: translateX(150%) translateY(150%);
     opacity: 0;
   }
+}
+
+/* ===== ENHANCED DEATH VISUALS ===== */
+/* Additional layered effects: blood splat, fragment fall, blur/rotate for more impact */
+.slot.slot-death-animation {
+  /* Slight perspective to emphasize depth */
+  transform-origin: center center;
+  perspective: 800px;
+}
+
+.slot.slot-death-animation .card-chip,
+.slot.slot-death-animation .card-art {
+  /* Ensure the inner card follows the death animation and adds rotation/blur */
+  animation: chip-fragment 0.6s cubic-bezier(.2,.9,.2,1) forwards;
+  will-change: transform, opacity, filter;
+}
+
+.slot.slot-death-animation .status-icons-overlay {
+  opacity: 0;
+  transition: opacity 0.12s linear;
+}
+
+.slot.slot-death-animation::after {
+  /* Blood / energy splatter that expands and fades */
+  content: '';
+  position: absolute;
+  left: -10%;
+  top: -10%;
+  width: 120%;
+  height: 120%;
+  pointer-events: none;
+  border-radius: inherit;
+  background: radial-gradient(circle at 45% 25%, rgba(255,110,110,0.92) 0%, rgba(220,40,40,0.9) 8%, rgba(200,30,30,0.6) 18%, transparent 40%),
+              radial-gradient(circle at 70% 60%, rgba(255,200,80,0.12) 0%, transparent 35%);
+  mix-blend-mode: screen;
+  opacity: 0;
+  transform: scale(0.2) translateY(-8px);
+  filter: blur(0.6px) saturate(1.2);
+  animation: blood-splat 0.6s cubic-bezier(.2,.9,.2,1) 0.12s forwards;
+  z-index: 50030;
+}
+
+@keyframes blood-splat {
+  0% { opacity: 1; transform: scale(0.2) translateY(-8px); filter: blur(0.6px) saturate(1.2); }
+  50% { opacity: 0.9; transform: scale(1.02) translateY(6px); filter: blur(0.4px) saturate(1.4); }
+  100% { opacity: 0; transform: scale(1.6) translateY(28px); filter: blur(2px) saturate(0.6); }
+}
+
+@keyframes chip-fragment {
+  0% {
+    transform: translateZ(0) translateY(0) rotateZ(0) scale(1);
+    opacity: 1;
+    filter: none;
+  }
+  35% {
+    transform: translateZ(0) translateY(6px) rotateZ(6deg) scale(0.98);
+    filter: brightness(1.2) blur(0.2px);
+  }
+  65% {
+    transform: translateZ(0) translateY(18px) rotateZ(10deg) scale(0.85);
+    filter: blur(0.8px) brightness(0.9) contrast(1.05);
+  }
+  100% {
+    transform: translateZ(0) translateY(46px) rotateZ(14deg) scale(0.6);
+    opacity: 0;
+    filter: blur(2.2px) brightness(0.6) saturate(0.6);
+  }
+}
+
+/* Small debris particles using box-shadow technique on a pseudo-element */
+.slot.slot-death-animation .card-chip::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255,120,120,0.95);
+  transform: translate(-50%, -50%) scale(0.2);
+  box-shadow: -18px -6px 0 0 rgba(255,90,90,0.95), 14px -10px 0 0 rgba(255,70,70,0.9), -6px 18px 0 0 rgba(255,40,40,0.85), 20px 22px 0 0 rgba(200,30,30,0.8);
+  opacity: 0;
+  animation: debris-burst 0.55s cubic-bezier(.2,.9,.2,1) 0.08s forwards;
+  pointer-events: none;
+}
+
+@keyframes debris-burst {
+  0% { transform: translate(-50%, -50%) scale(0.2); opacity: 1; filter: blur(0.2px); }
+  60% { transform: translate(-50%, -50%) scale(1); opacity: 0.9; filter: blur(0.6px); }
+  100% { transform: translate(-50%, -50%) scale(1.8); opacity: 0; filter: blur(3px); }
+}
+
+/* Reduce visual clutter after death animation completes */
+.slot.slot-death-animation * {
+  pointer-events: none;
 }
 
 .deck-draw-indicator {
@@ -826,6 +1001,152 @@
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
 }
 
+/* Sleep ZZZ floating effect */
+/* Sleep ZZZ floating effect (centered above card, higher z-index, slower, blue) */
+.sleep-zzz {
+  position: absolute;
+  left: 50%;
+  top: 24%;
+  transform: translate(-50%, -50%);
+  z-index: 50010 !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+}
+
+.sleep-zzz span {
+  position: relative;
+  --tx: 0px; /* horizontal offset per letter */
+  color: #5fb0ff; /* blue */
+  font-weight: 900;
+  /* use Comic Sans-like font for Zzz */
+  font-family: 'Comic Sans MS', 'Comic Sans', 'cursive';
+  font-size: 14px; /* slightly smaller */
+  line-height: 1;
+  opacity: 0;
+  transform-origin: center;
+  /* remove heavy shadow and add softer black outline for better contrast */
+  -webkit-text-stroke: 1.6px rgba(0,0,0,0.6);
+  text-stroke: 1.6px rgba(0,0,0,0.6);
+  will-change: transform, opacity;
+  animation: z-float 3.6s cubic-bezier(.22,.78,.26,1) infinite;
+}
+
+/* each Z slightly larger than the previous and offset left/right (smaller overall) */
+.sleep-zzz span:nth-child(1) { --tx: 14px; animation-delay: 0s; font-size: 14px; --r-start: 6deg; --r-mid: 3deg; --r-end: 12deg; }
+.sleep-zzz span:nth-child(2) { --tx: -16px; animation-delay: 0.40s; font-size: 16px; --r-start: -14deg; --r-mid: -10deg; --r-end: -6deg; }
+.sleep-zzz span:nth-child(3) { --tx: 18px; animation-delay: 0.80s; font-size: 18px; --r-start: 8deg; --r-mid: 4deg; --r-end: 14deg; }
+
+@keyframes z-float {
+  0% { opacity: 0; transform: translateY(14px) translateX(var(--tx)) rotate(var(--r-start)) scale(0.78); }
+  20% { opacity: 1; transform: translateY(0) translateX(calc(var(--tx) * 0.55)) rotate(var(--r-mid)) scale(1.08); }
+  70% { opacity: 1; transform: translateY(-38px) translateX(calc(var(--tx) * 0.2)) rotate(calc(var(--r-mid) + 3deg)) scale(1.35); }
+  100% { opacity: 0; transform: translateY(-76px) translateX(calc(var(--tx) * 0.02)) rotate(var(--r-end)) scale(1.18); }
+}
+
+/* If sleep-zzz is nested inside the status-icons-overlay (top-right), keep it visible above */
+.status-icons-overlay .sleep-zzz { position: absolute; top: 8px; right: 8px; left: auto; transform: none; z-index: 50010 !important; }
+
+/* Ensure sleep overlay is above the card preview */
+.slot > .sleep-zzz,
+.slot .sleep-zzz {
+  z-index: 50010 !important;
+}
+
+/* Paralyze corner burst */
+.paralyze-burst {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  line-height: 1;
+  color: #ffef59; /* electric yellow */
+  text-shadow: 0 0 6px rgba(255,239,89,0.8), 0 0 12px rgba(255,200,40,0.6);
+  pointer-events: none;
+  background: transparent;
+  z-index: 50010 !important;
+  opacity: 0;
+  transform-origin: center;
+  /* loop the pulse so all bursts stay synchronized while status remains */
+  animation: paralyze-pop 1s cubic-bezier(.22,.78,.26,1) infinite;
+}
+
+@keyframes paralyze-pop {
+  0% { opacity: 0; transform: translateY(6px) scale(0.6) rotate(-10deg); }
+  18% { opacity: 1; transform: translateY(0) scale(1.05) rotate(0deg); }
+  50% { opacity: 0.95; transform: translateY(-6px) scale(1.08) rotate(6deg); }
+  82% { opacity: 0.6; transform: translateY(-8px) scale(0.95) rotate(10deg); }
+  100% { opacity: 0; transform: translateY(-10px) scale(0.9) rotate(12deg); }
+}
+
+/* Bleed emoji dripping */
+.bleed-emoji {
+  width: auto;
+  height: auto;
+  pointer-events: none;
+  z-index: 50010 !important;
+  opacity: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform-origin: center;
+  /* loop continuously while bleed status remains; delays staggered inline */
+  animation: bleed-drip 3.6s cubic-bezier(.22,.78,.26,1) infinite;
+}
+
+@keyframes bleed-drip {
+  0% { opacity: 0; transform: translateY(-6px) scale(0.88) rotate(-6deg); }
+  12% { opacity: 1; transform: translateY(0) scale(1) rotate(0deg); }
+  55% { opacity: 0.95; transform: translateY(26px) scale(1.04) rotate(4deg); }
+  90% { opacity: 0.25; transform: translateY(46px) scale(0.98) rotate(6deg); }
+  100% { opacity: 0; transform: translateY(62px) scale(0.95) rotate(8deg); }
+}
+
+/* Shield overlay: blue gradient from bottom->top and center shield icon */
+
+.shield-overlay {
+  position: absolute;
+  pointer-events: none;
+  z-index: 50005 !important;
+  display: block;
+  overflow: visible;
+}
+
+.shield-overlay .shield-gradient {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: 0;
+  border-radius: 10px;
+  background: linear-gradient(to top, rgba(10, 160, 255, 0.7) 0%, rgba(60, 130, 255, 0.18) 50%, transparent 60%);
+  mix-blend-mode: screen;
+  pointer-events: none;
+  z-index: 50005 !important;
+}
+
+.shield-overlay .shield-center {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  transform: translate(-50%, -50%);
+  width: 52px;
+  height: 52px;
+  filter: drop-shadow(0 6px 18px rgba(20,60,150,0.45));
+  opacity: 0.98;
+  animation: shield-pulse 1.6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes shield-pulse {
+  0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.9; }
+  50% { transform: translate(-50%, -50%) scale(1.06); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(0.94); opacity: 0.94; }
+}
+
 .status-icons-overlay {
   position: absolute;
   top: 6px;
@@ -848,13 +1169,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 10000000;
 }
 
 .card-preview-container {
   display: flex;
   gap: 80px;
   align-items: center;
+  z-index: 10000010;
 }
 
 .card-preview-full {
@@ -1245,7 +1567,7 @@
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 50;
+  z-index: 100050; /* acima dos overlays (99999), abaixo do card-preview (10000000) */
   padding: 0;
   margin: 0;
 }
@@ -1288,7 +1610,7 @@
 /* Ghost Preview - aparece ao passar o mouse sobre cartas */
 .ghost-preview {
   position: fixed;
-  z-index: 9999;
+  z-index: 100100;
   pointer-events: none;
   animation: ghostFadeIn 0.2s ease-out;
   filter: drop-shadow(0 8px 32px rgba(0, 0, 0, 0.6));
@@ -2003,8 +2325,8 @@ body.is-fullscreen .graveyard-container {
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
+  transform: translateX(-50%);
+  z-index: 100050;
   border-radius: 12px;
   background: linear-gradient(135deg, rgba(120, 235, 255, 0.12) 0%, transparent 50%, rgba(40, 180, 220, 0.08) 100%);
   pointer-events: none;

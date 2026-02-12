@@ -1,6 +1,7 @@
 // Card data for Leoracal
 module.exports = {
   id: 'leoracal',
+  title: { pt: 'Rastro do deserto', en: 'Trail of the Desert' },
   num: 4,
   height: 1.5,
   weakness: 'ar',
@@ -9,7 +10,7 @@ module.exports = {
   element: 'terra',
   img: require('../../img/creatures/leoracal_bio.webp'),
   color: 'earth',
-  hp: 5,
+  hp: 6,
   abilities: [
     {
       name: { pt: 'Rugido Sísmico', en: 'Seismic Roar' },
@@ -33,15 +34,19 @@ module.exports = {
     pt: 'Aliados recebem 3% menos dano enquanto Leoracal estiver em campo.',
     en: 'Allies take 3% less damage while Leoracal is on the field.',
   },
-  storyTitle: { pt: 'Origem de Leoracal', en: 'Origin of Leoracal' },
+  storyTitle: { pt: 'Rastro do deserto', en: 'Trail of the Desert' },
   story: [
     {
-      pt: 'Leoracal é uma fera de força incomparável, guardiã das terras ancestrais.',
-      en: 'Leoracal is a beast of unmatched strength, guardian of ancient lands.',
+      pt: 'Leoracal é uma fera de força incomparável que habita desertos e planícies áridas. Seu corpo é musculoso, resistente ao calor extremo, e seus sentidos são apurados para localizar presas a grandes distâncias.',
+      en: 'Leoracal is a beast of unmatched strength that inhabits deserts and arid plains. Its body is muscular, resistant to extreme heat, and its senses are keen enough to locate prey at great distances.',
     },
     {
-      pt: 'Seu rugido ecoa por todo o campo de batalha.',
-      en: 'Its roar echoes across the battlefield.',
+      pt: 'Suas patas largas não afundam nas areias do deserto, permitindo que se mova com velocidade mesmo nos terrenos mais instáveis. Por conta disso, ao longo do tempo tornou-se indispensável para caçadas e locomoção através do deserto.',
+      en: 'Its wide paws do not sink into desert sands, allowing it to move swiftly even on unstable ground. Because of this, over time it became indispensable for hunting and travel across the desert.',
+    },
+    {
+      pt: 'Apesar de sua utilidade, Leoracal é extremamente territorial e difícil de domar, aceitando apenas mestres que consigam provar força, paciência e respeito.',
+      en: 'Despite its usefulness, Leoracal is extremely territorial and difficult to tame, accepting only masters who can prove strength, patience, and respect.',
     },
   ],
 

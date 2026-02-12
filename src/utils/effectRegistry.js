@@ -288,6 +288,44 @@ export function processStatusEffects(state, creatureId) {
       newState = result.newState;
       const typeName = effect.type === 'burn' ? 'queimadura' : effect.type === 'poison' ? 'veneno' : 'sangramento';
       log.push(`${creature.name} sofreu ${result.damageDealt} de dano por ${typeName}`);
+      // Se a criatura morreu por debuff, remove-a imediatamente do campo e atualiza graveyard/orbs
+      if (result.died) {
+        try {
+          // tenta encontrar em qual lado estava a criatura
+          const deadCreature = findCreatureById(newState, creatureId);
+          let ownerSide = null;
+          if (newState.player?.field?.slots?.some(s => s && s.id === creatureId)) ownerSide = 'player';
+          if (!ownerSide && newState.ai?.field?.slots?.some(s => s && s.id === creatureId)) ownerSide = 'ai';
+
+          if (ownerSide && deadCreature) {
+            // remove da slot e adiciona ao cemitério
+            const updatedSlots = newState[ownerSide].field.slots.map(s => (s && s.id === creatureId) ? null : s);
+            const updatedGrave = [...(newState[ownerSide]?.graveyard || []), deadCreature];
+            newState = {
+              ...newState,
+              [ownerSide]: {
+                ...newState[ownerSide],
+                field: {
+                  ...newState[ownerSide].field,
+                  slots: updatedSlots,
+                },
+                graveyard: updatedGrave,
+              }
+            };
+
+            // Se o lado ficou sem criaturas, penaliza -1 orbe (comportamento imediato)
+            const hasCreatures = updatedSlots.some(Boolean);
+            if (!hasCreatures && (newState[ownerSide].orbs || 0) > 0) {
+              newState[ownerSide].orbs = Math.max(0, (newState[ownerSide].orbs || 0) - 1);
+              // mark that we applied orb penalty due to status kill to avoid double application later
+              newState._orbPenaltyFromStatus = { ...(newState._orbPenaltyFromStatus || {}), [ownerSide]: true };
+              log.push(`${ownerSide === 'player' ? 'Você' : 'IA'} perdeu 1 orbe por ficar sem criaturas!`);
+            }
+          }
+        } catch (e) {
+          // se falhar não bloqueia o processamento principal
+        }
+      }
       effect.duration -= 1;
       if (effect.duration > 0) updatedEffects.push(effect);
     } else if (effect.type === 'regeneration') {

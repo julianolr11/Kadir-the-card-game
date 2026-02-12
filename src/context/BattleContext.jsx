@@ -256,7 +256,7 @@ export function BattleProvider({ children }) {
     phase: 'idle', // 'idle' | 'coinflip' | 'playing' | 'ended'
     turn: 1,
     activePlayer: 'player', // 'player' | 'ai'
-    creaturesInvokedThisTurn: 0, // Contador de criaturas invocadas no turno atual
+    creaturesInvokedThisTurn: { player: 0, ai: 0 }, // Contador de criaturas invocadas no turno atual por lado
     creaturesWithUsedAbility: new Set(), // Criaturas que já usaram habilidade este turno
     resurrectionPending: null, // { guardianId, guardianName, availableSlots } se Ignis foi invocado e há cemitério
     returnCardPending: null, // { guardianId, guardianName } se Owlberoth foi invocado
@@ -367,7 +367,7 @@ export function BattleProvider({ children }) {
       phase: 'coinflip',
       turn: 1,
       activePlayer: 'player',
-      creaturesInvokedThisTurn: 0,
+      creaturesInvokedThisTurn: { player: 0, ai: 0 },
       resurrectionPending: null,
       returnCardPending: null,
       poisonPending: null,
@@ -599,6 +599,25 @@ export function BattleProvider({ children }) {
       nsCleaned = { ...r2.newState };
       const aiSlotsAfterGrave = r2.cleanedSlots;
 
+      // Apply orb penalty centrally after removing dead creatures from slots
+      // If a side has no creatures and hasn't already received an orb penalty from status processing,
+      // decrement orbs and add a log entry.
+      const applyOrbPenaltyIfNeeded = (stateObj, sideKey) => {
+        const slots = (sideKey === 'player' ? playerSlotsAfterGrave : aiSlotsAfterGrave) || [];
+        const hasCreaturesNow = slots.some(Boolean);
+        const alreadyApplied = stateObj._orbPenaltyFromStatus && stateObj._orbPenaltyFromStatus[sideKey];
+        if (!hasCreaturesNow && (stateObj[sideKey].orbs || 0) > 0 && !alreadyApplied) {
+          stateObj[sideKey].orbs = Math.max(0, (stateObj[sideKey].orbs || 0) - 1);
+          stateObj.log = [...(stateObj.log || []), `${sideKey === 'player' ? 'Você' : 'IA'} perdeu 1 orbe por ficar sem criaturas!`];
+          stateObj._orbPenaltyFromStatus = { ...(stateObj._orbPenaltyFromStatus || {}), [sideKey]: true };
+        }
+      };
+
+      // Clone processed.ns to avoid mutating originals
+      nsCleaned = { ...processed.ns };
+      applyOrbPenaltyIfNeeded(nsCleaned, 'player');
+      applyOrbPenaltyIfNeeded(nsCleaned, 'ai');
+
       nsCleaned = {
         ...nsCleaned,
         player: {
@@ -619,7 +638,7 @@ export function BattleProvider({ children }) {
 
       return {
         ...nsCleaned,
-        creaturesInvokedThisTurn: 0, // Reseta contador de invocações para o próximo turno
+        creaturesInvokedThisTurn: { player: 0, ai: 0 }, // Reseta contador de invocações para o próximo turno (por segurança)
         creaturesWithUsedAbility: new Set(), // Reseta criaturas que usaram habilidade
         log: [...logEntries, ...resurrectionLogs, `Fim do turno de ${s.activePlayer}.`, ...processed.logs],
       };
@@ -697,7 +716,7 @@ export function BattleProvider({ children }) {
       }
 
       // Verifica se já invocou 1 criatura neste turno
-      if ((s.creaturesInvokedThisTurn || 0) >= 1) {
+      if ((s.creaturesInvokedThisTurn?.player || 0) >= 1) {
         return {
           ...s,
           log: [...s.log, 'Você já invocou 1 criatura neste turno!'],
@@ -740,7 +759,10 @@ export function BattleProvider({ children }) {
 
       const newState = {
         ...s,
-        creaturesInvokedThisTurn: (s.creaturesInvokedThisTurn || 0) + 1,
+        creaturesInvokedThisTurn: {
+          ...(s.creaturesInvokedThisTurn || { player: 0, ai: 0 }),
+          player: (s.creaturesInvokedThisTurn?.player || 0) + 1,
+        },
         player: {
           ...s.player,
           hand,
@@ -2629,6 +2651,68 @@ export function BattleProvider({ children }) {
       let updated = false;
       let logEntries = [...s.log];
 
+      // PRIORIDADE 0: Se a IA NÃO tiver criaturas em campo, priorizar invocar 1 criatura
+      const aiHasCreaturesInitially = slots.some(Boolean);
+      const canInvokeCreatureInitially = (s.creaturesInvokedThisTurn?.ai || 0) < 1;
+      if (!aiHasCreaturesInitially && canInvokeCreatureInitially) {
+        // procura a carta invocável na mão (pula efeitos e cartas de campo)
+        let cardToInvoke = null;
+        let cardIndex = -1;
+        for (let i = 0; i < hand.length; i += 1) {
+          const cId = hand[i];
+          if (!cId) continue;
+          if (String(cId).toLowerCase().startsWith('effect_') || /^f\d{3}$/i.test(cId) || String(cId).toLowerCase().startsWith('field_')) continue;
+          cardToInvoke = cId;
+          cardIndex = i;
+          break;
+        }
+
+        const emptySlotIndex = slots.findIndex((slot) => !slot);
+        if (cardToInvoke && emptySlotIndex >= 0) {
+          hand.splice(cardIndex, 1);
+          const creatureData = creaturesPool.find(c => c.id === cardToInvoke) || {};
+          const build = resolveCreatureBuild(creatureData);
+          const instanceId = `${cardToInvoke}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+          slots[emptySlotIndex] = {
+            id: instanceId,
+            baseId: cardToInvoke,
+            name: creatureData.name?.pt || creatureData.name?.en || cardToInvoke,
+            element: creatureData.element || 'puro',
+            hp: build.hp,
+            maxHp: build.maxHp,
+            atk: build.atk,
+            def: build.def,
+            abilities: build.abilities,
+            buffs: [],
+            debuffs: [],
+            shield: build.perkEffects?.shieldOnSummon?.amount || 0,
+            shieldTurns: build.perkEffects?.shieldOnSummon?.duration || 0,
+            statusEffects: [],
+          };
+
+          const aiBlessingResult = applyAiSummonBlessings(s, build, creatureData, emptySlotIndex, slots, logEntries);
+          logEntries = aiBlessingResult.logEntries;
+          updated = true;
+          logEntries = [...logEntries, `IA priorizou invocar ${cardToInvoke} no slot ${emptySlotIndex + 1} para evitar perda de orbe.`];
+          s.battleStats.ai.cardsSummoned = [...s.battleStats.ai.cardsSummoned, cardToInvoke];
+
+          // Retorna estado atualizado imediatamente, priorizando a invocação
+          return {
+            ...s,
+            creaturesInvokedThisTurn: {
+              ...(s.creaturesInvokedThisTurn || { player: 0, ai: 0 }),
+              ai: (s.creaturesInvokedThisTurn?.ai || 0) + 1,
+            },
+            ai: {
+              ...s.ai,
+              hand,
+              field: { ...s.ai.field, slots },
+            },
+            log: logEntries,
+          };
+        }
+      }
+
       // PRIORIDADE 1: Verifica se há criaturas da IA que podem atacar
       const aiCreaturesWithAbilities = slots.map((slot, i) => {
         if (!slot || slot.hp <= 0) return null;
@@ -2697,7 +2781,7 @@ export function BattleProvider({ children }) {
       // PRIORIDADE 3: Se nao tem carta de campo, invoca criaturas (máximo 1 por turno)
       const action = chooseAction(s);
       const emptyIndex = slots.findIndex((slot) => !slot);
-      const canInvokeCreature = (s.creaturesInvokedThisTurn || 0) < 1;
+      const canInvokeCreature = (s.creaturesInvokedThisTurn?.ai || 0) < 1;
 
       if (canInvokeCreature && action?.type === 'summon' && typeof action.handIndex === 'number' && typeof action.slotIndex === 'number') {
         const { handIndex, slotIndex } = action;
@@ -2784,7 +2868,10 @@ export function BattleProvider({ children }) {
 
       return {
         ...s,
-        creaturesInvokedThisTurn: (s.creaturesInvokedThisTurn || 0) + 1,
+        creaturesInvokedThisTurn: {
+          ...(s.creaturesInvokedThisTurn || { player: 0, ai: 0 }),
+          ai: (s.creaturesInvokedThisTurn?.ai || 0) + 1,
+        },
         ai: {
           ...s.ai,
           hand,

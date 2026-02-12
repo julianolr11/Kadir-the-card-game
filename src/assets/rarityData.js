@@ -65,55 +65,52 @@ export const RARITY_CONFIG = {
  * Baseado em análise de balanceamento do jogo
  */
 export const creatureRarities = {
-  // COMMON (14)
-  draak: { rarity: RARITY_TIERS.COMMON, value: 100 },
-  mawthorn: { rarity: RARITY_TIERS.COMMON, value: 100 },
-  kael: { rarity: RARITY_TIERS.COMMON, value: 100 },
-  leoracal: { rarity: RARITY_TIERS.COMMON, value: 100 },
-  griffor: { rarity: RARITY_TIERS.COMMON, value: 100 },
-  ekeranth: { rarity: RARITY_TIERS.COMMON, value: 100 },
-  ignis: { rarity: RARITY_TIERS.COMMON, value: 100 },
-  drazaq: { rarity: RARITY_TIERS.COMMON, value: 100 },
-  owlberoth: { rarity: RARITY_TIERS.COMMON, value: 100 },
-  digitama: { rarity: RARITY_TIERS.COMMON, value: 100 },
-  virideer: { rarity: RARITY_TIERS.COMMON, value: 100 },
-  ashfang: { rarity: RARITY_TIERS.COMMON, value: 100 },
-  viborom: { rarity: RARITY_TIERS.COMMON, value: 100 },
-  wraith: { rarity: RARITY_TIERS.COMMON, value: 125 },
+  // COMMON (9) - 10 a 30 moedas
+  viborom: { rarity: RARITY_TIERS.COMMON, value: 10 },
+  arguilia: { rarity: RARITY_TIERS.COMMON, value: 15 },
+  leoracal: { rarity: RARITY_TIERS.COMMON, value: 20 },
+  drazaq: { rarity: RARITY_TIERS.COMMON, value: 15 },
+  alatoy: { rarity: RARITY_TIERS.COMMON, value: 20 },
+  terrakhal: { rarity: RARITY_TIERS.COMMON, value: 25 },
+  nihil: { rarity: RARITY_TIERS.COMMON, value: 30 },
+  virideer: { rarity: RARITY_TIERS.COMMON, value: 15 },
 
-  // UNCOMMON (11)
-  sunburst: { rarity: RARITY_TIERS.UNCOMMON, value: 150 },
-  landor: { rarity: RARITY_TIERS.UNCOMMON, value: 150 },
-  raptauros: { rarity: RARITY_TIERS.UNCOMMON, value: 150 },
-  arguilia: { rarity: RARITY_TIERS.UNCOMMON, value: 175 },
-  faskel: { rarity: RARITY_TIERS.UNCOMMON, value: 150 },
-  lunethal: { rarity: RARITY_TIERS.UNCOMMON, value: 150 },
-  elderox: { rarity: RARITY_TIERS.UNCOMMON, value: 175 },
-  pawferion: { rarity: RARITY_TIERS.UNCOMMON, value: 150 },
-  alatoy: { rarity: RARITY_TIERS.UNCOMMON, value: 175 },
-  whalar: { rarity: RARITY_TIERS.UNCOMMON, value: 175 },
-  elythra: { rarity: RARITY_TIERS.UNCOMMON, value: 150 },
+  // UNCOMMON (11) - 20 a 50 moedas
+  mawthorn: { rarity: RARITY_TIERS.UNCOMMON, value: 30 },
+  griffor: { rarity: RARITY_TIERS.UNCOMMON, value: 25 },
+  owlberoth: { rarity: RARITY_TIERS.UNCOMMON, value: 35 },
+  elderox: { rarity: RARITY_TIERS.UNCOMMON, value: 40 },
+  sunburst: { rarity: RARITY_TIERS.UNCOMMON, value: 30 },
+  landor: { rarity: RARITY_TIERS.UNCOMMON, value: 35 },
+  raptauros: { rarity: RARITY_TIERS.UNCOMMON, value: 35 },
+  faskel: { rarity: RARITY_TIERS.UNCOMMON, value: 40 },
+  whalar: { rarity: RARITY_TIERS.UNCOMMON, value: 45 },
+  gravhyr: { rarity: RARITY_TIERS.UNCOMMON, value: 50 },
+  beoxyr: { rarity: RARITY_TIERS.UNCOMMON, value: 45 },
 
-  // RARE (8)
-  agolir: { rarity: RARITY_TIERS.RARE, value: 250 },
-  beoxyr: { rarity: RARITY_TIERS.RARE, value: 300 },
-  zephyron: { rarity: RARITY_TIERS.RARE, value: 250 },
-  ekonos: { rarity: RARITY_TIERS.RARE, value: 250 },
-  terrakhal: { rarity: RARITY_TIERS.RARE, value: 250 },
-  gravhyr: { rarity: RARITY_TIERS.RARE, value: 275 },
-  ekernoth: { rarity: RARITY_TIERS.RARE, value: 250 },
-  arigus: { rarity: RARITY_TIERS.RARE, value: 300 },
+  // RARE (8) - 40 a 70 moedas
+  draak: { rarity: RARITY_TIERS.RARE, value: 50 },
+  kael: { rarity: RARITY_TIERS.RARE, value: 45 },
+  ignis: { rarity: RARITY_TIERS.RARE, value: 55 },
+  digitama: { rarity: RARITY_TIERS.RARE, value: 60 },
+  ashfang: { rarity: RARITY_TIERS.RARE, value: 50 },
+  roenhell: { rarity: RARITY_TIERS.RARE, value: 70 },
+  seract: { rarity: RARITY_TIERS.RARE, value: 65 },
+  noctyra: { rarity: RARITY_TIERS.RARE, value: 70 },
 
-  // EPIC (3)
-  roenhell: { rarity: RARITY_TIERS.EPIC, value: 500 },
-  moar: { rarity: RARITY_TIERS.EPIC, value: 500 },
-  nihil: { rarity: RARITY_TIERS.EPIC, value: 500 },
+  // EPIC (6) - 60 a 90 moedas
+  ekeranth: { rarity: RARITY_TIERS.EPIC, value: 70 },
+  lunethal: { rarity: RARITY_TIERS.EPIC, value: 75 },
+  elythra: { rarity: RARITY_TIERS.EPIC, value: 80 },
+  agolir: { rarity: RARITY_TIERS.EPIC, value: 85 },
+  ekonos: { rarity: RARITY_TIERS.EPIC, value: 80 },
+  ekernoth: { rarity: RARITY_TIERS.EPIC, value: 90 },
 
-  // LEGENDARY (1)
-  seract: { rarity: RARITY_TIERS.LEGENDARY, value: 2500 },
-
-  // NOCTYRA - Será classificada como LEGENDARY também (guardião especial)
-  noctyra: { rarity: RARITY_TIERS.LEGENDARY, value: 2500 },
+  // LEGENDARY (4) - 80 a 150 moedas
+  pawferion: { rarity: RARITY_TIERS.LEGENDARY, value: 100 },
+  zephyron: { rarity: RARITY_TIERS.LEGENDARY, value: 120 },
+  arigus: { rarity: RARITY_TIERS.LEGENDARY, value: 130 },
+  moar: { rarity: RARITY_TIERS.LEGENDARY, value: 150 },
 };
 
 /**
@@ -140,17 +137,17 @@ export const getCreatureRarity = (creatureId) => {
 };
 
 /**
- * Calcula multiplicador de holo (brilho especial)
- * Cartas raras com efeito holo tem 1.75x valor
+ * Calcula valor com bônus de holo (brilho especial)
+ * Cartas holo recebem +50 moedas ao valor base
  * @param {string} creatureId - ID da criatura
  * @param {boolean} isHolo - Se tem efeito holo
  * @returns {number} Valor total da criatura
  */
 export const getCreatureValue = (creatureId, isHolo = false) => {
-  const { value, rarity } = getCreatureRarity(creatureId);
-  const holoMultiplier = isHolo && [RARITY_TIERS.RARE, RARITY_TIERS.EPIC, RARITY_TIERS.LEGENDARY].includes(rarity) ? 1.75 : 1;
+  const { value } = getCreatureRarity(creatureId);
+  const holoBonus = isHolo ? 50 : 0;
 
-  return Math.floor(value * holoMultiplier);
+  return value + holoBonus;
 };
 
 /**

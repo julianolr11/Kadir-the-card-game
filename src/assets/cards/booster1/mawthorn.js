@@ -9,7 +9,7 @@ module.exports = {
   element: 'agua',
   img: require('../../img/creatures/mawthorn_bio.webp'),
   color: 'water',
-  hp: 4,
+  hp: 8,
   abilities: [
     {
       name: { pt: 'Garras Abissais', en: 'Abyssal Claws' },
@@ -36,16 +36,16 @@ module.exports = {
   storyTitle: { pt: 'Origem de Mawthorn', en: 'Origin of Mawthorn' },
   story: [
     {
-      pt: 'Mawthorn ronda trincheiras abissais onde a luz não alcança e o veneno se torna alimento.',
-      en: 'Mawthorn prowls abyssal trenches where light never reaches and poison becomes sustenance.',
+      pt: 'Mawthorn é uma criatura ancestral que habita as cavernas mais profundas e geladas do mundo, onde a luz jamais alcança. Seu corpo colossal, semelhante ao de um urso, é coberto por pelos brancos endurecidos como gelo eterno, e suas garras cristalinas são capazes de rasgar pedra como se fosse carne.',
+      en: 'Mawthorn is an ancient creature that dwells in the deepest, coldest caves of the world, where light never reaches. Its colossal bear-like body is covered in white fur hardened like eternal ice, and its crystalline claws can tear through stone as if it were flesh.',
     },
     {
-      pt: 'Seu corpo exsuda toxinas que curam sua própria carne enquanto corroem armaduras inimigas.',
-      en: 'Its body leaks toxins that heal its flesh while corroding enemy armor.',
+      pt: 'Dizem que Mawthorn nasceu de uma tempestade congelada que aprisionou uma montanha inteira, e que desde então se tornou o guardião involuntário de túneis esquecidos e reinos soterrados pelo tempo.',
+      en: 'They say Mawthorn was born from a frozen storm that imprisoned an entire mountain, and that it has since become the unwilling guardian of forgotten tunnels and kingdoms buried by time.',
     },
     {
-      pt: 'Dizem que cada espinho que perde brota como uma âncora viva, prendendo presas nas profundezas.',
-      en: 'It is said each thorn it sheds sprouts like a living anchor, trapping prey in the depths.',
+      pt: 'Não caça por fome, mas por instinto territorial: qualquer criatura que invada seu domínio é marcada como intrusa. Sobreviver a um encontro com Mawthorn é considerado impossível - e aqueles que afirmam tê-lo visto descrevem seus olhos como abismos azulados, frios como a própria morte.',
+      en: 'It does not hunt from hunger, but from territorial instinct: any creature that invades its domain is marked as an intruder. Surviving an encounter with Mawthorn is considered impossible - and those who claim to have seen it describe its eyes as bluish abysses, cold as death itself.',
     },
   ],
 

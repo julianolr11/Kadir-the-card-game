@@ -274,6 +274,8 @@ function DeckBuilder({ onNavigate }) {
   const [showGuardianSelectModal, setShowGuardianSelectModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [showRecycler, setShowRecycler] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteIndex, setDeleteIndex] = useState(null);
 
   // Calcular quantidade total de cartas
   const totalCards = useMemo(() => {
@@ -406,10 +408,20 @@ function DeckBuilder({ onNavigate }) {
   function handleDelete(idx) {
     const current = slots[idx];
     if (!current) return;
-    const confirmDelete = window.confirm(`Remover ${current.name}?`);
-    if (!confirmDelete) return;
+    setDeleteIndex(idx);
+    setShowDeleteConfirm(true);
+  }
 
-    // Remover do localStorage
+  function confirmDeleteDeck() {
+    const idx = deleteIndex;
+    const current = slots[idx];
+    if (!current) {
+      setShowDeleteConfirm(false);
+      setDeleteIndex(null);
+      return;
+    }
+
+    // Remover do contexto / localStorage
     if (deleteDeck) {
       deleteDeck(current.id);
     }
@@ -419,6 +431,14 @@ function DeckBuilder({ onNavigate }) {
     next[idx] = null;
     setSlots(next);
     triggerOpen(idx);
+
+    setShowDeleteConfirm(false);
+    setDeleteIndex(null);
+  }
+
+  function cancelDeleteDeck() {
+    setShowDeleteConfirm(false);
+    setDeleteIndex(null);
   }
 
   function handleChangeGuardian() {
@@ -1121,6 +1141,95 @@ function DeckBuilder({ onNavigate }) {
                 }}
               >
                 Criar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmação de exclusão de deck */}
+      {showDeleteConfirm && (
+        <div
+          className="loadout-modal-overlay"
+          onClick={cancelDeleteDeck}
+        >
+          <div
+            className="loadout-modal-content"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: '520px', padding: '28px' }}
+          >
+            <button
+              className="loadout-modal-close"
+              onClick={cancelDeleteDeck}
+            >
+              ✕
+            </button>
+
+            <h2
+              style={{
+                color: '#ffd6d6',
+                marginBottom: '16px',
+                marginTop: '4px',
+                fontSize: '22px',
+                fontWeight: '700',
+                textAlign: 'center',
+              }}
+            >
+              ⚠️ Excluir Deck
+            </h2>
+
+            <div style={{ color: '#f0dede', marginBottom: 18, textAlign: 'center' }}>
+              Tem certeza que deseja excluir este deck? Esta ação <strong>não</strong> pode ser desfeita.
+            </div>
+
+            <div style={{ marginBottom: 12, textAlign: 'center', color: '#e8dfe0' }}>
+              {deleteIndex !== null && slots[deleteIndex] ? (
+                <>
+                  <div style={{ fontSize: 18, fontWeight: 700 }}>{slots[deleteIndex].name}</div>
+                  <div style={{ fontSize: 13, opacity: 0.9 }}>
+                    {(() => {
+                      const d = getDeck ? getDeck(slots[deleteIndex].id) : null;
+                      const count = d?.cards?.length ?? '—';
+                      const guardian = d?.guardianId || '—';
+                      return `${count} cartas • Guardião: ${guardian}`;
+                    })()}
+                  </div>
+                </>
+              ) : null}
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', marginTop: '18px' }}>
+              <button
+                onClick={cancelDeleteDeck}
+                style={{
+                  flex: 1,
+                  padding: '12px 16px',
+                  borderRadius: '10px',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  background: 'rgba(255,255,255,0.04)',
+                  color: '#fff',
+                  fontSize: '14px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmDeleteDeck}
+                style={{
+                  flex: 1,
+                  padding: '12px 16px',
+                  borderRadius: '10px',
+                  border: '2px solid rgba(255, 80, 80, 0.9)',
+                  background: 'linear-gradient(135deg, rgba(255,80,80,0.25), rgba(200,40,40,0.25))',
+                  color: '#fff',
+                  fontSize: '14px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                Excluir Deck
               </button>
             </div>
           </div>

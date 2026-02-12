@@ -10,7 +10,7 @@ module.exports = {
   element: 'puro',
   img: require('../../img/creatures/draak_bio.webp'),
   color: 'pure',
-  hp: 5,
+  hp: 9,
   abilities: [
     {
       name: { pt: 'Sopro Etéreo', en: 'Ethereal Breath' },
@@ -37,12 +37,8 @@ module.exports = {
   storyTitle: { pt: 'Origem de Draak', en: 'Origin of Draak' },
   story: [
     {
-      pt: 'Draak é um jovem draconídeo nascido nas nuvens eternas.',
-      en: 'Draak is a young draconid born in the eternal clouds.',
-    },
-    {
-      pt: 'Sua energia leve e instável o torna imprevisível e poderoso.',
-      en: 'Its light and unstable energy makes it unpredictable and powerful.',
+      pt: 'Draak é um draconídeo puro, nascido da essência dos lugares mais pacíficos do mundo, destinado desde sua criação a ser um guardião da harmonia. Seus olhos de esmeralda, profundos e penetrantes, refletem não apenas sua majestade, mas também a sabedoria ancestral que observa todas as criaturas. Raro e quase mítico, Draak é considerado um presságio de boa sorte - viajantes que têm o privilégio de avistá-lo acreditam estar sob proteção divina.',
+      en: 'Draak is a pure draconid, born from the essence of the most peaceful places in the world, destined since its creation to be a guardian of harmony. Its emerald eyes, deep and piercing, reflect not only its majesty but also the ancestral wisdom that watches over all creatures. Rare and almost mythical, Draak is considered a sign of good fortune - travelers who are privileged to see it believe they are under divine protection.',
     },
   ],
 

@@ -935,6 +935,32 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
               >
                 Voltar ao Deck
               </button>
+              <button
+                onClick={() => {
+                  // Descarta o deck: limpa todas as slots, remove guardião e volta para a lista de decks
+                  setDeckCards(Array(20).fill(null));
+                  setGuardianCardId(null);
+                  setShowDeckIncompleteWarning(false);
+                  // Fecha o editor retornando para a tela de decks
+                  if (typeof onClose === 'function') onClose();
+                }}
+                style={{
+                  marginLeft: '12px',
+                  padding: '12px 28px',
+                  borderRadius: '8px',
+                  border: '2px solid rgba(220,60,70,0.6)',
+                  background: 'linear-gradient(135deg, rgba(220,60,70,0.15), rgba(200,40,50,0.08))',
+                  color: '#fff',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={(e) => { e.target.style.background = 'linear-gradient(135deg, rgba(220,60,70,0.25), rgba(200,40,50,0.15))'; }}
+                onMouseLeave={(e) => { e.target.style.background = 'linear-gradient(135deg, rgba(220,60,70,0.15), rgba(200,40,50,0.08))'; }}
+              >
+                Descartar deck
+              </button>
             </div>
           </div>
         )}

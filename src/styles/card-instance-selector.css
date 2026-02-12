@@ -153,13 +153,13 @@
 }
 
 .holo-badge {
-  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-  color: #1a1a2e;
+  color: #fbbf24;
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
   animation: glow 1.5s ease-in-out infinite;
+  text-shadow: 0 0 8px rgba(251, 191, 36, 0.8);
 }
 
 @keyframes glow {

@@ -2,14 +2,165 @@
  * AI logic for battle decisions
  * This is a placeholder that will be expanded later
  */
+// Import creature definitions and helpers
+let creaturesPool = null;
+try {
+  // es module default or commonjs
+  const cp = require('../assets/cards');
+  creaturesPool = cp && cp.default ? cp.default : cp;
+} catch (e) {
+  creaturesPool = [];
+}
 
+const { getFieldAffinityBonus } = require('./fieldAffinity');
+
+/**
+ * Escolhe ação principal da IA com heurísticas simples.
+ * - Prioriza invocar criatura quando estiver com muitas cartas e poucas criaturas.
+ * - Escolhe o melhor monstro da mão com base em atk/hp comparado aos inimigos.
+ */
 export function chooseAction(battleState) {
-  // TODO: Implement AI decision logic
-  // For now, return a simple pass action
-  return {
-    type: 'pass',
-    target: null,
-  };
+  try {
+    const s = battleState;
+    if (!s || s.activePlayer !== 'ai') return { type: 'pass' };
+
+    const hand = Array.isArray(s.ai?.hand) ? s.ai.hand : [];
+    const slots = Array.isArray(s.ai?.field?.slots) ? s.ai.field.slots : [null, null, null];
+    const enemySlots = Array.isArray(s.player?.field?.slots) ? s.player.field.slots : [];
+
+    const aiCreatureCount = slots.filter(Boolean).length;
+    const enemyCreatures = enemySlots.filter(Boolean);
+
+    // If AI has many cards in hand (>=6) and few creatures (<=1), prioritize summoning
+    const handThreshold = 6;
+    // detect field/effect cards in hand
+    const fieldCardIndex = hand.findIndex((c) => c && (/^f\d{3}$/i.test(c) || String(c).toLowerCase().startsWith('field_')));
+    const effectCardIndex = hand.findIndex((c) => c && String(c).toLowerCase().startsWith('effect_'));
+
+    if (hand.length >= handThreshold && aiCreatureCount <= 1) {
+      // Evaluate each invokable creature in hand
+      let best = null;
+      for (let i = 0; i < hand.length; i += 1) {
+        const cId = hand[i];
+        if (!cId) continue;
+        const lowered = String(cId).toLowerCase();
+        if (lowered.startsWith('effect_') || lowered.startsWith('field_') || /^f\d{3}$/i.test(cId)) continue;
+
+        const baseId = cId.includes('-') ? cId.split('-')[0] : cId;
+        const creatureDef = creaturesPool.find(c => c.id === baseId) || null;
+        if (!creatureDef) continue;
+
+        // Basic stats
+        const atk = typeof creatureDef.atk === 'number' ? creatureDef.atk : (creatureDef.attack || 2);
+        const hp = typeof creatureDef.hp === 'number' ? creatureDef.hp : (creatureDef.maxHp || 5);
+
+        // Score vs all enemy creatures
+        let score = 0;
+        if (enemyCreatures.length === 0) {
+          // Prefer high-HP / sustain if no enemies
+          score = hp * 0.6 + atk * 0.4;
+        } else {
+          enemyCreatures.forEach((e) => {
+            const eAtk = e.atk || 1;
+            const eHp = e.hp || 3;
+            // Advantage if our atk > enemy def/atk, and survivability
+            score += (atk - (e.def || 0)) * 1.2 + (hp - eHp) * 0.35;
+            // small bonus for elemental affinity if sharedField exists
+            try {
+              const field = s.sharedField && s.sharedField.cardData ? s.sharedField.cardData : (s.sharedField || {});
+              const aff = getFieldAffinityBonus(field, creatureDef);
+              score += (aff.bonusDano || 0) * 0.8 + (aff.bonusHP || 0) * 0.5;
+            } catch (err) {}
+          });
+        }
+
+        if (!best || score > best.score) {
+          best = { score, handIndex: i, baseId, creatureDef };
+        }
+      }
+
+      if (best) {
+        // choose preferred slot: try to align with enemy strongest slot if possible
+        let preferredSlot = slots.findIndex(s => !s);
+        if (enemyCreatures.length > 0) {
+          // strongest enemy by atk+hp
+          let strongestIdx = 0;
+          let strongestVal = -Infinity;
+          enemySlots.forEach((slot, idx) => {
+            if (!slot) return;
+            const val = (slot.atk || 0) + (slot.hp || 0) * 0.5;
+            if (val > strongestVal) { strongestVal = val; strongestIdx = idx; }
+          });
+          // prefer same index if empty
+          if (!slots[strongestIdx]) preferredSlot = strongestIdx;
+        }
+
+        // ensure preferredSlot valid
+        if (preferredSlot === -1) preferredSlot = slots.findIndex(s => !s) || 0;
+
+        return { type: 'summon', handIndex: best.handIndex, slotIndex: preferredSlot };
+      }
+    }
+
+    // If not forced by hand size, evaluate whether now is a good moment to summon.
+    // Re-evaluate best candidate even if hand < threshold.
+    let best = null;
+    for (let i = 0; i < hand.length; i += 1) {
+      const cId = hand[i];
+      if (!cId) continue;
+      const lowered = String(cId).toLowerCase();
+      if (lowered.startsWith('effect_') || lowered.startsWith('field_') || /^f\d{3}$/i.test(cId)) continue;
+      const baseId = cId.includes('-') ? cId.split('-')[0] : cId;
+      const creatureDef = creaturesPool.find(c => c.id === baseId) || null;
+      if (!creatureDef) continue;
+      const atk = typeof creatureDef.atk === 'number' ? creatureDef.atk : (creatureDef.attack || 2);
+      const hp = typeof creatureDef.hp === 'number' ? creatureDef.hp : (creatureDef.maxHp || 5);
+      let score = 0;
+      if (enemyCreatures.length === 0) {
+        score = hp * 0.6 + atk * 0.4;
+      } else {
+        enemyCreatures.forEach((e) => {
+          const eAtk = e.atk || 1;
+          const eHp = e.hp || 3;
+          score += (atk - (e.def || 0)) * 1.2 + (hp - eHp) * 0.35;
+          try {
+            const field = s.sharedField && s.sharedField.cardData ? s.sharedField.cardData : (s.sharedField || {});
+            const aff = getFieldAffinityBonus(field, creatureDef);
+            score += (aff.bonusDano || 0) * 0.8 + (aff.bonusHP || 0) * 0.5;
+          } catch (err) {}
+        });
+      }
+      if (!best || score > best.score) {
+        best = { score, handIndex: i, baseId, creatureDef };
+      }
+    }
+
+    if (best) {
+      // Decision rules for timing
+      // - If AI has fewer creatures than enemy, prefer to summon
+      if (enemyCreatures.length > aiCreatureCount) {
+        const preferredSlot = slots.findIndex(s => !s) || 0;
+        return { type: 'summon', handIndex: best.handIndex, slotIndex: preferredSlot };
+      }
+
+      // - If the best candidate has positive score (favorable matchup), summon
+      if (best.score > 0.5) {
+        const preferredSlot = slots.findIndex(s => !s) || 0;
+        return { type: 'summon', handIndex: best.handIndex, slotIndex: preferredSlot };
+      }
+
+      // - If there is a useful field card in hand and situation not favorable, prefer invoking field
+      if (fieldCardIndex >= 0) {
+        return { type: 'pass' }; // let performAiTurn handle field invocation in its own priority
+      }
+    }
+
+    // Fallback: if has pending strong attack options, choose pass for now
+    return { type: 'pass' };
+  } catch (e) {
+    console.warn('chooseAction error', e);
+    return { type: 'pass' };
+  }
 }
 
 export function evaluateGameState(state) {
@@ -35,9 +186,33 @@ export function executeEffectCard(state, effectCard, targetInfo = null) {
 
   switch (effectCard.effectType) {
     case 'draw':
-      // Compra +N cartas do baralho
+      // Compra +N cartas do baralho imediatamente para o jogador (respeita limite de mão)
       if (!newState.player) newState.player = {};
-      newState.player.cardsDrawn = (newState.player.cardsDrawn || 0) + effectCard.effectValue;
+      if (newState.player?.deck && Array.isArray(newState.player.deck) && Array.isArray(newState.player.hand)) {
+        const deck = [...newState.player.deck];
+        const hand = [...newState.player.hand];
+        const drawn = [];
+        for (let i = 0; i < (effectCard.effectValue || 0); i++) {
+          if (deck.length === 0) break;
+          if (hand.length >= 7) break; // limite de mão
+          const d = deck.shift();
+          if (d) {
+            hand.push(d);
+            drawn.push(d);
+          }
+        }
+        newState.player = {
+          ...newState.player,
+          deck,
+          hand,
+        };
+        // Atualiza estatísticas de batalha para mostrar quais cartas foram compradas
+        if (!newState.battleStats) newState.battleStats = { player: { cardsDrawn: [] }, ai: { cardsDrawn: [] } };
+        newState.battleStats.player = {
+          ...newState.battleStats.player,
+          cardsDrawn: [...(newState.battleStats.player.cardsDrawn || []), ...drawn],
+        };
+      }
       break;
 
     case 'essence':

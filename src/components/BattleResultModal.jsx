@@ -14,17 +14,24 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
   const playerCards = Array.isArray(playerDeck) ? playerDeck : [];
   const [expandedCards, setExpandedCards] = useState({});
 
-  // Valores de moedas por resultado
-  const COINS_VICTORY = 200;
-  const COINS_DEFEAT = 50; // 1/4 de vitória
-  const coinsEarned = isPlayerWon ? COINS_VICTORY : COINS_DEFEAT;
+  // Valores de moedas por resultado (ajustados)
+  const COINS_DEFEAT = 20;
+  const COINS_VICTORY_BASE = 50;
+  const COIN_PER_KILL = 5;
+
+  // Conta quantos abates o jogador efetuou nesta batalha.
+  const playerKills = (battleStats && battleStats.player && Array.isArray(battleStats.player.cardsKilled))
+    ? battleStats.player.cardsKilled.length
+    : (killFeed ? killFeed.filter(k => battleStats?.player?.cardsSummoned?.includes(k.attacker)).length : 0);
+
+  const coinsEarned = isPlayerWon ? (COINS_VICTORY_BASE + COIN_PER_KILL * playerKills) : COINS_DEFEAT;
 
   // Award moedas quando o modal monta (apenas uma vez)
   useEffect(() => {
     if (addCoins && coinsEarned > 0) {
       addCoins(coinsEarned);
     }
-  }, []); // Array vazio = executa apenas ao montar
+  }, []); // executa apenas ao montar
 
   // Função para calcular XP necessário por nível (mesma do AppContext)
   const getXpForLevel = (level) => {

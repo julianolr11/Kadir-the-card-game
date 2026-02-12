@@ -36,16 +36,15 @@ function CardInstanceSelector({
   // Calcula valor da carta baseado em raridade, nível e holo
   const calculateCardValue = (instance) => {
     const rarity = getCreatureRarity(cardId);
-    let baseValue = rarity.value || 100;
+    let baseValue = rarity.value || 10;
 
-    // Bônus por nível (10% por nível acima de 1)
-    const levelBonus = instance.level > 1 ? baseValue * (instance.level - 1) * 0.1 : 0;
+    // Bônus por nível (10% por nível, começando do 0)
+    const levelBonus = instance.level > 0 ? baseValue * instance.level * 0.1 : 0;
     let totalValue = baseValue + levelBonus;
 
-    // Multiplicador holo para cartas raras ou melhores
-    const isRareOrBetter = ['rare', 'epic', 'legendary'].includes(rarity.rarity);
-    if (instance.isHolo && isRareOrBetter) {
-      totalValue *= 1.75;
+    // Bônus holo: +50 moedas
+    if (instance.isHolo) {
+      totalValue += 50;
     }
 
     return Math.floor(totalValue);

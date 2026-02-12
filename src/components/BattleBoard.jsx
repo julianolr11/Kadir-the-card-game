@@ -18,6 +18,8 @@ import freezeIcon from '../assets/img/icons/freeze.png';
 import paralyzeIcon from '../assets/img/icons/paralyze.png';
 import poisonIcon from '../assets/img/icons/poison.png';
 import sleepIcon from '../assets/img/icons/sleep.png';
+import StatusOverlayPortal from './StatusOverlayPortal.jsx';
+import swordPng from '../assets/img/icons/sword.png';
 
 function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
   const {
@@ -35,6 +37,8 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
     cancelReturnCard,
     poisonEnemyCard,
     cancelPoisonCard,
+    freezeEnemyCard,
+    cancelFreezeCard,
     selectFieldCardForSwap,
     completeSwap,
     cancelSwap,
@@ -58,6 +62,15 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
   const [baseBg, setBaseBg] = React.useState(undefined);
   const [overlayBg, setOverlayBg] = React.useState(undefined);
   const [hoveredCard, setHoveredCard] = React.useState(null);
+  const slotRefs = React.useRef({});
+  const [sleepOverlays, setSleepOverlays] = React.useState([]);
+  const [paralyzeOverlays, setParalyzeOverlays] = React.useState([]);
+  const [bleedOverlays, setBleedOverlays] = React.useState([]);
+  const [poisonOverlays, setPoisonOverlays] = React.useState([]);
+  const [freezeOverlays, setFreezeOverlays] = React.useState([]);
+  const [shieldOverlays, setShieldOverlays] = React.useState([]);
+  const [burnFlames, setBurnFlames] = React.useState([]);
+  const [burnGradients, setBurnGradients] = React.useState([]);
   const [mousePos, setMousePos] = React.useState({ x: 0, y: 0 });
   const [turnBlockModalOpen, setTurnBlockModalOpen] = React.useState(false);
   const [selectedCreature, setSelectedCreature] = React.useState(null); // { slotIndex, creature } - abre modal de habilidades
@@ -179,6 +192,8 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
   useEffect(() => {
     if (state.phase === 'idle') startBattle(selectedDeck);
   }, [state.phase, startBattle, selectedDeck]);
+
+  // cursor de ataque será aplicado apenas ao entrar em slots alvo (veja onMouseEnter/onMouseLeave abaixo)
 
   // Pausa música do menu quando a batalha começa
   useEffect(() => {
@@ -495,6 +510,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
       {slots.map((slot, i) => {
         const isTargetable = selectedAbility && owner !== state.activePlayer && slot && slot.hp > 0;
         const isSpectralTargetable = state.spectralAttackPending?.selectedAbility !== undefined && owner !== state.activePlayer && slot && slot.hp > 0;
+        const isFreezeTargetable = state.freezePending && owner === 'ai' && slot && slot.hp > 0;
         const isPlayerCreature = owner === 'player' && slot && slot.hp > 0 && state.activePlayer === 'player';
         const isDying = slot && state.animations && state.animations[slot.id]?.death;
         const isAttacking = slot && state.animations && state.animations[slot.id]?.type === 'attacking';
@@ -503,10 +519,36 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
         return (
           <div
             key={i}
+            ref={el => { if (slot) slotRefs.current[slot.id] = el; }}
             className={`slot ${slot ? 'occupied' : 'empty'}${isTargetable || isSpectralTargetable ? ' slot-targetable' : ''}${isPlayerCreature ? ' slot-clickable' : ''}${isDying ? ' slot-death-animation' : ''}${isAttacking ? ' slot-attacking' : ''}${returningClass}`}
-            onMouseEnter={() => slot && setHoveredCard({ cardId: slot.id, source: 'slot', owner, index: i })}
-            onMouseLeave={() => setHoveredCard(null)}
-            onClick={() => {
+              onMouseEnter={() => {
+              if (slot) setHoveredCard({ cardId: slot.id, source: 'slot', owner, index: i });
+              // só altera o cursor para espada se estamos em modo de seleção e o slot é alvo válido
+              const targetNow = (selectedAbility && owner !== state.activePlayer && slot && slot.hp > 0) || (state.spectralAttackPending?.selectedAbility !== undefined && owner !== state.activePlayer && slot && slot.hp > 0) || (state.freezePending && owner === 'ai' && slot && slot.hp > 0);
+              if (targetNow) {
+                const elRef = slotRefs.current?.[slot.id];
+                const cursorValue = `url(/assets/img/icons/sword.cur), url(${swordPng}), auto`;
+                try {
+                  if (elRef) elRef.style.cursor = cursorValue;
+                  else document.body.style.cursor = cursorValue;
+                } catch (e) {
+                  if (elRef) elRef.style.cursor = 'crosshair';
+                  else document.body.style.cursor = 'crosshair';
+                }
+              }
+            }}
+            onMouseLeave={() => {
+              setHoveredCard(null);
+              const elRef = slotRefs.current?.[slot?.id];
+              if (elRef) elRef.style.cursor = '';
+              else document.body.style.cursor = '';
+            }}
+              onClick={() => {
+              if (isFreezeTargetable) {
+                // Aplicar congelamento pendente (benção do Mawthorn)
+                freezeEnemyCard(i);
+                return;
+              }
               if (isTargetable && selectedAbility) {
                 // Executa habilidade normal no alvo
                 useAbility('player', selectedAbility.slotIndex, selectedAbility.abilityIndex, 'ai', i);
@@ -520,7 +562,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
                 setSelectedFieldCreature({ slotIndex: i, creature: slot });
               }
             }}
-            style={{ cursor: isTargetable || isSpectralTargetable ? 'crosshair' : (isPlayerCreature ? 'pointer' : 'default') }}
+            style={{ cursor: isPlayerCreature ? 'pointer' : 'default' }}
           >
             {slot ? (
             <div style={{ position: 'relative' }}>
@@ -563,6 +605,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
                 if (anim.type === 'status' && anim.statusType) {
                   return <div className={`status-pulse status-${anim.statusType}`} />;
                 }
+                // sleep overlay rendered in top-level portal
                 return null;
               })()}
             </div>
@@ -649,6 +692,123 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
+  // Compute positions for sleep and paralyze overlays and render via portal to avoid stacking-context issues
+  useEffect(() => {
+    const sleep = [];
+    const paralyze = [];
+    const bleed = [];
+    const poison = [];
+    const freeze = [];
+    const shield = [];
+    const burnFl = [];
+    const burnGrad = [];
+    const gather = (slots = []) => {
+      slots.forEach(slot => {
+        if (!slot) return;
+        const anim = state.animations?.[slot.id];
+        const hasSleep = (slot.statusEffects || []).some(e => e.type === 'sleep' && e.duration > 0) || (anim && anim.type === 'sleep');
+        const hasPar = (slot.statusEffects || []).some(e => e.type === 'paralyze' && e.duration > 0) || (anim && anim.type === 'paralyze');
+        const hasBleed = (slot.statusEffects || []).some(e => e.type === 'bleed' && e.duration > 0) || (anim && anim.type === 'bleed');
+        const hasBurn = (slot.statusEffects || []).some(e => e.type === 'burn' && e.duration > 0) || (anim && anim.type === 'burn');
+        const el = slotRefs.current[slot.id];
+        if (!el) return;
+        const r = el.getBoundingClientRect();
+        if (hasSleep) {
+          sleep.push({ id: slot.id, left: r.left + (r.width / 2), top: r.top + (r.height * 0.18) });
+        }
+        if (hasPar) {
+          // four corners (small offset inside)
+          const pad = Math.min(18, Math.round(Math.min(r.width, r.height) * 0.08));
+          paralyze.push({ id: slot.id + '-tl', left: r.left + pad, top: r.top + pad });
+          paralyze.push({ id: slot.id + '-tr', left: r.left + r.width - pad, top: r.top + pad });
+          paralyze.push({ id: slot.id + '-bl', left: r.left + pad, top: r.top + r.height - pad });
+          paralyze.push({ id: slot.id + '-br', left: r.left + r.width - pad, top: r.top + r.height - pad });
+        }
+        if (hasBleed) {
+          const baseLeft = r.left + (r.width / 2);
+          const baseTop = r.top + (r.height * 0.28); // moved further down
+          const offsets = [-10, 10];
+          for (let i = 0; i < offsets.length; i++) {
+            bleed.push({ id: `${slot.id}-bleed-${i}`, left: baseLeft + offsets[i], top: baseTop, idx: i });
+          }
+        }
+
+        if ((slot.statusEffects || []).some(e => e.type === 'poison' && e.duration > 0) || (anim && anim.type === 'poison')) {
+          // Create 3 poison bubble particles rising from lower-left to upper area of card
+          // shift bubbles right by ~55px and up by 110px (additional -20px upward)
+          const baseLeft = r.left + (r.width * 0.28) + 55;
+          const baseTop = r.top + (r.height * 0.68) - 110;
+          // Arrange bubbles: index0 = medium-left, index1 = small-middle, index2 = large-right
+          const bubbleOffsets = [-22, 0, 22];
+          const bubbleSizes = [18, 12, 26];
+          const bubbleRises = [-56, -44, -96];
+          const bubbleDur = [3000, 3200, 3800]; // slower, more prolonged animations
+          for (let i = 0; i < 3; i++) {
+            poison.push({ id: `${slot.id}-poison-${i}`, left: baseLeft + bubbleOffsets[i], top: baseTop, size: bubbleSizes[i], delay: i * 320, rise: bubbleRises[i], dur: bubbleDur[i] });
+          }
+        }
+
+        if (hasBurn) {
+          // gradient overlay covering the lower portion of the card (bottom->top red/orange)
+          const gradWidth = Math.round(r.width * 0.98);
+          const gradHeight = Math.round(r.height * 0.46);
+          const gradLeft = r.left + (r.width / 2);
+          // place gradient higher so it overlays the lower part of the card (not below it).
+          // lower it additional 3px as requested (previously +11), so total offset becomes +14px
+          const gradTop = r.top + (r.height * 0.72) + 14;
+          burnGrad.push({ id: slot.id + '-burn-grad', left: gradLeft, top: gradTop, width: gradWidth, height: gradHeight });
+
+          // more detailed flame particles placed near the base of the card
+          const flameBaseLeft = r.left + (r.width / 2);
+          // put flames higher so they appear over the card's base artwork
+          const flameBaseTop = r.top + (r.height * 0.72);
+          // use up to 5 flames spread across the card width for natural coverage (wider lateral spread)
+          const flameOffsets = [-74, -48, 0, 48, 74];
+          const flameSizes = [34, 28, 36, 28, 24];
+          const flameDur = [3400, 2800, 3800, 2800, 2600];
+          for (let i = 0; i < flameOffsets.length; i++) {
+            // increase vertical spread so flames are more staggered up/down
+            const yOffset = (i - Math.floor(flameOffsets.length / 2)) * 8; // larger vertical jitter
+            // move half the flames ~30px lower for depth (move even-indexed flames)
+            const extraDown = (i % 2 === 0) ? 30 : 0;
+            burnFl.push({ id: `${slot.id}-burn-flame-${i}`, left: flameBaseLeft + flameOffsets[i], top: flameBaseTop + yOffset + extraDown, idx: i, w: flameSizes[i], h: Math.round(flameSizes[i] * 1.3), dur: flameDur[i], delay: i * 220 });
+          }
+        }
+
+        // Freeze overlay
+        if ((slot.statusEffects || []).some(e => e.type === 'freeze' && e.duration > 0) || (anim && anim.type === 'freeze')) {
+          const fWidth = Math.round(r.width * 1.04);
+          const fHeight = Math.round(r.height * 1.04);
+          // center of slot
+          const fLeft = r.left + (r.width / 2);
+          const fTop = r.top + (r.height / 2);
+          freeze.push({ id: `${slot.id}-freeze`, left: fLeft, top: fTop, width: fWidth, height: fHeight });
+        }
+
+        // Shield overlay: center shield icon + subtle blue->transparent gradient from bottom->top
+        if ((slot.shield || 0) > 0) {
+          // posição original: centro do slot
+          shield.push({ id: slot.id, left: r.left + (r.width / 2), top: r.top + (r.height / 2), width: r.width, height: r.height, amount: slot.shield });
+        }
+      });
+    };
+
+    try {
+      gather(state.player?.field?.slots || []);
+      gather(state.ai?.field?.slots || []);
+    } catch (e) {
+      // ignore
+    }
+    setSleepOverlays(sleep);
+    setParalyzeOverlays(paralyze);
+    setBleedOverlays(bleed);
+    setPoisonOverlays(poison);
+    setFreezeOverlays(freeze);
+    setShieldOverlays(shield);
+    setBurnFlames(burnFl);
+    setBurnGradients(burnGrad);
+  }, [state.animations, state.player?.field?.slots, state.ai?.field?.slots]);
+
   // Determina o background do board (novo bg calculado a partir do campo ativo)
   const boardBg = state.sharedField.active && state.sharedField.id ? (() => {
     let fieldData = null;
@@ -719,6 +879,120 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
 
   return (
     <>
+    {sleepOverlays && sleepOverlays.length > 0 && (
+      <StatusOverlayPortal>
+        {sleepOverlays.map(o => (
+          <div key={`zzz-${o.id}`} className="sleep-zzz" style={{ position: 'absolute', left: `${o.left}px`, top: `${o.top}px`, transform: 'translate(-50%,-50%)' }} aria-hidden>
+            <span>Z</span>
+            <span>Z</span>
+            <span>Z</span>
+          </div>
+        ))}
+      </StatusOverlayPortal>
+    )}
+
+    {paralyzeOverlays && paralyzeOverlays.length > 0 && (
+      <StatusOverlayPortal>
+        {paralyzeOverlays.map(o => (
+          <div key={`par-${o.id}`} className="paralyze-burst" style={{ position: 'absolute', left: `${o.left - 13}px`, top: `${o.top - 6}px`, transform: 'translate(-50%,-50%)' }} aria-hidden>⚡</div>
+        ))}
+      </StatusOverlayPortal>
+    )}
+
+    {shieldOverlays && shieldOverlays.length > 0 && (
+      <StatusOverlayPortal>
+        {shieldOverlays.map(o => (
+          <div key={`shield-${o.id}`} className="shield-overlay" style={{ position: 'absolute', left: `${o.left}px`, top: `${o.top}px`, width: `${o.width}px`, height: `${o.height}px`, transform: 'translate(-50%,-50%)' }} aria-hidden>
+            <div className="shield-gradient" />
+            <img src={shieldIcon} className="shield-center" alt="shield" />
+          </div>
+        ))}
+      </StatusOverlayPortal>
+    )}
+
+    {bleedOverlays && bleedOverlays.length > 0 && (
+      <StatusOverlayPortal>
+        {bleedOverlays.map(o => (
+          <div key={`bleed-${o.id}`} className="bleed-emoji" style={{ position: 'absolute', left: `${o.left}px`, top: `${o.top}px`, transform: 'translate(-50%,-50%)', fontSize: `${14 + (o.idx*2)}px`, animationDelay: `${o.idx * 0.18}s` }} aria-hidden>
+            🩸
+          </div>
+        ))}
+      </StatusOverlayPortal>
+    )}
+    {poisonOverlays && poisonOverlays.length > 0 && (
+      <StatusOverlayPortal>
+        {poisonOverlays.map(b => (
+          <div
+            key={`poison-${b.id}`}
+            className="poison-bubble"
+            style={{ position: 'absolute', left: `${b.left}px`, top: `${b.top}px`, width: `${b.size}px`, height: `${b.size}px`, transform: 'translate(-50%,-50%)', animationDelay: `${b.delay}ms`, ['--rise']: `${b.rise}px`, ['--poison-duration']: `${b.dur}ms` }}
+            aria-hidden
+          />
+        ))}
+      </StatusOverlayPortal>
+    )}
+    {freezeOverlays && freezeOverlays.length > 0 && (
+      <StatusOverlayPortal>
+        {freezeOverlays.map(f => (
+          <div
+            key={`freeze-${f.id}`}
+            className="freeze-overlay"
+            style={{ position: 'absolute', left: `${f.left}px`, top: `${f.top}px`, width: `${f.width}px`, height: `${f.height}px`, transform: 'translate(-50%,-50%)' }}
+            aria-hidden
+          >
+            <div className="freeze-snowflake-group" aria-hidden>
+                <svg className="freeze-snowflake freeze-snowflake-tl" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden focusable="false">
+                  <g stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none">
+                    <path d="M12 2 L12 22" />
+                    <path d="M4 8 L20 16" />
+                    <path d="M4 16 L20 8" />
+                    <path d="M8 4 L16 20" />
+                    <path d="M16 4 L8 20" />
+                  </g>
+                </svg>
+                <svg className="freeze-snowflake freeze-snowflake-br" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden focusable="false">
+                  <g stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none">
+                    <path d="M12 2 L12 22" />
+                    <path d="M4 8 L20 16" />
+                    <path d="M4 16 L20 8" />
+                    <path d="M8 4 L16 20" />
+                    <path d="M16 4 L8 20" />
+                  </g>
+                </svg>
+              </div>
+          </div>
+        ))}
+      </StatusOverlayPortal>
+    )}
+    {burnGradients && burnGradients.length > 0 && (
+      <StatusOverlayPortal>
+        {burnGradients.map(g => (
+          <div key={`burn-grad-${g.id}`} className="burn-gradient" style={{ position: 'absolute', left: `${g.left}px`, top: `${g.top}px`, width: `${g.width}px`, height: `${g.height}px`, transform: 'translate(-50%,-30%)' }} aria-hidden />
+        ))}
+      </StatusOverlayPortal>
+    )}
+
+    {burnFlames && burnFlames.length > 0 && (
+      <StatusOverlayPortal>
+        {burnFlames.map(f => (
+          <div
+            key={`burn-flame-${f.id}`}
+            className="burn-flame"
+            style={{
+              position: 'absolute',
+              left: `${f.left}px`,
+              top: `${f.top}px`,
+              transform: 'translate(-50%,-40%)',
+              width: `${f.w}px`,
+              height: `${f.h}px`,
+              animationDuration: `${f.dur || 1900}ms`,
+              animationDelay: `${f.delay || 0}ms`,
+            }}
+            aria-hidden
+          />
+        ))}
+      </StatusOverlayPortal>
+    )}
     {state.returnCardPending && (
       <div style={turnModalBgStyle}>
         <div style={turnModalStyle}>

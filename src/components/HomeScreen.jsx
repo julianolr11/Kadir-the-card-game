@@ -537,7 +537,11 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
           {/* Áudio do efeito sphere-menu */}
           <audio ref={deckBtnAudioRef} src={sphereMenuSound} preload="auto" />
           {(() => {
-            const guardianCardData = activeGuardian ? getGuardianCardData(activeGuardian.id || activeGuardian.name) : null;
+            const deckList = Object.values(decks || {});
+            const deckGuardianId = deckList.length ? deckList[0]?.guardianId : null;
+            const deckGuardianData = deckGuardianId ? getGuardianCardData(deckGuardianId) : null;
+            const activeGuardianData = activeGuardian ? getGuardianCardData(activeGuardian.id || activeGuardian.name) : null;
+            const guardianCardData = deckGuardianData || activeGuardianData;
             const guardianElement = guardianCardData?.element || activeGuardian?.element;
 
             return (
@@ -546,9 +550,11 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
                 onClick={() => onNavigate('deck')}
                 onMouseEnter={handleDeckBtnMouseEnter}
                 style={{
-                  backgroundImage: activeGuardian?.img
-                    ? `url(${activeGuardian.img})`
-                    : undefined,
+                  backgroundImage: guardianCardData?.img
+                    ? `url(${guardianCardData.img})`
+                    : activeGuardian?.img
+                      ? `url(${activeGuardian.img})`
+                      : undefined,
                   backgroundSize: 'cover',
                   backgroundPosition: 'center',
                   boxShadow:

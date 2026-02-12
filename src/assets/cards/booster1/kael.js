@@ -10,7 +10,7 @@ module.exports = {
   element: 'agua',
   img: require('../../img/creatures/kael_bio.webp'),
   color: 'water',
-  hp: 4,
+  hp: 7,
   abilities: [
     {
       name: { pt: 'Mordida Gélida', en: 'Frost Bite' },
@@ -37,12 +37,16 @@ module.exports = {
   storyTitle: { pt: 'Origem de Kael', en: 'Origin of Kael' },
   story: [
     {
-      pt: 'Kael é uma fera das águas profundas, astuta e resistente.',
-      en: 'Kael is a beast of the deep waters, cunning and resilient.',
+      pt: 'Kael é uma fera selvagem que habita rios, pântanos e lagos de águas turbulentas. Extremamente astuto, aprendeu a usar o próprio ambiente como arma, movendo-se entre as correntes com velocidade e precisão.',
+      en: 'Kael is a wild beast that inhabits rivers, swamps, and lakes of turbulent waters. Extremely cunning, it learned to use the environment itself as a weapon, moving through the currents with speed and precision.',
     },
     {
-      pt: 'Sua presença acalma aliados e confunde inimigos.',
-      en: 'Its presence calms allies and confuses enemies.',
+      pt: 'Seu corpo é forte e flexível, coberto por uma pelagem constantemente encharcada, e seus olhos atentos nunca perdem um alvo. Kael não ataca de forma direta: ele cerca, confunde e espera o momento exato para avançar.',
+      en: 'Its body is strong and flexible, covered in a constantly soaked coat, and its watchful eyes never lose a target. Kael does not attack directly: it circles, confuses, and waits for the exact moment to strike.',
+    },
+    {
+      pt: 'Caçadores afirmam que enfrentar Kael é como lutar contra a própria maré — quando se percebe o perigo, já é tarde demais.',
+      en: 'Hunters claim that facing Kael is like fighting the tide itself — when you realize the danger, it is already too late.',
     },
   ],
 

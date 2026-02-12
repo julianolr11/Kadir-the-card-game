@@ -1,17 +1,42 @@
 import React, { useContext } from 'react';
 import { AppContext } from '../context/AppContext';
 import '../styles/guardian-select-modal.css';
+const GUARDIANS_DATA = require('../assets/guardiansData');
+
+// Tenta obter dados do guardião (arquivo da carta) para usar a imagem
+const getGuardianCardData = (guardianId) => {
+  if (!guardianId) return null;
+  try {
+    // arquivos de guardiões ficam em src/assets/cards/booster1/<id>.js
+    const card = require(`../assets/cards/booster1/${guardianId}.js`);
+    if (card && card.img) return card;
+  } catch (e) {
+    // ignore
+  }
+  // fallback para guardiansData que pode conter `img`
+  try {
+    const fallback = GUARDIANS_DATA?.[guardianId];
+    if (fallback && fallback.img) return fallback;
+  } catch (e) {}
+  return null;
+};
 
 function DeckSelectModal({ visible, onClose, onSelect }) {
   const { decks = {}, lang = 'ptbr' } = useContext(AppContext);
 
   if (!visible) return null;
 
-  const deckList = Object.entries(decks || {}).map(([key, deck]) => ({
-    id: key,
-    name: deck.name || key,
-    cards: deck.cards || [],
-  }));
+  const deckList = Object.entries(decks || {}).map(([key, deck]) => {
+    const gid = deck.guardianId || deck.guardian || null;
+    const guardianData = getGuardianCardData(gid);
+    return {
+      id: key,
+      name: deck.name || key,
+      cards: deck.cards || [],
+      guardianId: gid,
+      guardianData,
+    };
+  });
 
   const handleDeckClick = (deck) => {
     onSelect(deck.cards);
@@ -26,15 +51,24 @@ function DeckSelectModal({ visible, onClose, onSelect }) {
         </div>
 
         <div className="deck-list">
-          {deckList.length > 0 ? (
-            deckList.map((deck) => (
-              <div key={deck.id} className="deck-item" onClick={() => handleDeckClick(deck)}>
-                <div className="deck-info">
-                  <h3>{deck.name}</h3>
-                  <p>{deck.cards.length} {lang === 'ptbr' ? 'cartas' : 'cards'}</p>
+            {deckList.length > 0 ? (
+            <div className="deck-grid">
+              {deckList.map((deck) => (
+                <div key={deck.id} className="deck-item" onClick={() => handleDeckClick(deck)}>
+                  <div
+                    className="deck-card-preview"
+                    style={{
+                      backgroundImage: deck.guardianData && deck.guardianData.img ? `url(${deck.guardianData.img})` : 'none',
+                    }}
+                  >
+                    <div className="deck-card-overlay">
+                      <h3>{deck.name}</h3>
+                      <p className="deck-card-sub">{lang === 'ptbr' ? 'Pronto para editar' : 'Ready to edit'}</p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))
+              ))}
+            </div>
           ) : (
             <p className="no-decks-message">
               {lang === 'ptbr' ? 'Nenhum deck disponível' : 'No decks available'}
@@ -102,36 +136,94 @@ function DeckSelectModal({ visible, onClose, onSelect }) {
         }
 
         .deck-list {
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
+          display: block;
+          gap: 12px;
+        }
+
+        .deck-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+          gap: 14px;
         }
 
         .deck-item {
-          background: #2a2a2a;
-          border: 1px solid #9b7d5e;
-          border-radius: 5px;
-          padding: 15px;
           cursor: pointer;
-          transition: all 0.3s ease;
+          transform: translateY(0);
         }
 
-        .deck-item:hover {
-          background: #3a3a3a;
-          border-color: #c9a876;
-          transform: translateX(5px);
+        .deck-item:hover .deck-card-preview {
+          transform: translateY(-6px) scale(1.02);
+          box-shadow: 0 12px 34px rgba(0,0,0,0.6);
         }
 
-        .deck-info h3 {
-          margin: 0 0 5px 0;
-          color: #e8d5b7;
-          font-size: 16px;
+        .deck-card-preview {
+          width: 100%;
+          aspect-ratio: 3 / 4;
+          background-size: cover;
+          background-position: center;
+          border-radius: 10px;
+          border: 2px solid #9b7d5e;
+          position: relative;
+          overflow: hidden;
+          transition: all 0.25s ease;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
 
-        .deck-info p {
+        .deck-card-overlay {
+          position: absolute;
+          inset: 0;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          background: linear-gradient(to bottom, rgba(0,0,0,0.35), rgba(0,0,0,0.45));
+          color: #fff;
+          text-align: center;
+          padding: 12px;
+        }
+
+        .deck-card-overlay h3 {
           margin: 0;
-          color: #9b7d5e;
-          font-size: 14px;
+          color: #f3eada;
+          font-size: 16px;
+          text-shadow: 0 2px 6px rgba(0,0,0,0.8);
+        }
+
+        .deck-card-sub {
+          margin: 6px 0 0 0;
+          color: rgba(243,234,218,0.85);
+          font-size: 12px;
+        }
+
+        .deck-item {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .deck-item-guardian-img {
+          width: 48px;
+          height: 48px;
+          object-fit: cover;
+          border-radius: 8px;
+          border: 1px solid rgba(255,255,255,0.06);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+          flex-shrink: 0;
+        }
+
+        .deck-item-guardian-placeholder {
+          width: 48px;
+          height: 48px;
+          border-radius: 8px;
+          background: rgba(255,255,255,0.03);
+          flex-shrink: 0;
+        }
+
+        .deck-info {
+          text-align: center;
+          width: 100%;
         }
 
         .no-decks-message {

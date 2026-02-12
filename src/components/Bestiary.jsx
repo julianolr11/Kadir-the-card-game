@@ -114,7 +114,7 @@ function Bestiary({ onBack }) {
 
     return (
       <div className={`creature-preview-container ${isFading ? 'fade-out' : 'fade-in'}`}>
-        <div className={`creature-preview-card creature-preview-border-${displayCard.element || 'neutral'}`}>
+        <div className={`creature-preview-card creature-preview-border-${displayCard.type === 'effect' ? 'neutral' : (displayCard.element || 'neutral')}`}>
           <div className="creature-preview-header">
             <div className="creature-preview-name-group">
               <h2 className="creature-preview-name">
@@ -124,7 +124,7 @@ function Bestiary({ onBack }) {
                 )}
               </h2>
             </div>
-            {displayCard.element && elementIcons[displayCard.element] && (
+            {displayCard.type !== 'effect' && displayCard.element && elementIcons[displayCard.element] && (
               <img
                 src={elementIcons[displayCard.element]}
                 alt={displayCard.element}
@@ -144,7 +144,7 @@ function Bestiary({ onBack }) {
           <div className="creature-preview-stats">
             <div className="creature-preview-stat">
               <span className="creature-preview-stat-label">Tipo:</span>
-              <span className="creature-preview-stat-value">{getText(displayCard.type, lang) || 'Criatura'}</span>
+              <span className="creature-preview-stat-value">{displayCard.type === 'effect' ? (lang === 'ptbr' ? 'Efeito' : 'Effect') : (getText(displayCard.type, lang) || 'Criatura')}</span>
             </div>
             <div className="creature-preview-stat">
               <span className="creature-preview-stat-label">HP:</span>
@@ -185,7 +185,6 @@ function Bestiary({ onBack }) {
         }}
       />
 
-      {/* Botão de voltar com seta para esquerda */}
       <button
         className="bestiary-back-btn"
         onClick={() => {
@@ -244,7 +243,8 @@ function Bestiary({ onBack }) {
                       <span className="bestiary-question-mark">?</span>
                     </div>
                   )}
-                  <div className={`bestiary-card-border bestiary-card-border-${card.element || 'neutral'}`} />
+                    {/* element icon removed from grid items; only shown in preview */}
+                  <div className={`bestiary-card-border ${'bestiary-card-border-' + (card.type === 'effect' ? 'neutral' : (card.element || 'neutral'))}`} />
                 </div>
               );
             })}
@@ -275,13 +275,14 @@ function Bestiary({ onBack }) {
                   }}
                 >
                   {owned ? (
-                    <img src={typeof card.img === 'string' ? card.img : (card.img?.default || '')} alt={getText(card.name, lang)} className="bestiary-card-img" />
-                  ) : (
-                    <div className="bestiary-card-locked">
-                      <span className="bestiary-question-mark">?</span>
-                    </div>
-                  )}
-                  <div className={`bestiary-card-border bestiary-card-border-${card.element || 'neutral'}`} />
+                      <img src={typeof card.img === 'string' ? card.img : (card.img?.default || '')} alt={getText(card.name, lang)} className="bestiary-card-img" />
+                    ) : (
+                      <div className="bestiary-card-locked">
+                        <span className="bestiary-question-mark">?</span>
+                      </div>
+                    )}
+                    {/* element icon removed from grid items; only shown in preview */}
+                    <div className={`bestiary-card-border ${'bestiary-card-border-' + (card.type === 'effect' ? 'neutral' : (card.element || 'neutral'))}`} />
                 </div>
               );
             })}
@@ -322,7 +323,8 @@ function Bestiary({ onBack }) {
                       <span className="bestiary-question-mark">?</span>
                     </div>
                   )}
-                  <div className={`bestiary-card-border bestiary-card-border-${card.element || 'neutral'}`} />
+                  {/* Effect cards should not show element icon or colored border */}
+                  <div className={`bestiary-card-border ${'bestiary-card-border-' + (card.type === 'effect' ? 'neutral' : (card.element || 'neutral'))}`} />
                 </div>
               );
             })}

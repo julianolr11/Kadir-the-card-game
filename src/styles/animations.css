@@ -159,6 +159,60 @@
     filter: blur(6px);
   }
 }
+
+/* Wind gust used when returning a card to hand (Owlberoth) */
+@keyframes windGustIn {
+  0% { opacity: 0; transform: translateX(-40%) scaleX(0.6) skewX(-6deg); }
+  30% { opacity: 0.85; transform: translateX(-8%) scaleX(1) skewX(-3deg); }
+  100% { opacity: 0; transform: translateX(40%) scaleX(1.1) skewX(-1deg); }
+}
+
+.wind-blow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  /* shift 50px to the right from centered position */
+  transform: translate(-50%, -50%) translateX(50px);
+  width: 110%;
+  height: 70%;
+  pointer-events: none;
+  z-index: 1400;
+  mix-blend-mode: screen;
+  opacity: 0;
+}
+
+.wind-blow::before,
+.wind-blow::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.02) 60%, transparent 100%);
+  filter: blur(10px);
+}
+
+.wind-blow::after {
+  background: linear-gradient(90deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 35%, transparent 100%);
+  left: -6%;
+  width: 110%;
+  transform: translateX(-6%);
+  filter: blur(16px);
+}
+
+.wind-blow.wind-blow-ai {
+  animation: windGustIn 1.8s cubic-bezier(.2,.9,.2,1) forwards;
+  animation-delay: 0.2s;
+  z-index: 1200;
+}
+.wind-blow.wind-blow-player {
+  animation: windGustIn 1.8s cubic-bezier(.2,.9,.2,1) forwards;
+  animation-delay: 0.2s;
+  transform-origin: right center;
+  z-index: 1200;
+}
 /* Wallpaper transition animations */
 .wallpaper-video-out {
   animation: wallpaperVideoOut 1s ease-in forwards;

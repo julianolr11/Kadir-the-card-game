@@ -391,6 +391,12 @@
   text-align: center;
 }
 
+/* Inline debuff text styles used inside ability/description HTML */
+.debuff-bleed {
+  color: #ff6464;
+  font-weight: 700;
+}
+
 .card-preview-abilities {
   flex-direction: column;
   font-size: 1rem;

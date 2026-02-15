@@ -1,12 +1,12 @@
-/**
+/*
  * Sistema de Raridade das Cartas
  *
- * Distribuição:
- * - Common (40%): cinza/silver - 14 criaturas
- * - Uncommon (30%): verde/bronze - 11 criaturas
- * - Rare (20%): azul/silver - 8 criaturas
- * - Epic (8%): roxo/ouro - 3 criaturas
- * - Legendary (2%): ouro/cristal - 1 criatura
+ * Distribuição (ajustada):
+ * - Common (50%): cinza/silver
+ * - Uncommon (35%): verde/bronze
+ * - Rare (10%): azul
+ * - Epic (4.5%): roxo
+ * - Legendary (0.5%): ouro/cristal
  */
 
 export const RARITY_TIERS = {
@@ -24,7 +24,7 @@ export const RARITY_CONFIG = {
     color: '#c0c0c0', // Silver
     glowColor: 'rgba(192, 192, 192, 0.5)',
     borderWidth: '2px',
-    dropRate: 0.40,
+    dropRate: 0.50,
   },
   uncommon: {
     tier: 1,
@@ -32,7 +32,7 @@ export const RARITY_CONFIG = {
     color: '#a85c33', // Bronze
     glowColor: 'rgba(168, 92, 51, 0.5)',
     borderWidth: '2px',
-    dropRate: 0.30,
+    dropRate: 0.35,
   },
   rare: {
     tier: 2,
@@ -40,7 +40,7 @@ export const RARITY_CONFIG = {
     color: '#4a90e2', // Blue
     glowColor: 'rgba(74, 144, 226, 0.5)',
     borderWidth: '3px',
-    dropRate: 0.20,
+    dropRate: 0.10,
   },
   epic: {
     tier: 3,
@@ -48,7 +48,7 @@ export const RARITY_CONFIG = {
     color: '#9b59b6', // Purple
     glowColor: 'rgba(155, 89, 182, 0.7)',
     borderWidth: '3px',
-    dropRate: 0.08,
+    dropRate: 0.045,
   },
   legendary: {
     tier: 4,
@@ -56,7 +56,7 @@ export const RARITY_CONFIG = {
     color: '#f39c12', // Gold
     glowColor: 'rgba(243, 156, 18, 0.8)',
     borderWidth: '4px',
-    dropRate: 0.02,
+    dropRate: 0.005,
   },
 };
 
@@ -136,6 +136,69 @@ export const getCreatureRarity = (creatureId) => {
   };
 };
 
+// Ranges de valor por raridade (min, max)
+export const RARITY_RANGES = {
+  [RARITY_TIERS.COMMON]: [0, 20],
+  [RARITY_TIERS.UNCOMMON]: [10, 30],
+  [RARITY_TIERS.RARE]: [25, 50],
+  [RARITY_TIERS.EPIC]: [40, 70],
+  [RARITY_TIERS.LEGENDARY]: [60, 100],
+};
+
+// Ranges específicos para essences e fields
+export const ESSENCE_RANGE = [0, 30];
+export const FIELD_RANGE = [0, 30];
+
+const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+
+/**
+ * Retorna o valor de reciclagem de uma carta (unifica regras)
+ * @param {string} cardId - id da carta/creature
+ * @param {object} instance - instância da carta { level, isHolo }
+ * @param {object} cardMeta - metadados da carta (opcional) usados para detectar type/effectType
+ */
+export const getCardValue = (cardId, instance = {}, cardMeta = null) => {
+  const level = instance?.level || 0;
+  const isHolo = !!instance?.isHolo;
+
+  // Detecta tipo da carta
+  let type = null;
+  let effectType = null;
+  if (cardMeta) {
+    type = cardMeta.type;
+    effectType = cardMeta.effectType;
+  }
+
+  // Se type for string, use como indicador (field/effect). Caso contrário, trata como criatura
+  const isField = typeof type === 'string' && type === 'field';
+  const isEffect = typeof type === 'string' && type === 'effect';
+  const isEssence = isEffect && effectType === 'essence';
+
+  // Define range a usar
+  let range = null;
+  if (isField) range = FIELD_RANGE;
+  else if (isEssence) range = ESSENCE_RANGE;
+  else {
+    const { rarity } = getCreatureRarity(cardId);
+    range = RARITY_RANGES[rarity] || RARITY_RANGES[RARITY_TIERS.COMMON];
+  }
+
+  const [minRange, maxRange] = range;
+
+  // Valor base: se houver um value explícito nas definições, usar e clamar; senão usar média da faixa
+  const explicit = creatureRarities[cardId]?.value;
+  const baseCandidate = typeof explicit === 'number' ? explicit : Math.round((minRange + maxRange) / 2);
+  const baseValue = clamp(baseCandidate, minRange, maxRange);
+
+  // Bônus por nível: 10% por level (contando desde 0)
+  const levelBonus = baseValue * level * 0.1;
+
+  // Bônus holo: flat +30
+  const holoBonus = isHolo ? 30 : 0;
+
+  return Math.floor(baseValue + levelBonus + holoBonus);
+};
+
 /**
  * Calcula valor com bônus de holo (brilho especial)
  * Cartas holo recebem +50 moedas ao valor base
@@ -144,10 +207,8 @@ export const getCreatureRarity = (creatureId) => {
  * @returns {number} Valor total da criatura
  */
 export const getCreatureValue = (creatureId, isHolo = false) => {
-  const { value } = getCreatureRarity(creatureId);
-  const holoBonus = isHolo ? 50 : 0;
-
-  return value + holoBonus;
+  // Compat wrapper: usa getCardValue para manter cálculo unificado
+  return getCardValue(creatureId, { level: 0, isHolo }, null);
 };
 
 /**
@@ -168,11 +229,11 @@ export const getCreaturesByRarity = (rarityTier) => {
 export const getRollRarity = () => {
   const roll = Math.random();
   const tiers = [
-    { tier: RARITY_TIERS.LEGENDARY, prob: 0.02 },
-    { tier: RARITY_TIERS.EPIC, prob: 0.08 },
-    { tier: RARITY_TIERS.RARE, prob: 0.20 },
-    { tier: RARITY_TIERS.UNCOMMON, prob: 0.30 },
-    { tier: RARITY_TIERS.COMMON, prob: 0.40 },
+    { tier: RARITY_TIERS.LEGENDARY, prob: 0.005 },  // 0.50%
+    { tier: RARITY_TIERS.EPIC, prob: 0.045 },       // 4.50%
+    { tier: RARITY_TIERS.RARE, prob: 0.10 },        // 10.00%
+    { tier: RARITY_TIERS.UNCOMMON, prob: 0.35 },    // 35.00%
+    { tier: RARITY_TIERS.COMMON, prob: 0.50 },      // 50.00%
   ];
 
   let accumulated = 0;

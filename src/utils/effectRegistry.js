@@ -92,6 +92,17 @@ export function applyDamage(state, params) {
   damage = applyModifiers(damage, attackMods);
   damage = applyModifiers(damage, defenseMods.map(m => ({ ...m, value: -m.value })));
 
+  // Aplica modificador temporário do Elderox: se o lado do atacante tiver o marcador ativo, dobra o dano
+  try {
+    const attackerSide = getCreatureSide(state, attackerId);
+    if (attackerSide && state && state.elderoxDoubleDamage && state.elderoxDoubleDamage[attackerSide]) {
+      console.debug('Elderox double-damage marker detected for side', attackerSide);
+      damage = damage * 2;
+    }
+  } catch (e) {
+    // ignore
+  }
+
   damage = Math.max(1, Math.round(damage)); // Dano mínimo de 1
   let shieldBroken = false;
   const hadShield = !ignoreShield && (target.shield > 0);
@@ -288,45 +299,10 @@ export function processStatusEffects(state, creatureId) {
       newState = result.newState;
       const typeName = effect.type === 'burn' ? 'queimadura' : effect.type === 'poison' ? 'veneno' : 'sangramento';
       log.push(`${creature.name} sofreu ${result.damageDealt} de dano por ${typeName}`);
-      // Se a criatura morreu por debuff, remove-a imediatamente do campo e atualiza graveyard/orbs
-      if (result.died) {
-        try {
-          // tenta encontrar em qual lado estava a criatura
-          const deadCreature = findCreatureById(newState, creatureId);
-          let ownerSide = null;
-          if (newState.player?.field?.slots?.some(s => s && s.id === creatureId)) ownerSide = 'player';
-          if (!ownerSide && newState.ai?.field?.slots?.some(s => s && s.id === creatureId)) ownerSide = 'ai';
-
-          if (ownerSide && deadCreature) {
-            // remove da slot e adiciona ao cemitério
-            const updatedSlots = newState[ownerSide].field.slots.map(s => (s && s.id === creatureId) ? null : s);
-            const updatedGrave = [...(newState[ownerSide]?.graveyard || []), deadCreature];
-            newState = {
-              ...newState,
-              [ownerSide]: {
-                ...newState[ownerSide],
-                field: {
-                  ...newState[ownerSide].field,
-                  slots: updatedSlots,
-                },
-                graveyard: updatedGrave,
-              }
-            };
-
-            // Se o lado ficou sem criaturas, penaliza -1 orbe (comportamento imediato)
-            const hasCreatures = updatedSlots.some(Boolean);
-            if (!hasCreatures && (newState[ownerSide].orbs || 0) > 0) {
-              newState[ownerSide].orbs = Math.max(0, (newState[ownerSide].orbs || 0) - 1);
-              // mark that we applied orb penalty due to status kill to avoid double application later
-              newState._orbPenaltyFromStatus = { ...(newState._orbPenaltyFromStatus || {}), [ownerSide]: true };
-              log.push(`${ownerSide === 'player' ? 'Você' : 'IA'} perdeu 1 orbe por ficar sem criaturas!`);
-            }
-          }
-        } catch (e) {
-          // se falhar não bloqueia o processamento principal
-        }
-      }
-      effect.duration -= 1;
+      // NOTE: remoção física da criatura do campo e ajuste de orbes
+      // é tratado pelo fluxo de `BattleContext` para permitir animações
+      // de morte (não removemos imediatamente aqui).
+      // duração será decrementada por rodada completa (ver decrementRoundDurations)
       if (effect.duration > 0) updatedEffects.push(effect);
     } else if (effect.type === 'regeneration') {
       const heal = Number.isFinite(effect.value) ? effect.value : 1;
@@ -336,7 +312,7 @@ export function processStatusEffects(state, creatureId) {
       });
       newState = result.newState;
       log.push(`${creature.name} regenerou ${result.healAmount} HP`);
-      effect.duration -= 1;
+      // duração será decrementada por rodada completa
       if (effect.duration > 0) updatedEffects.push(effect);
     } else if (effect.type === 'paralyze' || effect.type === 'sleep') {
       // 20% de chance de remover no início do turno
@@ -345,7 +321,7 @@ export function processStatusEffects(state, creatureId) {
         log.push(`${creature.name} se recuperou de ${effect.type === 'paralyze' ? 'paralisia' : 'sono'}.`);
         effect.duration = 0;
       } else {
-        effect.duration -= 1;
+        // não decrementa aqui; mantém até o tick de rodada
         if (effect.duration > 0) {
           updatedEffects.push(effect);
           log.push(`${creature.name} permanece ${effect.type === 'paralyze' ? 'paralisado' : 'adormecido'}.`);
@@ -353,7 +329,7 @@ export function processStatusEffects(state, creatureId) {
       }
     } else if (effect.type === 'freeze') {
       // Congelado: não age; apenas reduz a duração
-      effect.duration -= 1;
+      // duração será decrementada por rodada completa
       if (effect.duration > 0) {
         updatedEffects.push(effect);
         log.push(`${creature.name} permanece congelado.`);
@@ -378,9 +354,9 @@ export function processBuffs(state, creatureId) {
     return { newState: state, log: [] };
   }
 
-  const buffs = (creature.buffs || [])
-    .map(buff => ({ ...buff, duration: buff.duration - 1 }))
-    .filter(buff => buff.duration > 0);
+  // Não decrementa a duração aqui; o decremento de duração por rodada completa
+  // é feito em `decrementRoundDurations` para que "turnos" signifiquem rodadas.
+  const buffs = (creature.buffs || []).filter(buff => buff.duration > 0);
 
   const expired = (creature.buffs || []).length - buffs.length;
   const log = expired > 0 ? [`${expired} efeito(s) de ${creature.name} expiraram`] : [];
@@ -388,6 +364,72 @@ export function processBuffs(state, creatureId) {
   const newState = updateCreature(state, creatureId, { buffs });
 
   return { newState, log };
+}
+
+/**
+ * Decrementa duração de status e buffs uma vez por rodada completa.
+ * Deve ser chamado quando uma rodada (player+ai) for concluída.
+ */
+export function decrementRoundDurations(state) {
+  let newState = { ...state };
+  let logs = [];
+
+  const processCreature = (c) => {
+    if (!c) return c;
+    let updated = { ...c };
+
+    // Processa statusEffects
+    const se = (c.statusEffects || []).map(effect => ({ ...effect }));
+    const newStatus = [];
+    se.forEach(effect => {
+      effect.duration = (typeof effect.duration === 'number') ? effect.duration - 1 : effect.duration;
+      if (effect.duration > 0) {
+        newStatus.push(effect);
+      } else {
+        // efeito expirou
+        const typeName = effect.type === 'burn' ? 'queimadura' : effect.type === 'paralyze' ? 'paralisia' : effect.type === 'sleep' ? 'sono' : effect.type;
+        logs.push(`${c.name} não está mais afetado por ${typeName}.`);
+      }
+    });
+
+    // Processa buffs
+    const buffs = (c.buffs || []).map(b => ({ ...b }));
+    const newBuffs = [];
+    buffs.forEach(buff => {
+      buff.duration = (typeof buff.duration === 'number') ? buff.duration - 1 : buff.duration;
+      if (buff.duration > 0) newBuffs.push(buff);
+      else logs.push(`Efeito de ${c.name} expirou.`);
+    });
+
+    updated.statusEffects = newStatus;
+    updated.buffs = newBuffs;
+    return updated;
+  };
+
+  // Atualiza player slots
+  if (newState.player?.field?.slots) {
+    newState.player = {
+      ...newState.player,
+      field: {
+        ...newState.player.field,
+        slots: newState.player.field.slots.map(s => processCreature(s)),
+      }
+    };
+  }
+
+  // Atualiza AI slots
+  if (newState.ai?.field?.slots) {
+    newState.ai = {
+      ...newState.ai,
+      field: {
+        ...newState.ai.field,
+        slots: newState.ai.field.slots.map(s => processCreature(s)),
+      }
+    };
+  }
+
+  // Retorna novo estado e logs gerados
+  return { newState, log: logs };
 }
 
 // ===== FUNÇÕES AUXILIARES =====
@@ -406,6 +448,19 @@ function findCreatureById(state, creatureId) {
     if (slot && slot.id === creatureId) return slot;
   }
 
+  return null;
+}
+
+/**
+ * Retorna o lado ('player' | 'ai' | null) de uma criatura pelo id
+ */
+function getCreatureSide(state, creatureId) {
+  for (let slot of state.player?.field?.slots || []) {
+    if (slot && slot.id === creatureId) return 'player';
+  }
+  for (let slot of state.ai?.field?.slots || []) {
+    if (slot && slot.id === creatureId) return 'ai';
+  }
   return null;
 }
 

@@ -4,6 +4,7 @@ import { chooseAction } from '../logic/ai';
 import { AppContext } from './AppContext';
 import fieldChangeSfx from '../assets/sounds/effects/field-change.MP3';
 import flipCardSfx from '../assets/sounds/effects/flipcard.MP3';
+import airSfx from '../assets/sounds/effects/elements/air.MP3';
 import battleMusic from '../assets/sounds/music/battle-music.mp3';
 import * as effectRegistry from '../utils/effectRegistry';
 
@@ -38,6 +39,7 @@ const sampleDeckFromPool = (size = 20) => {
 export function BattleProvider({ children }) {
   const { decks, cardCollection, effectsVolume, loadGuardianLoadout } = useContext(AppContext);
   const battleAudioRef = useRef(null);
+  const revealTimeoutRef = useRef(null);
 
   // Resolve habilidades selecionadas (2 slots) e aplica perk simples
   const resolveCreatureBuild = useCallback((creatureData) => {
@@ -89,10 +91,12 @@ export function BattleProvider({ children }) {
     // Aplica benção do guardião se existir
     let blessingEffect = null;
     let hasIgnisBlessing = false;
+    let hasVirideerBlessing = false;
     let hasEkerenthBlessing = false;
     let hasOwlberothBlessing = false;
     let hasNihilBlessing = false;
     let hasDrazraqBlessing = false;
+    let hasLeoracalBlessing = false;
     let hasSeractBlessing = false;
     let hasNoctyraBlessing = false;
     let hasMawthornBlessing = false;
@@ -107,8 +111,12 @@ export function BattleProvider({ children }) {
     let hasArigusBlessing = false;
     let hasRoenhellBlessing = false;
     let hasMoarBlessing = false;
+    let hasElderoxBlessing = false;
     if (creatureData.isGuardian && creatureData.defaultBlessing) {
       const blessing = creatureData.defaultBlessing;
+      if (blessing.id === 'virideer_blessing') {
+        hasVirideerBlessing = true;
+      }
       // Para o Griffor: escudo por 3 turnos
       if (blessing.id === 'griffor_blessing') {
         blessingEffect = { amount: 3, duration: 3 };
@@ -139,6 +147,10 @@ export function BattleProvider({ children }) {
       // Para o Drazraq: roubar uma carta da mão do adversário
       if (blessing.id === 'drazaq_blessing') {
         hasDrazraqBlessing = true;
+      }
+      // Para o Leoracal (visão): revelar carta da mão do adversário
+      if (blessing.id === 'leoracal_blessing_vision' || blessing.id === 'leoracal_blessing') {
+        hasLeoracalBlessing = true;
       }
       // Para o Seract: trocar uma criatura em campo por uma do cemitério
       if (blessing.id === 'seract_blessing') {
@@ -196,6 +208,11 @@ export function BattleProvider({ children }) {
       if (blessing.id === 'moar_blessing') {
         hasMoarBlessing = true;
       }
+      // Para o Elderox: concede double damage para aliados no mesmo turno de invocação
+      if (blessing.id === 'elderox_blessing') {
+        // marca presença da benção para tratarmos no fluxo de summon
+        hasElderoxBlessing = true;
+      }
     }
 
     // Monta habilidades selecionadas (fallback: primeiras 2 habilidades básicas)
@@ -227,7 +244,7 @@ export function BattleProvider({ children }) {
 
     const hp = baseHp + hpBoost;
     const maxHp = hp;
-    return { atk, def, hp, maxHp, abilities: selectedAbilities, perkEffects: { shieldOnSummon }, hasIgnisBlessing, hasEkerenthBlessing, hasOwlberothBlessing, hasNihilBlessing, hasDrazraqBlessing, hasSeractBlessing, hasNoctyraBlessing, hasMawthornBlessing, hasAlatoyBlessing, hasPawferionBlessing, hasEkonosBlessing, hasBeoxyrBlessing, hasArguíliaBlessing, hasKaelBlessing, hasAshfangBlessing, hasZephyronBlessing, hasArigusBlessing, hasRoenhellBlessing, hasMoarBlessing };
+    return { atk, def, hp, maxHp, abilities: selectedAbilities, perkEffects: { shieldOnSummon }, hasIgnisBlessing, hasVirideerBlessing, hasEkerenthBlessing, hasOwlberothBlessing, hasNihilBlessing, hasDrazraqBlessing, hasLeoracalBlessing, hasSeractBlessing, hasNoctyraBlessing, hasMawthornBlessing, hasAlatoyBlessing, hasPawferionBlessing, hasEkonosBlessing, hasBeoxyrBlessing, hasArguíliaBlessing, hasKaelBlessing, hasAshfangBlessing, hasZephyronBlessing, hasArigusBlessing, hasRoenhellBlessing, hasMoarBlessing, hasElderoxBlessing };
   }, [loadGuardianLoadout, cardCollection]);
 
   const playFieldChangeSound = useCallback(() => {
@@ -262,9 +279,12 @@ export function BattleProvider({ children }) {
     returnCardPending: null, // { guardianId, guardianName } se Owlberoth foi invocado
     poisonPending: null, // { guardianId, guardianName } se Nihil foi invocada
     stealCardPending: null, // { guardianId, guardianName } se Drazraq foi invocado
+    revealOpponentPending: null, // { guardianId, guardianName } se Leoracal foi invocado
+    revealedOpponentIndex: null, // índice da carta atualmente revelada no modal
     swapCardPending: null, // { guardianId, guardianName, step, selectedFieldSlot } se Seract foi invocado
     freezePending: null, // { guardianId, guardianName } se Mawthorn foi invocado
     healPending: null, // { guardianId, guardianName, amount } se Ekonos foi invocado
+    virideerBlessPending: null, // { guardianId, guardianName, amount } se Virideer foi invocado
     effectCardPending: null, // { cardId, requiresTarget, targetType } se cartade efeito foi jogada
     drawOpponentPending: null, // { handIndex, baseId } se Compra Reversa foi jogada
     player: {
@@ -308,6 +328,38 @@ export function BattleProvider({ children }) {
     lastDiscardedEffectCard: null, // Armazena id da última carta de efeito descartada (para animação)
   });
 
+  // DEBUG helper: expõe função no window para disparar animação Elderox via console
+  try {
+    // eslint-disable-next-line no-param-reassign
+    // assign on each render (safe) to avoid conditional hooks mismatch
+    window.triggerElderoxAnimation = (side = 'player', slotIndex = 0) => {
+      setState((s) => {
+        try {
+          const slots = s[side]?.field?.slots || [];
+          const slot = slots[slotIndex];
+          if (!slot) return s;
+          console.debug('triggerElderoxAnimation called for', side, 'slot', slotIndex, 'instance', slot.id);
+          const anims = { ...(s.animations || {}) };
+          anims[slot.id] = { type: 'elderoxDouble', owner: side, slotIndex };
+          // schedule removal (shorter so effect disappears earlier)
+          setTimeout(() => {
+            console.debug('Removing elderox animation (trigger) for', slot.id);
+            setState((s2) => {
+              const a = { ...(s2.animations || {}) };
+              delete a[slot.id];
+              return { ...s2, animations: a };
+            });
+          }, 1200);
+          return { ...s, animations: anims };
+        } catch (e) {
+          return s;
+        }
+      });
+    };
+  } catch (e) {
+    // ignore (non-browser env)
+  }
+
   // Controla música de fundo da batalha
   useEffect(() => {
     if (state.phase === 'playing') {
@@ -334,6 +386,33 @@ export function BattleProvider({ children }) {
 
   const log = useCallback((msg) => {
     setState((s) => ({ ...s, log: [...s.log, msg] }));
+  }, []);
+
+  // Dispara animação arbitrária (útil para debugging / console)
+  const triggerAnimation = useCallback(({ type, owner, slotIndex, creatureId, duration = 2000 }) => {
+    setState((s) => {
+      // resolve creature id se não fornecido
+      let id = creatureId;
+      if (!id) {
+        const slots = owner === 'ai' ? (s.ai?.field?.slots || []) : (s.player?.field?.slots || []);
+        const slot = (typeof slotIndex === 'number' && slotIndex >= 0) ? slots[slotIndex] : null;
+        id = slot?.id;
+      }
+      if (!id) return s;
+
+      const newAnims = { ...(s.animations || {}), [id]: { type, owner, slotIndex } };
+
+      // agenda remoção após duration
+      setTimeout(() => {
+        setState((s2) => {
+          const anims = { ...(s2.animations || {}) };
+          delete anims[id];
+          return { ...s2, animations: anims };
+        });
+      }, duration);
+
+      return { ...s, animations: newAnims };
+    });
   }, []);
 
   const pickFirstUserDeck = useCallback(() => {
@@ -375,6 +454,7 @@ export function BattleProvider({ children }) {
       swapCardPending: null,
       freezePending: null,
       healPending: null,
+      virideerBlessPending: null,
       player: { orbs: 5, essence: 0, deck: pDeck, hand: pHand, field: { slots: [null, null, null], effects: [null, null, null] }, graveyard: [], fieldGraveyard: [] },
       ai: { orbs: 5, essence: 0, deck: aDeck, hand: aHand, field: { slots: [null, null, null], effects: [null, null, null] }, graveyard: [], fieldGraveyard: [] },
       sharedField: { active: false, id: null },
@@ -409,9 +489,11 @@ export function BattleProvider({ children }) {
       // penalidade por finalizar turno sem criaturas
       const currentSnapshot = { ...s[currentSide] };
       const hasCreatures = currentSnapshot.field?.slots?.some(Boolean);
-      if (!hasCreatures && currentSnapshot.orbs > 0) {
+      // Não aplica penalidade se o lado já invocou uma criatura neste turno (evita penalizar na primeira jogada)
+      const invokedThisTurnCount = (s.creaturesInvokedThisTurn && s.creaturesInvokedThisTurn[currentSide]) ? s.creaturesInvokedThisTurn[currentSide] : 0;
+      if (!hasCreatures && currentSnapshot.orbs > 0 && invokedThisTurnCount === 0) {
         currentSnapshot.orbs = Math.max(0, (currentSnapshot.orbs || 0) - 1);
-        logEntries.push(`${currentSide === 'player' ? 'Voc├¬' : 'IA'} terminou sem criaturas. -1 orbe.`);
+        logEntries.push(`${currentSide === 'player' ? 'Você' : 'IA'} terminou sem criaturas. -1 orbe.`);
         // Verifica se o jogo acabou após perder orb
         if (currentSnapshot.orbs === 0) {
           const winner = currentSide === 'player' ? 'ai' : 'player';
@@ -426,7 +508,8 @@ export function BattleProvider({ children }) {
             },
             log: [...logEntries, `⚰️ ${currentSide === 'player' ? 'Você perdeu' : 'IA perdeu'} todos os orbes! FIM DE JOGO!`],
           };
-        }      }
+        }
+      }
 
       // compra 1 carta (limite de 7; overflow: volta para o deck e embaralha)
       const side = nextActive;
@@ -494,6 +577,7 @@ export function BattleProvider({ children }) {
       const processResurrectedCreatures = (slots, side, newState) => {
         const processedSlots = [];
         let logs = [];
+        console.log(`PROCESS RESURRECT CHECK for side=${side}`, slots);
 
         (slots || []).forEach(c => {
           if (!c) {
@@ -505,6 +589,7 @@ export function BattleProvider({ children }) {
             const newDuration = c.resurrectDuration - 1;
             if (newDuration <= 0) {
               // Duração acabou, retorna ao cemitério
+              console.log(`PROCESS RESURRECT: ${c.name} duration ended, returning to graveyard`, { side, creature: c });
               newState[side] = {
                 ...newState[side],
                 graveyard: [...(newState[side]?.graveyard || []), c]
@@ -574,18 +659,59 @@ export function BattleProvider({ children }) {
         (slots || []).forEach(c => {
           if (c && c.hp <= 0) {
             deadCreatures.push(c);
-            cleanedSlots.push(null);
+            // mantemos a criatura na slot por enquanto para permitir a animação de morte
+            cleanedSlots.push(c);
+            // marca animação de morte para a UI
+            newState.animations = { ...(newState.animations || {}), [c.id]: { death: true } };
+            // agenda remoção real da criatura após a duração da animação (400ms antes + 600ms animação = 1000ms)
+            (function(deadId, ownerSide, deadCreature) {
+              setTimeout(() => {
+                setState((s2) => {
+                  try {
+                    const updated = { ...s2 };
+                    // remove a criatura da slot
+                    updated[ownerSide] = {
+                      ...updated[ownerSide],
+                      field: {
+                        ...updated[ownerSide].field,
+                        slots: (updated[ownerSide].field.slots || []).map(slot => (slot && slot.id === deadId) ? null : slot),
+                      },
+                      graveyard: [...(updated[ownerSide].graveyard || []), deadCreature],
+                    };
+                    // limpa animação
+                    const anims = { ...(updated.animations || {}) };
+                    delete anims[deadId];
+                    updated.animations = anims;
+                    return updated;
+                  } catch (e) {
+                    return s2;
+                  }
+                });
+              }, 1000);
+            })(c.id, side, c);
           } else {
             cleanedSlots.push(c);
           }
         });
 
-        // Adiciona criaturas mortas ao graveyard do lado correspondente
+        // Adiciona criaturas mortas ao graveyard do lado correspondente (reflete que morreram; remoção física virá após animação)
         if (deadCreatures.length > 0) {
           newState[side] = {
             ...newState[side],
             graveyard: [...(newState[side]?.graveyard || []), ...deadCreatures]
           };
+          // aplica penalidade de orbe imediatamente caso após remoção o lado fique sem criaturas
+          try {
+            const futureSlots = (slots || []).map(s => (s && s.hp > 0) ? s : null).map(slot => (deadCreatures.some(d => slot && slot.id === d.id) ? null : slot));
+            const hasCreaturesAfter = futureSlots.some(Boolean);
+            if (!hasCreaturesAfter && (newState[side].orbs || 0) > 0) {
+              newState[side].orbs = Math.max(0, (newState[side].orbs || 0) - 1);
+              newState.log = [...(newState.log || []), `${side === 'player' ? 'Você' : 'IA'} perdeu 1 orbe por ficar sem criaturas!`];
+              newState._orbPenaltyFromStatus = { ...(newState._orbPenaltyFromStatus || {}), [side]: true };
+            }
+          } catch (e) {
+            // ignore
+          }
         }
 
         return { cleanedSlots, newState };
@@ -615,8 +741,8 @@ export function BattleProvider({ children }) {
 
       // Clone processed.ns to avoid mutating originals
       nsCleaned = { ...processed.ns };
-      applyOrbPenaltyIfNeeded(nsCleaned, 'player');
-      applyOrbPenaltyIfNeeded(nsCleaned, 'ai');
+      // Aplica penalidade de orbe apenas para o lado que está finalizando o turno
+      applyOrbPenaltyIfNeeded(nsCleaned, currentSide);
 
       nsCleaned = {
         ...nsCleaned,
@@ -636,11 +762,33 @@ export function BattleProvider({ children }) {
         },
       };
 
+      // Se completamos uma rodada (voltando para o jogador), decrementa durações de status/buffs uma vez
+      let finalState = { ...nsCleaned };
+      let extraLogs = [];
+      if (nextActive === 'player') {
+        try {
+          const rr = effectRegistry.decrementRoundDurations(finalState);
+          finalState = rr.newState;
+          extraLogs = rr.log || [];
+        } catch (e) {
+          console.warn('Erro ao decrementar durações por rodada', e);
+        }
+      }
+
+      // Limpa marcador temporário do Elderox para o lado que terminou o turno (expira quando o oponente começa)
+      try {
+        if (finalState.elderoxDoubleDamage) {
+          finalState.elderoxDoubleDamage = { ...finalState.elderoxDoubleDamage, [currentSide]: false };
+        }
+      } catch (e) {
+        console.warn('Erro ao limpar marcador Elderox', e);
+      }
+
       return {
-        ...nsCleaned,
+        ...finalState,
         creaturesInvokedThisTurn: { player: 0, ai: 0 }, // Reseta contador de invocações para o próximo turno (por segurança)
         creaturesWithUsedAbility: new Set(), // Reseta criaturas que usaram habilidade
-        log: [...logEntries, ...resurrectionLogs, `Fim do turno de ${s.activePlayer}.`, ...processed.logs],
+        log: [...logEntries, ...resurrectionLogs, `Fim do turno de ${s.activePlayer}.`, ...processed.logs, ...extraLogs],
       };
     });
   }, [log]);
@@ -685,6 +833,7 @@ export function BattleProvider({ children }) {
 
       const hand = [...s.player.hand];
       const cardId = hand[index];
+      console.log('summonFromHand called:', { index, slotIndex, cardId });
       if (!cardId) return s;
 
       // Extrai baseId se for instanceId
@@ -698,6 +847,7 @@ export function BattleProvider({ children }) {
           }
         }
       }
+      console.log('summonFromHand resolved baseId:', baseId);
 
       // Verifica se é carta de efeito - NÃO PODE SER INVOCADA
       if (String(baseId).toLowerCase().startsWith('effect_')) {
@@ -735,6 +885,7 @@ export function BattleProvider({ children }) {
 
       // Resolve build com perks e loadout
       const build = resolveCreatureBuild(creatureData);
+      console.log('resolveCreatureBuild result for', baseId, { hasElderoxBlessing: build.hasElderoxBlessing });
 
       // Cria estrutura completa da criatura
       const creature = {
@@ -777,6 +928,35 @@ export function BattleProvider({ children }) {
         },
         log: [...s.log, `Invocou ${creature.name} no slot ${slotIndex + 1}.`],
       };
+
+      // Se for Elderox, marca double-damage temporário para o lado do jogador (válido só neste turno)
+      if (build.hasElderoxBlessing) {
+        // marca double-damage imediatamente
+        newState.elderoxDoubleDamage = { ...(s.elderoxDoubleDamage || {}), player: true };
+        newState.log = [...newState.log, `${creature.name} concede DOBRO de dano para aliados neste turno!`];
+        console.log('Elderox blessing (player summon) activated double-damage marker');
+        // Adiciona animação visual ligeiramente depois para garantir que o DOM e refs dos slots existam
+        const animId = creature.id;
+        setTimeout(() => {
+          console.log('Adding elderox animation (player) for', animId, 'slotIndex', slotIndex);
+          setState(s3 => {
+            const anims = { ...(s3.animations || {}) };
+            anims[animId] = { type: 'elderoxDouble', owner: 'player', slotIndex };
+            console.log('State update: elderox animation added (player) for', animId);
+            return { ...s3, animations: anims };
+          });
+          // schedule removal
+          setTimeout(() => {
+            console.log('Removing elderox animation (player) for', animId);
+            setState(s4 => {
+              const anims2 = { ...(s4.animations || {}) };
+              delete anims2[animId];
+              return { ...s4, animations: anims2 };
+            });
+          }, 1200);
+        }, 1000);
+        console.log('Elderox animation scheduled (player) for', animId, 'slotIndex', slotIndex, 'will run in ~1s');
+      }
 
       // Se for Ignis, ativa o efeito de ressurreição
       if (build.hasIgnisBlessing) {
@@ -857,6 +1037,18 @@ export function BattleProvider({ children }) {
             guardianName: creature.name,
           };
           newState.log.push(`${creature.name} oferece roubar uma carta da mão do oponente!`);
+        }
+      }
+
+      // Se for Leoracal (Visão além do alcance), ativa o efeito de revelar carta da mão
+      if (build.hasLeoracalBlessing) {
+        const aiHand = newState.ai?.hand || [];
+        if (aiHand.length > 0) {
+          newState.revealOpponentPending = {
+            guardianId: baseId,
+            guardianName: creature.name,
+          };
+          newState.log.push(`${creature.name} oferece revelar uma carta da mão do oponente!`);
         }
       }
 
@@ -983,6 +1175,32 @@ export function BattleProvider({ children }) {
         }
       }
 
+      // Se for Virideer, permite escolher uma criatura aliada para receber +1 HP
+      if (build.hasVirideerBlessing) {
+        const playerSlots = [...(newState.player?.field?.slots || [])];
+        const alliedCreatures = playerSlots.filter((slot, idx) => slot !== null && slot !== undefined && idx !== slotIndex); // Exclui o próprio Virideer
+
+        if (alliedCreatures.length > 0) {
+          // Permite escolha pelo jogador
+            newState.virideerBlessPending = {
+              guardianId: baseId,
+              guardianName: creature.name,
+              amount: 2,
+              virideerSlot: slotIndex,
+            };
+          newState.log.push(`${creature.name} oferece conceder +1 HP a uma criatura aliada!`);
+        } else {
+          // Sem outras criaturas, aplica a si mesmo
+          const virCreature = playerSlots[slotIndex];
+          if (virCreature) {
+            virCreature.hp = Math.min(virCreature.hp + 2, virCreature.maxHp);
+            playerSlots[slotIndex] = virCreature;
+            newState.player = { ...newState.player, field: { ...newState.player.field, slots: playerSlots } };
+            newState.log.push(`${creature.name} concedeu +1 HP para si mesmo!`);
+          }
+        }
+      }
+
       // Se for Beoxyr, aplica dano e queimadura em uma criatura aleatória do adversário
       if (build.hasBeoxyrBlessing) {
         const aiSlots = [...(newState.ai?.field?.slots || [])];
@@ -1022,14 +1240,14 @@ export function BattleProvider({ children }) {
       // Se for Arguilia, concede +1 HP para todas as criaturas de água em campo
       if (build.hasArguíliaBlessing) {
         const playerSlots = [...(newState.player?.field?.slots || [])];
-        let healedCount = 0;
+        const healedIds = [];
 
         const updatedPlayerSlots = playerSlots.map(slot => {
           if (!slot) return slot;
 
           // Verifica se a criatura é de água
           if (slot.element === 'agua' || (creaturesPool.find(c => c.id === baseId || c.id.split('-')[0] === baseId)?.element === 'agua')) {
-            healedCount++;
+            healedIds.push(slot.id);
             // Se o HP está no máximo, aumenta ambos. Senão, apenas o HP até o máximo
             if (slot.hp >= slot.maxHp) {
               return {
@@ -1048,8 +1266,21 @@ export function BattleProvider({ children }) {
         });
 
         newState.player = { ...newState.player, field: { ...newState.player.field, slots: updatedPlayerSlots } };
-        if (healedCount > 0) {
-          newState.log.push(`${creature.name} concedeu +1 HP para ${healedCount} criatura(s) de água!`);
+        if (healedIds.length > 0) {
+          newState.log.push(`${creature.name} concedeu +1 HP para ${healedIds.length} criatura(s) de água!`);
+          // Animação de +1 sobre as criaturas curadas
+          newState.animations = {
+            ...(newState.animations || {}),
+            ...healedIds.reduce((acc, id) => ({ ...acc, [id]: { type: 'heal', amount: 1, icon: 'heart' } }), {}),
+          };
+          // Remove animação após 900ms
+          setTimeout(() => {
+            setState(s2 => {
+              const anims = { ...(s2.animations || {}) };
+              healedIds.forEach(id => delete anims[id]);
+              return { ...s2, animations: anims };
+            });
+          }, 900);
         }
       }
 
@@ -1094,6 +1325,7 @@ export function BattleProvider({ children }) {
           targetCreature.hp = Math.max(0, targetCreature.hp - 1);
 
           // Aplica queimadura por 3 turnos
+          console.debug('Ashfang blessing (player summon) applying to AI target', { targetId: targetCreature?.id, targetName: targetCreature?.name });
           const burnStatusEffect = targetCreature.statusEffects?.find(e => e.type === 'burn');
           const newStatusEffects = targetCreature.statusEffects ? [...targetCreature.statusEffects] : [];
 
@@ -1176,11 +1408,44 @@ export function BattleProvider({ children }) {
         if (enemyIndices.length > 0) {
           const randomIndex = enemyIndices[Math.floor(Math.random() * enemyIndices.length)];
           const returnedCreature = aiSlots[randomIndex];
-          aiSlots[randomIndex] = null;
+          if (returnedCreature) {
+            const creatureId = returnedCreature.id;
+            // don't remove immediately; trigger return animation and finalize after delay
+            newState.animations = { ...(newState.animations || {}), [creatureId]: { type: 'returningToHand', owner: 'player', slotIndex: randomIndex } };
+            newState.log.push(`${creature.name} empurrou ${returnedCreature.name}, retornando-o à mão do oponente.`);
 
-          const aiHand = [...(newState.ai?.hand || []), returnedCreature.id];
-          newState.ai = { ...newState.ai, hand: aiHand, field: { ...newState.ai.field, slots: aiSlots } };
-          newState.log.push(`${creature.name} retornou ${returnedCreature.name} para a mão do oponente!`);
+            // play wind SFX
+            try {
+              const audio = new Audio(airSfx);
+              audio.volume = (effectsVolume ?? 50) / 100;
+              audio.play().catch(() => {});
+            } catch (e) {}
+
+            // finalize after animation duration
+            const delayMs = 2000;
+            setTimeout(() => {
+              setState((s2) => {
+                const aiSlotsNow = [...(s2.ai?.field?.slots || [])];
+                const slotCreature = aiSlotsNow[randomIndex];
+                const anims = { ...(s2.animations || {}) };
+
+                let aiHand = [...(s2.ai?.hand || [])];
+                if (slotCreature && slotCreature.id === creatureId) {
+                  aiSlotsNow[randomIndex] = null;
+                  aiHand = [...aiHand, slotCreature.id];
+                }
+
+                delete anims[creatureId];
+
+                return {
+                  ...s2,
+                  ai: { ...s2.ai, hand: aiHand, field: { ...s2.ai.field, slots: aiSlotsNow } },
+                  animations: anims,
+                  log: [...s2.log, `${returnedCreature.name} foi retornado para a mão do oponente.`],
+                };
+              });
+            }, delayMs);
+          }
         }
       }
 
@@ -1213,6 +1478,7 @@ export function BattleProvider({ children }) {
       const restoredCreature = { ...ressurectedCreature, id: newInstanceId, baseId: baseId };
 
       const newLog = [...s.log, `${ressurectedCreature.name} foi ressuscitado!`];
+      console.log('RESURRECT - restoring creature', { ressurectedCreature, newInstanceId, targetSlotIndex });
 
       // Se houver slot disponível
       if (targetSlotIndex >= 0 && targetSlotIndex < 3) {
@@ -1222,7 +1488,9 @@ export function BattleProvider({ children }) {
           return { ...s, log: newLog };
         }
 
-        slots[targetSlotIndex] = restoredCreature;
+        // Marca como temporária para que retorne ao cemitério após N turnos
+        slots[targetSlotIndex] = { ...restoredCreature, temporary: true, resurrectDuration: 2 };
+        console.log('RESURRECT - placed in slot', { slotIndex: targetSlotIndex, restoredCreature });
         return {
           ...s,
           player: { ...s.player, graveyard, field: { ...s.player.field, slots } },
@@ -1266,33 +1534,56 @@ export function BattleProvider({ children }) {
       const returnedCreature = aiSlots[slotIndex];
       if (!returnedCreature) return s;
 
-      // Adiciona animação de retorno à mão
+      // Prepare animation on the slot (don't remove yet so animation can render)
       const creatureId = returnedCreature.id;
       const newAnimations = {
         ...(s.animations || {}),
-        [creatureId]: { type: 'returningToHand', owner: 'ai', slotIndex }
+        [creatureId]: { type: 'returningToHand', owner: 'player', slotIndex }
       };
 
-      // Remove a criatura do slot
-      aiSlots[slotIndex] = null;
+      const newLog = [...s.log, `${returnedCreature.name} será retornado para a mão do adversário.`];
 
-      // Adiciona à mão do inimigo (simulado - em um jogo real isso seria controlado pela IA)
-      const aiHand = [...(s.ai?.hand || []), returnedCreature.id];
+      // Play wind sound
+      try {
+        const audio = new Audio(airSfx);
+        audio.volume = (effectsVolume ?? 50) / 100;
+        audio.play().catch(() => {});
+      } catch (e) {
+        // ignore
+      }
 
-      const newLog = [...s.log, `${returnedCreature.name} foi retornado para a mão do oponente!`];
-
-      // Remove animação após 800ms
+      // After delay (match animation duration), remove the creature from slot and add to player's hand, then clear animation
+      const delayMs = 2000; // total 2s to match animation (1.8s + 0.2s)
       setTimeout(() => {
-        setState(s2 => {
+        setState((s2) => {
+          const aiSlotsNow = [...(s2.ai?.field?.slots || [])];
+          // make sure slot still contains the same creature id before removing
+          const slotCreature = aiSlotsNow[slotIndex];
           const anims = { ...(s2.animations || {}) };
-          delete anims[creatureId];
-          return { ...s2, animations: anims };
-        });
-      }, 800);
 
+          // Return to owner (AI) hand
+          let aiHand = [...(s2.ai?.hand || [])];
+          if (slotCreature && slotCreature.id === creatureId) {
+            aiSlotsNow[slotIndex] = null;
+            aiHand = [...aiHand, slotCreature.id];
+          }
+
+          // clear animation
+          delete anims[creatureId];
+
+          return {
+            ...s2,
+            ai: { ...s2.ai, hand: aiHand, field: { ...s2.ai.field, slots: aiSlotsNow } },
+            animations: anims,
+            log: [...s2.log, `${returnedCreature.name} foi retornado para a mão do adversário!`],
+          };
+        });
+      }, delayMs);
+
+      // Return intermediate state with animation active
       return {
         ...s,
-        ai: { ...s.ai, field: { ...s.ai.field, slots: aiSlots }, hand: aiHand },
+        ai: { ...s.ai, field: { ...s.ai.field, slots: aiSlots } },
         returnCardPending: null,
         animations: newAnimations,
         log: newLog,
@@ -1389,6 +1680,55 @@ export function BattleProvider({ children }) {
         ai: { ...s.ai, hand: aiHand },
         stealCardPending: null,
         log: newLog,
+      };
+    });
+  }, []);
+
+  // Revela uma carta da mão do inimigo (benção do Leoracal)
+  const revealEnemyCard = useCallback((handIndex) => {
+    setState((s) => {
+      if (!s.revealOpponentPending) return s;
+
+      const aiHand = [...(s.ai?.hand || [])];
+      if (handIndex < 0 || handIndex >= aiHand.length) return s;
+
+      const revealedCard = aiHand[handIndex];
+      if (!revealedCard) return s;
+
+      const newLog = [...s.log, `${s.revealOpponentPending.guardianName} revelou uma carta da mão do oponente!`];
+
+      // Marca qual índice foi revelado, mantendo o modal aberto até o jogador fechar
+      return {
+        ...s,
+        revealedOpponentIndex: handIndex,
+        log: newLog,
+      };
+    });
+    // agenda fechamento automático após 5 segundos
+    if (revealTimeoutRef.current) clearTimeout(revealTimeoutRef.current);
+    revealTimeoutRef.current = setTimeout(() => {
+      setState((s) => ({
+        ...s,
+        revealOpponentPending: null,
+        revealedOpponentIndex: null,
+        log: [...s.log, 'Revelação encerrada.'],
+      }));
+      revealTimeoutRef.current = null;
+    }, 5000);
+  }, []);
+
+  const cancelRevealEnemy = useCallback(() => {
+    if (revealTimeoutRef.current) {
+      clearTimeout(revealTimeoutRef.current);
+      revealTimeoutRef.current = null;
+    }
+    setState((s) => {
+      if (!s.revealOpponentPending && s.revealedOpponentIndex === null) return s;
+      return {
+        ...s,
+        revealOpponentPending: null,
+        revealedOpponentIndex: null,
+        log: [...s.log, 'Ação cancelada.'],
       };
     });
   }, []);
@@ -1589,6 +1929,52 @@ export function BattleProvider({ children }) {
       return {
         ...s,
         healPending: null,
+        log: [...s.log, 'Ação cancelada.'],
+      };
+    });
+  }, []);
+
+  // Aplica benção do Virideer (+1 HP a criatura escolhida)
+  const applyVirideerBless = useCallback((slotIndex) => {
+    setState((s) => {
+      if (!s.virideerBlessPending) return s;
+
+      const playerSlots = [...(s.player?.field?.slots || [])];
+      if (slotIndex < 0 || slotIndex >= playerSlots.length) return s;
+
+      const targetCreature = playerSlots[slotIndex];
+      if (!targetCreature) return s;
+
+      // Aplica +1 HP
+      const healAmount = s.virideerBlessPending.amount || 2;
+      targetCreature.hp = Math.min(targetCreature.hp + healAmount, targetCreature.maxHp);
+      playerSlots[slotIndex] = targetCreature;
+
+      const newLog = [...s.log, `${targetCreature.name} recebeu +${healAmount} HP pela benção de ${s.virideerBlessPending.guardianName}!`];
+
+      // Animação de cura simples
+      const animations = {
+        ...(s.animations || {}),
+        ...(targetCreature.id ? { [targetCreature.id]: { type: 'heal', amount: healAmount } } : {}),
+      };
+
+      return {
+        ...s,
+        player: { ...s.player, field: { ...s.player.field, slots: playerSlots } },
+        virideerBlessPending: null,
+        animations,
+        log: newLog,
+      };
+    });
+  }, []);
+
+  // Cancela benção do Virideer
+  const cancelVirideerBless = useCallback(() => {
+    setState((s) => {
+      if (!s.virideerBlessPending) return s;
+      return {
+        ...s,
+        virideerBlessPending: null,
         log: [...s.log, 'Ação cancelada.'],
       };
     });
@@ -2073,6 +2459,81 @@ export function BattleProvider({ children }) {
       const effectName = typeof effectCard.name === 'object' ? effectCard.name.pt : effectCard.name;
       log(`Jogou ${effectName}`);
 
+      // Se o executeEffectCard anexou animações (ex: damageAll), agenda limpeza e remoção de mortos
+      if (newState.animations && Object.keys(newState.animations).length > 0) {
+        const animTargets = Object.keys(newState.animations);
+
+        // Limpa animações de dano após 900ms
+        setTimeout(() => {
+          setState(s2 => {
+            const anims = { ...(s2.animations || {}) };
+            animTargets.forEach(id => {
+              if (anims[id] && anims[id].type === 'damage') {
+                delete anims[id];
+              }
+            });
+            return { ...s2, animations: anims };
+          });
+        }, 900);
+
+        // Para cada target que morreu, anima morte e remove depois
+        animTargets.forEach((targetId) => {
+          const targetCreature = (newState.ai?.field?.slots || []).find(slot => slot?.id === targetId);
+          if (targetCreature && targetCreature.hp <= 0) {
+            // Adiciona animação de morte após pequeno delay
+            setTimeout(() => {
+              setState(s3 => ({
+                ...s3,
+                animations: { ...(s3.animations || {}), [targetId]: { death: true } }
+              }));
+
+              // Remove a criatura do campo após 600ms e atualiza cemitério/orbs/killfeed
+              setTimeout(() => {
+                setState(s4 => {
+                  const updated = { ...s4 };
+                  const targetCreatureNow = updated.ai.field.slots.find(slot => slot?.id === targetId);
+                  if (targetCreatureNow) {
+                    updated.ai.field.slots = updated.ai.field.slots.map(slot => slot?.id === targetId ? null : slot);
+                    updated.ai.graveyard = [...(updated.ai.graveyard || []), targetCreatureNow];
+                    updated.ai.orbs = Math.max(0, (updated.ai.orbs || 5) - 1);
+                    updated.killFeed = [...(updated.killFeed || []), {
+                      turn: updated.turn,
+                      attacker: effectName || 'Effect',
+                      attackerId: effectCard.id,
+                      target: targetCreatureNow.name,
+                      targetId: targetCreatureNow.id,
+                      hadAdvantage: false,
+                    }];
+
+                    updated.battleStats = {
+                      ...updated.battleStats,
+                      player: {
+                        ...updated.battleStats.player,
+                        cardsKilled: [...(updated.battleStats.player.cardsKilled || []), effectCard.id],
+                      },
+                    };
+
+                    updated.log = [...updated.log, `${targetCreatureNow.name} foi derrotado! ${updated.ai.orbs === 0 ? '⚰️ FIM DE JOGO!' : '⚰️ -1 orbe'}`];
+
+                    if (updated.ai.orbs === 0) {
+                      updated.phase = 'ended';
+                      updated.gameResult = {
+                        winner: 'player',
+                        loser: 'ai',
+                        kills: updated.killFeed,
+                        turns: updated.turn,
+                        stats: updated.battleStats,
+                      };
+                    }
+                  }
+                  return updated;
+                });
+              }, 600);
+            }, 300);
+          }
+        });
+      }
+
       return newState;
     });
   }, [cardCollection, log]);
@@ -2342,7 +2803,9 @@ export function BattleProvider({ children }) {
     poisonEnemyCard,
     cancelPoisonCard,
     stealEnemyCard,
+    revealEnemyCard,
     cancelStealCard,
+    cancelRevealEnemy,
     selectFieldCardForSwap,
     completeSwap,
     cancelSwap,
@@ -2350,6 +2813,8 @@ export function BattleProvider({ children }) {
     cancelFreezeCard,
     healAllyCard,
     cancelHealCard,
+    applyVirideerBless,
+    cancelVirideerBless,
     log,
     playEffectCard,
     selectEffectCardTarget,
@@ -2359,6 +2824,7 @@ export function BattleProvider({ children }) {
     selectSpectralAbility,
     executeSpectralAttack,
     cancelSpectralAttack,
+    triggerAnimation,
     startPlaying: (firstPlayer) => {
       setState(s => ({
         ...s,
@@ -2366,7 +2832,52 @@ export function BattleProvider({ children }) {
         activePlayer: firstPlayer === 'player' ? 'player' : 'ai',
       }));
     },
-  }), [state, startBattle, endTurn, drawPlayerCard, summonFromHand, invokeFieldCard, invokeFieldCardAI, useAbility, resurrectCreature, cancelResurrection, returnEnemyCard, cancelReturnCard, poisonEnemyCard, cancelPoisonCard, stealEnemyCard, cancelStealCard, selectFieldCardForSwap, completeSwap, cancelSwap, freezeEnemyCard, cancelFreezeCard, healAllyCard, cancelHealCard, log, playEffectCard, selectEffectCardTarget, updateEffectCardTarget, cancelEffectCard, cancelDrawOpponent, selectSpectralAbility, executeSpectralAttack, cancelSpectralAttack]);
+  }), [state, startBattle, endTurn, drawPlayerCard, summonFromHand, invokeFieldCard, invokeFieldCardAI, useAbility, resurrectCreature, cancelResurrection, returnEnemyCard, cancelReturnCard, poisonEnemyCard, cancelPoisonCard, stealEnemyCard, revealEnemyCard, cancelStealCard, cancelRevealEnemy, selectFieldCardForSwap, completeSwap, cancelSwap, freezeEnemyCard, cancelFreezeCard, healAllyCard, cancelHealCard, applyVirideerBless, cancelVirideerBless, log, playEffectCard, selectEffectCardTarget, updateEffectCardTarget, cancelEffectCard, cancelDrawOpponent, selectSpectralAbility, executeSpectralAttack, cancelSpectralAttack]);
+
+  // Expose a debug helper on window to trigger the Owlberoth return animation from the console
+  React.useEffect(() => {
+    try {
+      window.showOwlberothAnim = (slotIndex) => {
+        console.log('[debug] showOwlberothAnim called for slot', slotIndex);
+        try {
+          // Log slot element if present
+          const playerSlots = document.querySelectorAll('.slots-player .slot, .slots-slots-player .slot');
+          const el = playerSlots && playerSlots[slotIndex] ? playerSlots[slotIndex] : null;
+          console.log('[debug] resolved slot element:', el);
+        } catch (e) {
+          console.log('[debug] cannot resolve slot element:', e);
+        }
+        triggerAnimation({ type: 'returningToHand', owner: 'player', slotIndex, duration: 2000 });
+      };
+      // Direct DOM injector for quick visual test (no state changes)
+      window.debugWindBlow = (slotIndexOrSelector) => {
+        try {
+          let slotEl = null;
+          if (typeof slotIndexOrSelector === 'number') {
+            const playerSlots = document.querySelectorAll('.slots-player .slot, .slots-slots-player .slot');
+            slotEl = playerSlots && playerSlots[slotIndexOrSelector] ? playerSlots[slotIndexOrSelector] : null;
+          } else if (typeof slotIndexOrSelector === 'string') {
+            slotEl = document.querySelector(slotIndexOrSelector);
+          }
+          if (!slotEl) slotEl = document.querySelector('.slot.occupied');
+          if (!slotEl) return console.warn('No slot element found to inject wind-blow');
+          const div = document.createElement('div');
+          div.className = 'wind-blow wind-blow-player';
+          slotEl.style.overflow = 'visible';
+          slotEl.appendChild(div);
+          setTimeout(() => div.remove(), 2000);
+        } catch (err) {
+          console.error('debugWindBlow error', err);
+        }
+      };
+    } catch (e) {
+      // ignore in non-browser environments
+    }
+    return () => {
+      try { delete window.showOwlberothAnim; } catch (e) {}
+      try { delete window.debugWindBlow; } catch (e) {}
+    };
+  }, [triggerAnimation]);
 
   const applyAiSummonBlessings = useCallback((s, build, creatureData, summonSlotIndex, aiSlots, logEntries) => {
     const creatureName = creatureData.name?.pt || creatureData.name?.en || creatureData.id;
@@ -2396,6 +2907,42 @@ export function BattleProvider({ children }) {
       nextLog = [...nextLog, 'Todos os seus inimigos foram queimados por 2 turnos!'];
     }
 
+    // Elderox (IA): concede double-damage temporário para aliados da IA neste turno
+    if (build.hasElderoxBlessing) {
+      s.elderoxDoubleDamage = { ...(s.elderoxDoubleDamage || {}), ai: true };
+      nextLog = [...nextLog, `${creatureName} concedeu DOBRO de dano para as criaturas da IA neste turno!`];
+      console.log('Elderox blessing (AI summon) activated double-damage marker');
+      // Animação: agendamos a ativação da animação no instanceId (usando aiSlots local passado) para
+      // rodar depois do render — garante que os refs dos slots existam quando o portal calcular posições
+      try {
+        const inst = (aiSlots || [])[summonSlotIndex];
+        if (inst && inst.id) {
+          const instId = inst.id;
+          setTimeout(() => {
+            console.log('Adding elderox animation (ai) for', instId, 'slotIndex', summonSlotIndex);
+            setState(s2 => {
+              const anims = { ...(s2.animations || {}) };
+              anims[instId] = { type: 'elderoxDouble', owner: 'ai', slotIndex: summonSlotIndex };
+              console.log('State update: elderox animation added (ai) for', instId);
+              return { ...s2, animations: anims };
+            });
+            // schedule removal
+            setTimeout(() => {
+              console.log('Removing elderox animation (ai) for', instId);
+              setState(s3 => {
+                const anims2 = { ...(s3.animations || {}) };
+                delete anims2[instId];
+                return { ...s3, animations: anims2 };
+              });
+            }, 1200);
+          }, 1000);
+          console.log('Elderox animation scheduled (ai) for', instId, 'slotIndex', summonSlotIndex, 'will run in ~1s');
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+
     // Owlberoth: retorna criatura inimiga (jogador) para a mão
     if (build.hasOwlberothBlessing) {
       const playerSlots = [...(s.player?.field?.slots || [])];
@@ -2403,10 +2950,42 @@ export function BattleProvider({ children }) {
       if (indices.length > 0) {
         const idx = getRandomIndex(indices);
         const returned = playerSlots[idx];
-        playerSlots[idx] = null;
-        const playerHand = [...(s.player?.hand || []), returned.id];
-        s.player = { ...s.player, hand: playerHand, field: { ...s.player.field, slots: playerSlots } };
-        nextLog = [...nextLog, `${creatureName} retornou ${returned.name} para a sua mão!`];
+
+        // Prepare animation on the player's slot — don't remove yet so animation can render
+        try {
+          s.animations = { ...(s.animations || {}), [returned.id]: { type: 'returningToHand', owner: 'player', slotIndex: idx } };
+        } catch (e) {}
+
+        nextLog = [...nextLog, `${creatureName} retornará ${returned.name} para a mão do jogador!`];
+
+        // Play wind sound
+        try {
+          const audio = new Audio(airSfx);
+          audio.volume = (effectsVolume ?? 50) / 100;
+          audio.play().catch(() => {});
+        } catch (e) {}
+
+        // After delay, remove from slot and add to player's hand, then clear animation
+        const delayMs = 2000;
+        setTimeout(() => {
+          setState((s2) => {
+            const playerSlotsNow = [...(s2.player?.field?.slots || [])];
+            const slotCreature = playerSlotsNow[idx];
+            const anims = { ...(s2.animations || {}) };
+            let playerHand = [...(s2.player?.hand || [])];
+            if (slotCreature && slotCreature.id === returned.id) {
+              playerSlotsNow[idx] = null;
+              playerHand = [...playerHand, slotCreature.id];
+            }
+            delete anims[returned.id];
+            return {
+              ...s2,
+              player: { ...s2.player, hand: playerHand, field: { ...s2.player.field, slots: playerSlotsNow } },
+              animations: anims,
+              log: [...(s2.log || []), `${returned.name} foi retornado para a mão do jogador!`],
+            };
+          });
+        }, delayMs);
       }
     }
 
@@ -2420,6 +2999,39 @@ export function BattleProvider({ children }) {
         playerSlots[idx] = applyStatusEffect(target, 'poison', 2, creatureName);
         s.player = { ...s.player, field: { ...s.player.field, slots: playerSlots } };
         nextLog = [...nextLog, `${creatureName} envenenou ${target.name} por 2 turnos!`];
+      }
+    }
+
+    // Leoracal (visão): revela carta da mão do oponente
+    if (build.hasLeoracalBlessing) {
+      const playerHand = [...(s.player?.hand || [])];
+      if (playerHand.length > 0) {
+        const indices = playerHand.map((slot, idx) => (slot ? idx : null)).filter(idx => idx !== null);
+        if (indices.length > 0) {
+          const idx = getRandomIndex(indices);
+          // mark reveal pending with owner 'ai' so UI shows player's hand as target
+          s.revealOpponentPending = {
+            guardianId: creatureData.id || creatureName,
+            guardianName: creatureName,
+            owner: 'ai',
+          };
+          s.revealedOpponentIndex = idx;
+          nextLog = [...nextLog, `${creatureName} revelou uma carta da mão do jogador!`];
+
+          // schedule automatic closing of reveal after 5s
+          try {
+            if (revealTimeoutRef.current) clearTimeout(revealTimeoutRef.current);
+          } catch (e) {}
+          revealTimeoutRef.current = setTimeout(() => {
+            setState((s2) => ({
+              ...s2,
+              revealOpponentPending: null,
+              revealedOpponentIndex: null,
+              log: [...(s2.log || []), 'Revelação encerrada.'],
+            }));
+            revealTimeoutRef.current = null;
+          }, 5000);
+        }
       }
     }
 
@@ -2485,7 +3097,8 @@ export function BattleProvider({ children }) {
       if (indices.length > 0) {
         const idx = getRandomIndex(indices);
         const target = playerSlots[idx];
-        playerSlots[idx] = applyStatusEffect(target, 'paralyze', 2, creatureName);
+        console.log('ALATOY BLESSING - applying paralyze', { targetId: target?.id, targetName: target?.name, duration: 3, source: creatureName });
+        playerSlots[idx] = applyStatusEffect(target, 'paralyze', 3, creatureName);
         s.player = { ...s.player, field: { ...s.player.field, slots: playerSlots } };
         nextLog = [...nextLog, `${creatureName} paralisou ${target.name} por 2 turnos!`];
       }
@@ -2574,11 +3187,11 @@ export function BattleProvider({ children }) {
 
     // Arguilia: +1 HP para criaturas de água (IA)
     if (build.hasArguíliaBlessing) {
-      let count = 0;
+      const healedIds = [];
       const updated = aiSlots.map((slot) => {
         if (!slot) return slot;
         if (slot.element === 'agua') {
-          count += 1;
+          healedIds.push(slot.id);
           if (slot.hp >= slot.maxHp) {
             return { ...slot, hp: slot.hp + 1, maxHp: slot.maxHp + 1 };
           }
@@ -2587,7 +3200,21 @@ export function BattleProvider({ children }) {
         return slot;
       });
       aiSlots.splice(0, aiSlots.length, ...updated);
-      if (count > 0) nextLog = [...nextLog, `${creatureName} concedeu +1 HP para ${count} criatura(s) de água da IA!`];
+      if (healedIds.length > 0) {
+        nextLog = [...nextLog, `${creatureName} concedeu +1 HP para ${healedIds.length} criatura(s) de água da IA!`];
+        s.animations = {
+          ...(s.animations || {}),
+          ...healedIds.reduce((acc, id) => ({ ...acc, [id]: { type: 'heal', amount: 1, icon: 'heart' } }), {}),
+        };
+        // Remove animação após 900ms
+        setTimeout(() => {
+          setState(s2 => {
+            const anims = { ...(s2.animations || {}) };
+            healedIds.forEach(id => delete anims[id]);
+            return { ...s2, animations: anims };
+          });
+        }, 900);
+      }
     }
 
     // Kael: 1 dano 3 vezes ou 3 de dano direto
@@ -2631,6 +3258,7 @@ export function BattleProvider({ children }) {
       if (indices.length > 0) {
         const idx = getRandomIndex(indices);
         const target = playerSlots[idx];
+        console.debug('Ashfang blessing (AI summon) applying to player target', { targetId: target?.id, targetName: target?.name });
         target.hp = Math.max(0, target.hp - 1);
         playerSlots[idx] = applyStatusEffect(target, 'burn', 3, creatureName);
         s.player = { ...s.player, field: { ...s.player.field, slots: playerSlots } };
@@ -2651,10 +3279,10 @@ export function BattleProvider({ children }) {
       let updated = false;
       let logEntries = [...s.log];
 
-      // PRIORIDADE 0: Se a IA NÃO tiver criaturas em campo, priorizar invocar 1 criatura
-      const aiHasCreaturesInitially = slots.some(Boolean);
+      // PRIORIDADE 0: Se a IA ainda não invocou neste turno, pode invocar 1 criatura (se houver slot e carta)
+      // Limite: AI pode invocar no máximo 1 criatura por turno
       const canInvokeCreatureInitially = (s.creaturesInvokedThisTurn?.ai || 0) < 1;
-      if (!aiHasCreaturesInitially && canInvokeCreatureInitially) {
+      if (canInvokeCreatureInitially) {
         // procura a carta invocável na mão (pula efeitos e cartas de campo)
         let cardToInvoke = null;
         let cardIndex = -1;
@@ -2695,6 +3323,35 @@ export function BattleProvider({ children }) {
           updated = true;
           logEntries = [...logEntries, `IA priorizou invocar ${cardToInvoke} no slot ${emptySlotIndex + 1} para evitar perda de orbe.`];
           s.battleStats.ai.cardsSummoned = [...s.battleStats.ai.cardsSummoned, cardToInvoke];
+
+          // Agendamos um ataque logo após a invocação, se houver alvos, para permitir que a IA ataque
+          setTimeout(() => {
+            try {
+              setState((s2) => {
+                if (s2.phase !== 'playing' || s2.activePlayer !== 'ai') return s2;
+                const aiSlotsNow = s2.ai.field.slots || [];
+                const enemySlotsNow = s2.player.field.slots || [];
+                // encontra um atacante válido (tem abilities e não está incapacitado)
+                const possibleAttackers = aiSlotsNow.map((slot, idx) => {
+                  if (!slot || slot.hp <= 0) return null;
+                  const incapacitating = (slot.statusEffects || []).some(e => ['paralyze', 'freeze', 'sleep'].includes(e.type) && e.duration > 0);
+                  if (incapacitating) return null;
+                  if (!slot.abilities || slot.abilities.length === 0) return null;
+                  return { slotIndex: idx, creature: slot };
+                }).filter(Boolean);
+                const possibleTargets = enemySlotsNow.map((slot, idx) => (slot && slot.hp > 0) ? { slotIndex: idx, creature: slot } : null).filter(Boolean);
+                if (possibleAttackers.length > 0 && possibleTargets.length > 0) {
+                  const attacker = possibleAttackers[Math.floor(Math.random() * possibleAttackers.length)];
+                  const target = possibleTargets[Math.floor(Math.random() * possibleTargets.length)];
+                  const abilityIndex = Math.floor(Math.random() * (attacker.creature.abilities.length || 1));
+                  return { ...s2, aiPendingAttack: { attackerSlot: attacker.slotIndex, targetSlot: target.slotIndex, abilityIndex }, };
+                }
+                return s2;
+              });
+            } catch (e) {
+              // ignore
+            }
+          }, 300);
 
           // Retorna estado atualizado imediatamente, priorizando a invocação
           return {

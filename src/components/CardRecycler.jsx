@@ -1,6 +1,6 @@
 import React, { useContext, useState, useMemo } from 'react';
 import { AppContext } from '../context/AppContext';
-import { getCreatureRarity, RARITY_CONFIG } from '../assets/rarityData.js';
+import { getCreatureRarity, RARITY_CONFIG, getCardValue } from '../assets/rarityData.js';
 import creaturePool from '../assets/cards';
 import '../styles/card-recycler.css';
 
@@ -28,6 +28,7 @@ function CardRecycler({ lang = 'ptbr' }) {
   const { cardCollection, addCoins, removeCardInstance } = useContext(AppContext);
   const [selectedCards, setSelectedCards] = useState(new Set());
   const [expandedRarity, setExpandedRarity] = useState(null);
+  const [expandedSubsections, setExpandedSubsections] = useState({});
   const [recyclingInProgress, setRecyclingInProgress] = useState(false);
 
   const langKey = lang === 'ptbr' ? 'pt' : lang;
@@ -35,6 +36,8 @@ function CardRecycler({ lang = 'ptbr' }) {
   // Agrupa cards por raridade
   const cardsByRarity = useMemo(() => {
     const grouped = {
+      essence: [],
+      field: [],
       common: [],
       uncommon: [],
       rare: [],
@@ -54,25 +57,35 @@ function CardRecycler({ lang = 'ptbr' }) {
         // Pula cartas que já estão selecionadas
         if (selectedCards.has(key)) return;
 
+        const creatureData = creaturePool.find(c => c.id === creatureId);
+        const cardValue = getCardValue(creatureId, instance, creatureData);
         const rarity = getCreatureRarity(creatureId);
-        let baseValue = rarity.value || 10;
 
-        // Bônus por nível (10% por nível, começando do 0)
-        const levelBonus = instance.level > 0 ? baseValue * instance.level * 0.1 : 0;
-        let cardValue = baseValue + levelBonus;
-
-        // Bônus holo: +50 moedas
-        if (instance.isHolo) {
-          cardValue += 50;
-        }
-
-        if (grouped[rarity.rarity]) {
+        // Decide target group: essence and field are top-level categories
+        const type = typeof creatureData?.type === 'string' ? creatureData.type : 'creature';
+        if (type === 'field') {
+          grouped.field.push({
+            ...instance,
+            creatureId,
+            originalIndex: instanceIndex,
+            rarity: 'field',
+            value: cardValue,
+          });
+        } else if (type === 'effect' && creatureData?.effectType === 'essence') {
+          grouped.essence.push({
+            ...instance,
+            creatureId,
+            originalIndex: instanceIndex,
+            rarity: 'essence',
+            value: cardValue,
+          });
+        } else if (grouped[rarity.rarity]) {
           grouped[rarity.rarity].push({
             ...instance,
             creatureId,
             originalIndex: instanceIndex,
             rarity: rarity.rarity,
-            value: Math.floor(cardValue),
+            value: cardValue,
           });
         }
       });
@@ -89,19 +102,8 @@ function CardRecycler({ lang = 'ptbr' }) {
       const instances = cardCollection?.[creatureId];
       if (instances && instances[index]) {
         const instance = instances[index];
-        const rarity = getCreatureRarity(creatureId);
-        let baseValue = rarity.value || 10;
-
-        // Bônus por nível (10% por nível, começando do 0)
-        const levelBonus = instance.level > 0 ? baseValue * instance.level * 0.1 : 0;
-        let cardValue = baseValue + levelBonus;
-
-        // Bônus holo: +50 moedas
-        if (instance.isHolo) {
-          cardValue += 50;
-        }
-
-        total += Math.floor(cardValue);
+        const creatureData = creaturePool.find(c => c.id === creatureId);
+        total += getCardValue(creatureId, instance, creatureData);
       }
     });
     return total;
@@ -148,10 +150,14 @@ function CardRecycler({ lang = 'ptbr' }) {
   };
 
   const getRarityColor = (rarity) => {
+    if (rarity === 'essence') return '#7bd26b';
+    if (rarity === 'field') return '#66c2ff';
     return RARITY_CONFIG[rarity]?.color || '#ffffff';
   };
 
   const getRarityName = (rarity) => {
+    if (rarity === 'essence') return 'Essência';
+    if (rarity === 'field') return 'Campo';
     return RARITY_CONFIG[rarity]?.name || rarity;
   };
 
@@ -165,19 +171,14 @@ function CardRecycler({ lang = 'ptbr' }) {
         const instance = instances[index];
         const creatureData = creaturePool.find(c => c.id === creatureId);
         const rarity = getCreatureRarity(creatureId);
-
-        let baseValue = rarity.value || 10;
-        const levelBonus = instance.level > 0 ? baseValue * instance.level * 0.1 : 0;
-        let cardValue = baseValue + levelBonus;
-        if (instance.isHolo) cardValue += 50;
-
+        const value = getCardValue(creatureId, instance, creatureData);
         details.push({
           key,
           creatureId,
           index,
           instance,
           creatureData,
-          value: Math.floor(cardValue),
+          value,
           name: creatureData
             ? (typeof creatureData.name === 'object' ? creatureData.name[langKey] : creatureData.name)
             : creatureId,
@@ -188,6 +189,79 @@ function CardRecycler({ lang = 'ptbr' }) {
     });
     return details;
   }, [selectedCards, cardCollection, langKey]);
+
+  const toggleSubsection = (rarity, section) => {
+    const key = `${rarity}_${section}`;
+    setExpandedSubsections(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const renderCardItem = (card) => {
+    const key = `${card.creatureId}_${card.originalIndex}`;
+    const isSelected = selectedCards.has(key);
+    const creatureData = creaturePool.find(c => c.id === card.creatureId);
+    const cardName = creatureData
+      ? (typeof creatureData.name === 'object' ? creatureData.name[langKey] : creatureData.name)
+      : card.creatureId;
+    const cardElement = creatureData?.element || 'puro';
+    const cardImg = creatureData?.img;
+
+    const elementColors = {
+      agua: '#4a9eff',
+      water: '#4a9eff',
+      fogo: '#ff5722',
+      fire: '#ff5722',
+      terra: '#8b6f47',
+      earth: '#8b6f47',
+      ar: '#a8dadc',
+      air: '#a8dadc',
+      puro: '#e8d4b0',
+      pure: '#e8d4b0',
+    };
+
+    return (
+      <div
+        key={key}
+        className={`recycled-card-item ${isSelected ? 'selected' : ''}`}
+        onClick={() => toggleCardSelection(card.creatureId, card.originalIndex)}
+        style={{ borderLeftColor: elementColors[cardElement] || '#a87e2d' }}
+      >
+        <div className="card-item-thumbnail">
+          {cardImg && (
+            <img
+              src={typeof cardImg === 'string' ? cardImg : cardImg?.default || ''}
+              alt={cardName}
+              className="card-thumbnail-img"
+            />
+          )}
+        </div>
+        <div className="card-item-info">
+          <div className="card-item-header">
+            <div className="card-item-name">
+              {cardName}
+              {card.isHolo && <span className="holo-badge">✨</span>}
+            </div>
+            {elementIcons[cardElement] && (
+              <img
+                src={elementIcons[cardElement]}
+                alt={cardElement}
+                className="card-element-icon"
+              />
+            )}
+          </div>
+          <div className="card-item-details">
+            <span className="card-detail-item">Nv. {card.level ?? 0}</span>
+            <span className="card-detail-separator">•</span>
+            <span className="card-detail-item">XP: {card.xp || 0}</span>
+            <span className="card-detail-separator">•</span>
+            <span className="card-detail-item" style={{ fontSize: '0.7rem', opacity: 0.6 }}>ID: {card.instanceId?.slice(0, 6)}</span>
+          </div>
+        </div>
+        <div className="card-item-value">
+          +{card.value} <span className="coin-icon">🪙</span>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="recycler-layout">
@@ -215,78 +289,49 @@ function CardRecycler({ lang = 'ptbr' }) {
 
               {expandedRarity === rarity && (
                 <div className="rarity-cards-list">
-                  {cards.length > 0 ? (
-                    cards.map((card) => {
-                      const key = `${card.creatureId}_${card.originalIndex}`;
-                      const isSelected = selectedCards.has(key);
-                      const creatureData = creaturePool.find(c => c.id === card.creatureId);
-                      const cardName = creatureData
-                        ? (typeof creatureData.name === 'object' ? creatureData.name[langKey] : creatureData.name)
-                        : card.creatureId;
-                      const cardElement = creatureData?.element || 'puro';
-                      const cardImg = creatureData?.img;
+                  {(() => {
 
-                      // Cores por elemento
-                      const elementColors = {
-                        agua: '#4a9eff',
-                        water: '#4a9eff',
-                        fogo: '#ff5722',
-                        fire: '#ff5722',
-                        terra: '#8b6f47',
-                        earth: '#8b6f47',
-                        ar: '#a8dadc',
-                        air: '#a8dadc',
-                        puro: '#e8d4b0',
-                        pure: '#e8d4b0',
-                      };
+                    // Top-level 'essence' and 'field' sections render a flat list
+                    if (rarity === 'essence') {
+                      if (!cards.length) return <div className="rarity-empty">Nenhuma carta de essência</div>;
+                      return <div className="subsection-list">{cards.map(c => renderCardItem(c))}</div>;
+                    }
 
-                      return (
-                        <div
-                          key={key}
-                          className={`recycled-card-item ${isSelected ? 'selected' : ''}`}
-                          onClick={() => toggleCardSelection(card.creatureId, card.originalIndex)}
-                          style={{ borderLeftColor: elementColors[cardElement] || '#a87e2d' }}
-                        >
-                          <div className="card-item-thumbnail">
-                            {cardImg && (
-                              <img
-                                src={typeof cardImg === 'string' ? cardImg : cardImg?.default || ''}
-                                alt={cardName}
-                                className="card-thumbnail-img"
-                              />
-                            )}
-                          </div>
-                          <div className="card-item-info">
-                            <div className="card-item-header">
-                              <div className="card-item-name">
-                                {cardName}
-                                {card.isHolo && <span className="holo-badge">✨</span>}
-                              </div>
-                              {elementIcons[cardElement] && (
-                                <img
-                                  src={elementIcons[cardElement]}
-                                  alt={cardElement}
-                                  className="card-element-icon"
-                                />
-                              )}
-                            </div>
-                            <div className="card-item-details">
-                              <span className="card-detail-item">Nv. {card.level ?? 0}</span>
-                              <span className="card-detail-separator">•</span>
-                              <span className="card-detail-item">XP: {card.xp || 0}</span>
-                              <span className="card-detail-separator">•</span>
-                              <span className="card-detail-item" style={{ fontSize: '0.7rem', opacity: 0.6 }}>ID: {card.instanceId?.slice(0, 6)}</span>
-                            </div>
-                          </div>
-                          <div className="card-item-value">
-                            +{card.value} <span className="coin-icon">🪙</span>
-                          </div>
+                    if (rarity === 'field') {
+                      if (!cards.length) return <div className="rarity-empty">Nenhuma carta de campo</div>;
+                      return <div className="subsection-list">{cards.map(c => renderCardItem(c))}</div>;
+                    }
+
+                    // For 'common' rarity, show only creature cards as a flat list (no subsections)
+                    if (rarity === 'common') {
+                      const creatureCardsOnly = cards.filter(card => {
+                        const cd = creaturePool.find(c => c.id === card.creatureId);
+                        const t = (typeof cd?.type === 'string') ? cd.type : 'creature';
+                        return t !== 'field' && !(t === 'effect' && cd?.effectType === 'essence');
+                      });
+                      if (!creatureCardsOnly.length) return <div className="rarity-empty">Nenhuma carta {getRarityName(rarity).toLowerCase()}</div>;
+                      return <div className="subsection-list">{creatureCardsOnly.map(c => renderCardItem(c))}</div>;
+                    }
+
+                    // For rarity groups, show only creature cards as a flat list (no subsections)
+                    const creatureCardsOnly = cards.filter(card => {
+                      const cd = creaturePool.find(c => c.id === card.creatureId);
+                      const t = (typeof cd?.type === 'string') ? cd.type : 'creature';
+                      return t !== 'field' && !(t === 'effect' && cd?.effectType === 'essence');
+                    });
+
+                    if (!creatureCardsOnly.length) {
+                      return <div className="rarity-empty">Nenhuma carta {getRarityName(rarity).toLowerCase()}</div>;
+                    }
+
+                    return (
+                      <div>
+                        <div className="subsection-list">
+                          {creatureCardsOnly.map(c => renderCardItem(c))}
                         </div>
-                      );
-                    })
-                  ) : (
-                    <div className="rarity-empty">Nenhuma carta {getRarityName(rarity).toLowerCase()}</div>
-                  )}
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
             </div>

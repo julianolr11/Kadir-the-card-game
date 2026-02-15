@@ -19,6 +19,8 @@ import paralyzeIcon from '../assets/img/icons/paralyze.png';
 import poisonIcon from '../assets/img/icons/poison.png';
 import sleepIcon from '../assets/img/icons/sleep.png';
 import StatusOverlayPortal from './StatusOverlayPortal.jsx';
+import GhostPreviewPortal from './GhostPreviewPortal.jsx';
+import HandPortal from './HandPortal.jsx';
 import swordPng from '../assets/img/icons/sword.png';
 
 function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
@@ -32,6 +34,8 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
     startPlaying,
     useAbility,
     stealEnemyCard,
+    revealEnemyCard,
+    cancelRevealEnemy,
     cancelStealCard,
     returnEnemyCard,
     cancelReturnCard,
@@ -52,6 +56,8 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
     resurrectCreature,
     cancelResurrection,
     cancelDrawOpponent,
+    applyVirideerBless,
+    cancelVirideerBless,
   } = useBattle();
   const { cardCollection } = React.useContext(AppContext);
   const [activeCardIndex, setActiveCardIndex] = React.useState(null);
@@ -63,6 +69,9 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
   const [overlayBg, setOverlayBg] = React.useState(undefined);
   const [hoveredCard, setHoveredCard] = React.useState(null);
   const slotRefs = React.useRef({});
+  const revealModalRef = React.useRef(null);
+  const revealContainerRef = React.useRef(null);
+  const [revealScale, setRevealScale] = React.useState(1);
   const [sleepOverlays, setSleepOverlays] = React.useState([]);
   const [paralyzeOverlays, setParalyzeOverlays] = React.useState([]);
   const [bleedOverlays, setBleedOverlays] = React.useState([]);
@@ -71,6 +80,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
   const [shieldOverlays, setShieldOverlays] = React.useState([]);
   const [burnFlames, setBurnFlames] = React.useState([]);
   const [burnGradients, setBurnGradients] = React.useState([]);
+  const [elderoxOverlays, setElderoxOverlays] = React.useState([]);
   const [mousePos, setMousePos] = React.useState({ x: 0, y: 0 });
   const [turnBlockModalOpen, setTurnBlockModalOpen] = React.useState(false);
   const [selectedCreature, setSelectedCreature] = React.useState(null); // { slotIndex, creature } - abre modal de habilidades
@@ -102,9 +112,12 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
   const turnModalStyle = {
     background: 'rgba(44, 38, 60, 0.38)',
     color: '#f5f5fa',
-    padding: '32px 28px',
+    padding: '18px 20px',
     borderRadius: '16px',
-    minWidth: '320px',
+    width: 'min(92vw, 1100px)',
+    maxHeight: '78vh',
+    overflowY: 'auto',
+    boxSizing: 'border-box',
     boxShadow: '0 6px 32px 0 rgba(30,22,40,0.18)',
     border: '1.5px solid rgba(255,255,255,0.18)',
     textShadow: '0 2px 8px #0007',
@@ -367,24 +380,22 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
     const isHolo = instance?.isHolo || false;
     return (
       <div className="card-slot-preview">
-        <div style={{ transform: 'scale(0.6)', transformOrigin: 'center center', pointerEvents: 'none' }}>
-          <CreatureCardPreview
-            creature={data}
-            onClose={null}
-            level={level}
-            isHolo={isHolo}
-            allowFlip={false}
-            currentHp={slotData?.hp}
-            maxHp={slotData?.maxHp || data?.hp}
-            armor={slotData?.shield || 0}
-            burn={(slotData?.statusEffects || []).find(e => e.type === 'burn')?.duration || 0}
-            freeze={(slotData?.statusEffects || []).find(e => e.type === 'freeze')?.duration || 0}
-            paralyze={(slotData?.statusEffects || []).find(e => e.type === 'paralyze')?.duration || 0}
-            poison={(slotData?.statusEffects || []).find(e => e.type === 'poison')?.duration || 0}
-            sleep={(slotData?.statusEffects || []).find(e => e.type === 'sleep')?.duration || 0}
-            bleed={(slotData?.statusEffects || []).find(e => e.type === 'bleed')?.duration || 0}
-          />
-        </div>
+        <CreatureCardPreview
+          creature={data}
+          onClose={null}
+          level={level}
+          isHolo={isHolo}
+          allowFlip={false}
+          currentHp={slotData?.hp}
+          maxHp={slotData?.maxHp || data?.hp}
+          armor={slotData?.shield || 0}
+          burn={(slotData?.statusEffects || []).find(e => e.type === 'burn')?.duration || 0}
+          freeze={(slotData?.statusEffects || []).find(e => e.type === 'freeze')?.duration || 0}
+          paralyze={(slotData?.statusEffects || []).find(e => e.type === 'paralyze')?.duration || 0}
+          poison={(slotData?.statusEffects || []).find(e => e.type === 'poison')?.duration || 0}
+          sleep={(slotData?.statusEffects || []).find(e => e.type === 'sleep')?.duration || 0}
+          bleed={(slotData?.statusEffects || []).find(e => e.type === 'bleed')?.duration || 0}
+        />
       </div>
     );
   };
@@ -480,8 +491,8 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
               </div>
             </div>
           </div>
+          </div>
         </div>
-      </div>
     );
   };
 
@@ -565,7 +576,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
             style={{ cursor: isPlayerCreature ? 'pointer' : 'default' }}
           >
             {slot ? (
-            <div style={{ position: 'relative' }}>
+            <div style={{ position: 'relative', transform: 'scale(0.6)', transformOrigin: 'center center', pointerEvents: 'none' }}>
               {renderCardChip(slot.id, 'slot', slot)}
               <div className="status-icons-overlay">
                 {/* Escudo */}
@@ -587,6 +598,10 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
                   const cls = anim.hasAdvantage ? 'advantage' : (anim.hasDisadvantage ? 'disadvantage' : 'neutral');
                   return (
                     <>
+                      {/** Explosion behind the number for final meteor */}
+                      {anim.attackerId === 'effect_final_meteor' && (
+                        <div className="damage-explosion" />
+                      )}
                       <div className={`effect-float effect-damage ${cls}`}>-{anim.amount}</div>
                       {anim.shieldHit && <div className={`shield-shimmer${anim.shieldBroken ? ' shield-broken' : ''}`} />}
                       {/* Foguinho animado para burn tick */}
@@ -600,10 +615,32 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
                   );
                 }
                 if (anim.type === 'heal') {
-                  return <div className="effect-float effect-heal">+{anim.amount}</div>;
+                  return (
+                    <>
+                      <img src={heartIcon} alt="heart" className="effect-heal-icon" />
+                      <div className="effect-float effect-heal">+{anim.amount}</div>
+                    </>
+                  );
                 }
                 if (anim.type === 'status' && anim.statusType) {
                   return <div className={`status-pulse status-${anim.statusType}`} />;
+                }
+                if (anim.type === 'returningToHand') {
+                  // Wind visual when a card is blown back to hand
+                  return (
+                    <>
+                      <div className={`wind-blow wind-blow-${anim.owner}`} />
+                    </>
+                  );
+                }
+                if (anim.type === 'elderoxDouble') {
+                  return (
+                    <>
+                      <div className="elderox-badge"><span className="elderox-arrow">▲</span> Dano x2</div>
+                      <div className="elderox-arc" />
+                      <div className="elderox-spark" />
+                    </>
+                  );
                 }
                 // sleep overlay rendered in top-level portal
                 return null;
@@ -628,7 +665,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
           }}
           style={{ cursor: 'pointer' }}
         >
-          <div style={{ position: 'relative' }}>
+          <div style={{ position: 'relative', transform: 'scale(0.6)', transformOrigin: 'center center', pointerEvents: 'none' }}>
             {/* Indicador de Criatura Espectral */}
             <div className="spectral-badge">👻</div>
             {renderCardChip(spectralSlot.id, 'slot', spectralSlot)}
@@ -650,6 +687,48 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
           </div>
         </div>
       )}
+          {state.virideerBlessPending && (
+            <div style={turnModalBgStyle}>
+              <div style={turnModalStyle}>
+                <div style={{ fontWeight: 700, marginBottom: 12 }}>{state.virideerBlessPending.guardianName} oferece +1 HP — escolha uma criatura aliada</div>
+                <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+                  {(state.player?.field?.slots || []).map((slot, idx) => {
+                    if (!slot) return null;
+                    const cardData = getCardData(slot.id);
+                    return (
+                      <button
+                        key={`virideer-bless-${idx}`}
+                        type="button"
+                        onClick={() => applyVirideerBless(idx)}
+                        style={{
+                          border: 'none',
+                          background: 'transparent',
+                          cursor: 'pointer',
+                          padding: 0,
+                        }}
+                        aria-label={`Aplicar benção em ${slot.name || 'criatura'}`}
+                      >
+                        <div style={{ transform: 'scale(0.45)', transformOrigin: 'top center', height: 290 }}>
+                          <CreatureCardPreview
+                            creature={cardData}
+                            level={0}
+                            allowFlip={false}
+                            burn={(slot?.statusEffects || []).find(e => e.type === 'burn')?.duration || 0}
+                            freeze={(slot?.statusEffects || []).find(e => e.type === 'freeze')?.duration || 0}
+                            paralyze={(slot?.statusEffects || []).find(e => e.type === 'paralyze')?.duration || 0}
+                            poison={(slot?.statusEffects || []).find(e => e.type === 'poison')?.duration || 0}
+                            sleep={(slot?.statusEffects || []).find(e => e.type === 'sleep')?.duration || 0}
+                            bleed={(slot?.statusEffects || []).find(e => e.type === 'bleed')?.duration || 0}
+                          />
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+                <button style={turnModalBtnStyle} onClick={cancelVirideerBless}>Cancelar</button>
+              </div>
+            </div>
+          )}
     </div>
     );
   };
@@ -692,6 +771,25 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
+  // Use fixed card dimensions for reveal modal (no scaling)
+  useEffect(() => {
+    setRevealScale(1);
+  }, [state.revealOpponentPending]);
+
+  // DEBUG helpers: expose slotRefs and current animations to window for inspection
+  useEffect(() => {
+    try {
+      // expose functions rather than raw refs so they reflect latest state
+      // eslint-disable-next-line no-param-reassign
+      window.getKadirSlotRefs = () => slotRefs.current;
+      // eslint-disable-next-line no-param-reassign
+      window.getKadirAnimations = () => state.animations || {};
+    } catch (e) {
+      // ignore non-browser env
+    }
+    return () => {};
+  }, [state.animations]);
+
   // Compute positions for sleep and paralyze overlays and render via portal to avoid stacking-context issues
   useEffect(() => {
     const sleep = [];
@@ -702,6 +800,12 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
     const shield = [];
     const burnFl = [];
     const burnGrad = [];
+    const elderox = [];
+    // Debug: dump current animations keys for diagnosis
+    try {
+      const keys = Object.keys(state.animations || {});
+      if (keys.length > 0) console.log('Current state.animations keys:', keys);
+    } catch (e) {}
     const gather = (slots = []) => {
       slots.forEach(slot => {
         if (!slot) return;
@@ -711,7 +815,13 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
         const hasBleed = (slot.statusEffects || []).some(e => e.type === 'bleed' && e.duration > 0) || (anim && anim.type === 'bleed');
         const hasBurn = (slot.statusEffects || []).some(e => e.type === 'burn' && e.duration > 0) || (anim && anim.type === 'burn');
         const el = slotRefs.current[slot.id];
-        if (!el) return;
+        if (!el) {
+          // Log missing ref when an animation exists for this slot
+          if (anim && anim.type === 'elderoxDouble') {
+            console.log('Elderox anim present but slot ref missing for', slot.id, 'slotIndex', slot.index || 'unknown');
+          }
+          return;
+        }
         const r = el.getBoundingClientRect();
         if (hasSleep) {
           sleep.push({ id: slot.id, left: r.left + (r.width / 2), top: r.top + (r.height * 0.18) });
@@ -775,6 +885,20 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
           }
         }
 
+        // Elderox overlay animation (portal) — shows badge above and rising green gradient over the card
+        if (anim && anim.type === 'elderoxDouble') {
+          const badgeLeft = r.left + (r.width / 2);
+          // center badge vertically over the card
+          const badgeTop = Math.round(r.top + (r.height * 0.5));
+          const gradLeft = r.left + (r.width / 2);
+          // position gradient to be centered at the badge height so it stays within the card
+          // use a reduced height (10%) and center the grad on the badge (prevents overflow above the card)
+          const gradHeight = Math.round(r.height * 0.1);
+          const gradTop = Math.round(badgeTop); // we'll use translate(-50%,-50%) when rendering
+          const gradWidth = Math.round(r.width * 0.98);
+          elderox.push({ id: slot.id, left: badgeLeft, topBadge: badgeTop, topGrad: gradTop, width: gradWidth, height: gradHeight });
+        }
+
         // Freeze overlay
         if ((slot.statusEffects || []).some(e => e.type === 'freeze' && e.duration > 0) || (anim && anim.type === 'freeze')) {
           const fWidth = Math.round(r.width * 1.04);
@@ -807,7 +931,15 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
     setShieldOverlays(shield);
     setBurnFlames(burnFl);
     setBurnGradients(burnGrad);
+    setElderoxOverlays(elderox);
   }, [state.animations, state.player?.field?.slots, state.ai?.field?.slots]);
+
+  // DEBUG: loga quando overlays do Elderox aparecem (temporário)
+  useEffect(() => {
+    if (elderoxOverlays && elderoxOverlays.length > 0) {
+      console.log('Elderox overlays computed:', elderoxOverlays);
+    }
+  }, [elderoxOverlays]);
 
   // Determina o background do board (novo bg calculado a partir do campo ativo)
   const boardBg = state.sharedField.active && state.sharedField.id ? (() => {
@@ -993,6 +1125,18 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
         ))}
       </StatusOverlayPortal>
     )}
+    {elderoxOverlays && elderoxOverlays.length > 0 && (
+      <StatusOverlayPortal>
+        {elderoxOverlays.map(o => (
+          <React.Fragment key={`elderox-${o.id}`}>
+            <div className="elderox-badge" style={{ position: 'absolute', left: `${o.left}px`, top: `${o.topBadge}px`, transform: 'translate(-50%,-50%)' }} aria-hidden>
+              <span className="elderox-arrow">▲</span> Dano x2
+            </div>
+            <div className="elderox-shimmer-portal" style={{ position: 'absolute', left: `${o.left}px`, top: `${o.topGrad}px`, width: `${o.width}px`, height: `${o.height}px`, transform: 'translate(-50%,-50%)' }} aria-hidden />
+          </React.Fragment>
+        ))}
+      </StatusOverlayPortal>
+    )}
     {state.returnCardPending && (
       <div style={turnModalBgStyle}>
         <div style={turnModalStyle}>
@@ -1081,7 +1225,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
       <div style={turnModalBgStyle}>
         <div style={turnModalStyle}>
           <div style={{ fontWeight: 700, marginBottom: 12 }}>Escolha uma carta da mão do oponente</div>
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap' }}>
             {(state.ai?.hand || []).map((_, idx) => (
               <button
                 key={`steal-card-${idx}`}
@@ -1109,6 +1253,96 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
               </button>
             ))}
           </div>
+        </div>
+      </div>
+    )}
+
+    {state.revealOpponentPending && (
+      <div style={turnModalBgStyle}>
+        <div style={{ ...turnModalStyle, maxHeight: 'none', overflowY: 'visible' }} ref={revealModalRef}>
+          <div style={{ fontWeight: 700, marginBottom: 8 }}>{state.revealOpponentPending.guardianName} revelou uma carta - escolha para ver</div>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap', padding: '6px 4px' }}>
+            {((state.revealOpponentPending && state.revealOpponentPending.owner === 'ai') ? (state.player?.hand || []) : (state.ai?.hand || [])).map((cardId, idx) => {
+              const revealed = state.revealedOpponentIndex === idx;
+              return (
+                <button
+                  key={`reveal-card-${idx}`}
+                  type="button"
+                  onClick={() => {
+                    // if AI initiated the reveal, player should not be able to pick (it's automatic)
+                    if (state.revealOpponentPending && state.revealOpponentPending.owner === 'ai') return;
+                    revealEnemyCard(idx);
+                  }}
+                  style={{
+                      border: 'none',
+                      background: 'transparent',
+                      cursor: 'pointer',
+                      padding: 0,
+                      margin: 0,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: 160,
+                      lineHeight: 0,
+                      overflow: 'visible',
+                    }}
+                  aria-label={`Revelar carta ${idx + 1}`}
+                >
+                  <div ref={revealContainerRef} style={{ width: 160, height: 240, transform: 'none', transformOrigin: 'top center', display: 'inline-block' }}>
+                    {revealed ? (
+                      <div style={{ width: 160, height: 240, display: 'inline-block', overflow: 'visible', position: 'relative' }}>
+                        <div style={{ width: 369, position: 'absolute', left: '50%', top: 0, transform: 'translateX(-50%) scale(0.434)', transformOrigin: 'top center', pointerEvents: 'none', fontSize: '12px', lineHeight: 1.25 }}>
+                          {(() => {
+                            try {
+                              const cardData = getCardData(cardId);
+                              return (
+                                <CreatureCardPreview
+                                  creature={cardData}
+                                  level={0}
+                                  allowFlip={false}
+                                />
+                              );
+                            } catch (e) {
+                              return (
+                                <div
+                                  style={{
+                                    width: 160,
+                                    height: 240,
+                                    backgroundImage: `url(${cardVerso})`,
+                                    backgroundSize: 'cover',
+                                    backgroundPosition: 'center',
+                                    backgroundRepeat: 'no-repeat',
+                                    borderRadius: 8,
+                                    boxShadow: '0 6px 18px rgba(0,0,0,0.45)',
+                                    border: '1px solid rgba(255,255,255,0.2)',
+                                  }}
+                                />
+                              );
+                            }
+                          })()}
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        style={{
+                          width: 160,
+                          height: 240,
+                          backgroundImage: `url(${cardVerso})`,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center',
+                          backgroundRepeat: 'no-repeat',
+                          borderRadius: 18,
+                          boxShadow: '0 6px 18px rgba(0,0,0,0.45)',
+                          border: '1px solid rgba(255,255,255,0.2)',
+                        }}
+                      />
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          <button style={turnModalBtnStyle} onClick={cancelRevealEnemy}>Fechar</button>
         </div>
       </div>
     )}
@@ -1538,9 +1772,10 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
         {/* Botão de Cemitério do Jogador removido daqui - será adicionado ao lado do fim de turno */}
       </div>
 
-      <div className="hand">
-        <div className="hand-title">Sua mão ({state.player.hand.length}/7)</div>
-        <div className="hand-cards">
+      <HandPortal>
+        <div className="hand" style={{ pointerEvents: 'auto' }}>
+          <div className="hand-title">Sua mão ({state.player.hand.length}/7)</div>
+          <div className="hand-cards">
           {state.player.hand.map((cid, i) => {
             const isActive = activeCardIndex === i;
             const isDiscarding = state.lastDiscardedEffectCard && cid === state.lastDiscardedEffectCard;
@@ -1562,6 +1797,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
           {state.player.hand.length === 0 && <div className="hand-empty">Sem cartas</div>}
         </div>
       </div>
+      </HandPortal>
 
       {activeCardIndex !== null && state.player.hand[activeCardIndex] && (
         <div className="card-preview-overlay" onClick={() => setActiveCardIndex(null)}>
@@ -1711,14 +1947,15 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
         }
         return true;
       })() && (
-        <div
-          className="ghost-preview"
-          style={{
-            left: mousePos.x + 20,
-            top: mousePos.y - 150,
-            pointerEvents: 'none',
-          }}
-        >
+        <GhostPreviewPortal>
+          <div
+            className="ghost-preview"
+            style={{
+              left: mousePos.x + 20,
+              top: mousePos.y - 150,
+              pointerEvents: 'none',
+            }}
+          >
           {(() => {
             const { instance } = resolveCardId(hoveredCard.cardId);
             const cardData = getCardData(hoveredCard.cardId);
@@ -1792,7 +2029,8 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
               </div>
             );
           })()}
-        </div>
+          </div>
+        </GhostPreviewPortal>
       )}
     </div>
     {turnBlockModalOpen && (

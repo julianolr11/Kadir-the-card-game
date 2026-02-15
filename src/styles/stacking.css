@@ -1,0 +1,97 @@
+/* Centralized stacking definitions (z-index) for consistent layering
+   Use CSS variables to control global stacking and utility classes to apply them.
+   Import this file once in the app entry (already imported in App.tsx).
+*/
+:root {
+   /* Layer map (low -> high). Use these for consistent layer control across the app.
+       Example ordering (tweak numbers to taste):
+          table/background: 0
+          field (board background): 10
+          terrain overlays: 50
+          creatures: 100
+          creature-effects (floating numbers, status icons): 200
+          ui elements (hud, bars): 1000
+          hand: 2000
+          effects & portals: 5000
+          modals/backdrops: 10000
+          ghost-preview/tooltips: 11000
+   These numbers are intentionally spaced to allow inserting extra layers if needed.
+   */
+   --z-table: 0;
+   --z-field: 10;
+   --z-terrain: 50;
+   --z-creatures: 100;
+   --z-creature-effects: 200;
+   --z-ui: 1000;
+   /* Player hand should sit above transient effects by default */
+   --z-hand: 10500;
+   --z-effects-base: 5000;
+   --z-battle-backdrop: 10000;
+   --z-ghost-preview: 11000;
+
+   /* Named shortcuts for common effects */
+   --z-shield: 4200; /* sits under hand/ghost but above creature art */
+   --z-freeze: 5020;
+   --z-elderox: 5050;
+}
+
+/* Utility classes - apply where needed on elements */
+.z-ghost { z-index: var(--z-ghost-preview) !important; }
+.z-hand { z-index: var(--z-hand) !important; }
+.z-effects { z-index: var(--z-effects-base); }
+.z-shield { z-index: var(--z-shield); }
+.z-freeze { z-index: var(--z-freeze); }
+.z-elderox { z-index: var(--z-elderox); }
+.z-battle-overlay { z-index: var(--z-battle-backdrop) !important; }
+.z-battle-modal { z-index: var(--z-battle-backdrop) !important; }
+
+/* Helpful: map common selectors to variables to progressively override existing hardcoded values
+   Add more selectors here if you want to map current components to the centralized scale.
+*/
+/* Example override: ensure the portal container uses centralized value */
+#kadir-status-overlays { z-index: var(--z-effects-base); }
+
+/* Layer utility classes mapping to semantic names (apply to elements) */
+.layer-table { z-index: var(--z-table); }
+.layer-field { z-index: var(--z-field); }
+.layer-terrain { z-index: var(--z-terrain); }
+.layer-creatures { z-index: var(--z-creatures); }
+.layer-creature-effects { z-index: var(--z-creature-effects); }
+.layer-ui { z-index: var(--z-ui); }
+.layer-hand { z-index: var(--z-hand); }
+.layer-effects { z-index: var(--z-effects-base); }
+.layer-battle-backdrop { z-index: var(--z-battle-backdrop); }
+.layer-ghost { z-index: var(--z-ghost-preview); }
+
+/* Force-mapping: ensure central variables take precedence over scattered hardcoded z-indexes.
+   These rules apply `!important` where appropriate to guarantee the stacking controller
+   is the single source of truth. Add or remove selectors below as you refactor.
+*/
+
+/* Visual previews / modals */
+.ghost-preview, .card-preview, .card-preview::before { z-index: var(--z-ghost-preview) !important; }
+.hand { z-index: var(--z-hand) !important; }
+
+/* Battle result modal and overlay */
+.battle-result-overlay, .battle-result-modal { z-index: var(--z-battle-backdrop) !important; }
+
+/* Status/Effects portal and common effect layers */
+#kadir-status-overlays, .layer-effects, .z-effects { z-index: var(--z-effects-base) !important; }
+
+/* Shield / protection visuals */
+.shield-overlay, .shield-overlay .shield-gradient, .shield-shimmer { z-index: var(--z-shield) !important; }
+
+/* Freeze / snowflake */
+.freeze-overlay, .freeze-snowflake { z-index: var(--z-freeze) !important; }
+
+/* Elderox visuals */
+.elderox-badge, .elderox-grad, .elderox-arc, .elderox-spark, .elderox-grad-portal, .elderox-shimmer-portal { z-index: var(--z-elderox) !important; }
+
+/* Floating numbers, status icons */
+.effect-float, .status-pulse, .status-icons-overlay, .status-icon { z-index: var(--z-creature-effects) !important; }
+
+/* Poison bubbles and similar animated particles */
+.poison-bubble, .debuff-overlay, .debuff-burn-anim, .debuff-freeze, .debuff-sleep { z-index: calc(var(--z-effects-base) - 50) !important; }
+
+/* Default end comment */
+/* End of stacking.css */

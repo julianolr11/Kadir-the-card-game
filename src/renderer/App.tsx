@@ -15,6 +15,7 @@ import { BattleProvider } from '../context/BattleContext';
 import BoosterResultsSlider from '../components/BoosterResultsSlider';
 import fieldCards from '../assets/cards/field/exampleFieldCards';
 import LoadingMenu from './LoadingMenu';
+import '../styles/stacking.css';
 
 // linha removida: declaração duplicada de useState
 export default function App() {

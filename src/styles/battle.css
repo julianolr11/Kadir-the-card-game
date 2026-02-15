@@ -830,7 +830,7 @@
   justify-content: center;
   position: relative;
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.4) inset;
-  overflow: hidden;
+  overflow: visible;
   z-index: 50;
 }
 
@@ -986,6 +986,12 @@
   padding: 0;
 }
 
+.slots .slot.occupied .card-slot-preview > div {
+  transform: scale(1);
+  transform-origin: center center;
+  pointer-events: none;
+}
+
 .status-icons-overlay {
   position: absolute;
   top: 6px;
@@ -1110,7 +1116,8 @@
 .shield-overlay {
   position: absolute;
   pointer-events: none;
-  z-index: 50005 !important;
+  /* semantic: shield overlays sit in the effects layer but slightly below generic effects */
+  z-index: var(--z-shield);
   display: block;
   overflow: visible;
 }
@@ -1125,7 +1132,7 @@
   background: linear-gradient(to top, rgba(10, 160, 255, 0.7) 0%, rgba(60, 130, 255, 0.18) 50%, transparent 60%);
   mix-blend-mode: screen;
   pointer-events: none;
-  z-index: 50005 !important;
+  z-index: var(--z-shield);
 }
 
 .shield-overlay .shield-center {

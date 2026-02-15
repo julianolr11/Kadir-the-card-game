@@ -84,8 +84,8 @@ module.exports = {
     id: 'virideer_blessing',
     name: { pt: 'Luz do Orvalho', en: 'Dewlight' },
     desc: {
-      pt: 'Aliados curam +1 de vida ao receber cura.',
-      en: 'Allies heal +1 HP when healed.',
+      pt: 'Aliados curam +2 de vida ao receber cura.',
+      en: 'Allies heal +2 HP when healed.',
     },
   },
   unlockTable: [

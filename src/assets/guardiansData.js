@@ -1110,10 +1110,10 @@ const guardiansData = {
     ],
     defaultBlessing: {
       id: 'elderox_blessing',
-      name: { pt: 'Aura de Antiguidade', en: 'Aura of Antiquity' },
+      name: { pt: 'Fúria Ancestral', en: 'Ancestral Fury' },
       desc: {
-        pt: 'Aliados ganham +8% de defesa enquanto Elderox estiver em campo.',
-        en: 'Allies gain +8% defense while Elderox is on the field.',
+        pt: 'Ao ser invocado, aliados causam DOBRO de dano durante este turno.',
+        en: 'When summoned, allies deal DOUBLE damage for this turn.',
       },
     },
     unlockTable: [
@@ -1501,11 +1501,11 @@ const guardiansData = {
       },
     ],
     defaultBlessing: {
-      id: 'leoracal_blessing',
-      name: { pt: 'Inferno Protetor', en: 'Protective Inferno' },
+      id: 'leoracal_blessing_vision',
+      name: { pt: 'Visão além do alcance', en: 'Vision Beyond Reach' },
       desc: {
-        pt: 'Criaturas de fogo ganham +8% de defesa enquanto Leoracal estiver em campo.',
-        en: 'Fire creatures gain +8% defense while Leoracal is on the field.',
+        pt: 'Ao ser invocado, revela uma carta aleatória da mão do oponente.',
+        en: 'When summoned, reveals a random card from the opponent\'s hand.',
       },
     },
     unlockTable: [

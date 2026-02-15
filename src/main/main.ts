@@ -78,7 +78,9 @@ const createWindow = async () => {
     show: false,
     width: 1920,
     height: 1080,
-    resizable: true,
+    // Prevent the user from resizing or maximizing the window
+    resizable: false,
+    maximizable: false,
     frame: false, // Remove barra de ferramentas e botões
     icon: iconPath,
     webPreferences: {

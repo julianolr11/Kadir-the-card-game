@@ -255,16 +255,43 @@ export function executeEffectCard(state, effectCard, targetInfo = null) {
 
     case 'damageAll':
       // Causa dano a todos os monstros inimigos
-      if (newState.ai?.field?.slots && Array.isArray(newState.ai.field.slots)) {
-        newState.ai.field.slots = newState.ai.field.slots.map(creature => {
-          if (creature) {
-            return {
-              ...creature,
-              hp: Math.max(0, creature.hp - effectCard.effectValue)
+      try {
+        const { applyDamage } = require('../utils/effectRegistry');
+        if (newState.ai?.field?.slots && Array.isArray(newState.ai.field.slots)) {
+          const animations = {};
+          let accumulatedLog = [];
+          let currState = newState;
+          for (let i = 0; i < (currState.ai.field.slots || []).length; i += 1) {
+            const creature = currState.ai.field.slots[i];
+            if (!creature) continue;
+            const targetId = creature.id;
+            const res = applyDamage(currState, {
+              attackerId: effectCard.id || 'effect',
+              targetId,
+              baseDamage: effectCard.effectValue || 0,
+              attackerElement: effectCard.element || 'puro',
+              ignoreShield: false,
+            });
+            // use the returned newState for next iterations
+            currState = res.newState;
+            accumulatedLog = [...accumulatedLog, ...res.log];
+            animations[targetId] = {
+              type: 'damage',
+              amount: res.damageDealt,
+              hasAdvantage: !!res.hasAdvantage,
+              hasDisadvantage: !!res.hasDisadvantage,
+              shieldHit: !!res.shieldHit,
+              shieldBroken: !!res.shieldBroken,
+              attackerId: effectCard.id || null,
             };
           }
-          return creature;
-        });
+          currState.log = [...(currState.log || []), ...accumulatedLog];
+          // Attach animations payload so BattleContext can schedule clearing/removals
+          currState.animations = { ...(currState.animations || {}), ...animations };
+          newState = currState;
+        }
+      } catch (e) {
+        console.warn('damageAll execution failed', e);
       }
       break;
 

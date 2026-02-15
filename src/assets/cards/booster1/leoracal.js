@@ -75,11 +75,11 @@ module.exports = {
     },
   ],
   defaultBlessing: {
-    id: 'leoracal_blessing',
-    name: { pt: 'Inferno Protetor', en: 'Protective Inferno' },
+    id: 'leoracal_blessing_vision',
+    name: { pt: 'Visão além do alcance', en: 'Vision Beyond Reach' },
     desc: {
-      pt: 'Criaturas de fogo ganham +3% de defesa enquanto Leoracal estiver em campo.',
-      en: 'Fire creatures gain +3% defense while Leoracal is on the field.',
+      pt: 'Ao ser invocado, revela uma carta aleatória da mão do oponente.',
+      en: 'When summoned, reveals a random card from the opponent\'s hand.',
     },
   },
   unlockTable: [

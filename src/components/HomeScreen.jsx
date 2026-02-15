@@ -16,7 +16,7 @@ import BoosterResultsSlider from './BoosterResultsSlider';
 import DeckSelectModal from './DeckSelectModal';
 import Bestiary from './Bestiary';
 import Shop from './Shop';
-import { getRollRarity, RARITY_TIERS } from '../assets/rarityData.js';
+import { getRollRarity, RARITY_TIERS, getCreaturesByRarity } from '../assets/rarityData.js';
 
 // Função para carregar dados da carta do guardião
 const getGuardianCardData = (guardianId) => {
@@ -335,16 +335,66 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
 
   function generateBoosterPack() {
     const pool = Array.isArray(creatures) ? [...creatures] : [];
-    // Embaralha pool simples
-    for (let i = pool.length - 1; i > 0; i -= 1) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [pool[i], pool[j]] = [pool[j], pool[i]];
+
+    // Separe por tipo (fields, effects, creatures simples)
+    const fieldCards = pool.filter(c => c && c.type === 'field');
+    const effectCards = pool.filter(c => c && c.type === 'effect');
+    const baseCreatures = pool.filter(c => c && c.type !== 'field' && c.type !== 'effect');
+
+    const totalCount = baseCreatures.length + fieldCards.length + effectCards.length;
+    const creatureProb = totalCount > 0 ? (baseCreatures.length / totalCount) : 0.7;
+    const fieldProb = totalCount > 0 ? (fieldCards.length / totalCount) : 0.15;
+    // effectProb is remainder
+
+    const pickRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+    const selected = [];
+    for (let i = 0; i < 5; i += 1) {
+      const r = Math.random();
+
+      // Decide se será criatura / campo / efeito mantendo proporções do pool
+      if (r < creatureProb) {
+        // Role a raridade primeiro e escolha uma criatura dessa raridade
+        const rarity = getRollRarity();
+        const candidatesIds = getCreaturesByRarity(rarity) || [];
+        // Tenta encontrar objetos no baseCreatures com esses ids
+        const candidates = baseCreatures.filter(c => c && c.id && candidatesIds.includes(c.id));
+
+        let pick = null;
+        if (candidates.length > 0) {
+          pick = pickRandom(candidates);
+        } else if (baseCreatures.length > 0) {
+          // Fallback para qualquer criatura disponível
+          pick = pickRandom(baseCreatures);
+        }
+
+        if (pick) {
+          selected.push({ ...pick, isHolo: Math.random() < 0.05, rarity });
+          continue;
+        }
+      } else if (r < creatureProb + fieldProb) {
+        // Campo
+        if (fieldCards.length > 0) {
+          const pick = pickRandom(fieldCards);
+          selected.push({ ...pick, isHolo: Math.random() < 0.05, rarity: 'field' });
+          continue;
+        }
+      } else {
+        // Efeito
+        if (effectCards.length > 0) {
+          const pick = pickRandom(effectCards);
+          selected.push({ ...pick, isHolo: Math.random() < 0.05, rarity: 'effect' });
+          continue;
+        }
+      }
+
+      // Último recurso: sorteio simples do pool restante
+      if (pool.length > 0) {
+        const pick = pickRandom(pool);
+        selected.push({ ...pick, isHolo: Math.random() < 0.05, rarity: getRollRarity() });
+      }
     }
-    const selected = pool.slice(0, 5).map((card) => ({
-      ...card,
-      isHolo: Math.random() < 0.05,
-      rarity: getRollRarity(), // Adiciona raridade aleatória ao card
-    }));
+
     return selected;
   }
 

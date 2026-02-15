@@ -1,9 +1,9 @@
 import React, { useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 
-const containerId = 'kadir-status-overlays';
+const containerId = 'kadir-ghost-preview-portal';
 
-export default function StatusOverlayPortal({ children }) {
+export default function GhostPreviewPortal({ children }) {
   const elRef = useRef(null);
 
   useEffect(() => {
@@ -13,18 +13,17 @@ export default function StatusOverlayPortal({ children }) {
       container.id = containerId;
       document.body.appendChild(container);
     }
-    // ensure container has the correct layout and stacking values (update existing if present)
     container.style.position = 'fixed';
     container.style.top = '0';
     container.style.left = '0';
     container.style.width = '100%';
     container.style.height = '100%';
     container.style.pointerEvents = 'none';
-    // prefer centralized CSS variable so maintainers can control stacking from `stacking.css`
-    container.style.zIndex = 'var(--z-effects-base)';
+    // prioritize ghost preview above everything using centralized variable
+    container.style.zIndex = 'var(--z-ghost-preview)';
     elRef.current = container;
     return () => {
-      // don't remove container on unmount (global reuse)
+      // keep container for reuse
     };
   }, []);
 

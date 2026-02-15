@@ -72,10 +72,10 @@ module.exports = {
   ],
   defaultBlessing: {
     id: 'elderox_blessing',
-    name: { pt: 'Aura de Antiguidade', en: 'Aura of Antiquity' },
+    name: { pt: 'Fúria Ancestral', en: 'Ancestral Fury' },
     desc: {
-      pt: 'Aliados ganham +3% de defesa enquanto Elderox estiver em campo.',
-      en: 'Allies gain +3% defense while Elderox is on the field.',
+      pt: 'Ao ser invocado, aliados causam DOBRO de dano durante este turno.',
+      en: 'When summoned, allies deal DOUBLE damage for this turn.',
     },
   },
   unlockTable: [

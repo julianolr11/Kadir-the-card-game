@@ -115,6 +115,9 @@ function StartFlow({ onFinish, onGoHome, menuMusicRef }) {
     false,
     false,
   ]);
+  const modalRef = useRef(null);
+  const previewRef = useRef(null);
+  const dialogRef = useRef(null);
   // Efeito: cartas surgem uma a uma com pop
   useEffect(() => {
     function showNextCard(i) {
@@ -175,6 +178,27 @@ function StartFlow({ onFinish, onGoHome, menuMusicRef }) {
       }
     };
   }, [step, lang, effectsVolume]);
+
+  // Ensure overlays/modal/dialog get a numeric z-index that overrides portal hand
+  useEffect(() => {
+    function applyZIndex(ref) {
+      try {
+        const el = ref?.current;
+        if (!el) return;
+        const root = getComputedStyle(document.documentElement);
+        const val = (root.getPropertyValue('--z-ghost-preview') || '').trim();
+        const num = parseInt(val, 10) || 11000;
+        el.style.setProperty('z-index', String(num), 'important');
+      } catch (e) {
+        /* ignore */
+      }
+    }
+
+    if (showModal) applyZIndex(modalRef);
+    if (showPreview) applyZIndex(previewRef);
+    // always ensure dialog has proper z-index
+    applyZIndex(dialogRef);
+  }, [showModal, showPreview]);
 
   const handleNext = () => {
     // Toca o som de click ao avançar o diálogo
@@ -246,13 +270,14 @@ function StartFlow({ onFinish, onGoHome, menuMusicRef }) {
       {/* Modal de escolha de elemento (filtro/blur) */}
       {showModal && (
         <div
+          ref={modalRef}
           style={{
             position: 'fixed',
             top: 0,
             left: 0,
             right: 0,
             bottom: 0,
-            zIndex: 2100,
+            zIndex: 'var(--z-battle-backdrop)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -394,10 +419,11 @@ function StartFlow({ onFinish, onGoHome, menuMusicRef }) {
       {/* Overlay do CardPreview */}
       {showPreview && (
         <div
+          ref={previewRef}
           style={{
             position: 'fixed',
             inset: 0,
-            zIndex: 5000,
+            zIndex: 'var(--z-battle-backdrop)',
             backdropFilter: 'blur(2px)',
             display: 'flex',
             alignItems: 'center',
@@ -448,6 +474,7 @@ function StartFlow({ onFinish, onGoHome, menuMusicRef }) {
       )}
       {/* Diálogo só aparece se o preview não estiver aberto */}
       <div
+        ref={dialogRef}
         style={{
           width: '100%',
           padding: 0,
@@ -459,7 +486,7 @@ function StartFlow({ onFinish, onGoHome, menuMusicRef }) {
           left: 0,
           right: 0,
           bottom: 0,
-          zIndex: 2150, // Fica acima das cartas viradas (zIndex padrão), mas abaixo do CardPreview (zIndex 3000)
+          zIndex: 'var(--z-battle-backdrop)', // Ensure dialog sits above hand and other UI
         }}
       >
         <div

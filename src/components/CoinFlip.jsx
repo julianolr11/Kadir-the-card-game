@@ -7,6 +7,7 @@ import { AppContext } from '../context/AppContext';
 
 function CoinFlip({ onResult, playerName = 'Jogador', aiName = 'Adversário' }) {
   const { effectsVolume } = useContext(AppContext);
+  const overlayRef = React.useRef(null);
   const [phase, setPhase] = useState('intro'); // intro -> ready -> flipping -> result
   const [isFlipping, setIsFlipping] = useState(false);
   const [result, setResult] = useState(null);
@@ -19,6 +20,22 @@ function CoinFlip({ onResult, playerName = 'Jogador', aiName = 'Adversário' }) 
       setPhase('ready');
     }, 3000);
     return () => clearTimeout(introTimer);
+  }, []);
+
+  // Ensure overlay z-index matches --z-battle-backdrop (numeric fallback 10600)
+  useEffect(() => {
+    try {
+      const el = overlayRef.current;
+      if (!el) return;
+      el.style.setProperty('z-index', 'var(--z-battle-backdrop)', 'important');
+      const resolved = getComputedStyle(el).getPropertyValue('z-index');
+      if (!resolved || resolved === 'auto' || isNaN(parseInt(resolved, 10))) {
+        const root = getComputedStyle(document.documentElement);
+        const vb = (root.getPropertyValue('--z-battle-backdrop') || '').trim() || '10600';
+        const num = parseInt(vb, 10) || 10600;
+        el.style.setProperty('z-index', String(num), 'important');
+      }
+    } catch (e) {}
   }, []);
 
   useEffect(() => {
@@ -71,7 +88,7 @@ function CoinFlip({ onResult, playerName = 'Jogador', aiName = 'Adversário' }) 
   };
 
   return (
-    <div className="coinflip-overlay">
+    <div className="coinflip-overlay" ref={overlayRef}>
       <div className="coinflip-container">
         <audio ref={audioRef} src={coinFlipSound} preload="auto" />
 

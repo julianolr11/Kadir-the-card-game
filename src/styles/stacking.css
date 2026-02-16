@@ -24,9 +24,9 @@
    --z-creature-effects: 200;
    --z-ui: 1000;
    /* Player hand should sit above transient effects by default */
-   --z-hand: 10500;
+   --z-hand: 10000;
    --z-effects-base: 5000;
-   --z-battle-backdrop: 10000;
+   --z-battle-backdrop: 10600;
    --z-ghost-preview: 11000;
 
    /* Named shortcuts for common effects */
@@ -69,8 +69,11 @@
 */
 
 /* Visual previews / modals */
-.ghost-preview, .card-preview, .card-preview::before { z-index: var(--z-ghost-preview) !important; }
+.ghost-preview { z-index: var(--z-ghost-preview) !important; }
 .hand { z-index: var(--z-hand) !important; }
+
+/* Card preview and its overlay should sit at battle-backdrop level (above hand) */
+.card-preview, .card-preview::before, .card-preview-overlay { z-index: var(--z-battle-backdrop) !important; }
 
 /* Battle result modal and overlay */
 .battle-result-overlay, .battle-result-modal { z-index: var(--z-battle-backdrop) !important; }

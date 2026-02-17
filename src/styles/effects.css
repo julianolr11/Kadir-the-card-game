@@ -363,7 +363,7 @@
   pointer-events: none;
   transform-origin: center center;
   border-radius: 14px;
-  z-index: 5020; /* above card art but below HUD/hand/ghost-preview */
+  z-index: var(--z-freeze); /* above card art but below HUD/hand/ghost-preview */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -394,7 +394,7 @@
 
 .freeze-snowflake {
   position: absolute;
-  z-index: 5040; /* ensures snowflake sits in front of card art but below HUD/hand/ghost-preview */
+  z-index: calc(var(--z-freeze) + 20); /* ensures snowflake sits in front of card art but below HUD/hand/ghost-preview */
   width: 26px;
   height: 26px;
   transform-origin: center center;

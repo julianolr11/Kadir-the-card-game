@@ -19,6 +19,7 @@ import paralyzeIcon from '../assets/img/icons/paralyze.png';
 import poisonIcon from '../assets/img/icons/poison.png';
 import sleepIcon from '../assets/img/icons/sleep.png';
 import StatusOverlayPortal from './StatusOverlayPortal.jsx';
+import LayeredStatusOverlayPortal from './LayeredStatusOverlayPortal.jsx';
 import GhostPreviewPortal from './GhostPreviewPortal.jsx';
 import HandPortal from './HandPortal.jsx';
 import swordPng from '../assets/img/icons/sword.png';
@@ -1012,7 +1013,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
   return (
     <>
     {sleepOverlays && sleepOverlays.length > 0 && (
-      <StatusOverlayPortal>
+      <LayeredStatusOverlayPortal zValue="var(--z-creature-effects)" idSuffix="sleep">
         {sleepOverlays.map(o => (
           <div key={`zzz-${o.id}`} className="sleep-zzz" style={{ position: 'absolute', left: `${o.left}px`, top: `${o.top}px`, transform: 'translate(-50%,-50%)' }} aria-hidden>
             <span>Z</span>
@@ -1020,39 +1021,39 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
             <span>Z</span>
           </div>
         ))}
-      </StatusOverlayPortal>
+      </LayeredStatusOverlayPortal>
     )}
 
     {paralyzeOverlays && paralyzeOverlays.length > 0 && (
-      <StatusOverlayPortal>
+      <LayeredStatusOverlayPortal zValue="var(--z-creature-effects)" idSuffix="paralyze">
         {paralyzeOverlays.map(o => (
           <div key={`par-${o.id}`} className="paralyze-burst" style={{ position: 'absolute', left: `${o.left - 13}px`, top: `${o.top - 6}px`, transform: 'translate(-50%,-50%)' }} aria-hidden>⚡</div>
         ))}
-      </StatusOverlayPortal>
+      </LayeredStatusOverlayPortal>
     )}
 
     {shieldOverlays && shieldOverlays.length > 0 && (
-      <StatusOverlayPortal>
+      <LayeredStatusOverlayPortal zValue="var(--z-shield)" idSuffix="shield">
         {shieldOverlays.map(o => (
           <div key={`shield-${o.id}`} className="shield-overlay" style={{ position: 'absolute', left: `${o.left}px`, top: `${o.top}px`, width: `${o.width}px`, height: `${o.height}px`, transform: 'translate(-50%,-50%)' }} aria-hidden>
             <div className="shield-gradient" />
             <img src={shieldIcon} className="shield-center" alt="shield" />
           </div>
         ))}
-      </StatusOverlayPortal>
+      </LayeredStatusOverlayPortal>
     )}
 
     {bleedOverlays && bleedOverlays.length > 0 && (
-      <StatusOverlayPortal>
+      <LayeredStatusOverlayPortal zValue="calc(var(--z-effects-base) - 50)" idSuffix="bleed">
         {bleedOverlays.map(o => (
           <div key={`bleed-${o.id}`} className="bleed-emoji" style={{ position: 'absolute', left: `${o.left}px`, top: `${o.top}px`, transform: 'translate(-50%,-50%)', fontSize: `${14 + (o.idx*2)}px`, animationDelay: `${o.idx * 0.18}s` }} aria-hidden>
             🩸
           </div>
         ))}
-      </StatusOverlayPortal>
+      </LayeredStatusOverlayPortal>
     )}
     {poisonOverlays && poisonOverlays.length > 0 && (
-      <StatusOverlayPortal>
+      <LayeredStatusOverlayPortal zValue="calc(var(--z-effects-base) - 50)" idSuffix="poison">
         {poisonOverlays.map(b => (
           <div
             key={`poison-${b.id}`}
@@ -1061,10 +1062,10 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
             aria-hidden
           />
         ))}
-      </StatusOverlayPortal>
+      </LayeredStatusOverlayPortal>
     )}
     {freezeOverlays && freezeOverlays.length > 0 && (
-      <StatusOverlayPortal>
+      <LayeredStatusOverlayPortal zValue="var(--z-freeze)" idSuffix="freeze">
         {freezeOverlays.map(f => (
           <div
             key={`freeze-${f.id}`}
@@ -1094,7 +1095,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
               </div>
           </div>
         ))}
-      </StatusOverlayPortal>
+      </LayeredStatusOverlayPortal>
     )}
     {burnGradients && burnGradients.length > 0 && (
       <StatusOverlayPortal>

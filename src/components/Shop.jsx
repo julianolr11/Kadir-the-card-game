@@ -16,7 +16,7 @@ const SHOP_PRODUCTS = [
     name: { pt: 'Booster Individual', en: 'Single Booster' },
     description: { pt: '5 cartas aleatórias', en: '5 random cards' },
     quantity: 1,
-    price: 150,
+    price: 200,
     image: require('../assets/img/card/booster.png'),
     type: 'booster',
   },
@@ -25,7 +25,7 @@ const SHOP_PRODUCTS = [
     name: { pt: 'Pack 5 Boosters', en: '5 Booster Pack' },
     description: { pt: '25 cartas aleatórias', en: '25 random cards' },
     quantity: 5,
-    price: 700,
+    price: 930,
     discount: 7,
     image: require('../assets/img/card/booster.png'),
     type: 'booster',
@@ -35,7 +35,7 @@ const SHOP_PRODUCTS = [
     name: { pt: 'Pack 10 Boosters', en: '10 Booster Pack' },
     description: { pt: '50 cartas aleatórias', en: '50 random cards' },
     quantity: 10,
-    price: 1300,
+    price: 1740,
     discount: 13,
     image: require('../assets/img/card/booster.png'),
     type: 'booster',
@@ -44,7 +44,7 @@ const SHOP_PRODUCTS = [
     id: 'card_common',
     name: { pt: 'Carta Comum', en: 'Common Card' },
     description: { pt: '1 carta comum aleatória', en: '1 random common card' },
-    price: 50,
+    price: 70,
     image: require('../assets/img/card/verso.png'),
     type: 'rarity',
     rarity: RARITY_TIERS.COMMON,
@@ -54,7 +54,7 @@ const SHOP_PRODUCTS = [
     id: 'card_uncommon',
     name: { pt: 'Carta Incomum', en: 'Uncommon Card' },
     description: { pt: '1 carta incomum aleatória', en: '1 random uncommon card' },
-    price: 100,
+    price: 135,
     image: require('../assets/img/card/verso.png'),
     type: 'rarity',
     rarity: RARITY_TIERS.UNCOMMON,
@@ -64,7 +64,7 @@ const SHOP_PRODUCTS = [
     id: 'card_rare',
     name: { pt: 'Carta Rara', en: 'Rare Card' },
     description: { pt: '1 carta rara aleatória', en: '1 random rare card' },
-    price: 300,
+    price: 400,
     image: require('../assets/img/card/verso.png'),
     type: 'rarity',
     rarity: RARITY_TIERS.RARE,
@@ -74,7 +74,7 @@ const SHOP_PRODUCTS = [
     id: 'card_epic',
     name: { pt: 'Carta Épica', en: 'Epic Card' },
     description: { pt: '1 carta épica aleatória', en: '1 random epic card' },
-    price: 500,
+    price: 670,
     image: require('../assets/img/card/verso.png'),
     type: 'rarity',
     rarity: RARITY_TIERS.EPIC,
@@ -84,7 +84,7 @@ const SHOP_PRODUCTS = [
     id: 'card_legendary',
     name: { pt: 'Carta Lendária', en: 'Legendary Card' },
     description: { pt: '1 carta lendária aleatória', en: '1 random legendary card' },
-    price: 1200,
+    price: 1600,
     image: require('../assets/img/card/verso.png'),
     type: 'rarity',
     rarity: RARITY_TIERS.LEGENDARY,
@@ -202,7 +202,7 @@ function Shop({ onBack }) {
     // Sons
     if (pageFlipAudioRef.current) {
       pageFlipAudioRef.current.currentTime = 0;
-      pageFlipAudioRef.current.volume = effectsVolume / 100;
+      pageFlipAudioRef.current.volume = (effectsVolume ?? 50) / 100;
       pageFlipAudioRef.current.play().catch(() => {});
     }
 
@@ -295,7 +295,7 @@ function Shop({ onBack }) {
         onMouseEnter={() => {
           if (movingAudioRef.current) {
             movingAudioRef.current.currentTime = 0;
-            movingAudioRef.current.volume = effectsVolume / 100;
+            movingAudioRef.current.volume = (effectsVolume ?? 50) / 100;
             movingAudioRef.current.play().catch(() => {});
           }
         }}

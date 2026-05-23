@@ -15,7 +15,7 @@ module.exports = {
       name: { pt: 'Garras Abissais', en: 'Abyssal Claws' },
       cost: 1,
       desc: {
-        pt: 'Causa 3 de dano e aplica bleed por 2 turnos.',
+        pt: 'Causa 3 de dano e aplica sangramento por 2 turnos.',
         en: 'Deals 3 damage and applies bleed for 2 turns.',
       },
     },
@@ -23,14 +23,14 @@ module.exports = {
       name: { pt: 'Regeneração', en: 'Regeneration' },
       cost: 1,
       desc: {
-        pt: 'Recupera 3 de vida e concede 10% de resistência a veneno por 2 turnos.',
-        en: 'Restores 3 HP and grants 10% poison resist for 2 turns.',
+        pt: 'Recupera 3 de vida e concede +1 resistência a veneno por 2 turnos.',
+        en: 'Restores 3 HP and reduces poison damage by 1 for 2 turns.',
       },
     },
   ],
   field: { pt: 'Abismo Profundo', en: 'Deep Abyss' },
   fielddesc: {
-    pt: 'Aliados recuperam 2 de vida/turno; inimigos recebem 2 de poison leve ao entrarem.',
+    pt: 'Aliados recuperam 2 de vida/turno; inimigos recebem 2 de veneno leve ao entrarem.',
     en: 'Allies recover 2 HP/turn; enemies take 2 light poison on entry.',
   },
   storyTitle: { pt: 'Origem de Mawthorn', en: 'Origin of Mawthorn' },
@@ -56,8 +56,8 @@ module.exports = {
       id: 'mawthorn_skill_1',
       name: { pt: 'Espinho Penetrante', en: 'Piercing Thorn' },
       desc: {
-        pt: 'Causa 3 de dano, ignora 10% defesa e aplica bleed.',
-        en: 'Deals 3 damage, ignores 10% defense and applies bleed.',
+        pt: 'Causa 3 de dano, ignora +1 defesa e aplica sangramento.',
+        en: 'Deals 3 damage, ignores +1 defense and applies bleed.',
       },
       cost: 1,
       type: 'damage_bleed',
@@ -66,8 +66,8 @@ module.exports = {
       id: 'mawthorn_skill_2',
       name: { pt: 'Veneno Corredor', en: 'Coursing Poison' },
       desc: {
-        pt: 'Causa 3 de dano, aplica poison por 3 turnos e reduz cura recebida em 10%.',
-        en: 'Deals 3 damage, poisons 3 turns, reduces healing received by 10%.',
+        pt: 'Causa 3 de dano, aplica veneno por 3 turnos e reduz a próxima cura recebida em 1.',
+        en: 'Deals 3 damage, poisons for 3 turns, and reduces next healing received by 1.',
       },
       cost: 1,
       type: 'damage_poison',
@@ -90,7 +90,7 @@ module.exports = {
       id: 'ABYSSAL_THORNS',
       name: { pt: 'Espinhos Abissais', en: 'Abyssal Thorns' },
       desc: {
-        pt: 'Ao entrar em campo, aplica bleed leve em todos os inimigos.',
+        pt: 'Ao entrar em campo, aplica sangramento leve em todos os inimigos.',
         en: 'When summoned, applies light bleed to all enemies.',
       },
     },
@@ -101,11 +101,11 @@ module.exports = {
       id: 'mawthorn_skill_nuvem_toxica',
       name: { pt: 'Nuvem Tóxica', en: 'Toxic Cloud' },
       desc: {
-        pt: 'Causa 2 de dano, aplica poison e -5% de acerto no alvo.',
-        en: 'Deals 2 damage, applies poison and -5% accuracy.',
+        pt: 'Causa 2 de dano, aplica veneno e -1 precisão no alvo.',
+        en: 'Deals 2 damage, applies poison, and lowers target accuracy by 1.',
       },
       cost: 1,
-      type: 'damage_poison_accuracy',
+      effectType: 'damage_poison_accuracy',
     },
     // Nível 4 - Perk: Regeneração Profunda
     {
@@ -114,7 +114,7 @@ module.exports = {
       id: 'DEEP_REGEN',
       name: { pt: 'Regeneração Profunda', en: 'Deep Regeneration' },
       desc: {
-        pt: 'Recupera 1 de vida por turno enquanto estiver com bleed ativo.',
+        pt: 'Recupera 1 de vida por turno enquanto estiver com sangramento ativo.',
         en: 'Recovers 1 HP per turn while bleed is active.',
       },
     },
@@ -125,11 +125,11 @@ module.exports = {
       id: 'mawthorn_skill_picada_mortal',
       name: { pt: 'Picada Mortal', en: 'Deadly Sting' },
       desc: {
-        pt: 'Causa 3 de dano, bleed + poison por 2 turnos.',
+        pt: 'Causa 3 de dano, sangramento + veneno por 2 turnos.',
         en: 'Deals 3 damage, bleed + poison for 2 turns.',
       },
       cost: 2,
-      type: 'damage_bleed_poison',
+      effectType: 'damage_bleed_poison',
     },
     // Nível 6 - Perk: Pele Tóxica
     {
@@ -138,7 +138,7 @@ module.exports = {
       id: 'TOXIC_SKIN',
       name: { pt: 'Pele Tóxica', en: 'Toxic Skin' },
       desc: {
-        pt: 'Recebe -1 de dano de poison e bleed.',
+        pt: 'Recebe -1 de dano de veneno e sangramento.',
         en: 'Takes -1 damage from poison and bleed.',
       },
     },
@@ -149,11 +149,11 @@ module.exports = {
       id: 'mawthorn_skill_furia_natureza',
       name: { pt: 'Fúria da Natureza', en: "Nature's Fury" },
       desc: {
-        pt: 'Causa 4 de dano e cria campo que aplica bleed leve em inimigos novos.',
+        pt: 'Causa 4 de dano e cria campo que aplica sangramento leve em inimigos novos.',
         en: 'Deals 4 damage and creates a field applying light bleed to new enemies.',
       },
       cost: 2,
-      type: 'field_bleed',
+      effectType: 'field_bleed',
     },
     // Nível 8 - Perk: Esporos Curativos
     {
@@ -173,11 +173,11 @@ module.exports = {
       id: 'mawthorn_skill_toxina_suprema',
       name: { pt: 'Toxina Suprema', en: 'Supreme Toxin' },
       desc: {
-        pt: 'Causa 4 em área, poison forte 3 turnos e 25% de paralisar.',
-        en: 'Deals 4 AoE, strong poison 3 turns and 25% paralyze.',
+        pt: 'Causa 4 em área, veneno forte 3 turnos e jogue a moeda 1 vez; se der cara, paralisa.',
+        en: 'Deals 4 AoE, strong poison 3 turns and flips a coin once; on heads, paralyzes.',
       },
       cost: 3,
-      type: 'aoe_poison_paralyze',
+      effectType: 'aoe_poison_paralyze',
     },
     // Nível 10 - Habilidade: Apocalipse Tóxico
     {
@@ -186,11 +186,11 @@ module.exports = {
       id: 'mawthorn_skill_apocalipse_toxico',
       name: { pt: 'Apocalipse Tóxico', en: 'Toxic Apocalypse' },
       desc: {
-        pt: 'Supremo: 4 de dano, bleed + poison extremo por 4 turnos.',
+        pt: 'Supremo: 4 de dano, sangramento + veneno extremo por 4 turnos.',
         en: 'Ultimate: 4 damage, extreme bleed + poison for 4 turns.',
       },
       cost: 4,
-      type: 'ultimate_bleed_poison',
+      effectType: 'ultimate_bleed_poison',
     },
   ],
 };

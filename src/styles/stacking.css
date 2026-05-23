@@ -28,6 +28,7 @@
    --z-effects-base: 5000;
    --z-battle-backdrop: 10600;
    --z-ghost-preview: 11000;
+   --z-card-modal: 12000;
 
    /* Named shortcuts for common effects */
    --z-shield: 4200; /* sits under hand/ghost but above creature art */
@@ -44,6 +45,7 @@
 .z-elderox { z-index: var(--z-elderox); }
 .z-battle-overlay { z-index: var(--z-battle-backdrop) !important; }
 .z-battle-modal { z-index: var(--z-battle-backdrop) !important; }
+.z-card-modal { z-index: var(--z-card-modal) !important; }
 
 /* Helpful: map common selectors to variables to progressively override existing hardcoded values
    Add more selectors here if you want to map current components to the centralized scale.
@@ -72,8 +74,23 @@
 .ghost-preview { z-index: var(--z-ghost-preview) !important; }
 .hand { z-index: var(--z-hand) !important; }
 
-/* Card preview and its overlay should sit at battle-backdrop level (above hand) */
-.card-preview, .card-preview::before, .card-preview-overlay { z-index: var(--z-battle-backdrop) !important; }
+/* Card preview overlays sit above the hand, shield/status portals and hover previews. */
+#kadir-battle-modal-portal,
+.card-preview-overlay,
+.card-preview-container,
+.effect-target-modal,
+.effect-target-container {
+  z-index: var(--z-card-modal) !important;
+}
+
+#kadir-battle-modal-portal .card-preview-overlay,
+#kadir-battle-modal-portal .effect-target-modal {
+  pointer-events: auto;
+}
+
+#kadir-battle-modal-portal > * {
+  pointer-events: auto;
+}
 
 /* Battle result modal and overlay */
 .battle-result-overlay, .battle-result-modal { z-index: var(--z-battle-backdrop) !important; }
@@ -85,7 +102,7 @@
 .shield-overlay, .shield-overlay .shield-gradient, .shield-shimmer { z-index: var(--z-shield) !important; }
 
 /* Freeze / snowflake */
-.freeze-overlay, .freeze-snowflake { z-index: var(--z-freeze) !important; }
+.freeze-overlay { z-index: var(--z-freeze) !important; }
 
 /* Elderox visuals */
 .elderox-badge, .elderox-grad, .elderox-arc, .elderox-spark, .elderox-grad-portal, .elderox-shimmer-portal { z-index: var(--z-elderox) !important; }

@@ -7,6 +7,7 @@ import heartIcon from '../assets/img/icons/hearticon.png';
 import flipCardSound from '../assets/sounds/effects/flipcard.MP3';
 import holoEffectSound from '../assets/sounds/effects/holo-effect.mp3';
 import { AppContext } from '../context/AppContext';
+import CreatureCardPreview from './CreatureCardPreview';
 
 const getElementImage = (element) => {
   try {
@@ -190,14 +191,32 @@ function BoosterResultsSlider({ cards, lang, onClose }) {
                 if (card?.type === 'effect') {
                   return (
                     <div key={`${card?.id || idx}-${idx}`} className={wrapperClass}>
+                      {isNewCard(card) && (
+                        <div className="card-badge-new">
+                          {lang === 'en' ? 'NEW' : 'NOVA'}
+                        </div>
+                      )}
+                      <CreatureCardPreview
+                        creature={card}
+                        isHolo={card?.isHolo}
+                        allowFlip={false}
+                      />
+                    </div>
+                  );
+                }
+
+                /*
+                if (card?.type === 'effect') {
+                  return (
+                    <div key={`${card?.id || idx}-${idx}`} className={wrapperClass}>
                       <div className={`card-preview card-preview-effect ${card?.isHolo ? 'card-preview-holo' : ''}`}>
-                        {/* Badge NEW */}
+                        {/* Badge NEW * /}
                         {isNewCard(card) && (
                           <div className="card-badge-new">
                             {lang === 'en' ? 'NEW' : 'NOVA'}
                           </div>
                         )}
-                        {/* Header */}
+                        {/* Header * /}
                         <div className="card-preview-header">
                           <span className="card-preview-name" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                             {getLocalizedText(card?.name, lang)}
@@ -205,7 +224,7 @@ function BoosterResultsSlider({ cards, lang, onClose }) {
                           </span>
                           <span className="card-preview-id">#E{String(card?.num || 0).padStart(3, '0')}</span>
                         </div>
-                        {/* Arte */}
+                        {/* Arte * /}
                         <div className="card-preview-art-wrapper">
                           {card?.img ? (
                             <img src={typeof card.img === 'string' ? card.img : (card.img?.default || '')} alt={getLocalizedText(card?.name, lang)} className="card-preview-art" />
@@ -213,7 +232,7 @@ function BoosterResultsSlider({ cards, lang, onClose }) {
                             <div style={{width: '100%', height: '100%', backgroundColor: '#333'}} />
                           )}
                         </div>
-                        {/* Tipo e Descrição */}
+                        {/* Tipo e Descrição * /}
                         <div className="card-preview-field-desc">
                           <strong>Efeito:</strong>
                           <div style={{ whiteSpace: 'pre-line', marginTop: '8px' }}>
@@ -224,19 +243,38 @@ function BoosterResultsSlider({ cards, lang, onClose }) {
                     </div>
                   );
                 }
+                */
 
                 // Exibição especial para cartas de campo
                 if (card?.type === 'field') {
                   return (
                     <div key={`${card?.id || idx}-${idx}`} className={wrapperClass}>
+                      {isNewCard(card) && (
+                        <div className="card-badge-new">
+                          {lang === 'en' ? 'NEW' : 'NOVA'}
+                        </div>
+                      )}
+                      <CreatureCardPreview
+                        creature={card}
+                        isHolo={card?.isHolo}
+                        allowFlip={false}
+                      />
+                    </div>
+                  );
+                }
+
+                /*
+                if (card?.type === 'field') {
+                  return (
+                    <div key={`${card?.id || idx}-${idx}`} className={wrapperClass}>
                       <div className={`card-preview card-preview-field ${card?.isHolo ? 'card-preview-holo' : ''}`}>
-                        {/* Badge NEW */}
+                        {/* Badge NEW * /}
                         {isNewCard(card) && (
                           <div className="card-badge-new">
                             {lang === 'en' ? 'NEW' : 'NOVA'}
                           </div>
                         )}
-                        {/* Header */}
+                        {/* Header * /}
                         <div className="card-preview-header">
                           <span className="card-preview-name" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                             {getLocalizedText(card?.name, lang)}
@@ -244,7 +282,7 @@ function BoosterResultsSlider({ cards, lang, onClose }) {
                           </span>
                           <span className="card-preview-id">#{card?.id || '?'}</span>
                         </div>
-                        {/* Arte */}
+                        {/* Arte * /}
                         <div className="card-preview-art-wrapper">
                           {card?.img ? (
                             <img src={typeof card.img === 'string' ? card.img : (card.img?.default || '')} alt={getLocalizedText(card?.name, lang)} className="card-preview-art" />
@@ -252,7 +290,7 @@ function BoosterResultsSlider({ cards, lang, onClose }) {
                             <div style={{width: '100%', height: '100%', backgroundColor: '#333'}} />
                           )}
                         </div>
-                        {/* Descrição e efeitos */}
+                        {/* Descrição e efeitos * /}
                         <div className="card-preview-field-desc">
                           <strong>Descrição:</strong>
                           <div style={{ whiteSpace: 'pre-line' }}>{getLocalizedText(card.description, lang)}</div>
@@ -277,6 +315,7 @@ function BoosterResultsSlider({ cards, lang, onClose }) {
                     </div>
                   );
                 }
+                */
                 // ...exibição padrão para outras cartas...
                 return (
                   <div

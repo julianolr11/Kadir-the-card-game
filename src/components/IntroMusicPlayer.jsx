@@ -6,6 +6,13 @@ const IntroMusicPlayer = React.forwardRef((props, ref) => {
   const audioRef = useRef(null);
   const { musicVolume } = useContext(AppContext);
 
+  const playIntroMusic = () => {
+    if (!audioRef.current) return Promise.resolve();
+    audioRef.current.muted = false;
+    audioRef.current.volume = (musicVolume ?? 100) / 100;
+    return audioRef.current.play().catch(() => {});
+  };
+
   // Permite controle externo via ref
   React.useImperativeHandle(ref, () => ({
     pause: () => {
@@ -14,11 +21,7 @@ const IntroMusicPlayer = React.forwardRef((props, ref) => {
       }
     },
     play: () => {
-      if (audioRef.current) {
-        audioRef.current.volume = (musicVolume ?? 100) / 100;
-        return audioRef.current.play();
-      }
-      return Promise.resolve();
+      return playIntroMusic();
     },
     setVolume: (v) => {
       if (audioRef.current) audioRef.current.volume = v;
@@ -29,8 +32,12 @@ const IntroMusicPlayer = React.forwardRef((props, ref) => {
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = (musicVolume ?? 100) / 100;
-      audioRef.current.play().catch(() => {});
+      playIntroMusic();
     }
+    window.addEventListener('kadir-audio-unlocked', playIntroMusic);
+    return () => {
+      window.removeEventListener('kadir-audio-unlocked', playIntroMusic);
+    };
   }, [musicVolume]);
 
   return <audio ref={audioRef} src={introMusic} loop preload="auto" />;

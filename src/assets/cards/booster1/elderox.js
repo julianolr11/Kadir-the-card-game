@@ -31,8 +31,8 @@ module.exports = {
   ],
   field: { pt: 'Montanha Ancestral', en: 'Ancient Mountain' },
   fielddesc: {
-    pt: 'Aumenta defesa de criaturas de terra em 4% enquanto Elderox estiver em campo.',
-    en: "Increases earth creatures' defense by 4% while Elderox is on the field.",
+    pt: 'Criaturas de terra ganham +1 defesa enquanto Elderox estiver em campo.',
+    en: "Earth creatures gain +1 defense while Elderox is on the field.",
   },
   storyTitle: { pt: 'Lenda de Elderox', en: 'Legend of Elderox' },
   story: [
@@ -41,7 +41,7 @@ module.exports = {
       en: 'Elderox is an ancient creature, symbol of the strength and endurance of the mountains.',
     },
     {
-      pt: 'Seu rugido ecoa por vales e desfiladeiros, inspirando aliados e aterrorizando inimigos.',
+      pt: 'Seu rugido ecoa por vales e desfiladeiros, inspirando aliados e atérrorizando inimigos.',
       en: 'Its roar echoes through valleys and gorges, inspiring allies and terrifying enemies.',
     },
   ],
@@ -63,8 +63,8 @@ module.exports = {
       id: 'elderox_skill_2',
       name: { pt: 'Defesa Milenial', en: 'Millennial Defense' },
       desc: {
-        pt: 'Aumenta a defesa própria e reduz dano recebido em 5% por 2 turnos.',
-        en: 'Increases own defense and reduces damage taken by 5% for 2 turns.',
+        pt: 'Aumenta a defesa própria e reduz o dano recebido em 1 por 2 turnos.',
+        en: 'Increases own defense and reduces damage taken by 1 for 2 turns.',
       },
       cost: 1,
       type: 'buff',

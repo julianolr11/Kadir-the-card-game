@@ -1,12 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import OptionsModal from '../components/OptionsModal';
 import ExitModal from '../components/ExitModal';
+import { AppContext } from '../context/AppContext';
 import '../styles/animations.css';
 import '../styles/vinheta.css';
 import wallpaper from '../assets/img/wallpaper/wallpaper.png';
+import keyClickSound from '../assets/sounds/effects/key_click.MP3';
 
 interface LoadingMenuProps {
-  onNavigate: (route: string) => void;
+  onNavigate: (route: string, params?: any) => void;
   menuMusicRef: any;
   introMusicRef: any;
 }
@@ -22,7 +24,28 @@ function LoadingMenu({ onNavigate, menuMusicRef, introMusicRef }: LoadingMenuPro
   const [showExit, setShowExit] = useState(false);
   const [videoError, setVideoError] = useState(false);
   const [videoOpacity, setVideoOpacity] = useState(1);
+  const [isContinuing, setIsContinuing] = useState(false);
+  const [hasStartedJourney] = useState(() => {
+    try {
+      if (localStorage.getItem('kadirStartFlowCompleted') === 'true') return true;
+      const collection = JSON.parse(localStorage.getItem('cardCollection') || '{}');
+      return Object.keys(collection || {}).length > 0 && !!localStorage.getItem('activeGuardian');
+    } catch {
+      return false;
+    }
+  });
   const videoRef = useRef<HTMLVideoElement>(null);
+  const keyClickAudioRef = useRef<HTMLAudioElement>(null);
+  const { effectsVolume } = useContext(AppContext);
+
+  const playClickSound = () => {
+    const audio = keyClickAudioRef.current;
+    if (!audio) return;
+    audio.muted = false;
+    audio.volume = (effectsVolume ?? 50) / 100;
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
+  };
 
   // Pausa a música do menu quando entra em LoadingMenu
   useEffect(() => {
@@ -74,7 +97,8 @@ function LoadingMenu({ onNavigate, menuMusicRef, introMusicRef }: LoadingMenuPro
     }
   };
 
-  const handleIniciar = () => {
+  const handlePrimaryAction = () => {
+    playClickSound();
     // Para a música intro
     if (introMusicRef?.current) {
       introMusicRef.current.pause();
@@ -86,6 +110,13 @@ function LoadingMenu({ onNavigate, menuMusicRef, introMusicRef }: LoadingMenuPro
       if (playPromise) {
         playPromise.catch(() => {});
       }
+    }
+    if (hasStartedJourney) {
+      setIsContinuing(true);
+      setTimeout(() => {
+        onNavigate('home', { transition: 'continue' });
+      }, 680);
+      return;
     }
     onNavigate('iniciar');
   };
@@ -101,6 +132,7 @@ function LoadingMenu({ onNavigate, menuMusicRef, introMusicRef }: LoadingMenuPro
         overflow: 'hidden',
       }}
     >
+      <audio ref={keyClickAudioRef} src={keyClickSound} preload="auto" />
       {/* Versão no canto superior esquerdo */}
       <div
         style={{
@@ -182,13 +214,13 @@ function LoadingMenu({ onNavigate, menuMusicRef, introMusicRef }: LoadingMenuPro
         }}
         className="fade-in"
       >
-        <button className="home-btn" onClick={handleIniciar}>
-          Iniciar
+        <button className="home-btn" onClick={handlePrimaryAction}>
+          {hasStartedJourney ? 'Continuar' : 'Iniciar'}
         </button>
-        <button className="home-btn" onClick={() => setShowOptions(true)}>
+        <button className="home-btn" onClick={() => { playClickSound(); setShowOptions(true); }}>
           Opções
         </button>
-        <button className="home-btn" onClick={() => setShowExit(true)}>
+        <button className="home-btn" onClick={() => { playClickSound(); setShowExit(true); }}>
           Sair
         </button>
       </div>
@@ -204,6 +236,9 @@ function LoadingMenu({ onNavigate, menuMusicRef, introMusicRef }: LoadingMenuPro
           onConfirm={() => window.close()}
           onCancel={() => setShowExit(false)}
         />
+      )}
+      {isContinuing && (
+        <div className="continue-transition-overlay continue-transition-blackout" aria-hidden />
       )}
     </div>
   );

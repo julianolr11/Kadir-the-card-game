@@ -16,6 +16,7 @@ import BoosterResultsSlider from './BoosterResultsSlider';
 import DeckSelectModal from './DeckSelectModal';
 import Bestiary from './Bestiary';
 import Shop from './Shop';
+import AchievementsRoom from './AchievementsRoom';
 import { getRollRarity, RARITY_TIERS, getCreaturesByRarity } from '../assets/rarityData.js';
 
 // Função para carregar dados da carta do guardião
@@ -139,6 +140,16 @@ function BoosterZone({ boosters, onOpenBooster, isOpeningBooster, effectsVolume 
 }
 
 function HomeScreen({ onNavigate, menuMusicRef }) {
+  const {
+    activeGuardian,
+    boosters = 0,
+    coins = 0,
+    lang = 'ptbr',
+    setBoosters,
+    addCardsFromBooster,
+    decks = {},
+    effectsVolume,
+  } = useContext(AppContext);
   const cogAudioRef = React.useRef(null);
 
   function handleCogMouseEnter() {
@@ -191,7 +202,7 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
     const candle = candleAudioRef.current;
     if (candle) {
       candle.addEventListener('ended', handleCandleEnded);
-      candle.volume = 0.5;
+      candle.volume = (effectsVolume ?? 50) / 100;
       candle.currentTime = 0;
       const playPromise = candle.play();
       if (playPromise !== undefined) {
@@ -218,17 +229,13 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
         candle.removeEventListener('ended', handleCandleEnded);
       }
     };
-  }, [menuMusicRef, candleKey]);
-  const {
-    activeGuardian,
-    boosters = 0,
-    coins = 0,
-    lang = 'ptbr',
-    setBoosters,
-    addCardsFromBooster,
-    decks = {},
-    effectsVolume,
-  } = useContext(AppContext);
+  }, [menuMusicRef, candleKey, effectsVolume]);
+
+  React.useEffect(() => {
+    if (candleAudioRef.current) {
+      candleAudioRef.current.volume = (effectsVolume ?? 50) / 100;
+    }
+  }, [effectsVolume]);
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
@@ -239,10 +246,14 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
   const boosterVideoRef = useRef(null);
   const [cheatInput, setCheatInput] = useState('');
   const [showDeckModal, setShowDeckModal] = useState(false);
+  const [showBattleMenu, setShowBattleMenu] = useState(false);
+  const [pendingCampaignEnemy, setPendingCampaignEnemy] = useState(null);
   const [showBestiary, setShowBestiary] = useState(false);
   const bestiaryAudioRef = useRef(null);
   const [showShop, setShowShop] = useState(false);
   const shopAudioRef = useRef(null);
+  const [showAchievements, setShowAchievements] = useState(false);
+  const achievementsAudioRef = useRef(null);
 
   // Cheat code detector
   useEffect(() => {
@@ -292,6 +303,7 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
         localStorage.removeItem('activeGuardian');
         localStorage.removeItem('cardCollection');
         localStorage.removeItem('boosters');
+        localStorage.removeItem('kadirStartFlowCompleted');
 
         // Definir valores iniciais
         localStorage.setItem('boosters', '5');
@@ -450,15 +462,29 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
     setShowShop(true);
   }
 
+  function handleAchievementsClick() {
+    if (achievementsAudioRef.current) {
+      achievementsAudioRef.current.currentTime = 0;
+      achievementsAudioRef.current.volume = (effectsVolume ?? 50) / 100;
+      achievementsAudioRef.current.play().catch(() => {});
+    }
+    setShowAchievements(true);
+  }
+
   return (
     <div className="home-screen-container">
+      {/* Tela de Conquistas */}
+      <div className={`screen-wrapper ${showAchievements ? 'center' : 'slide-to-top'}`}>
+        <AchievementsRoom onBack={() => setShowAchievements(false)} />
+      </div>
+
       {/* Tela do Shop */}
       <div className={`screen-wrapper ${showShop ? 'center' : 'slide-to-left'}`}>
         <Shop onBack={() => setShowShop(false)} />
       </div>
 
       {/* Tela Principal (HomeScreen) */}
-      <div className={`screen-wrapper ${showBestiary ? 'slide-to-left' : showShop ? 'slide-to-right' : 'center'}`}>
+      <div className={`screen-wrapper ${showAchievements ? 'slide-to-bottom' : showBestiary ? 'slide-to-left' : showShop ? 'slide-to-right' : 'center'}`}>
         <div className="home-screen">
       {/* Áudio de vela queimando em loop - key força recriação do elemento */}
       <audio
@@ -627,13 +653,26 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
           })()}
         </div>
         <div className="home-btn-group home-btn-group-bottom">
-          <button className="home-btn" onClick={() => onNavigate('iniciar')}>
-            Iniciar
-          </button>
-          <button className="home-btn" onClick={() => setShowDeckModal(true)}>
-            Batalha (MVP)
+          <button className="home-btn" onClick={() => setShowBattleMenu(true)}>
+            Batalhar
           </button>
         </div>
+
+        <audio ref={achievementsAudioRef} src={movingTableSound} preload="auto" />
+        <button
+          className="achievements-nav-btn"
+          onClick={handleAchievementsClick}
+          onMouseEnter={() => {
+            if (achievementsAudioRef.current) {
+              achievementsAudioRef.current.currentTime = 0;
+              achievementsAudioRef.current.volume = (effectsVolume ?? 50) / 100;
+              achievementsAudioRef.current.play().catch(() => {});
+            }
+          }}
+        >
+          <span className="achievements-nav-text">Conquistas</span>
+          <span className="achievements-nav-arrow">↑</span>
+        </button>
 
         {/* Botão do Shop (Lado Esquerdo) */}
         <audio ref={shopAudioRef} src={movingTableSound} preload="auto" />
@@ -643,6 +682,7 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
           onMouseEnter={() => {
             if (shopAudioRef.current) {
               shopAudioRef.current.currentTime = 0;
+              shopAudioRef.current.volume = (effectsVolume ?? 50) / 100;
               shopAudioRef.current.play().catch(() => {});
             }
           }}
@@ -659,6 +699,7 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
           onMouseEnter={() => {
             if (bestiaryAudioRef.current) {
               bestiaryAudioRef.current.currentTime = 0;
+              bestiaryAudioRef.current.volume = (effectsVolume ?? 50) / 100;
               bestiaryAudioRef.current.play().catch(() => {});
             }
           }}
@@ -667,15 +708,42 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
           <span className="bestiary-nav-arrow">→</span>
         </button>
       </main>
-      <DeckSelectModal
-        visible={showDeckModal}
-        decks={Object.entries(decks || {}).map(([id, deck]) => ({ id, ...deck }))}
-        onClose={() => setShowDeckModal(false)}
-        onSelect={(deck) => {
-          setShowDeckModal(false);
-          onNavigate('battle', { deck });
-        }}
-      />
+      {showBattleMenu && (
+        <div className="battle-menu-overlay" onClick={() => setShowBattleMenu(false)}>
+          <div className="battle-menu-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="battle-menu-rune" aria-hidden />
+            <p className="battle-menu-kicker">Escolha seu destino</p>
+            <h2 className="battle-menu-title">Batalhar</h2>
+            <div className="battle-menu-options">
+              <button
+                className="battle-menu-option"
+                onClick={() => {
+                  setShowBattleMenu(false);
+                  onNavigate('campaign');
+                }}
+              >
+                <span>Campanha</span>
+              </button>
+              <button
+                className="battle-menu-option"
+                onClick={() => {
+                  setShowBattleMenu(false);
+                  setShowDeckModal(true);
+                }}
+              >
+                <span>Batalha Individual</span>
+              </button>
+              <button className="battle-menu-option battle-menu-option-muted" disabled>
+                <span>Rankeada</span>
+                <small>Em breve</small>
+              </button>
+            </div>
+            <button className="battle-menu-close" onClick={() => setShowBattleMenu(false)}>
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
       {showOptions && (
         <OptionsModal
           visible={showOptions}
@@ -685,9 +753,19 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
       {showDeckModal && (
         <DeckSelectModal
           visible={showDeckModal}
+          decks={Object.entries(decks || {}).map(([id, deck]) => ({ id, ...deck }))}
           onClose={() => setShowDeckModal(false)}
           onSelect={(deck) => {
             setShowDeckModal(false);
+            if (pendingCampaignEnemy) {
+              onNavigate('battle', {
+                deck,
+                mode: 'campaign',
+                opponent: pendingCampaignEnemy,
+              });
+              setPendingCampaignEnemy(null);
+              return;
+            }
             onNavigate('battle', { deck });
           }}
         />

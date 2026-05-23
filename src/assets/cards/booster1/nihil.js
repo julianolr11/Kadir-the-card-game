@@ -24,15 +24,15 @@ module.exports = {
       name: { pt: 'Rasgadura do Vácuo', en: 'Void Rend' },
       cost: 2,
       desc: {
-        pt: 'Causa 2 de dano em área e aplica -8% resistência por 2 turnos.',
-        en: 'Deals 2 area damage and applies -8% resistance for 2 turns.',
+        pt: 'Causa 2 de dano em área e aplica -1 resistência por 2 turnos.',
+        en: 'Deals 2 area damage and applies -1 resistance for 2 turns.',
       },
     },
   ],
   field: { pt: 'Eco do Nada', en: 'Echo of Nothingness' },
   fielddesc: {
-    pt: 'Ao entrar, inimigos perdem 1 essência e -5% precisão por 1 turno; aliados puros ganham +5% esquiva.',
-    en: 'On entry, enemies lose 1 essence and -5% accuracy for 1 turn; pure allies gain +5% evasion.',
+    pt: 'Ao entrar, inimigos perdem 1 essência e -1 precisão por 1 turno; aliados puros ganham +1 esquiva.',
+    en: 'On entry, enemies lose 1 essence and imprecision for 1 turn; pure allies gain +1 evasion.',
   },
   storyTitle: { pt: 'Vazio Faminto', en: 'Ravenous Void' },
   story: [
@@ -79,8 +79,8 @@ module.exports = {
       id: 'nihil_skill_2',
       name: { pt: 'Silêncio da Alma', en: 'Soul Silence' },
       desc: {
-        pt: 'Causa 2 de dano em área e reduz precisão dos inimigos em 6% por 1 turno.',
-        en: 'Deals 2 area damage and lowers enemy accuracy by 6% for 1 turn.',
+        pt: 'Causa 2 de dano em área e reduz precisão dos inimigos em 1 por 1 turno.',
+        en: 'Deals 2 area damage and applies imprecision for 1 turn.',
       },
       cost: 1,
       type: 'damage_debuff',
@@ -114,11 +114,11 @@ module.exports = {
       id: 'nihil_skill_espiral_devoradora',
       name: { pt: 'Espiral Devoradora', en: 'Devouring Spiral' },
       desc: {
-        pt: 'Causa 2 de dano puro e aplica -8% resistência por 2 turnos.',
-        en: 'Deals 2 pure damage and applies -8% resistance for 2 turns.',
+        pt: 'Causa 2 de dano puro e aplica -1 resistência por 2 turnos.',
+        en: 'Deals 2 pure damage and applies -1 resistance for 2 turns.',
       },
       cost: 1,
-      type: 'damage_resist_down',
+      effectType: 'damage_resist_down',
     },
     // Nível 4 - Perk: Vazio Protetor
     {
@@ -138,11 +138,11 @@ module.exports = {
       id: 'nihil_skill_cicatriz_eterea',
       name: { pt: 'Cicatriz Etérea', en: 'Ethereal Scar' },
       desc: {
-        pt: 'Causa 3 de dano e deixa vulnerável: +8% dano recebido por 2 turnos.',
-        en: 'Deals 3 damage and leaves target vulnerable: +8% damage taken for 2 turns.',
+        pt: 'Causa 3 de dano e deixa vulnerável: recebe +1 dano por 2 turnos.',
+        en: 'Deals 3 damage and leaves target vulnerable: takes +1 damage for 2 turns.',
       },
       cost: 2,
-      type: 'damage_vulnerable',
+      effectType: 'damage_vulnerable',
     },
     // Nível 6 - Perk: Fôlego do Nada
     {
@@ -166,7 +166,7 @@ module.exports = {
         en: 'Deals 2 area damage, drains 1 essence from each enemy, and heals 2 HP.',
       },
       cost: 2,
-      type: 'aoe_drain_heal',
+      effectType: 'aoe_drain_heal',
     },
     // Nível 8 - Perk: Essência Protetora
     {
@@ -190,7 +190,7 @@ module.exports = {
         en: 'Deals 4 pure damage and removes 1 positive effect from the target.',
       },
       cost: 3,
-      type: 'damage_dispel',
+      effectType: 'damage_dispel',
     },
     // Nível 10 - Habilidade: Abismo Faminto
     {
@@ -203,7 +203,7 @@ module.exports = {
         en: 'Ultimate: 5 pure damage to all, drains 1 essence each, and grants a shield that negates 1 attack.',
       },
       cost: 4,
-      type: 'ultimate_aoe_drain_shield',
+      effectType: 'ultimate_aoe_drain_shield',
     },
   ],
 };

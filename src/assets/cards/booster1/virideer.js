@@ -69,8 +69,8 @@ module.exports = {
       id: 'virideer_skill_chifre_luminescente',
       name: { pt: 'Chifre Luminescente', en: 'Luminous Horn' },
       desc: {
-        pt: 'Causa 2 de dano e 50% de chance de aplicar <span class="debuff-blind">cegueira</span> por 1 turno.',
-        en: 'Deals 2 damage and 50% chance to apply <span class="debuff-blind">blind</span> for 1 turn.',
+        pt: 'Causa 2 de dano e jogue a moeda 1 vez; se der cara, aplica <span class="debuff-blind">cegueira</span> por 1 turno.',
+        en: 'Deals 2 damage and flips a coin once; on heads, apply <span class="debuff-blind">blind</span> for 1 turn.',
       },
       cost: 2,
       type: 'damage_blind',
@@ -112,7 +112,7 @@ module.exports = {
         en: 'Removes 1 debuff from all allies.',
       },
       cost: 1,
-      type: 'aoe_cleanse',
+      effectType: 'aoe_cleanse',
     },
     // Nível 4 - Perk: Chifre Reluzente
     {
@@ -121,8 +121,8 @@ module.exports = {
       id: 'SHINING_HORN',
       name: { pt: 'Chifre Reluzente', en: 'Shining Horn' },
       desc: {
-        pt: 'Aumenta chance de cegueira em +15%.',
-        en: 'Increases blind chance by +15%.',
+        pt: 'Ao atacar, jogue a moeda 1 vez; se der cara, aplica cegueira por 1 turno.',
+        en: 'When attacking, flip a coin once; on heads, applies blind for 1 turn.',
       },
     },
     // Nível 5 - Habilidade: Investida Serena
@@ -136,7 +136,7 @@ module.exports = {
         en: 'Deals 2 damage and heals 1 HP to self.',
       },
       cost: 1,
-      type: 'damage_selfheal',
+      effectType: 'damage_selfheal',
       damage: 2,
       heal: 1,
     },
@@ -162,7 +162,7 @@ module.exports = {
         en: 'Heals 2 HP and removes all debuffs from an ally.',
       },
       cost: 2,
-      type: 'heal_fullcleanse',
+      effectType: 'heal_fullcleanse',
       heal: 2,
     },
     // Nível 8 - Perk: Aurora Matinal
@@ -183,11 +183,11 @@ module.exports = {
       id: 'virideer_skill_chifre_solar',
       name: { pt: 'Chifre Solar', en: 'Solar Horn' },
       desc: {
-        pt: 'Causa 3 de dano e 50% de chance de silenciar por 1 turno.',
-        en: 'Deals 3 damage and 50% chance to silence for 1 turn.',
+        pt: 'Causa 3 de dano e jogue a moeda 1 vez; se der cara, silenciar por 1 turno.',
+        en: 'Deals 3 damage and flips a coin once; on heads, silence for 1 turn.',
       },
       cost: 2,
-      type: 'damage_silence',
+      effectType: 'damage_silence',
       damage: 3,
       chance: 0.5,
       statusEffect: 'silence',
@@ -204,7 +204,7 @@ module.exports = {
         en: 'Heals all allies for 3 HP and removes all debuffs.',
       },
       cost: 3,
-      type: 'aoe_heal_fullcleanse',
+      effectType: 'aoe_heal_fullcleanse',
       heal: 3,
     },
   ],

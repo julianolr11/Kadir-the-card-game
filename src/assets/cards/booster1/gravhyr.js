@@ -24,14 +24,14 @@ module.exports = {
       name: { pt: 'Imobilidade Vigilante', en: 'Vigilant Stillness' },
       cost: 1,
       desc: {
-        pt: 'Se ficar um turno sem atacar, recebe +20% defesa e fica imune a empurrões/deslocamentos até o próximo turno.',
-        en: 'If it skips attacking for a turn, gains +20% defense and becomes immune to pushes/displacement until next turn.',
+        pt: 'Se ficar um turno sem atacar, recebe +1 de vida e fica imune a empurrões/deslocamentos até o próximo turno.',
+        en: 'If it skips attacking for a turn, gains +1 health and becomes immune to pushes/displacement until next turn.',
       },
     },
   ],
   field: { pt: 'Claustro Silencioso', en: 'Silent Cloister' },
   fielddesc: {
-    pt: 'Ao entrar em combate após ficar imóvel, o primeiro inimigo atingido sofre Lentidão por 2 turnos.',
+    pt: 'Ao entrar em combaté após ficar imóvel, o primeiro inimigo atingido sofre Lentidão por 2 turnos.',
     en: 'When entering combat after staying still, the first enemy hit suffers Slow for 2 turns.',
   },
   storyTitle: { pt: 'Sentinela das Eras', en: 'Sentinel of Ages' },
@@ -82,8 +82,8 @@ module.exports = {
     id: 'gravhyr_blessing',
     name: { pt: 'Vigia Imóvel', en: 'Motionless Warden' },
     desc: {
-      pt: 'Se não atacar em um turno, ganha +20% defesa e imunidade a deslocamentos até o próximo turno; aliados de terra recebem +4% resistência.',
-      en: 'If it skips attacking for a turn, gains +20% defense and immunity to displacement until next turn; earth allies gain +4% resistance.',
+      pt: 'Para cada turno sem atacar, Gravhyr recebe +1 de vida; aliados de terra recebem +1 resistência.',
+      en: 'For each turn without attacking, Gravhyr gains +1 health; earth allies gain +1 resistance.',
     },
   },
   unlockTable: [
@@ -106,8 +106,8 @@ module.exports = {
       id: 'gravhyr_skill_4',
       name: { pt: 'Muralha Silente', en: 'Silent Bulwark' },
       desc: {
-        pt: 'Ganha +12% defesa e imune a empurrões por 2 turnos.',
-        en: 'Gains +12% defense and immunity to pushes for 2 turns.',
+        pt: 'Ganha +1 defesa e imune a empurrões por 2 turnos.',
+        en: 'Gains +1 defense and immunity to pushes for 2 turns.',
       },
       cost: 2,
     },
@@ -132,8 +132,8 @@ module.exports = {
       id: 'gravhyr_skill_6',
       name: { pt: 'Eco de Pedra', en: 'Stone Echo' },
       desc: {
-        pt: 'Causa 3 de dano em área e reduz ataque dos inimigos em 8% por 2 turnos.',
-        en: 'Deals 3 area damage and reduces enemies attack by 8% for 2 turns.',
+        pt: 'Causa 3 de dano em área e reduz ataque dos inimigos em 1 por 2 turnos.',
+        en: 'Deals 3 area damage and reduces enemy attack by 1 for 2 turns.',
       },
       cost: 3,
     },

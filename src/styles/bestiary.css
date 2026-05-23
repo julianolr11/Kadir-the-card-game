@@ -519,6 +519,14 @@
   transform: translateX(100%);
 }
 
+.screen-wrapper.slide-to-top {
+  transform: translateY(-100%);
+}
+
+.screen-wrapper.slide-to-bottom {
+  transform: translateY(100%);
+}
+
 .screen-wrapper.center {
   transform: translateX(0);
 }

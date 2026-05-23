@@ -168,10 +168,10 @@ module.exports = {
       level: 7,
       type: 'perk',
       id: 'KILL_XP_BONUS_10',
-      name: { pt: '+10% de exp por abate', en: '+10% XP per kill' },
+      name: { pt: '+1 XP por abaté', en: '+1 XP per kill' },
       displayText: {
-        pt: '+10% de exp por abate do guardião',
-        en: '+10% XP per guardian kill',
+        pt: '+1 XP por abaté do guardião',
+        en: '+1 XP per guardian kill',
       },
     },
     { level: 8, type: 'none' },

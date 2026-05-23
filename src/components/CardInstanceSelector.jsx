@@ -3,6 +3,7 @@ import { getCreatureRarity } from '../assets/rarityData.js';
 import '../styles/card-instance-selector.css';
 import lvlIcon from '../assets/img/icons/lvlicon.png';
 import heartIcon from '../assets/img/icons/hearticon.png';
+import CreatureCardPreview from './CreatureCardPreview';
 
 /**
  * CardInstanceSelector - Modal para selecionar qual instância de uma carta usar
@@ -25,6 +26,9 @@ function CardInstanceSelector({
   onSelect,
   onClose,
   onRecycle,
+  onEdit,
+  onAdorn,
+  adornTotalCount,
   title = 'Selecione uma cópia',
   lang = 'ptbr',
 }) {
@@ -32,6 +36,8 @@ function CardInstanceSelector({
     instances?.[0]?.instanceId || null
   );
   const [recyclingInstanceId, setRecyclingInstanceId] = useState(null);
+  const [adorningInstanceId, setAdorningInstanceId] = useState(null);
+  const [adornRemovingIds, setAdornRemovingIds] = useState([]);
 
   // Calcula valor da carta baseado em raridade, nível e holo
   const calculateCardValue = (instance) => {
@@ -63,6 +69,14 @@ function CardInstanceSelector({
     (inst) => inst.instanceId === selectedInstanceId
   );
   const selectedInstanceValue = selectedInstance ? calculateCardValue(selectedInstance) : 0;
+  const nonHoloInstances = sortedInstances.filter((inst) => !inst.isHolo);
+  const adornCount = adornTotalCount ?? nonHoloInstances.length;
+  const canAdornSelected = Boolean(
+    onAdorn &&
+    selectedInstance &&
+    !selectedInstance.isHolo &&
+    adornCount >= 10
+  );
 
   const handleSelectInstance = (instanceId) => {
     setSelectedInstanceId(instanceId);
@@ -93,6 +107,29 @@ function CardInstanceSelector({
         setRecyclingInstanceId(null);
       }, 500);
     }
+  };
+
+  const handleAdorn = (instanceId, e) => {
+    e.stopPropagation();
+    if (!onAdorn || !instanceId || adorningInstanceId || !canAdornSelected) return;
+    const sacrificeIds = nonHoloInstances
+      .filter((inst) => inst.instanceId !== instanceId)
+      .slice(0, 9)
+      .map((inst) => inst.instanceId);
+    setAdornRemovingIds(sacrificeIds);
+    setAdorningInstanceId(instanceId);
+    setTimeout(() => {
+      const upgraded = onAdorn(cardId, instanceId, sacrificeIds);
+      if (!upgraded) {
+        setAdorningInstanceId(null);
+        setAdornRemovingIds([]);
+        return;
+      }
+      setTimeout(() => {
+        setAdorningInstanceId(null);
+        setAdornRemovingIds([]);
+      }, 900);
+    }, 980);
   };
 
   const formatDate = (dateString) => {
@@ -133,6 +170,7 @@ function CardInstanceSelector({
           </button>
         </div>
 
+        <div className="instance-selector-content">
         {/* Instances List */}
         <div className="instances-list-container">
           {sortedInstances.length === 0 ? (
@@ -144,7 +182,10 @@ function CardInstanceSelector({
                   key={instance.instanceId}
                   className={`instance-item ${
                     selectedInstanceId === instance.instanceId ? 'active' : ''
-                  }`}
+                  } ${adornRemovingIds.includes(instance.instanceId) ? 'sacrificing' : ''}`}
+                  style={{
+                    '--sacrifice-delay': `${Math.max(0, adornRemovingIds.indexOf(instance.instanceId)) * 80}ms`,
+                  }}
                   onClick={() => handleSelectInstance(instance.instanceId)}
                 >
                   {/* Número da cópia e holo status */}
@@ -175,6 +216,19 @@ function CardInstanceSelector({
                     </div>
                   </div>
 
+                  {onEdit && (
+                    <button
+                      type="button"
+                      className="instance-edit-card-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEdit(cardId, instance.instanceId);
+                      }}
+                    >
+                      Editar carta
+                    </button>
+                  )}
+
                   {/* Selection indicator */}
                   <div className="instance-checkbox">
                     <input
@@ -189,6 +243,61 @@ function CardInstanceSelector({
               ))}
             </ul>
           )}
+        </div>
+
+        <aside className="instance-card-preview-panel">
+          <div className="instance-card-preview-title">
+            <span>{lang === 'en' ? 'Selected Card' : 'Carta selecionada'}</span>
+            {selectedInstance?.isHolo && <strong>Holo</strong>}
+          </div>
+          {selectedInstance && cardData ? (
+            <>
+              <div className={`instance-card-preview-scale ${adorningInstanceId === selectedInstance.instanceId ? 'adorning' : ''}`}>
+                <CreatureCardPreview
+                  creature={cardData}
+                  onClose={null}
+                  level={selectedInstance.level || 0}
+                  isHolo={!!selectedInstance.isHolo}
+                  allowFlip={false}
+                />
+              </div>
+              <div className="instance-preview-recycle">
+                <div className="instance-preview-value">
+                  <span>{lang === 'en' ? 'Recycle value' : 'Valor ao reciclar'}</span>
+                  <strong>+{selectedInstanceValue} moeda{selectedInstanceValue === 1 ? '' : 's'}</strong>
+                </div>
+                <button
+                  type="button"
+                  className="instance-preview-recycle-btn"
+                  onClick={(e) => handleRecycle(selectedInstance.instanceId, e)}
+                  disabled={recyclingInstanceId === selectedInstance.instanceId}
+                >
+                  {recyclingInstanceId === selectedInstance.instanceId ? 'Reciclando...' : 'Reciclar carta'}
+                </button>
+                {onAdorn && (
+                  <button
+                    type="button"
+                    className="instance-preview-adorn-btn"
+                    onClick={(e) => handleAdorn(selectedInstance.instanceId, e)}
+                    disabled={!canAdornSelected || adorningInstanceId === selectedInstance.instanceId}
+                  >
+                    {adorningInstanceId === selectedInstance.instanceId
+                      ? 'Adornando...'
+                      : selectedInstance.isHolo
+                        ? 'Carta holográfica'
+                        : adornCount >= 10
+                          ? 'Adornar carta'
+                          : `Adornar (${adornCount}/10)`}
+                  </button>
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="instance-card-preview-empty">
+              {lang === 'en' ? 'Select a copy' : 'Selecione uma cópia'}
+            </div>
+          )}
+        </aside>
         </div>
 
         {/* Actions */}

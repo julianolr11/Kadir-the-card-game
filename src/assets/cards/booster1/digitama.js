@@ -17,8 +17,8 @@ module.exports = {
       cost: 1,
       type: 'damage_chance_burn',
       desc: {
-        pt: 'Causa 2 de dano e tem 50% de chance de aplicar <span class="debuff-burn">queimadura</span> por 2 turnos.',
-        en: 'Deals 2 damage and has a 50% chance to apply <span class="debuff-burn">burn</span> for 2 turns.',
+        pt: 'Causa 2 de dano e jogue a moeda 1 vez; se der cara, aplica <span class="debuff-queimadura">queimadura</span> por 2 turnos.',
+        en: 'Deals 2 damage and flips a coin once; on heads, apply <span class="debuff-burn">burn</span> for 2 turns.',
       },
       damage: 2,
       chance: 0.5,
@@ -30,8 +30,8 @@ module.exports = {
       cost: 2,
       type: 'damage_chance_sleep',
       desc: {
-        pt: 'Causa 1 de dano e tem 50% de chance de aplicar <span class="debuff-sleep">dormir</span> por 2 turnos (não pode agir).',
-        en: 'Deals 1 damage and has a 50% chance to apply <span class="debuff-sleep">sleep</span> for 2 turns (cannot act).',
+        pt: 'Causa 1 de dano e jogue a moeda 1 vez; se der cara, aplica <span class="debuff-sono">dormir</span> por 2 turnos (não pode agir).',
+        en: 'Deals 1 damage and flips a coin once; on heads, apply <span class="debuff-sleep">sleep</span> for 2 turns (cannot act).',
       },
       damage: 1,
       chance: 0.5,
@@ -41,8 +41,8 @@ module.exports = {
   ],
   field: { pt: 'Aura Flamejante', en: 'Flaming Aura' },
   fielddesc: {
-    pt: 'Aumenta dano de fogo em 4% e chance de queimadura em +8% enquanto Digitama estiver em campo.',
-    en: 'Increases fire damage by 4% and burn chance by +8% while Digitama is on the field.',
+    pt: 'Aliados de fogo causam +1 dano com queimadura enquanto Digitama estiver em campo.',
+    en: 'Fire allies deal +1 burn damage while Digitama is on the field.',
   },
   storyTitle: { pt: 'Origem de Digitama', en: 'Origin of Digitama' },
   story: [
@@ -65,8 +65,8 @@ module.exports = {
       id: 'digitama_skill_chama_mistica',
       name: { pt: 'Chama Mística', en: 'Mystic Flame' },
       desc: {
-        pt: 'Causa 2 de dano e 50% de chance de aplicar <span class="debuff-burn">queimadura</span> por 2 turnos.',
-        en: 'Deals 2 damage and 50% chance to apply <span class="debuff-burn">burn</span> for 2 turns.',
+        pt: 'Causa 2 de dano e jogue a moeda 1 vez; se der cara, aplica <span class="debuff-queimadura">queimadura</span> por 2 turnos.',
+        en: 'Deals 2 damage and flips a coin once; on heads, apply <span class="debuff-burn">burn</span> for 2 turns.',
       },
       cost: 1,
       type: 'damage_chance_burn',
@@ -79,8 +79,8 @@ module.exports = {
       id: 'digitama_skill_fumaca_sonolenta',
       name: { pt: 'Fumaça Sonolenta', en: 'Sleepy Smoke' },
       desc: {
-        pt: 'Causa 1 de dano e 50% de chance de aplicar <span class="debuff-sleep">dormir</span> por 2 turnos.',
-        en: 'Deals 1 damage and 50% chance to apply <span class="debuff-sleep">sleep</span> for 2 turns.',
+        pt: 'Causa 1 de dano e jogue a moeda 1 vez; se der cara, aplica <span class="debuff-sono">dormir</span> por 2 turnos.',
+        en: 'Deals 1 damage and flips a coin once; on heads, apply <span class="debuff-sleep">sleep</span> for 2 turns.',
       },
       cost: 2,
       type: 'damage_chance_sleep',
@@ -94,8 +94,8 @@ module.exports = {
       id: 'digitama_blessing',
       name: { pt: 'Coroa Ardente', en: 'Burning Crown' },
       desc: {
-        pt: 'Aliados de fogo ganham +6% crit e queimaduras causam +1 de dano por turno.',
-        en: 'Fire allies gain +6% crit and burns deal +1 damage per turn.',
+        pt: 'Aliados de fogo jogam a moeda ao atacar; se der cara, causam +1 dano. Queimaduras causam +1 dano por turno.',
+        en: 'Fire allies gain +1 damage on heads and burns deal +1 damage per turn.',
       },
     },
   unlockTable: [
@@ -122,7 +122,7 @@ module.exports = {
         en: 'Gain evasion for 2 turns and reflect 1 fire damage.',
       },
       cost: 1,
-      type: 'buff_reflect',
+      effectType: 'buff_reflect',
     },
     // Nível 4 - Perk: Chama Persistente
     {
@@ -142,11 +142,11 @@ module.exports = {
       id: 'digitama_skill_brasa_giratoria',
       name: { pt: 'Brasa Giratória', en: 'Spinning Ember' },
       desc: {
-        pt: 'Causa 2 de dano, aplica queimadura e 50% de chance de cegar por 1 turno.',
-        en: 'Deals 2 damage, applies burn and 50% chance to blind for 1 turn.',
+        pt: 'Causa 2 de dano, aplica queimadura e jogue a moeda 1 vez; se der cara, cegar por 1 turno.',
+        en: 'Deals 2 damage, applies burn and flips a coin once; on heads, blind for 1 turn.',
       },
       cost: 1,
-      type: 'damage_burn_blind',
+      effectType: 'damage_burn_blind',
     },
     // Nível 6 - Perk: Fôlego Místico
     {
@@ -170,7 +170,7 @@ module.exports = {
         en: 'Deals 3 damage, ignores shield and applies fire bleed for 2 turns.',
       },
       cost: 2,
-      type: 'damage_bleed_shieldpierce',
+      effectType: 'damage_bleed_shieldpierce',
     },
     // Nível 8 - Perk: Fogo Protetor
     {
@@ -194,7 +194,7 @@ module.exports = {
         en: 'Deals 3 damage. If the target is burning, deal +1 damage.',
       },
       cost: 2,
-      type: 'damage_burn_bonus',
+      effectType: 'damage_burn_bonus',
     },
     // Nível 10 - Habilidade: Chama Final
     {
@@ -207,7 +207,7 @@ module.exports = {
         en: 'Deals 4 damage, applies extreme burn (2 damage/turn) and silences for 1 turn.',
       },
       cost: 3,
-      type: 'damage_extreme_burn_silence',
+      effectType: 'damage_extreme_burn_silence',
     },
   ],
   };

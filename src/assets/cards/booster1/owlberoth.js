@@ -15,28 +15,28 @@ module.exports = {
       name: { pt: 'Olhar Místico', en: 'Mystic Gaze' },
       cost: 1,
       desc: {
-        pt: 'Causa 3 de dano ao inimigo.',
-        en: 'Deals 3 damage to the enemy.',
+        pt: 'Causa 3 de dano e revela 1 carta da mão do oponente.',
+        en: 'Deals 3 damage and reveals 1 card from the opponent hand.',
       },
     },
     {
       name: { pt: 'Voo Noturno', en: 'Night Flight' },
       cost: 1,
       desc: {
-        pt: 'Aliados recebem bônus de esquiva.',
-        en: 'Allies gain an evasion bonus.',
+        pt: 'Concede 1 de escudo a todos os aliados por 1 turno.',
+        en: 'Grants 1 shield to all allies for 1 turn.',
       },
     },
   ],
   field: { pt: 'Noite Sagrada', en: 'Sacred Night' },
   fielddesc: {
-    pt: 'Aliados têm 3% mais chance de esquiva enquanto Owlberoth estiver em campo.',
-    en: 'Allies have 3% increased evasion while Owlberoth is on the field.',
+    pt: 'Aliados ganham +1 esquiva enquanto Owlberoth estiver em campo.',
+    en: 'Allies gain +1 evasion while Owlberoth is on the field.',
   },
   storyTitle: { pt: 'Origem de Owlberoth', en: 'Origin of Owlberoth' },
   story: [
     {
-      pt: 'Owlberoth é uma criatura mística, guardiã dos segredos da noite.',
+      pt: 'Owlberoth é uma criatura mistica, guardiã dos segredos da noite.',
       en: 'Owlberoth is a mystical creature, guardian of the secrets of the night.',
     },
     {
@@ -45,156 +45,154 @@ module.exports = {
     },
   ],
 
-  // ===== DADOS ESTENDIDOS (Guardião) =====
+  // ===== DADOS ESTENDIDOS (Guardiao) =====
   isGuardian: true,
   defaultBlessing: {
     id: 'owlberoth_blessing',
     name: { pt: 'Expulsão Mística', en: 'Mystic Expulsion' },
     desc: {
-      pt: 'Ao ser invocado o usuário escolhe 1 carta em campo do oponente para retornar para a mão dele.',
-      en: 'When summoned, you choose 1 enemy creature on the field to return to their hand.',
+      pt: 'Ao ser invocado, escolha 1 criatura inimiga em campo para retornar para a mão do oponente.',
+      en: 'When summoned, choose 1 enemy creature on the field to return to the opponent hand.',
     },
   },
   defaultSkills: [
     {
-      unlockTable: [
-        { level: 0, type: 'none' },
-        // Nível 2 - Perk: Olhar Penetrante
-        {
-          level: 2,
-          type: 'perk',
-          id: 'PIERCING_GAZE',
-          name: { pt: 'Olhar Penetrante', en: 'Piercing Gaze' },
-          desc: {
-            pt: 'Ganha +1 precisão ao entrar em campo.',
-            en: 'Gain +1 accuracy when summoned.',
-          },
-        },
-        // Nível 3 - Habilidade: Reflexo Rápido
-        {
-          level: 3,
-          type: 'skill',
-          id: 'owlberoth_skill_reflexo_rapido',
-          name: { pt: 'Reflexo Rápido', en: 'Quick Reflexes' },
-          desc: {
-            pt: 'Causa 2 de dano e aumenta velocidade por 2 turnos.',
-            en: 'Deals 2 damage and increases speed for 2 turns.',
-          },
-          cost: 1,
-          type: 'damage_buff',
-        },
-        // Nível 4 - Perk: Sabedoria Protetora
-        {
-          level: 4,
-          type: 'perk',
-          id: 'PROTECTIVE_WISDOM',
-          name: { pt: 'Sabedoria Protetora', en: 'Protective Wisdom' },
-          desc: {
-            pt: 'Recebe -1 de dano de ataques mágicos.',
-            en: 'Takes -1 damage from magic attacks.',
-          },
-        },
-        // Nível 5 - Habilidade: Escudo Sábio
-        {
-          level: 5,
-          type: 'skill',
-          id: 'owlberoth_skill_escudo_sabio',
-          name: { pt: 'Escudo Sábio', en: 'Wise Shield' },
-          desc: {
-            pt: 'Causa 3 de dano e fornece escudo para o próximo turno.',
-            en: 'Deals 3 damage and provides shield for the next turn.',
-          },
-          cost: 2,
-          type: 'damage_shield',
-        },
-        // Nível 6 - Perk: Fôlego Noturno
-        {
-          level: 6,
-          type: 'perk',
-          id: 'NIGHT_BREATH',
-          name: { pt: 'Fôlego Noturno', en: 'Night Breath' },
-          desc: {
-            pt: 'Ao derrotar um inimigo, recupera 1 de vida.',
-            en: 'When defeating an enemy, recover 1 HP.',
-          },
-        },
-        // Nível 7 - Habilidade: Fúria Encapuzada
-        {
-          level: 7,
-          type: 'skill',
-          id: 'owlberoth_skill_furia_encapuzada',
-          name: { pt: 'Fúria Encapuzada', en: 'Hooded Fury' },
-          desc: {
-            pt: 'Causa 4 de dano e cria escudo permanente.',
-            en: 'Deals 4 damage and creates a permanent shield.',
-          },
-          cost: 2,
-          type: 'damage_permanent_shield',
-        },
-        // Nível 8 - Perk: Olhos Vigilantes
-        {
-          level: 8,
-          type: 'perk',
-          id: 'WATCHFUL_EYES',
-          name: { pt: 'Olhos Vigilantes', en: 'Watchful Eyes' },
-          desc: {
-            pt: 'No início do turno, ganha 1 de escudo se estiver com precisão ativa.',
-            en: 'At the start of the turn, gain 1 shield if accuracy is active.',
-          },
-        },
-        // Nível 9 - Habilidade: Vigilância Eterna
-        {
-          level: 9,
-          type: 'skill',
-          id: 'owlberoth_skill_vigilancia_eterna',
-          name: { pt: 'Vigilância Eterna', en: 'Eternal Vigilance' },
-          desc: {
-            pt: 'Causa 4 de dano e protege todos os aliados por 1 turno.',
-            en: 'Deals 4 damage and protects all allies for 1 turn.',
-          },
-          cost: 3,
-          type: 'damage_team_protect',
-        },
-        // Nível 10 - Habilidade: Sentença do Sábio
-        {
-          level: 10,
-          type: 'skill',
-          id: 'owlberoth_skill_sentenca_sabio',
-          name: { pt: 'Sentença do Sábio', en: "Sage's Sentence" },
-          desc: {
-            pt: 'Supremo: 4 de dano e cria escudo absoluto para todos os aliados.',
-            en: 'Ultimate: 4 damage and creates absolute shield for all allies.',
-          },
-          cost: 4,
-          type: 'ultimate_team_abs_shield',
-        },
-      ],
-      cost: 2,
+      id: 'owlberoth_skill_olhar_mistico',
+      name: { pt: 'Olhar Místico', en: 'Mystic Gaze' },
+      desc: {
+        pt: 'Causa 3 de dano e revela 1 carta da mão do oponente.',
+        en: 'Deals 3 damage and reveals 1 card from the opponent hand.',
+      },
+      cost: 1,
+      type: 'damage_reveal',
+      damage: 3,
+      reveal: 1,
     },
-    { level: 6, type: 'none' },
-    { level: 7, type: 'perk', id: 'GUARDIAN_KILL_XP_BONUS' },
-    { level: 8, type: 'perk', id: 'HP_PLUS_2' },
+    {
+      id: 'owlberoth_skill_voo_noturno',
+      name: { pt: 'Voo Noturno', en: 'Night Flight' },
+      desc: {
+        pt: 'Concede 1 de escudo a todos os aliados por 1 turno.',
+        en: 'Grants 1 shield to all allies for 1 turn.',
+      },
+      cost: 1,
+      type: 'team_shield',
+      shield: 1,
+      duration: 1,
+    },
+  ],
+  unlockTable: [
+    { level: 0, type: 'none' },
+    {
+      level: 2,
+      type: 'perk',
+      id: 'PIERCING_GAZE',
+      name: { pt: 'Olhar Penetrante', en: 'Piercing Gaze' },
+      desc: {
+        pt: 'Ao entrar em campo, reduz a precisão de 1 inimigo em 1 por 1 turno.',
+        en: 'When summoned, lowers 1 enemy accuracy by 1 for 1 turn.',
+      },
+    },
+    {
+      level: 3,
+      type: 'skill',
+      id: 'owlberoth_skill_reflexo_rapido',
+      name: { pt: 'Reflexo Rápido', en: 'Quick Reflexes' },
+      desc: {
+        pt: 'Causa 2 de dano e ganha +1 velocidade por 2 turnos.',
+        en: 'Deals 2 damage and gains +1 speed for 2 turns.',
+      },
+      cost: 1,
+      effectType: 'damage_buff',
+      damage: 2,
+      buff: { stat: 'speed', value: 1, duration: 2 },
+    },
+    {
+      level: 4,
+      type: 'perk',
+      id: 'PROTECTIVE_WISDOM',
+      name: { pt: 'Sabedoria Protetora', en: 'Protective Wisdom' },
+      desc: {
+        pt: 'Recebe -1 de dano do primeiro ataque recebido em cada turno.',
+        en: 'Takes -1 damage from the first attack received each turn.',
+      },
+    },
+    {
+      level: 5,
+      type: 'skill',
+      id: 'owlberoth_skill_escudo_sabio',
+      name: { pt: 'Escudo Sábio', en: 'Wise Shield' },
+      desc: {
+        pt: 'Causa 3 de dano e concede 1 de escudo ao aliado com menor HP.',
+        en: 'Deals 3 damage and grants 1 shield to the ally with the lowest HP.',
+      },
+      cost: 2,
+      effectType: 'damage_shield_ally',
+      damage: 3,
+      shield: 1,
+    },
+    {
+      level: 6,
+      type: 'perk',
+      id: 'NIGHT_BREATH',
+      name: { pt: 'Fôlego Noturno', en: 'Night Breath' },
+      desc: {
+        pt: 'Ao derrotar um inimigo, recupera 1 de HP.',
+        en: 'When defeating an enemy, recovers 1 HP.',
+      },
+    },
+    {
+      level: 7,
+      type: 'skill',
+      id: 'owlberoth_skill_furia_encapuzada',
+      name: { pt: 'Fúria Encapuzada', en: 'Hooded Fury' },
+      desc: {
+        pt: 'Causa 4 de dano. Se a moeda der cara, concede 1 de escudo a todos os aliados.',
+        en: 'Deals 4 damage. On heads, grants 1 shield to all allies.',
+      },
+      cost: 2,
+      effectType: 'damage_coin_team_shield',
+      damage: 4,
+      shield: 1,
+    },
+    {
+      level: 8,
+      type: 'perk',
+      id: 'WATCHFUL_EYES',
+      name: { pt: 'Olhos Vigilantes', en: 'Watchful Eyes' },
+      desc: {
+        pt: 'No início do turno, se houver inimigo revelado, ganha 1 de escudo.',
+        en: 'At the start of the turn, if an enemy is revealed, gains 1 shield.',
+      },
+    },
     {
       level: 9,
       type: 'skill',
-      id: 'owlberoth_skill_6',
-      name: { pt: 'Vigiância Eterna', en: 'Eternal Vigilance' },
+      id: 'owlberoth_skill_vigilancia_eterna',
+      name: { pt: 'Vigilância Eterna', en: 'Eternal Vigilance' },
       desc: {
-        pt: 'Causa 4 de dano e protege todos os aliados.',
-        en: 'Deals 4 damage and protects all allies.',
+        pt: 'Causa 4 de dano e protege todos os aliados por 1 turno.',
+        en: 'Deals 4 damage and protects all allies for 1 turn.',
       },
-      cost: 2,
+      cost: 3,
+      effectType: 'damage_team_protect',
+      damage: 4,
+      shield: 1,
+      duration: 1,
     },
     {
       level: 10,
       type: 'skill',
-      id: 'owlberoth_skill_7',
+      id: 'owlberoth_skill_sentenca_sabio',
       name: { pt: 'Sentença do Sábio', en: "Sage's Sentence" },
       desc: {
-        pt: 'Supremo: 4 de dano e cria escudo absoluto para todos os aliados.',
-        en: 'Ultimate: 4 damage and creates absolute shield for all allies.',
+        pt: 'Supremo: causa 4 de dano e concede 2 de escudo para todos os aliados.',
+        en: 'Ultimate: deals 4 damage and grants 2 shield to all allies.',
       },
-      cost: 3,
+      cost: 4,
+      effectType: 'ultimate_team_shield',
+      damage: 4,
+      shield: 2,
     },
   ],
 };

@@ -27,7 +27,7 @@ module.exports = {
       name: { pt: 'Mordida Abissal', en: 'Abyssal Bite' },
       cost: 1,
       desc: {
-        pt: 'Ignora 1 ponto de defesa do alvo ao atacar e causa <span class="debuff-bleed">sangramento</span> por 2 turnos.',
+        pt: 'Ignora 1 ponto de defesa do alvo ao atacar e causa <span class="debuff-sangramento">sangramento</span> por 2 turnos.',
         en: 'Ignores 1 defense point of the target when attacking and causes <span class="debuff-bleed">bleed</span> for 2 turns.',
       },
     },
@@ -76,8 +76,8 @@ module.exports = {
     id: 'whalar_blessing',
     name: { pt: 'Friagem Abissal', en: 'Abyssal Cold' },
     desc: {
-      pt: 'Criaturas de água ganham +3% de velocidade enquanto Whalar estiver em campo.',
-      en: 'Water creatures gain +3% speed while Whalar is on the field.',
+      pt: 'Criaturas de água ganham +1 velocidade enquanto Whalar estiver em campo.',
+      en: 'Water creatures gain +1 speed while Whalar is on the field.',
     },
   },
   unlockTable: [
@@ -104,7 +104,7 @@ module.exports = {
         en: 'Deals 2 damage with frozen spikes.',
       },
       cost: 1,
-      type: 'damage',
+      effectType: 'damage',
     },
     // Nível 4 - Perk: Resistência Abissal
     {
@@ -128,7 +128,7 @@ module.exports = {
         en: 'Deals 3 damage and reduces enemy speed for 2 turns.',
       },
       cost: 2,
-      type: 'damage_slow',
+      effectType: 'damage_slow',
     },
     // Nível 6 - Perk: Fôlego das Profundezas
     {
@@ -152,7 +152,7 @@ module.exports = {
         en: 'Deals 4 damage with the force of the depths.',
       },
       cost: 2,
-      type: 'damage',
+      effectType: 'damage',
     },
     // Nível 8 - Perk: Maré Protetora
     {
@@ -176,7 +176,7 @@ module.exports = {
         en: 'Deals 4 damage and binds the enemy for 2 turns.',
       },
       cost: 3,
-      type: 'damage_bind',
+      effectType: 'damage_bind',
     },
     // Nível 10 - Habilidade: Cataclisma Aquático
     {
@@ -189,7 +189,7 @@ module.exports = {
         en: 'Ultimate: 4 damage and freezes enemies for 2 turns.',
       },
       cost: 4,
-      type: 'ultimate_freeze',
+      effectType: 'ultimate_freeze',
     },
   ],
 };

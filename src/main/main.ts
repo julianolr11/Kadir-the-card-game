@@ -21,6 +21,8 @@ import { setupAudioManager } from './audioManager';
 log.transports.file.level = 'info';
 autoUpdater.logger = log;
 
+app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
+
 let mainWindow: BrowserWindow | null = null;
 
 ipcMain.on('ipc-example', async (event, arg) => {

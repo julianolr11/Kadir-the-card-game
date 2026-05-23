@@ -47,21 +47,37 @@ const colorClass = {
 
 // Mapa de cores para status effects
 const STATUS_COLORS = {
-  burn: '#ff6450',
-  freeze: '#64c8ff',
+  burn: '#ff9a2f',
+  freeze: '#64e8ff',
   paralyze: '#ffff64',
-  poison: '#9664ff',
+  poison: '#4dff88',
   sleep: '#c896ff',
   bleed: '#ff6464',
-  armor: '#4169e1',
+  armor: '#5aa7ff',
 };
 
 // Função para processar descrição com emojis e adicionar ícones + texto colorido
+const HIGHLIGHT_KEYWORDS = [
+  { className: 'debuff-poison', pattern: /(envenenamento|envenena(?:r|do|da|m|ndo)?|veneno|poison(?:ed|ing)?)/gi },
+  { className: 'debuff-freeze', pattern: /(congelamento|congela(?:r|do|da|m|ndo)?|freeze|frozen)/gi },
+  { className: 'debuff-burn', pattern: /(queimadura(?:s)?|queima(?:r|do|da|m|ndo)?|burn(?:ed|ing)?)/gi },
+  { className: 'debuff-sleep', pattern: /(sono|dorme(?:r|m|ndo)?|adormece(?:r|m|ndo)?|sleep|asleep)/gi },
+  { className: 'buff-protection', pattern: /(proteção|protecao|protege(?:r|m|ndo)?|escudo(?:s)?|armadura|shield(?:s)?|protection|armor)/gi },
+  { className: 'debuff-bleed', pattern: /(sangramento|sangra(?:r|do|da|m|ndo)?|bleed(?:ing)?)/gi },
+  { className: 'debuff-paralyze', pattern: /(paralisia|paralisa(?:r|do|da|m|ndo)?|paralyze(?:d)?|stun(?:ned)?)/gi },
+  { className: 'buff-positive', pattern: /(cura(?:r|do|da|m|ndo)?|regenera(?:ção|cao|r|m|ndo)?|aumenta(?:r|m|ndo)?|ganha(?:r|m|ndo)?|concede(?:r|m|ndo)?|velocidade|esquiva|crítico|critico|defesa|ataque|heal(?:ing)?|regeneration|gain(?:s)?|grant(?:s)?|speed|dodge|critical|defense|attack)/gi },
+];
+
+const highlightDescriptionKeywords = (text) => HIGHLIGHT_KEYWORDS.reduce(
+  (current, { className, pattern }) => current.replace(pattern, match => `<span class="${className}">${match}</span>`),
+  text,
+);
+
 const processDescription = (desc) => {
   if (!desc) return '';
 
   // Se já contém tags <span class=...>, apenas retorna (dangerouslySetInnerHTML já interpreta)
-  if (/<span[^>]*class=["']debuff-[^"']+["'][^>]*>/.test(desc)) {
+  if (false && /<span[^>]*class=["']debuff-[^"']+["'][^>]*>/.test(desc)) {
     return desc;
   }
 
@@ -97,10 +113,32 @@ const processDescription = (desc) => {
     `<img src="${shieldIcon}" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ${STATUS_COLORS.armor}; font-weight: 600;">armadura</span>`,
   );
 
-  return processed;
+  return processed
+    .split(/(<[^>]+>)/g)
+    .map(part => (part.startsWith('<') ? part : highlightDescriptionKeywords(part)))
+    .join('');
 };
 
 // Função helper para renderizar descrição com ícone de status effect
+const normalizeFieldLabel = (value) => {
+  if (!value) return '';
+  const normalized = String(value)
+    .replace(/_/g, ' ')
+    .replace(/\bdraconideo\b/i, 'Draconídeo')
+    .replace(/\bagua\b/i, 'Água')
+    .replace(/\bar\b/i, 'Ar')
+    .replace(/\bfogo\b/i, 'Fogo')
+    .replace(/\bterra\b/i, 'Terra')
+    .replace(/\bpuro\b/i, 'Puro')
+    .replace(/\bmonstro\b/i, 'Monstro')
+    .replace(/\bfera\b/i, 'Fera')
+    .replace(/\bave\b/i, 'Ave')
+    .replace(/\breptiloide\b/i, 'Reptiloide')
+    .replace(/\bmistica\b/i, 'Mística')
+    .replace(/\bsombria\b/i, 'Sombria');
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+};
+
 const renderDescriptionWithStatus = (desc, statusEffect) => {
   if (!statusEffect || !STATUS_ICONS[statusEffect]) return desc;
   return (
@@ -120,6 +158,22 @@ const renderDescriptionWithStatus = (desc, statusEffect) => {
       />
     </span>
   );
+};
+
+const EFFECT_TYPE_LABELS = {
+  draw: 'Compra',
+  swap: 'Troca',
+  essence: 'Essencia',
+  damageAll: 'Impacto',
+  heal: 'Vitalidade',
+  shield: 'Protecao',
+  drawOpponent: 'Revelacao',
+  resurrect: 'Necromancia',
+  control: 'Ilusao',
+  shieldAll: 'Fortaleza',
+  destroyAll: 'Anulacao',
+  damageBuff: 'Furia',
+  essenceSacrifice: 'Ritual',
 };
 
 function CreatureCardPreview({
@@ -174,6 +228,11 @@ function CreatureCardPreview({
   // Detecta se é carta de campo
   const isFieldCard = creature.type === 'field';
   const isEffectCard = creature.type === 'effect';
+  const fieldElementLabel = normalizeFieldLabel(creature.element);
+  const fieldTypeLabel = normalizeFieldLabel(creature.fieldType);
+  const fieldElementBoosts = creature.elementBoosts || {};
+  const fieldTypeBoosts = creature.cardTypeBoosts || {};
+  const fieldSpecialBoosts = creature.specialBoosts || {};
   // Força classe de campo se solicitado
   const forceFieldClass = creature.forceFieldClass;
   // Corrige imagem para cartas de campo
@@ -211,6 +270,8 @@ function CreatureCardPreview({
   const creatureRarityData = !isFieldCard && !isEffectCard ? getCreatureRarity(creature.id) : null;
   const rarityClass = creatureRarityData ? `rarity-${creatureRarityData.rarity}` : '';
   const rarityConfig = creatureRarityData?.config;
+  const effectDescription = typeof creature.description === 'object' ? creature.description.pt || creature.description.en : creature.description;
+  const effectLabel = EFFECT_TYPE_LABELS[creature.effectType] || 'Arcano';
 
   return (
     <div style={{ position: 'relative', display: 'flex', perspective: '1000px' }}>
@@ -314,15 +375,61 @@ function CreatureCardPreview({
               </div>
             </div>
             {/* Se for carta de campo, mostra só lore e description */}
-            {isFieldCard || isEffectCard ? (
-              <div className="card-preview-field-desc">
+            {isFieldCard ? (
+              <div className="card-preview-field-desc field-card-info">
+                {creature.lore && (
+                  <div className="field-card-lore">
+                    <span className="field-card-label">Descrição</span>
+                    <p>{creature.lore}</p>
+                  </div>
+                )}
+
+                <div className="field-card-affinity">
+                  <span className="field-card-label">Fortalece</span>
+                  <div className="field-card-tags">
+                    {fieldElementLabel && <span className="field-card-tag field-card-tag-element">Elemento {fieldElementLabel}</span>}
+                    {fieldTypeLabel && <span className="field-card-tag field-card-tag-type">Tipo {fieldTypeLabel}</span>}
+                  </div>
+                </div>
+
+                <div className="field-card-bonuses">
+                  <span className="field-card-label">Bônus do campo</span>
+                  {Object.entries(fieldElementBoosts).map(([element, value]) => (
+                    <div className="field-card-bonus-row" key={`element-${element}`}>
+                      <span>Criaturas de {normalizeFieldLabel(element)}</span>
+                      <strong>+{value} dano / +{value} vida</strong>
+                    </div>
+                  ))}
+                  {Object.entries(fieldTypeBoosts).map(([type, value]) => (
+                    <div className="field-card-bonus-row" key={`type-${type}`}>
+                      <span>Criaturas do tipo {normalizeFieldLabel(type)}</span>
+                      <strong>+{value} dano / +{value} vida</strong>
+                    </div>
+                  ))}
+                  {Object.entries(fieldSpecialBoosts).map(([key, value]) => (
+                    <div className="field-card-bonus-row field-card-bonus-row-special" key={`special-${key}`}>
+                      <span>{fieldElementLabel && fieldTypeLabel ? `${fieldElementLabel} + ${fieldTypeLabel}` : 'Afinidade dupla'}</span>
+                      <strong>+{value.damage} dano / +{value.hp} vida</strong>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : isEffectCard ? (
+              <div className="card-preview-field-desc effect-card-info">
                 {creature.lore && (
                   <div style={{ marginBottom: 12, fontSize: '13px', fontStyle: 'italic', color: '#ddd', lineHeight: '1.4' }}>
                     <strong>Descrição:</strong> {creature.lore}
                   </div>
                 )}
-                <strong>{isEffectCard ? 'Efeito:' : 'Efeito:'}</strong>
-                <div style={{ whiteSpace: 'pre-line', fontSize: '13px', color: '#fff', lineHeight: '1.4' }}>{typeof creature.description === 'object' ? creature.description.pt || creature.description.en : creature.description}</div>
+                <div className="effect-card-kind">
+                  <span className="effect-card-label">Categoria</span>
+                  <span className="effect-card-chip">{effectLabel}</span>
+                </div>
+                <strong>Efeito:</strong>
+                <div
+                  className="effect-card-effect-text"
+                  dangerouslySetInnerHTML={{ __html: processDescription(effectDescription) }}
+                />
               </div>
             ) : (
               <div className="card-preview-abilities">

@@ -31,8 +31,8 @@ module.exports = {
   ],
   field: { pt: 'Horizonte Eterno', en: 'Eternal Horizon' },
   fielddesc: {
-    pt: 'Aliados puros ganham +4% resistência e +5% chance de crítico; furtividade inimiga é enfraquecida.',
-    en: 'Pure allies gain +4% resistance and +5% crit chance; enemy stealth is weakened.',
+    pt: 'Aliados puros ganham +1 resistência e +1 dano se a moeda der cara; furtividade inimiga é enfraquecida.',
+    en: 'Pure allies gain +1 resistance and +1 damage on heads; enemy stealth is weakened.',
   },
   storyTitle: { pt: 'Círculo que Nunca Fecha', en: 'Circle That Never Ends' },
   story: [
@@ -57,8 +57,8 @@ module.exports = {
       id: 'ekonos_skill_1',
       name: { pt: 'Raio Contínuo', en: 'Continuous Ray' },
       desc: {
-        pt: 'Causa 3 de dano puro e reduz precisão do alvo em 4% por 1 turno.',
-        en: 'Deals 3 pure damage and lowers target accuracy by 4% for 1 turn.',
+        pt: 'Causa 3 de dano puro e reduz precisão do alvo em 1 por 1 turno.',
+        en: 'Deals 3 pure damage and applies imprecision for 1 turn.',
       },
       cost: 1,
       type: 'damage_debuff',
@@ -67,8 +67,8 @@ module.exports = {
       id: 'ekonos_skill_2',
       name: { pt: 'Vigília Perpétua', en: 'Perpetual Vigil' },
       desc: {
-        pt: 'Ganha um escudo que nega ataques, revela furtivos e dá +8% esquiva por 1 rodada.',
-        en: 'Gains a shield that negates attacks, reveals stealth, and grants +8% dodge for 1 round.',
+        pt: 'Ganha um escudo que nega ataques, revela furtivos e concede +1 esquiva por 1 rodada.',
+        en: 'Gains a shield that negates attacks, reveals stealth, and grants +1 evasion for 1 round.',
       },
       cost: 1,
       type: 'buff',
@@ -90,8 +90,8 @@ module.exports = {
       id: 'ekonos_skill_3',
       name: { pt: 'Orbe Suspenso', en: 'Suspended Orb' },
       desc: {
-        pt: 'Causa 3 de dano puro e reduz defesa em 3% por 2 turnos.',
-        en: 'Deals 3 pure damage and lowers defense by 3% for 2 turns.',
+        pt: 'Causa 3 de dano puro e reduz defesa em 1 por 2 turnos.',
+        en: 'Deals 3 pure damage and lowers defense by 1 for 2 turns.',
       },
       cost: 1,
     },
@@ -114,8 +114,8 @@ module.exports = {
       id: 'ekonos_skill_5',
       name: { pt: 'Círculo Vigia', en: 'Watcher Circle' },
       desc: {
-        pt: 'Garante um escudo que nega todos os ataques por 2 rodadas e +10% resistência.',
-        en: 'Grants a shield that negates all attacks for 2 rounds and +10% resistance.',
+        pt: 'Garante um escudo que nega todos os ataques por 2 rodadas e +1 resistência.',
+        en: 'Grants a shield that negates all attacks for 2 rounds and +1 resistance.',
       },
       cost: 2,
     },
@@ -139,8 +139,8 @@ module.exports = {
       id: 'ekonos_skill_7',
       name: { pt: 'Supremo: Horizonte Imóvel', en: 'Ultimate: Motionless Horizon' },
       desc: {
-        pt: 'Supremo: 4 de dano em todos, revela furtivos e concede +12% crítico a aliados puros por 2 turnos.',
-        en: 'Ultimate: 4 damage to all, reveals stealth, and grants pure allies +12% crit for 2 turns.',
+        pt: 'Supremo: 4 de dano em todos, revela furtivos e concede +1 dano se a moeda der cara a aliados puros por 2 turnos.',
+        en: 'Ultimate: 4 damage to all, reveals stealth, and grants pure allies +1 damage on heads for 2 turns.',
       },
       cost: 3,
     },

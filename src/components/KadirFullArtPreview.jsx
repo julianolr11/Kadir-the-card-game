@@ -1,0 +1,235 @@
+import React, { useContext, useEffect, useMemo, useState } from 'react';
+import { AppContext } from '../context/AppContext';
+import allCards from '../assets/cards';
+import lvlIcon from '../assets/img/icons/lvlicon.png';
+import heartIcon from '../assets/img/icons/hearticon.png';
+import soulEssenceIcon from '../assets/img/icons/soul-essence.png';
+import fogoIcon from '../assets/img/elements/fogo.png';
+import aguaIcon from '../assets/img/elements/agua.png';
+import terraIcon from '../assets/img/elements/terra.png';
+import arIcon from '../assets/img/elements/ar.png';
+import puroIcon from '../assets/img/elements/puro.png';
+import '../styles/kadir-full-art.css';
+
+const COMMAND = 'kadirart';
+
+const getText = (value, langKey = 'pt') => {
+  if (!value) return '';
+  if (typeof value === 'string') return value;
+  return value[langKey] || value.pt || value.ptbr || value.en || '';
+};
+
+const stripHtml = (value) => getText(value)
+  .replace(/<[^>]+>/g, '')
+  .replace(/\s+/g, ' ')
+  .trim();
+
+const resolveImage = (card) => {
+  if (!card) return '';
+  if (typeof card.img === 'string') return card.img;
+  if (card.img && typeof card.img === 'object') {
+    return card.img.default || Object.values(card.img)[0] || '';
+  }
+  return card.image || '';
+};
+
+const elementIcons = {
+  fogo: fogoIcon,
+  agua: aguaIcon,
+  terra: terraIcon,
+  ar: arIcon,
+  puro: puroIcon,
+};
+
+const fullArtFocus = {
+  agolir: { position: '36% 0%', scale: 1.01 },
+  alatoy: { position: '20% 1774%', scale: 1.01 },
+  arguilia: { position: '46% 155%', scale: 1.14 },
+  arigus: { position: '52% 42%', scale: 1.04 },
+  ashfang: { position: '51% 44%', scale: 1.03 },
+  beoxyr: { position: '58% 74%%', scale: 1.01 },
+  digitama: { position: '54% 229%', scale: 1.13 },
+  draak: { position: '66% 74%', scale: 1.33 },
+  drazaq: { position: '50% 44%', scale: 1.04 },
+  ekeranth: { position: '50% 23%', scale: 1.34 },
+  ekernoth: { position: '43% -66%', scale: 1.01 },
+  ekonos: { position: '65% 105%', scale: 1.22 },
+  elderox: { position: '57% 43%', scale: 1.04 },
+  elythra: { position: '50% 42%', scale: 1.02 },
+  faskel: { position: '56% 8%', scale: 1.05 },
+  gravhyr: { position: '51% 43%', scale: 1.03 },
+  griffor: { position: '43% 144%', scale: 1.35 },
+  ignis: { position: '54% 174%', scale: 1.13 },
+  kael: { position: '43% 3443%', scale: 1.01 },
+  landor: { position: '37% 130%', scale: 1.20 },
+  leoracal: { position: '88% 6%', scale: 1.11 },
+  lunethal: { position: '50% 48%', scale: 1.02 },
+  mawthorn: { position: '50% 992%', scale: 1.01 },
+  moar: { position: '80% 108%', scale: 1.23 },
+  nihil: { position: '49% 1005%', scale: 1.01 },
+  noctyra: { position: '41% 542%', scale: 1.01 },
+  owlberoth: { position: '50% 168%', scale: 1.22 },
+  pawferion: { position: '52% 43%', scale: 1.04 },
+  raptauros: { position: '52% 145%', scale: 1.14 },
+  roenhell: { position: '50% 43%', scale: 1.03 },
+  seract: { position: '59% 33%', scale: 1.01 },
+  sunburst: { position: '50% 30%', scale: 1.03 },
+  terrakhal: { position: '50% 43%', scale: 1.25 },
+  viborom: { position: '38% 47%', scale: 1.01 },
+  virideer: { position: '35% 44%', scale: 1.01 },
+  whalar: { position: '27% -324%', scale: 1.01 },
+  zephyron: { position: '50% 263%', scale: 1.01 },
+};
+
+function KadirFullArtPreview() {
+  const { lang = 'ptbr' } = useContext(AppContext);
+  const [typed, setTyped] = useState('');
+  const [open, setOpen] = useState(false);
+  const [selectedCard, setSelectedCard] = useState(null);
+  const langKey = lang === 'en' ? 'en' : 'pt';
+
+  const creaturePool = useMemo(() => (
+    (Array.isArray(allCards) ? allCards : [])
+      .filter((card) => card && card.id && card.type !== 'field' && card.type !== 'effect')
+  ), []);
+
+  const card = selectedCard || creaturePool[0];
+
+  const imageSrc = resolveImage(card);
+  const name = getText(card?.name, langKey);
+  const title = getText(card?.title, langKey);
+  const type = getText(card?.type, langKey);
+  const weakness = card?.weakness || '';
+  const blessingName = getText(card?.defaultBlessing?.name, langKey);
+  const blessingDesc = getText(card?.defaultBlessing?.desc, langKey);
+  const primarySkill = card?.defaultSkills?.[0] || card?.abilities?.[0];
+  const secondarySkill = card?.defaultSkills?.[1] || card?.abilities?.[1];
+  const visibleSkills = [primarySkill, secondarySkill].filter(Boolean);
+  const focus = fullArtFocus[card?.id] || { position: '50% 44%', scale: 1.04 };
+
+  const openRandomCard = () => {
+    if (creaturePool.length === 0) return;
+    const nextIndex = Math.floor(Math.random() * creaturePool.length);
+    setSelectedCard(creaturePool[nextIndex]);
+    setOpen(true);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      const tagName = event.target?.tagName;
+      if (tagName === 'INPUT' || tagName === 'TEXTAREA' || event.target?.isContentEditable) return;
+      if (event.key === 'Escape') {
+        setOpen(false);
+        return;
+      }
+      if (event.key.length !== 1) return;
+      setTyped((current) => {
+        const next = `${current}${event.key}`.toLowerCase().slice(-COMMAND.length);
+        if (next.endsWith(COMMAND)) {
+          openRandomCard();
+          return '';
+        }
+        return next;
+      });
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [creaturePool]);
+
+  if (!open || !card) return null;
+
+  return (
+    <div className="kadir-full-art-overlay" onClick={() => setOpen(false)}>
+      <div className="kadir-full-art-stage" onClick={(event) => event.stopPropagation()}>
+        <button
+          type="button"
+          className="kadir-full-art-close"
+          onClick={() => setOpen(false)}
+          aria-label="Fechar full-art"
+        >
+          x
+        </button>
+
+        <article className={`kadir-full-art-card kadir-full-art-${card.element || 'puro'}`}>
+          <div
+            className="kadir-full-art-image"
+            style={{
+              backgroundImage: `url(${imageSrc})`,
+              backgroundPosition: focus.position,
+              '--full-art-scale': focus.scale,
+            }}
+          />
+          <div className="kadir-full-art-vignette" />
+          <div className="kadir-full-art-shine" />
+
+          <header className="kadir-full-art-header">
+            <div>
+              <strong>
+                {elementIcons[card.element] && (
+                  <img
+                    className="kadir-full-art-element"
+                    src={elementIcons[card.element]}
+                    alt={`Elemento ${card.element}`}
+                  />
+                )}
+                {name}
+              </strong>
+              <span>{title}</span>
+            </div>
+            <b>#{card.num ? String(card.num).padStart(3, '0') : '???'}</b>
+          </header>
+
+          <section className="kadir-full-art-info">
+            <div className="kadir-full-art-blessing">
+              <span>{blessingName || 'Benção'}</span>
+              <p>{blessingDesc || getText(card?.fielddesc, langKey)}</p>
+            </div>
+
+            <div className="kadir-full-art-skills">
+              {visibleSkills.map((skill) => (
+                <div key={skill.id || getText(skill.name, langKey)}>
+                  <header>
+                    <strong>{getText(skill.name, langKey)}</strong>
+                    <span className="kadir-full-art-cost">
+                      {Array.from({ length: Math.max(1, Number(skill.cost || 1)) }).map((_, index) => (
+                        <img key={index} src={soulEssenceIcon} alt="Essência" />
+                      ))}
+                    </span>
+                  </header>
+                  <p>{stripHtml(skill.desc || skill.displayText)}</p>
+                </div>
+              ))}
+            </div>
+
+            <footer className="kadir-full-art-stats">
+              <span>{type}</span>
+              <span>{Number(card.height || 0).toFixed(2)}m</span>
+              <span className="kadir-full-art-weakness">
+                {elementIcons[weakness] ? (
+                  <img src={elementIcons[weakness]} alt={`Fraqueza ${weakness}`} />
+                ) : (
+                  weakness || '-'
+                )}
+              </span>
+              <span className="kadir-full-art-level">
+                <img src={lvlIcon} alt="Nível" />
+                0
+              </span>
+              <strong className="kadir-full-art-hp">
+                <img src={heartIcon} alt="Vida" />
+                {card.hp || 0}
+              </strong>
+            </footer>
+          </section>
+        </article>
+
+        <div className="kadir-full-art-note">
+          Protótipo temporário full-art
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default KadirFullArtPreview;

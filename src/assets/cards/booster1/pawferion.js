@@ -31,8 +31,8 @@ module.exports = {
   ],
   field: { pt: 'Vazio Corrompido', en: 'Corrupted Void' },
   fielddesc: {
-    pt: 'Reduz o ataque de todas as criaturas não puras em 3% enquanto Pawferion estiver em campo.',
-    en: 'Reduces the attack of all non-pure creatures by 3% while Pawferion is on the field.',
+    pt: 'Reduz o ataque de todas as criaturas não puras em 1 enquanto Pawferion estiver em campo.',
+    en: 'Reduces the attack of all non-pure creatures by 1 while Pawferion is on the field.',
   },
   storyTitle: { pt: 'Origem de Pawferion', en: 'Origin of Pawferion' },
   story: [
@@ -98,7 +98,7 @@ module.exports = {
         en: 'Deals 2 damage twice (total 4).',
       },
       cost: 1,
-      type: 'multi_hit',
+      effectType: 'multi_hit',
     },
     // Nível 4 - Perk: Reflexos Ágeis
     {
@@ -122,7 +122,7 @@ module.exports = {
         en: 'Deals 3 damage and increases dodge for 2 turns.',
       },
       cost: 2,
-      type: 'damage_buff',
+      effectType: 'damage_buff',
     },
     // Nível 6 - Perk: Fôlego Selvagem
     {
@@ -146,7 +146,7 @@ module.exports = {
         en: 'Deals 4 damage and increases attack and speed for 2 turns.',
       },
       cost: 2,
-      type: 'damage_buff',
+      effectType: 'damage_buff',
     },
     // Nível 8 - Perk: Garras Protetoras
     {
@@ -170,7 +170,7 @@ module.exports = {
         en: 'Deals 4 damage in spinning attack and reduces target defense.',
       },
       cost: 3,
-      type: 'damage_defense_down',
+      effectType: 'damage_defense_down',
     },
     // Nível 10 - Habilidade: Fúria Absoluta
     {
@@ -183,7 +183,7 @@ module.exports = {
         en: 'Ultimate: 4 damage and increases all ally attributes for 2 turns.',
       },
       cost: 4,
-      type: 'ultimate_team_buff',
+      effectType: 'ultimate_team_buff',
     },
   ],
 };

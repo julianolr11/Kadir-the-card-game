@@ -16,23 +16,23 @@ module.exports = {
       name: { pt: 'Galope Celeste', en: 'Celestial Gallop' },
       cost: 1,
       desc: {
-        pt: 'Causa 3 de dano e dá +10% velocidade a aliados de ar por 2 turnos.',
-        en: 'Deals 3 damage and grants +10% speed to air allies for 2 turns.',
+        pt: 'Causa 3 de dano e concede +1 velocidade a aliados de ar por 2 turnos.',
+        en: 'Deals 3 damage and grants +1 speed to air allies for 2 turns.',
       },
     },
     {
       name: { pt: 'Asas do Zéfiro', en: 'Zephyr Wings' },
       cost: 1,
       desc: {
-        pt: 'Evita o próximo ataque e 20% de chance de paralyze leve em quem errar.',
-        en: 'Evades next hit and 20% chance to apply light paralysis to the attacker.',
+        pt: 'Evita o próximo ataque e jogue a moeda 1 vez; se der cara, paralisia leve em quem errar.',
+        en: 'Evades the next hit. Flip a coin once; on heads, apply light paralysis to the attacker.',
       },
     },
   ],
   field: { pt: 'Brisa do Alvorecer', en: 'Dawn Breeze' },
   fielddesc: {
-    pt: 'Criaturas de ar ganham +8% esquiva e 12% de chance de paralisar com ataques leves.',
-    en: 'Air creatures gain +8% evasion and 12% chance to paralyze with light hits.',
+    pt: 'Criaturas de ar ganham +1 esquiva. Em ataques leves, jogue a moeda 1 vez; se der cara, paralisa o alvo.',
+    en: 'Air creatures gain +1 evasion. Flip a coin once on light hits; on heads, paralyze the target.',
   },
   storyTitle: { pt: 'Lenda de Faskel', en: 'Legend of Faskel' },
   story: [
@@ -57,7 +57,7 @@ module.exports = {
       id: 'faskel_skill_1',
       name: { pt: 'Lâmina Fulminante', en: 'Lightning Blade' },
       desc: {
-        pt: 'Causa 3 de dano e aplica paralyze leve por 1 turno.',
+        pt: 'Causa 3 de dano e aplica paralisia leve por 1 turno.',
         en: 'Deals 3 damage and applies light paralysis for 1 turn.',
       },
       cost: 1,
@@ -67,8 +67,8 @@ module.exports = {
       id: 'faskel_skill_2',
       name: { pt: 'Choque Elétrico', en: 'Electric Shock' },
       desc: {
-        pt: 'Causa 3 de dano, 35% de paralisar e 8% de stun 1 turno.',
-        en: 'Deals 3 damage, 35% to paralyze and 8% to stun 1 turn.',
+        pt: 'Causa 3 de dano e paralisa por 1 turno. Jogue a moeda 1 vez; se der cara, também atordoa por 1 turno.',
+        en: 'Deals 3 damage and paralyzes for 1 turn. Flip a coin once; on heads, also stuns for 1 turn.',
       },
       cost: 1,
       type: 'damage_debuff',
@@ -78,8 +78,8 @@ module.exports = {
     id: 'faskel_blessing',
     name: { pt: 'Condutor Perfeito', en: 'Perfect Conductor' },
     desc: {
-      pt: 'Aliados de ar ganham +6% dano elétrico e paralyze dura +1 turno (máx 2).',
-      en: 'Air allies gain +6% electric damage and paralysis lasts +1 turn (max 2).',
+      pt: 'Aliados de ar causam +1 dano elétrico e paralisia dura +1 turno (máximo 2).',
+      en: 'Air allies deal +1 electric damage and paralysis lasts +1 turn (max 2).',
     },
   },
   unlockTable: [
@@ -90,8 +90,8 @@ module.exports = {
       id: 'faskel_skill_3',
       name: { pt: 'Raio Destrutivo', en: 'Destructive Lightning' },
       desc: {
-        pt: 'Causa 3 em área e 25% de paralisar 1 alvo aleatório.',
-        en: 'Deals 3 AoE and 25% to paralyze 1 random target.',
+        pt: 'Causa 3 em área e jogue a moeda 1 vez; se der cara, paralisa 1 alvo aleatório.',
+        en: 'Deals 3 AoE damage and paralyzes 1 random target.',
       },
       cost: 1,
     },
@@ -102,8 +102,8 @@ module.exports = {
       id: 'faskel_skill_4',
       name: { pt: 'Descarga Elétrica', en: 'Electric Discharge' },
       desc: {
-        pt: 'Causa 4 de dano e +15% velocidade por 2 turnos.',
-        en: 'Deals 4 damage and +15% speed for 2 turns.',
+        pt: 'Causa 4 de dano e +1 velocidade por 2 turnos.',
+        en: 'Deals 4 damage and +1 speed for 2 turns.',
       },
       cost: 2,
     },
@@ -114,8 +114,8 @@ module.exports = {
       id: 'faskel_skill_5',
       name: { pt: 'Tempestade Elétrica', en: 'Electric Storm' },
       desc: {
-        pt: 'Causa 4 de dano e 35% de paralisar todos por 1 turno.',
-        en: 'Deals 4 damage and 35% to paralyze all for 1 turn.',
+        pt: 'Causa 4 de dano. Jogue a moeda 1 vez; se der cara, paralisa todos os inimigos por 1 turno.',
+        en: 'Deals 4 damage and paralyzes all enemies for 1 turn.',
       },
       cost: 2,
     },
@@ -139,8 +139,8 @@ module.exports = {
       id: 'faskel_skill_7',
       name: { pt: 'Apocalipse Elétrico', en: 'Electric Apocalypse' },
       desc: {
-        pt: 'Supremo: 4 de dano, paralisar garantido 1 turno e 15% de stun 2 turnos.',
-        en: 'Ultimate: 4 damage, guaranteed 1-turn paralysis and 15% 2-turn stun.',
+        pt: 'Supremo: causa 4 de dano e aplica paralisia garantida por 1 turno. Jogue a moeda 1 vez; se der cara, atordoa por 2 turnos.',
+        en: 'Ultimate: deals 4 damage and applies guaranteed paralysis for 1 turn. Flip a coin once; on heads, stuns for 2 turns.',
       },
       cost: 3,
     },

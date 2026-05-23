@@ -24,15 +24,15 @@ module.exports = {
       name: { pt: 'Asas de Cimeira', en: 'Crest Wings' },
       cost: 1,
       desc: {
-        pt: 'Ganha +10% esquiva por 2 turnos e remove 1 efeito negativo.',
-        en: 'Grants +10% evasion for 2 turns and cleanses 1 negative effect.',
+        pt: 'Ganha +1 esquiva por 2 turnos e remove 1 efeito negativo.',
+        en: 'Grants +1 evasion for 2 turns and cleanses 1 negative effect.',
       },
     },
   ],
   field: { pt: 'Trono dos Altos Ventos', en: 'Highwinds Throne' },
   fielddesc: {
-    pt: 'Aliados de ar ganham +6% de velocidade e +5% de chance de crítico enquanto Elythra estiver em campo.',
-    en: 'Air allies gain +6% speed and +5% crit chance while Elythra is on the field.',
+    pt: 'Aliados de ar ganham +1 velocidade e +1 dano se a moeda der cara enquanto Elythra estiver em campo.',
+    en: 'Air allies gain +1 speed and +1 damage on heads while Elythra is on the field.',
   },
   storyTitle: { pt: 'Lenda de Elythra', en: 'Legend of Elythra' },
   story: [
@@ -41,7 +41,7 @@ module.exports = {
       en: 'Elythra glides through the highest drafts, guided by wings that crown its head.',
     },
     {
-      pt: 'Sua pele branca reflete a luz das nuvens, tornando-a um presságio prateado para quem olha do solo.',
+      pt: 'Sua pele branca reflete a luz das nuvens, tornando-a um presságio pratéado para quem olha do solo.',
       en: 'Its white skin mirrors cloudlight, becoming a silver omen for those watching from the ground.',
     },
     {
@@ -57,8 +57,8 @@ module.exports = {
       id: 'elythra_skill_1',
       name: { pt: 'Lâmina Aérea', en: 'Aerial Blade' },
       desc: {
-        pt: 'Causa 3 de dano e reduz o ataque do alvo em 3% por 1 turno.',
-        en: 'Deals 3 damage and reduces target attack by 3% for 1 turn.',
+        pt: 'Causa 3 de dano e reduz o ataque do alvo em 1 por 1 turno.',
+        en: 'Deals 3 damage and reduces target attack by 1 for 1 turn.',
       },
       cost: 1,
       type: 'damage_debuff',
@@ -78,8 +78,8 @@ module.exports = {
     id: 'elythra_blessing',
     name: { pt: 'Juramento dos Ventos Gêmeos', en: 'Twin Winds Oath' },
     desc: {
-      pt: 'Aliados de ar ganham +4% velocidade e +10% esquiva no primeiro turno em campo.',
-      en: 'Air allies gain +4% speed and +10% dodge on their first turn on the field.',
+      pt: 'Aliados de ar ganham +1 velocidade e +1 esquiva no primeiro turno em campo.',
+      en: 'Air allies gain +1 speed and +1 evasion on their first turn on the field.',
     },
   },
   unlockTable: [
@@ -114,8 +114,8 @@ module.exports = {
       id: 'elythra_skill_5',
       name: { pt: 'Véu das Nuvens', en: 'Cloud Veil' },
       desc: {
-        pt: 'Garante 15% de redução de dano por 2 turnos e devolve 1 de dano a quem atingir Elythra.',
-        en: 'Grants 15% damage reduction for 2 turns and reflects 1 damage to attackers.',
+        pt: 'Garante redução de 1 de dano por 2 turnos e devolve 1 de dano a quem atingir Elythra.',
+        en: 'Grants 1 damage reduction for 2 turns and reflects 1 damage to attackers.',
       },
       cost: 2,
     },
@@ -128,8 +128,8 @@ module.exports = {
       id: 'elythra_skill_6',
       name: { pt: 'Rajada Espectral', en: 'Spectral Burst' },
       desc: {
-        pt: 'Causa 4 de dano, ignora 10% da defesa e tem 20% de chance de atordoar.',
-        en: 'Deals 4 damage, ignores 10% defense, and has a 20% chance to stun.',
+        pt: 'Causa 4 de dano, ignora 1 ponto de defesa e jogue a moeda 1 vez; se der cara, atordoa.',
+        en: 'Deals 4 damage, ignores +1 defense, and flips a coin once; on heads, stuns.',
       },
       cost: 2,
     },
@@ -139,8 +139,8 @@ module.exports = {
       id: 'elythra_skill_7',
       name: { pt: 'Supremo: Vórtice Triplo', en: 'Ultimate: Triple Vortex' },
       desc: {
-        pt: 'Supremo: 4 de dano, aplica sangramento 2 por 2 turnos e concede +15% velocidade aos aliados de ar por 2 turnos.',
-        en: 'Ultimate: 4 damage, applies bleed 2 for 2 turns, and grants +15% speed to air allies for 2 turns.',
+        pt: 'Supremo: 4 de dano, aplica sangramento 2 por 2 turnos e concede +1 velocidade aos aliados de ar por 2 turnos.',
+        en: 'Ultimate: 4 damage, applies bleed 2 for 2 turns, and grants +1 speed to air allies for 2 turns.',
       },
       cost: 3,
     },

@@ -1,0 +1,1507 @@
+RELATORIO DE CARTAS - KADIR CARD GAME
+Gerado em: 07/05/2026, 19:33:26
+Fonte: D:\GIT\Kadir-card-game\kadiroms\src\assets\cards
+
+Total de cartas: 62
+Por tipo: Draconídeo: 5 | Monstro: 7 | Fera: 5 | Ave: 6 | Mística: 4 | Reptiloide: 2 | Sombria: 7 | Mistica: 1 | Campo: 12 | Efeito: 13
+Por raridade/categoria: Rara: 8 | Incomum: 11 | Comum: 8 | Epica: 6 | Lendaria: 4 | Campo: 12 | Efeito: 12 | Essencia: 1
+
+==========================================================================================
+
+01. Draak
+------------------------------------------------------------------------------------------
+ID: draak
+Numero: 1
+Tipo: Draconídeo
+Elemento: puro
+Raridade/Categoria: Rara
+Valor base de reciclagem: 50
+HP: 9
+Altura: 3.1
+Fraqueza: puro
+Cor/tema: pure
+Campo associado: Céu Cristalino
+Descricao do campo: Aumenta dano de ar em 3% enquanto Draak estiver em campo.
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\creatures\draak_bio.webp
+Habilidades:
+  1. Sopro Etéreo | Custo: 1
+     Causa 3 de dano ao inimigo.
+  2. Escamas Celestes | Custo: 1
+     Reduz dano recebido em 3%.
+Skills padrao de guardiao:
+  1. Grito Dracônico | Custo: 1 | Tipo: damage_stun | Dano: 3 | Status: stun
+     Causa 3 de dano e atordoa o inimigo.
+  2. Escama Destruidora | Custo: 1 | Tipo: damage_shieldpierce | Dano: 2
+     Causa 2 de dano e ignora 5% da defesa inimiga.
+Bencao padrao: Força Dracônica - Ataque aumenta em 3% enquanto Draak estiver em campo.
+Historia: Draak é um draconídeo puro, nascido da essência dos lugares mais pacíficos do mundo, destinado desde sua criação a ser um guardião da harmonia. Seus olhos de esmeralda, profundos e penetrantes, refletem não apenas sua majestade, mas também a sabedoria ancestral que observa todas as criaturas. Raro e quase mítico, Draak é considerado um presságio de boa sorte - viajantes que têm o privilégio de avistá-lo acreditam estar sob proteção divina.
+
+02. Mawthorn
+------------------------------------------------------------------------------------------
+ID: mawthorn
+Numero: 2
+Tipo: Monstro
+Elemento: agua
+Raridade/Categoria: Incomum
+Valor base de reciclagem: 30
+HP: 8
+Altura: 4.2
+Fraqueza: terra
+Cor/tema: water
+Campo associado: Abismo Profundo
+Descricao do campo: Aliados recuperam 2 de vida/turno; inimigos recebem 2 de poison leve ao entrarem.
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\creatures\mawthorn_bio.webp
+Habilidades:
+  1. Garras Abissais | Custo: 1
+     Causa 3 de dano e aplica bleed por 2 turnos.
+  2. Regeneração | Custo: 1
+     Recupera 3 de vida e concede 10% de resistência a veneno por 2 turnos.
+Skills padrao de guardiao:
+  1. Espinho Penetrante | Custo: 1 | Tipo: damage_bleed
+     Causa 3 de dano, ignora 10% defesa e aplica bleed.
+  2. Veneno Corredor | Custo: 1 | Tipo: damage_poison
+     Causa 3 de dano, aplica poison por 3 turnos e reduz cura recebida em 10%.
+Bencao padrao: Gélido Abissal - Ao ser invocado, escolhe uma criatura do campo adversário e aplica congelamento por 3 turnos.
+Historia: Mawthorn é uma criatura ancestral que habita as cavernas mais profundas e geladas do mundo, onde a luz jamais alcança. Seu corpo colossal, semelhante ao de um urso, é coberto por pelos brancos endurecidos como gelo eterno, e suas garras cristalinas são capazes de rasgar pedra como se fosse carne. / Dizem que Mawthorn nasceu de uma tempestade congelada que aprisionou uma montanha inteira, e que desde então se tornou o guardião involuntário de túneis esquecidos e reinos soterrados pelo tempo. / Não caça por fome, mas por instinto territorial: qualquer criatura que invada seu domínio é marcada como intrusa. Sobreviver a um encontro com Mawthorn é considerado impossível - e aqueles que afirmam tê-lo visto descrevem seus olhos como abismos azulados, frios como a própria morte.
+
+03. Kael
+------------------------------------------------------------------------------------------
+ID: kael
+Numero: 3
+Tipo: Fera
+Elemento: agua
+Raridade/Categoria: Rara
+Valor base de reciclagem: 45
+HP: 7
+Altura: 1.8
+Fraqueza: terra
+Cor/tema: water
+Campo associado: Lago Sagrado
+Descricao do campo: Aliados recebem 2% menos dano enquanto Kael estiver em campo.
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\creatures\kael_bio.webp
+Habilidades:
+  1. Mordida Gélida | Custo: 1
+     Causa 3 de dano ao inimigo.
+  2. Pele Escorregadia | Custo: 1
+     Reduz dano recebido em 3%.
+Skills padrao de guardiao:
+  1. Cone de Gelo | Custo: 1 | Tipo: damage
+     Causa 3 de dano ao inimigo com frio intenso.
+  2. Cristal Refrigerador | Custo: 1 | Tipo: damage_debuff
+     Causa 2 de dano e reduz velocidade do inimigo em 10%.
+Bencao padrao: Ataque Peneça - Ao ser invocado, dá 1 de dano 3 vezes a criaturas aleatórias. Se houver só 1 criatura, ela toma 3 de dano direto.
+Historia: Kael é uma fera selvagem que habita rios, pântanos e lagos de águas turbulentas. Extremamente astuto, aprendeu a usar o próprio ambiente como arma, movendo-se entre as correntes com velocidade e precisão. / Seu corpo é forte e flexível, coberto por uma pelagem constantemente encharcada, e seus olhos atentos nunca perdem um alvo. Kael não ataca de forma direta: ele cerca, confunde e espera o momento exato para avançar. / Caçadores afirmam que enfrentar Kael é como lutar contra a própria maré — quando se percebe o perigo, já é tarde demais.
+
+04. Leoracal
+------------------------------------------------------------------------------------------
+ID: leoracal
+Numero: 4
+Tipo: Fera
+Elemento: terra
+Raridade/Categoria: Comum
+Valor base de reciclagem: 20
+HP: 6
+Altura: 1.5
+Fraqueza: ar
+Cor/tema: earth
+Campo associado: Solo Sagrado
+Descricao do campo: Aliados recebem 3% menos dano enquanto Leoracal estiver em campo.
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\creatures\leoracal_bio.webp
+Habilidades:
+  1. Rugido Sísmico | Custo: 1
+     Causa 3 de dano ao inimigo.
+  2. Pele Rochosa | Custo: 1
+     Reduz dano recebido em 3%.
+Skills padrao de guardiao:
+  1. Rugido Flamejante | Custo: 1 | Tipo: damage
+     Causa 3 de dano com fogo ardente.
+  2. Chama Queimadora | Custo: 1 | Tipo: damage_debuff
+     Causa 2 de dano e queima o inimigo por 2 turnos.
+Bencao padrao: Visão além do alcance - Ao ser invocado, revela uma carta aleatória da mão do oponente.
+Historia: Leoracal é uma fera de força incomparável que habita desertos e planícies áridas. Seu corpo é musculoso, resistente ao calor extremo, e seus sentidos são apurados para localizar presas a grandes distâncias. / Suas patas largas não afundam nas areias do deserto, permitindo que se mova com velocidade mesmo nos terrenos mais instáveis. Por conta disso, ao longo do tempo tornou-se indispensável para caçadas e locomoção através do deserto. / Apesar de sua utilidade, Leoracal é extremamente territorial e difícil de domar, aceitando apenas mestres que consigam provar força, paciência e respeito.
+
+05. Griffor
+------------------------------------------------------------------------------------------
+ID: griffor
+Numero: 5
+Tipo: Ave
+Elemento: puro
+Raridade/Categoria: Incomum
+Valor base de reciclagem: 25
+HP: 5
+Altura: 2.2
+Fraqueza: puro
+Cor/tema: pure
+Campo associado: Céu Imaculado
+Descricao do campo: Aliados recebem 3% menos dano enquanto Griffor estiver em campo.
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\creatures\griffor_bio.webp
+Habilidades:
+  1. Voo Sagrado | Custo: 1
+     Causa 3 de dano ao inimigo.
+  2. Proteção Celestial | Custo: 1
+     Aliados recebem escudo de luz.
+Skills padrao de guardiao:
+  1. Garra Dilaceradora | Custo: 1 | Tipo: damage
+     Causa 3 de dano ao inimigo com garras afiadas.
+  2. Salto Acrobático | Custo: 1 | Tipo: damage_buff
+     Causa 2 de dano e aumenta esquiva em 6% por 1 turno.
+Bencao padrao: Escudo Celestial - Ao ser invocado ganha escudo por 3 turnos impedindo qualquer ataque adversário.
+Historia: Griffor é uma ave lendária, símbolo de pureza e proteção. / Seu voo inspira coragem e esperança.
+
+06. Ekeranth
+------------------------------------------------------------------------------------------
+ID: ekeranth
+Numero: 6
+Tipo: Draconídeo
+Elemento: fogo
+Raridade/Categoria: Epica
+Valor base de reciclagem: 70
+HP: 6
+Altura: 6.4
+Fraqueza: agua
+Cor/tema: fire
+Campo associado: Solo Vulcânico
+Descricao do campo: Durante 3 turnos as cartas de fogo ficam imunes as suas fraquezas.
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\creatures\ekeranth_bio.webp
+Habilidades:
+  1. Fúria Flamejante | Custo: 1
+     Causa 2 de dano ao inimigo.
+  2. Rajada de Fogo | Custo: 2
+     Causa 1 de dano a 2 inimigos aleatórios em campo.
+Skills padrao de guardiao:
+  1. Fúria Flamejante | Custo: 1 | Tipo: damage
+     Causa 2 de dano ao inimigo.
+  2. Rajada de Fogo | Custo: 2 | Tipo: aoe_damage
+     Causa 1 de dano a 2 inimigos aleatórios em campo.
+Bencao padrao: Queimadura Vulcânica - Ao ser invocado todos os personagens do campo adversário recebem queimadura por 2 turnos.
+Historia: Ekeranth nasceu nas entranhas ardentes de Ashkarn, forjado quando um ritual para controlar o fogo primordial saiu do controle e fez um vulcão inteiro ruir sobre si mesmo. Do colapso surgiu um draconídeo de pele vermelha incandescente, com veias de magma pulsando sob a carne como um coração em fúria. / Seu corpo exala fumaça constante, e cada movimento faz a terra rachar. Torres de pedra derretem sob suas garras, e suas asas, cortadas por fissuras luminosas, espalham brasas por onde passam. / Nos olhos verdes arde uma consciência antiga: fragmentos das mentes que tentaram criá-lo. Por isso, Ekeranth não caça por instinto — ele caça por julgamento. / Ele não reina sobre reinos. Ele os reduz a cinzas.
+
+07. Ignis
+------------------------------------------------------------------------------------------
+ID: ignis
+Numero: 7
+Tipo: Ave
+Elemento: fogo
+Raridade/Categoria: Rara
+Valor base de reciclagem: 55
+HP: 3
+Altura: 1.2
+Fraqueza: agua
+Cor/tema: fire
+Campo associado: Céu Flamejante
+Descricao do campo: Aumenta dano de fogo em 3% enquanto Ignis estiver em campo.
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\creatures\ignis_bio.webp
+Habilidades:
+  1. Chama Alada | Custo: 1
+     Causa 3 de dano ao inimigo.
+  2. Voo Flamejante | Custo: 1
+     Causa 1 de dano extra ao atacar.
+Skills padrao de guardiao:
+  1. Chama Abrasadora | Custo: 1 | Tipo: damage
+     Causa 3 de dano ao inimigo com fogo intenso.
+  2. Queimadura Persistente | Custo: 1 | Tipo: damage_drain
+     Causa 2 de dano e nega 1 ponto de vida por 2 turnos.
+Bencao padrao: Ressurreição Flamejante - Ao ser invocada permite ressuscitar uma criatura do cemitério e invocá-la no campo.
+Historia: Ignis é uma ave de fogo, ágil e feroz. / Seu voo deixa rastros de brasas pelo campo.
+
+08. Drazraq
+------------------------------------------------------------------------------------------
+ID: drazaq
+Numero: 8
+Tipo: Draconídeo
+Elemento: puro
+Raridade/Categoria: Comum
+Valor base de reciclagem: 15
+HP: 5
+Altura: 1.3
+Fraqueza: puro
+Cor/tema: pure
+Campo associado: Fenda Vulcânica
+Descricao do campo: Aliados ganham +5% ataque e ataques corpo a corpo aplicam queimadura leve.
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\creatures\drazraq_bio.webp
+Habilidades:
+  1. Impacto Bestial | Custo: 1
+     Causa 4 de dano, aplica bleed leve e derruba (knockdown) 1 turno.
+  2. Fúria Vulcânica | Custo: 1
+     Ganha +8% ataque por 2 turnos e 20% de chance de paralisar ao atacar.
+Skills padrao de guardiao:
+  1. Golpe Vulcânico | Custo: 1 | Tipo: damage_dot
+     Causa 4 de dano, aplica queimadura e 30% de chance de bleed.
+  2. Maldição Obscura | Custo: 1 | Tipo: damage_debuff
+     Causa 3 de dano e reduz ataque em 10% por 2 turnos.
+Bencao padrao: Roubo de Conhecimento - Ao ser invocado permite ao usuário escolher uma carta da mão do adversário e puxar para a sua mão.
+Historia: Drazraq nasceu quando lava encontrou raízes antigas, fundindo chamas e fúria primeva. / Ele carrega cicatrizes incandescentes que brilham ao ritmo de sua respiração. / Onde ele pisa, o solo racha e libera vapores que cegam e sufocam invasores.
+
+09. Owlberoth
+------------------------------------------------------------------------------------------
+ID: owlberoth
+Numero: 9
+Tipo: Mística
+Elemento: puro
+Raridade/Categoria: Incomum
+Valor base de reciclagem: 35
+HP: 10
+Altura: 3.7
+Fraqueza: puro
+Cor/tema: pure
+Campo associado: Noite Sagrada
+Descricao do campo: Aliados têm 3% mais chance de esquiva enquanto Owlberoth estiver em campo.
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\creatures\owlberoth_bio.webp
+Habilidades:
+  1. Olhar Místico | Custo: 1
+     Causa 3 de dano ao inimigo.
+  2. Voo Noturno | Custo: 1
+     Aliados recebem bônus de esquiva.
+Skills padrao de guardiao:
+  1. Habilidade 1 | Custo: 2
+  2. Habilidade 2 | Tipo: none
+  3. Habilidade 3 | Tipo: perk
+  4. Habilidade 4 | Tipo: perk
+  5. Vigiância Eterna | Custo: 2 | Tipo: skill
+     Causa 4 de dano e protege todos os aliados.
+  6. Sentença do Sábio | Custo: 3 | Tipo: skill
+     Supremo: 4 de dano e cria escudo absoluto para todos os aliados.
+Bencao padrao: Expulsão Mística - Ao ser invocado o usuário escolhe 1 carta em campo do oponente para retornar para a mão dele.
+Historia: Owlberoth é uma criatura mística, guardiã dos segredos da noite. / Seu olhar penetra as trevas e revela verdades ocultas.
+
+10. Digitama
+------------------------------------------------------------------------------------------
+ID: digitama
+Numero: 10
+Tipo: Mística
+Elemento: fogo
+Raridade/Categoria: Rara
+Valor base de reciclagem: 60
+HP: 4
+Altura: 1.23
+Fraqueza: agua
+Cor/tema: fire
+Campo associado: Aura Flamejante
+Descricao do campo: Aumenta dano de fogo em 4% e chance de queimadura em +8% enquanto Digitama estiver em campo.
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\creatures\digitama_bio.webp
+Habilidades:
+  1. Chama Mística | Custo: 1 | Tipo: damage_chance_burn | Dano: 2 | Status: burn
+     Causa 2 de dano e tem 50% de chance de aplicar <span class="debuff-burn">queimadura</span> por 2 turnos.
+  2. Fumaça Sonolenta | Custo: 2 | Tipo: damage_chance_sleep | Dano: 1 | Status: sleep
+     Causa 1 de dano e tem 50% de chance de aplicar <span class="debuff-sleep">dormir</span> por 2 turnos (não pode agir).
+Skills padrao de guardiao:
+  1. Chama Mística | Custo: 1 | Tipo: damage_chance_burn | Dano: 2 | Status: burn
+     Causa 2 de dano e 50% de chance de aplicar <span class="debuff-burn">queimadura</span> por 2 turnos.
+  2. Fumaça Sonolenta | Custo: 2 | Tipo: damage_chance_sleep | Dano: 1 | Status: sleep
+     Causa 1 de dano e 50% de chance de aplicar <span class="debuff-sleep">dormir</span> por 2 turnos.
+Bencao padrao: Coroa Ardente - Aliados de fogo ganham +6% crit e queimaduras causam +1 de dano por turno.
+Historia: Digitama nasceu quando um ritual de conjuração falhou e condensou fogo primordial em uma centelha consciente. / Ele aprendeu a moldar brasas em runas vivas, deixando trilhas ardentes que sussurram segredos antigos. / Onde Digitama passa, o ar vibra e os aliados sentem o ritmo das chamas guiando seus golpes.
+
+11. Virideer
+------------------------------------------------------------------------------------------
+ID: virideer
+Numero: 11
+Tipo: Mística
+Elemento: terra
+Raridade/Categoria: Comum
+Valor base de reciclagem: 15
+HP: 4
+Altura: 2
+Fraqueza: fogo
+Cor/tema: earth
+Campo associado: Campo de Orvalho
+Descricao do campo: Aliados recuperam 1 de vida ao final do turno enquanto Virideer estiver em campo.
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\creatures\virideer_bio.webp
+Habilidades:
+  1. Chifre Protetor | Custo: 1 | Dano: 3
+     Causa 3 de dano e concede escudo de 4 de vida ao aliado mais frágil.
+  2. Orvalho Revigorante | Custo: 2
+     Cura 2 de vida e remove 1 debuff de um aliado.
+Skills padrao de guardiao:
+  1. Orvalho Curativo | Custo: 1 | Tipo: heal
+     Cura 2 de vida.
+  2. Chifre Luminescente | Custo: 2 | Tipo: damage_blind | Dano: 2 | Status: blind
+     Causa 2 de dano e 50% de chance de aplicar <span class="debuff-blind">cegueira</span> por 1 turno.
+Bencao padrao: Luz do Orvalho - Aliados curam +2 de vida ao receber cura.
+Historia: Virideer dança ao amanhecer, espalhando gotas de cura por onde passa. / Seu chifre brilha com a luz da esperança, guiando aliados perdidos. / Dizem que uma lágrima de Virideer pode curar até as feridas mais profundas.
+
+12. Ashfang
+------------------------------------------------------------------------------------------
+ID: ashfang
+Numero: 12
+Tipo: Fera
+Elemento: fogo
+Raridade/Categoria: Rara
+Valor base de reciclagem: 50
+HP: 4
+Altura: 2.7
+Fraqueza: agua
+Cor/tema: fire
+Campo associado: Campos de Cinzas
+Descricao do campo: Aliados de fogo recebem 3% menos dano enquanto Ashfang estiver em campo.
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\creatures\ashfang_bio.webp
+Habilidades:
+  1. Mordida Vulcânica | Custo: 1
+     Causa 3 de dano ao inimigo.
+  2. Fúria das Cinzas | Custo: 1
+     Aumenta o ataque em 4% por 2 turnos.
+Skills padrao de guardiao:
+  1. Mordida Vulcânica | Custo: 1 | Tipo: damage_burn | Dano: 3 | Status: burn
+     Causa 3 de dano e aplica queimadura por 2 turnos.
+  2. Fúria das Cinzas | Custo: 1 | Tipo: damage_buff | Dano: 2
+     Causa 2 de dano e aumenta o próprio ataque em 4% por 2 turnos.
+Bencao padrao: Chama Eterna - Ao ser invocado, 1 criatura aleatória do campo adversário toma 1 de dano e queimadura por 3 turnos.
+Historia: Ashfang emerge das cinzas de antigos vulcões, trazendo destruição e renascimento. / Sua presença aquece o campo e inspira aliados a lutar com fervor.
+
+13. Viborom
+------------------------------------------------------------------------------------------
+ID: viborom
+Numero: 13
+Tipo: Reptiloide
+Elemento: agua
+Raridade/Categoria: Comum
+Valor base de reciclagem: 10
+HP: 5
+Altura: 9.3
+Fraqueza: terra
+Cor/tema: water
+Campo associado: Pântano Esquecido
+Descricao do campo: Inimigos têm sua velocidade reduzida em 6% enquanto Viborom estiver em campo.
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\creatures\viborom_bio.webp
+Habilidades:
+  1. Espreita Abissal | Custo: 1
+     Causa 3 de dano ao inimigo ao emergir das águas.
+  2. Veneno Líquido | Custo: 1
+     Aplica veneno que causa 1 de dano por turno durante 3 turnos.
+Skills padrao de guardiao:
+  1. Veneno Letal | Custo: 1 | Tipo: damage_debuff
+     Causa 3 de dano ao inimigo e o envenena.
+  2. Espécie Tóxica | Custo: 1 | Tipo: poison_dot
+     Envenena o inimigo causando 1 de dano por 3 turnos.
+Bencao padrao: Miasma Tóxico - Criaturas venenosas ganham +3% de resistência enquanto Viborom estiver em campo.
+Historia: Viborom habita pântanos ancestrais onde a água nunca está completamente parada. / Criatura serpentina e silenciosa, seu veneno líquido é temido até mesmo pelos mais poderosos aventureiros.
+
+14. Sunburst
+------------------------------------------------------------------------------------------
+ID: sunburst
+Numero: 14
+Tipo: Sombria
+Elemento: agua
+Raridade/Categoria: Incomum
+Valor base de reciclagem: 30
+HP: 5
+Altura: 1.4
+Fraqueza: terra
+Cor/tema: water
+Campo associado: Pântano Luminescente
+Descricao do campo: Criaturas sombrias causam +1 de dano por turno enquanto Sunburst estiver em campo.
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\creatures\sunburst_bio.webp
+Habilidades:
+  1. Explosão Solar | Custo: 1
+     Libera energia acumulada causando 3 de dano.
+  2. Luz Drenante | Custo: 1
+     Drena 2 de vida do inimigo à noite.
+Skills padrao de guardiao:
+  1. Raio Solar | Custo: 1 | Tipo: damage
+     Causa 3 de dano ao inimigo com raios de luz.
+  2. Explosão Luminosa | Custo: 1 | Tipo: damage_debuff
+     Causa 2 de dano e cega o inimigo por 1 turno.
+Bencao padrao: Radiância Solar - Criaturas de luz ganham +3% de ataque enquanto Sunburst estiver em campo.
+Historia: Sunburst absorve luz solar durante o dia para armazenar energia. / À noite, usa seu brilho fosforescente para confundir e capturar presas. / Seu brilho pode ser visto à distância, muitas vezes confundido com luzes guias.
+
+15. Landor
+------------------------------------------------------------------------------------------
+ID: landor
+Numero: 15
+Tipo: Ave
+Elemento: ar
+Raridade/Categoria: Incomum
+Valor base de reciclagem: 35
+HP: 4
+Altura: 1.8
+Fraqueza: terra
+Cor/tema: air
+Campo associado: Correntes Boreais
+Descricao do campo: Aumenta a velocidade das criaturas de ar em 3% enquanto Landor estiver em campo.
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\creatures\landor_bio.webp
+Habilidades:
+  1. Lâmina do Norte | Custo: 1 | Dano: 3
+     Causa 3 de dano ao inimigo com ventos cortantes.
+  2. Rajada Ascendente | Custo: 1 | Dano: 2 | Status: disrupt
+     Causa 2 de dano e empurra o inimigo, reduzindo sua eficácia no próximo turno.
+Skills padrao de guardiao:
+  1. Lâmina do Norte | Custo: 1 | Tipo: damage | Dano: 3
+     Causa 3 de dano ao inimigo com ventos cortantes.
+  2. Rajada Ascendente | Custo: 1 | Tipo: damage_disrupt | Dano: 2 | Status: disrupt
+     Causa 2 de dano e empurra o inimigo, reduzindo sua eficácia no próximo turno.
+Historia: Landor vaga pelos céus do norte, guiando correntes invisíveis com precisão ancestral. / Seu voo silencioso é sentido antes de ser visto, anunciando mudança e movimento.
+
+16. Raptauros
+------------------------------------------------------------------------------------------
+ID: raptauros
+Numero: 16
+Tipo: Draconídeo
+Elemento: terra
+Raridade/Categoria: Incomum
+Valor base de reciclagem: 35
+HP: 8
+Altura: 2.6
+Fraqueza: agua
+Cor/tema: earth
+Campo associado: Dunas Infinitas
+Descricao do campo: Aliados de terra ganham +1 de ataque enquanto Raptauros estiver em campo.
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\creatures\raptauros_bio.webp
+Habilidades:
+  1. Investida das Dunas | Custo: 1 | Dano: 3
+     Causa 3 de dano ao inimigo. Causa dano adicional se Raptauros agir primeiro.
+  2. Chifre de Areia | Custo: 2 | Dano: 2 | Status: defense_down
+     Causa 2 de dano e reduz defesa do alvo por 1 turno.
+Skills padrao de guardiao:
+  1. Investida das Dunas | Custo: 1 | Tipo: damage_bonus_first | Dano: 3
+     Causa 3 de dano ao inimigo. Causa dano adicional se agir primeiro.
+  2. Chifre de Areia | Custo: 2 | Tipo: damage_defense_down | Dano: 2 | Status: defense_down
+     Causa 2 de dano e reduz defesa do alvo por 1 turno.
+Bencao padrao: Fúria das Dunas - Aliados de terra ganham +10% de chance de crítico.
+Historia: Raptauros domina as tempestades de areia, caçando com precisão implacável. / Seu rugido ecoa pelas dunas, espalhando medo entre os invasores. / Dizem que pode atravessar desertos inteiros sem descansar.
+
+17. Arguilia
+------------------------------------------------------------------------------------------
+ID: arguilia
+Numero: 17
+Tipo: Ave
+Elemento: agua
+Raridade/Categoria: Comum
+Valor base de reciclagem: 15
+HP: 5
+Altura: 2.4
+Fraqueza: terra
+Cor/tema: water
+Campo associado: Rio Sagrado
+Descricao do campo: Criaturas de água recebem 3% menos dano enquanto Arguilia estiver em campo.
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\creatures\arguilia_bio.webp
+Habilidades:
+  1. Asas do Fluxo | Custo: 1
+     Causa 3 de dano e concede esquiva aumentada neste turno.
+  2. Véu das Águas | Custo: 1
+     Aliados recebem redução de dano por 1 turno.
+Skills padrao de guardiao:
+  1. Picada Envenenada | Custo: 1 | Tipo: damage_debuff
+     Causa 3 de dano e envenena o inimigo.
+  2. Teia Venenosa | Custo: 1 | Tipo: damage_debuff
+     Causa 2 de dano e reduz velocidade do inimigo.
+Bencao padrao: Vitalidade das Águas - Ao ser invocada, todas as criaturas de água em campo ganham +1 de vida.
+Historia: Arguilia é um espírito antigo que nasce onde rios sagrados cruzam terras intocadas. / Seu canto guia viajantes, purifica águas corrompidas e mantém o equilíbrio do mundo.
+
+18. Faskel
+------------------------------------------------------------------------------------------
+ID: faskel
+Numero: 18
+Tipo: Mística
+Elemento: ar
+Raridade/Categoria: Incomum
+Valor base de reciclagem: 40
+HP: 5
+Altura: 2.1
+Fraqueza: terra
+Cor/tema: air
+Campo associado: Brisa do Alvorecer
+Descricao do campo: Criaturas de ar ganham +8% esquiva e 12% de chance de paralisar com ataques leves.
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\creatures\faskel_bio.webp
+Habilidades:
+  1. Galope Celeste | Custo: 1
+     Causa 3 de dano e dá +10% velocidade a aliados de ar por 2 turnos.
+  2. Asas do Zéfiro | Custo: 1
+     Evita o próximo ataque e 20% de chance de paralyze leve em quem errar.
+Skills padrao de guardiao:
+  1. Lâmina Fulminante | Custo: 1 | Tipo: damage_debuff
+     Causa 3 de dano e aplica paralyze leve por 1 turno.
+  2. Choque Elétrico | Custo: 1 | Tipo: damage_debuff
+     Causa 3 de dano, 35% de paralisar e 8% de stun 1 turno.
+Bencao padrao: Condutor Perfeito - Aliados de ar ganham +6% dano elétrico e paralyze dura +1 turno (máx 2).
+Historia: Diz-se que Faskel nasce onde o primeiro vento da manhã toca as montanhas. / Seu galope ecoa como um presságio de mudança e liberdade. / Ele atravessa tempestades como se fossem véus finos, deixando para trás trovões que confundem inimigos.
+
+19. Lunethal
+------------------------------------------------------------------------------------------
+ID: lunethal
+Numero: 19
+Tipo: Draconídeo
+Elemento: agua
+Raridade/Categoria: Epica
+Valor base de reciclagem: 75
+HP: 6
+Altura: 3.4
+Fraqueza: terra
+Cor/tema: water
+Campo associado: Reflexo do Lago
+Descricao do campo: Criaturas de água recebem 3% a mais de defesa enquanto Lunethal estiver em campo.
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\creatures\lunethal_bio.webp
+Habilidades:
+  1. Maré Crescente | Custo: 1
+     Causa 3 de dano ao inimigo e aumenta a defesa de Lunethal em 1 ponto.
+  2. Sopro Lunar | Custo: 1
+     Causa 2 de dano e tem chance de reduzir o ataque do inimigo.
+Skills padrao de guardiao:
+  1. Raio Lunar | Custo: 1 | Tipo: damage
+     Causa 3 de dano com poder celestial.
+  2. Cura Noturna | Custo: 1 | Tipo: damage_heal
+     Causa 2 de dano e recupera 3 de vida.
+Bencao padrao: Bênção da Lua - Criaturas sagradas ganham +3% de velocidade enquanto Lunethal estiver em campo.
+Historia: Lunethal habita lagos ancestrais iluminados pela lua, emergindo apenas quando o equilíbrio das águas é ameaçado. / Diz-se que suas escamas refletem a lua cheia, tornando-o quase invisível nas noites silenciosas.
+
+20. Elderox
+------------------------------------------------------------------------------------------
+ID: elderox
+Numero: 20
+Tipo: Monstro
+Elemento: terra
+Raridade/Categoria: Incomum
+Valor base de reciclagem: 40
+HP: 12
+Altura: 4.2
+Fraqueza: agua
+Cor/tema: earth
+Campo associado: Montanha Ancestral
+Descricao do campo: Aumenta defesa de criaturas de terra em 4% enquanto Elderox estiver em campo.
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\creatures\elderox_bio.webp
+Habilidades:
+  1. Rugido Sísmico | Custo: 1
+     Causa dano em área e reduz a velocidade dos inimigos por 1 turno.
+  2. Pele Rochosa | Custo: 1
+     Recebe menos dano de ataques físicos por 2 turnos.
+Skills padrao de guardiao:
+  1. Sabedoria Ancestral | Custo: 1 | Tipo: damage
+     Causa 3 de dano ao inimigo com conhecimento antigo.
+  2. Defesa Milenial | Custo: 1 | Tipo: buff
+     Aumenta a defesa própria e reduz dano recebido em 5% por 2 turnos.
+Bencao padrao: Fúria Ancestral - Ao ser invocado, aliados causam DOBRO de dano durante este turno.
+Historia: Elderox é uma criatura ancestral, símbolo da força e resistência das montanhas. / Seu rugido ecoa por vales e desfiladeiros, inspirando aliados e aterrorizando inimigos.
+
+21. Pawferion
+------------------------------------------------------------------------------------------
+ID: pawferion
+Numero: 21
+Tipo: Sombria
+Elemento: puro
+Raridade/Categoria: Lendaria
+Valor base de reciclagem: 100
+HP: 10
+Altura: 3.8
+Fraqueza: fogo
+Cor/tema: pure
+Campo associado: Vazio Corrompido
+Descricao do campo: Reduz o ataque de todas as criaturas não puras em 3% enquanto Pawferion estiver em campo.
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\creatures\pawferion_bio.webp
+Habilidades:
+  1. Corrupção Elemental | Custo: 1
+     Rouba 1 ponto de ataque de todos os inimigos por 2 turnos.
+  2. Sombra Essencial | Custo: 1
+     Recebe metade do dano de ataques elementais por 1 turno.
+Skills padrao de guardiao:
+  1. Garra Rápida | Custo: 1 | Tipo: damage
+     Causa 3 de dano com ataques precisos.
+  2. Salto Ágil | Custo: 1 | Tipo: damage_buff
+     Causa 2 de dano e aumenta velocidade.
+Bencao padrao: Proteção Sagrada - Ao ser invocado, todas as criaturas aliadas ficam imunes a debuffs por 3 turnos.
+Historia: Ele, sendo essência de todos os elementos, foi corrompido pelo poder.
+
+22. Alatoy
+------------------------------------------------------------------------------------------
+ID: alatoy
+Numero: 22
+Tipo: Sombria
+Elemento: agua
+Raridade/Categoria: Comum
+Valor base de reciclagem: 20
+HP: 8
+Altura: 2.1
+Fraqueza: ar
+Cor/tema: water
+Campo associado: Fosso Luminescente
+Descricao do campo: Enquanto Alatoy estiver em campo, criaturas de água recebem +1 de defesa.
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\creatures\alatoy_bio.webp
+Habilidades:
+  1. Luz Abissal | Custo: 1
+     Emite uma luz verde-escura que reduz a precisão dos inimigos por 2 turnos.
+  2. Descarga Sombria | Custo: 1
+     Causa dano extra se o alvo estiver sob efeito de redução de precisão.
+Skills padrao de guardiao:
+  1. Golpe da Profundeza | Custo: 1 | Tipo: damage
+     Causa 3 de dano ao inimigo com pressão abissal.
+  2. Corrente Gelada | Custo: 1 | Tipo: damage_debuff
+     Causa 2 de dano e reduz a velocidade do inimigo.
+Bencao padrao: Choque Paralisante - Ao ser invocado, aplica paralisia a uma criatura aleatória do oponente por 2 turnos.
+Historia: Alatoy desliza silenciosamente pelas águas profundas, suas barbatanas iluminando o caminho para o desconhecido.
+
+23. Whalar
+------------------------------------------------------------------------------------------
+ID: whalar
+Numero: 23
+Tipo: Sombria
+Elemento: agua
+Raridade/Categoria: Incomum
+Valor base de reciclagem: 45
+HP: 12
+Altura: 4.5
+Fraqueza: ar
+Cor/tema: water
+Campo associado: Maré Sombria
+Descricao do campo: Enquanto Whalar estiver em campo, criaturas sombrias de água recebem +1 ataque.
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\creatures\whalar_bio.webp
+Habilidades:
+  1. Caçada Silenciosa | Custo: 1
+     Ataca primeiro se estiver à noite ou em campo sombrio.
+  2. Mordida Abissal | Custo: 1
+     Ignora 1 ponto de defesa do alvo ao atacar e causa <span class="debuff-bleed">sangramento</span> por 2 turnos.
+Skills padrao de guardiao:
+  1. Onda Gelada | Custo: 1 | Tipo: damage
+     Causa 3 de dano ao inimigo com água congelada.
+  2. Prisão de Gelo | Custo: 1 | Tipo: damage_stun
+     Causa 2 de dano e congela o inimigo por 1 turno.
+Bencao padrao: Friagem Abissal - Criaturas de água ganham +3% de velocidade enquanto Whalar estiver em campo.
+Historia: Whalar patrulha as marés escuras, caçando silenciosamente sob o véu da noite.
+
+24. Elythra
+------------------------------------------------------------------------------------------
+ID: elythra
+Numero: 24
+Tipo: Reptiloide
+Elemento: ar
+Raridade/Categoria: Epica
+Valor base de reciclagem: 80
+HP: 6
+Altura: 4.6
+Fraqueza: terra
+Cor/tema: air
+Campo associado: Trono dos Altos Ventos
+Descricao do campo: Aliados de ar ganham +6% de velocidade e +5% de chance de crítico enquanto Elythra estiver em campo.
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\creatures\elythra_bio.webp
+Habilidades:
+  1. Cauda Tridente | Custo: 1
+     Causa 3 de dano e marca o alvo para receber +1 de dano de ar no próximo golpe.
+  2. Asas de Cimeira | Custo: 1
+     Ganha +10% esquiva por 2 turnos e remove 1 efeito negativo.
+Skills padrao de guardiao:
+  1. Lâmina Aérea | Custo: 1 | Tipo: damage_debuff
+     Causa 3 de dano e reduz o ataque do alvo em 3% por 1 turno.
+  2. Chicote Tridente | Custo: 1 | Tipo: damage
+     Causa 2 de dano duas vezes, ignorando 1 ponto de defesa.
+Bencao padrao: Juramento dos Ventos Gêmeos - Aliados de ar ganham +4% velocidade e +10% esquiva no primeiro turno em campo.
+Historia: Elythra desliza entre as correntes mais altas, guiada por asas que brotam de sua cabeça. / Sua pele branca reflete a luz das nuvens, tornando-a um presságio prateado para quem olha do solo. / O rabo de tridente canaliza rajadas que partem rochas e silenciam qualquer ameaça às alturas.
+
+25. Agolir
+------------------------------------------------------------------------------------------
+ID: agolir
+Numero: 25
+Tipo: Sombria
+Elemento: puro
+Raridade/Categoria: Epica
+Valor base de reciclagem: 85
+HP: 7
+Altura: 0.1
+Fraqueza: puro
+Cor/tema: pure
+Campo associado: Véu Noctilucente
+Descricao do campo: Enquanto Agolir estiver em campo, aliados puros ganham +4% resistência e +6% esquiva à noite.
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\creatures\agolir_bio.webp
+Habilidades:
+  1. Manto Crepuscular | Custo: 1
+     Fica furtivo à noite: +12% esquiva e o próximo ataque causa +1 de dano puro.
+  2. Absorção Elemental | Custo: 1
+     Rouba 2% de ataque e 2% de defesa de inimigos ao redor por 2 turnos.
+Skills padrao de guardiao:
+  1. Lâmina Oculta | Custo: 1 | Tipo: damage
+     Causa 3 de dano; à noite ganha +10% crit nesse ataque.
+  2. Sangria de Éter | Custo: 1 | Tipo: damage_heal
+     Causa 2 de dano e rouba 1 de energia elemental do alvo, curando 1 de HP.
+Bencao padrao: Fome Rara - Aliados puros recuperam 1 de HP ao iniciar a noite e ganham +3% resistência.
+Historia: Agolir é uma criatura ancestral que atravessou eras escondida entre penumbras cambiantes. / Sua pele muda de tonalidade sob o luar, tornando-se quase invisível aos olhos mortais. / Alimenta-se poucas vezes ao ano, absorvendo energia dos elementos que o cercam para permanecer desperto.
+
+26. Beoxyr
+------------------------------------------------------------------------------------------
+ID: beoxyr
+Numero: 26
+Tipo: Monstro
+Elemento: fogo
+Raridade/Categoria: Incomum
+Valor base de reciclagem: 45
+HP: 6
+Altura: 2.5
+Fraqueza: agua
+Cor/tema: fire
+Campo associado: Caldeirão Vulcânico
+Descricao do campo: Aliados de fogo ganham +6% ataque; primeiro golpe de cada inimigo recebe 1 de queimadura.
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\creatures\beoxyr_bio.webp
+Habilidades:
+  1. Chicote Incandescente | Custo: 1
+     Causa 3 de dano e queima o alvo (1 de dano por 2 turnos).
+  2. Escamas de Brasa | Custo: 1
+     Ganha um escudo que nega o próximo ataque recebido por 1 rodada.
+Skills padrao de guardiao:
+  1. Mordida Brasífera | Custo: 1 | Tipo: damage_dot
+     Causa 3 de dano e aplica queimadura 1 por 2 turnos.
+  2. Fôlego Vulcânico | Custo: 1 | Tipo: damage_debuff
+     Causa 2 de dano em área e reduz defesa dos inimigos em 2% por 1 turno.
+Bencao padrao: Chama Vingativa - Ao ser invocado, uma criatura aleatória do campo adversário recebe 2 de dano e queimadura por 2 turnos.
+Historia: Beoxyr ronda crateras antigas, onde o calor jamais cessou. / Seu corpo exala fumaça brilhante, confundindo caçadores nas noites sem lua. / Dizem que forjou sua própria carapaça após devorar metais esquecidos.
+
+27. Zephyron
+------------------------------------------------------------------------------------------
+ID: zephyron
+Numero: 27
+Tipo: Fera
+Elemento: ar
+Raridade/Categoria: Lendaria
+Valor base de reciclagem: 120
+HP: 7
+Altura: 3
+Fraqueza: terra
+Cor/tema: air
+Campo associado: Olho da Tempestade
+Descricao do campo: Aliados de ar ganham +7% velocidade; inimigos têm 8% de chance de falhar ataques leves.
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\creatures\zephyron_bio.webp
+Habilidades:
+  1. Golpe de Ciclone | Custo: 1
+     Causa 3 de dano e empurra o alvo, reduzindo sua próxima ação.
+  2. Asas Vorpais | Custo: 1
+     Ganha +12% esquiva por 2 turnos e o próximo ataque recebe +10% de crítico.
+Skills padrao de guardiao:
+  1. Lâmina de Ventania | Custo: 1 | Tipo: damage_debuff
+     Causa 3 de dano e 25% de chance de paralisar 1 turno.
+  2. Eco Tempestuoso | Custo: 1 | Tipo: damage_debuff
+     Causa 2 de dano em área e reduz precisão inimiga em 5% por 2 turnos.
+Bencao padrao: Tempestade Paralisante - Ao ser invocado paralisa todas as criaturas adversárias por 1 turno.
+Historia: Zephyron caça no coração das tempestades, onde trovões viram presas. / Seu rugido suga o ar ao redor, abafando gritos e apagando fogueiras. / Dizem que já devorou um ciclone inteiro e desde então vaga com fome eterna.
+
+28. Ekonos
+------------------------------------------------------------------------------------------
+ID: ekonos
+Numero: 28
+Tipo: Ave
+Elemento: puro
+Raridade/Categoria: Epica
+Valor base de reciclagem: 80
+HP: 5
+Altura: 2.7
+Fraqueza: puro
+Cor/tema: pure
+Campo associado: Horizonte Eterno
+Descricao do campo: Aliados puros ganham +4% resistência e +5% chance de crítico; furtividade inimiga é enfraquecida.
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\creatures\Ekonos_bio.webp
+Habilidades:
+  1. Olho Imutável | Custo: 1
+     Revela inimigos furtivos e causa 3 de dano puro.
+  2. Asa Prismática | Custo: 1
+     Ganha um escudo que nega o próximo ataque recebido por 1 rodada.
+Skills padrao de guardiao:
+  1. Raio Contínuo | Custo: 1 | Tipo: damage_debuff
+     Causa 3 de dano puro e reduz precisão do alvo em 4% por 1 turno.
+  2. Vigília Perpétua | Custo: 1 | Tipo: buff
+     Ganha um escudo que nega ataques, revela furtivos e dá +8% esquiva por 1 rodada.
+Bencao padrao: Bênção Vital - Ao ser invocado, concede +2 de vida a uma criatura do seu campo. Se não houver nenhuma, aplica a si mesmo.
+Historia: Ekonos patrulha o limiar entre o céu e o vazio, onde o tempo não faz sombra. / Suas penas refletem constelações esquecidas, guiando viajantes perdidos. / Dizem que ele já contou cada nascer do sol e nunca piscou diante do infinito.
+
+29. Terrakhal
+------------------------------------------------------------------------------------------
+ID: terrakhal
+Numero: 29
+Tipo: Ave
+Elemento: terra
+Raridade/Categoria: Comum
+Valor base de reciclagem: 25
+HP: 5
+Altura: 2.2
+Fraqueza: agua
+Cor/tema: earth
+Campo associado: Areias Séculas
+Descricao do campo: Aliados de terra ganham +5% defesa e velocidade reduzida de inimigos em +3% enquanto Terrakhal estiver em campo.
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\creatures\terrakhal_bio.webp
+Habilidades:
+  1. Garras de Areia | Custo: 1
+     Causa 3 de dano e reduz velocidade do alvo em 5% por 1 turno.
+  2. Tempestade de Pó | Custo: 1
+     Causa 2 de dano em área e reduz precisão de todos os inimigos em 6%.
+Skills padrao de guardiao:
+  1. Bico Rochoso | Custo: 1 | Tipo: damage
+     Causa 3 de dano e ignora 1 ponto de defesa.
+  2. Abraço da Terra | Custo: 1 | Tipo: buff
+     Ganha escudo 2, reduz dano recebido em 3% e aumenta defesa em 2%.
+Bencao padrao: Rota Antiga - Aliados de terra ganham +3% defesa e +6% precisão enquanto Terrakhal estiver em campo.
+Historia: Terrakhal voa sobre desertos sem fim, carregando segredos de oásis perdidos. / Sua jornada não tem destino; apenas o vento quente e a poeira dourada. / Diz-se que se segui-lo, encontrará água em qualquer seca.
+
+30. Seract
+------------------------------------------------------------------------------------------
+ID: seract
+Numero: 31
+Tipo: Sombria
+Elemento: agua
+Raridade/Categoria: Rara
+Valor base de reciclagem: 65
+HP: 8
+Altura: 2.1
+Fraqueza: puro
+Cor/tema: water
+Campo associado: Reinado Glacial
+Descricao do campo: Enquanto Seract estiver em campo, inimigos sofrem -5% de regeneração e habilidades de água custam -1 essência.
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\creatures\seract_bio.webp
+Habilidades:
+  1. Toque Congelante | Custo: 2
+     Congela o alvo por 1 turno: reduz velocidade em 30% e causa +2 de dano gélido.
+  2. Cristal de Sombra | Custo: 3
+     Cria escudo de gelo sombrio: absorve até 3 dano e reflete 50% ao atacante.
+Skills padrao de guardiao:
+  1. Toque Congelante | Custo: 2
+     Congela o alvo por 1 turno: reduz velocidade em 30% e causa +2 de dano gélido.
+  2. Cristal de Sombra | Custo: 3
+     Cria escudo de gelo sombrio: absorve até 3 dano e reflete 50% ao atacante.
+Bencao padrao: Troca de Essência - Ao ser invocado, o usuário escolhe uma carta em campo para trocar por uma carta já enviada ao cemitério.
+Historia: Seract é uma criatura nascida nas profundezas geladas onde a luz nunca chega e o frio é absoluto. / Sua essência combina a frieza da água com a escuridão da sombra, tornando-a uma força devastadora. / Diz-se que onde Seract caminha, o calor abandona o mundo e apenas o silêncio permanece.
+
+31. Noctyra
+------------------------------------------------------------------------------------------
+ID: noctyra
+Numero: 29
+Tipo: Sombria
+Elemento: ar
+Raridade/Categoria: Rara
+Valor base de reciclagem: 70
+HP: 4
+Altura: 1.8
+Fraqueza: puro
+Cor/tema: air
+Campo associado: Correntes do Vácuo
+Descricao do campo: Aliados de ar começam furtivos no primeiro turno; ataques revelam posição por 1 turno.
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\creatures\noctyra_bio.webp
+Habilidades:
+  1. Distorção Aérea | Custo: 1
+     Causa 2 de dano e reduz precisão do inimigo em 6% por 1 turno.
+  2. Asas Furtivas | Custo: 1
+     Fica furtiva e ganha +12% esquiva até o próximo turno.
+Skills padrao de guardiao:
+  1. Lâmina do Vácuo | Custo: 1 | Tipo: damage
+     Causa 3 de dano e fica furtiva até o próximo ataque.
+  2. Sussurro Silencioso | Custo: 1 | Tipo: damage_debuff
+     Causa 2 de dano a todos os inimigos e reduz precisão em 8% por 1 turno.
+Bencao padrao: Drenar Vitalidade - Ao ser invocado, rouba 1 vida do adversário e acrescenta ao usuário (se não tiver 5 completas).
+Historia: Noctyra nasceu nas correntes silenciosas que atravessam o céu quando a luz se apaga. / Criatura sombria de asas finas, move-se entre vibrações do ar que os olhos não alcançam. / Os contornos azulados de suas asas não emitem calor — são fendas de energia aérea, marcando o espaço por onde ela já passou… ou ainda observa. / Durante o voo, Noctyra distorce o ar ao redor, confundindo sentidos e antecipando movimentos. / Ela não enfrenta o inimigo de frente. Ela o cerca, enfraquece e desaparece antes do contra-ataque. / Onde o vento hesita, ela já decidiu o desfecho. Corte de Corrente.
+
+32. Nihil
+------------------------------------------------------------------------------------------
+ID: nihil
+Numero: 30
+Tipo: Monstro
+Elemento: puro
+Raridade/Categoria: Comum
+Valor base de reciclagem: 30
+HP: 6
+Altura: 2.3
+Fraqueza: fogo
+Cor/tema: pure
+Campo associado: Eco do Nada
+Descricao do campo: Ao entrar, inimigos perdem 1 essência e -5% precisão por 1 turno; aliados puros ganham +5% esquiva.
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\creatures\nihil_bio.webp
+Habilidades:
+  1. Dreno Etéreo | Custo: 1
+     Causa 3 de dano puro e rouba 1 de essência, curando 1 de HP.
+  2. Rasgadura do Vácuo | Custo: 2
+     Causa 2 de dano em área e aplica -8% resistência por 2 turnos.
+Skills padrao de guardiao:
+  1. Mordida Vazia | Custo: 1 | Tipo: damage
+     Causa 3 de dano puro e rouba 1 de essência.
+  2. Silêncio da Alma | Custo: 1 | Tipo: damage_debuff
+     Causa 2 de dano em área e reduz precisão dos inimigos em 6% por 1 turno.
+Bencao padrao: Veneno do Vazio - Ao ser invocada o usuário escolhe uma criatura do campo do oponente para receber envenenamento por 2 turnos.
+Historia: Noctyra nasceu nas correntes silenciosas que atravessam o céu quando a luz se apaga. / Criatura sombria de asas finas, move-se entre vibrações do ar que os olhos não alcançam. / Contornos azulados das asas são fendas de energia aérea marcando onde já passou… ou ainda observa. / Durante o voo distorce o ar, confundindo sentidos e antecipando movimentos. / Não enfrenta de frente: cerca, enfraquece e some antes do contra-ataque. / Onde o vento hesita, ela já decidiu o desfecho. Corte de Corrente.
+
+33. Gravhyr
+------------------------------------------------------------------------------------------
+ID: gravhyr
+Numero: 31
+Tipo: Monstro
+Elemento: terra
+Raridade/Categoria: Incomum
+Valor base de reciclagem: 50
+HP: 7
+Altura: 2.8
+Fraqueza: agua
+Cor/tema: earth
+Campo associado: Claustro Silencioso
+Descricao do campo: Ao entrar em combate após ficar imóvel, o primeiro inimigo atingido sofre Lentidão por 2 turnos.
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\creatures\gravhyr_bio.webp
+Habilidades:
+  1. Golpe Petrificado | Custo: 1
+     Causa 2 de dano. Se não atacou no turno anterior, causa +1 de dano.
+  2. Imobilidade Vigilante | Custo: 1
+     Se ficar um turno sem atacar, recebe +20% defesa e fica imune a empurrões/deslocamentos até o próximo turno.
+Skills padrao de guardiao:
+  1. Golpe Petrificado | Custo: 1 | Tipo: damage
+     Causa 3 de dano; se não atacou no turno anterior, causa +1 de dano.
+  2. Despertar da Estátua | Custo: 1 | Tipo: damage_debuff
+     Ao agir após ficar imóvel, causa 2 de dano e aplica Lentidão por 2 turnos.
+Bencao padrao: Vigia Imóvel - Se não atacar em um turno, ganha +20% defesa e imunidade a deslocamentos até o próximo turno; aliados de terra recebem +4% resistência.
+Historia: Gravhyr não nasceu viva — despertou. / Esculpida nas eras antigas como vigia de templos esquecidos, permaneceu imóvel por séculos, observando a passagem do mundo sem interferir. / Seu corpo de rocha absorve luz e som, tornando-se indistinguível da arquitetura ao redor. Gravhyr espera. / Quando o inimigo acredita estar seguro, o peso da pedra cai sem aviso. O ataque nunca é visto, apenas sentido.
+
+34. Ekernoth
+------------------------------------------------------------------------------------------
+ID: ekernoth
+Numero: 31
+Tipo: Monstro
+Elemento: agua
+Raridade/Categoria: Epica
+Valor base de reciclagem: 90
+HP: 13
+Altura: 18.5
+Fraqueza: terra
+Cor/tema: water
+Campo associado: Abismo Salino
+Descricao do campo: Ao invocar, cria um escudo de água: aliados ganham +8% defesa e redução de 15% do dano sofrido.
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\creatures\ekernoth_bio.webp
+Habilidades:
+  1. Garra Marinada | Custo: 1
+     Causa 4 de dano água e reduz defesa do alvo em 6% por 1 turno.
+  2. Redemoinho Esmagador | Custo: 2
+     Causa 3 de dano em área e aplica -10% velocidade por 2 turnos.
+Skills padrao de guardiao:
+  1. Soco de Maré | Custo: 1 | Tipo: damage
+     Causa 4 de dano água e reduz defesa em 6%.
+  2. Corrente Presa | Custo: 1 | Tipo: damage_debuff
+     Causa 2 de dano em área e reduz velocidade dos inimigos em 8% por 1 turno.
+Bencao padrao: Benção dos Abismos - Aliados ganham +6% defesa e reduzem dano sofrido em 10%; inimigos sofrem -4% precisão.
+Historia: Ekernoth reina nas fossas abissais onde a luz nunca toca e a pressão esmaga civilizações inteiras. / Crustáceo colossal com pinças que abrem furos em navios de ferro como se fossem casca de ovo. / Cada passo provoca maremotos; cada berro forma correntes que rasgam o fundo do oceano. / Nenhuma nau conseguiu retornar das profundezas onde ele patrulha. Os marinheiros sussurram seu nome apenas sussurrado. / Escudo de água salgada abraça seu corpo blindado, refletindo ataques como espelhos líquidos no vácuo. / Quando Ekernoth sobe às águas rasas, aldeias costeiras trancam as portas e rezam aos deuses esquecidos. / Tormenta. Destruição. O fim silencioso daqueles que ousam desafiar o senhor do abismo.
+
+35. Arigus
+------------------------------------------------------------------------------------------
+ID: arigus
+Numero: 32
+Tipo: Monstro
+Elemento: agua
+Raridade/Categoria: Lendaria
+Valor base de reciclagem: 130
+HP: 8
+Altura: 1.6
+Fraqueza: fogo
+Cor/tema: water
+Campo associado: Pasto Invernal
+Descricao do campo: Aliados de agua ganham +3% de resistencia enquanto Arigus estiver em campo.
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\creatures\arigus_bio.webp
+Habilidades:
+  1. Investida Glacial | Custo: 1
+     Causa 3 de dano e reduz a velocidade do alvo em 10% por 1 turno.
+  2. Bruma Alpina | Custo: 1
+     Concede 1 de escudo e aumenta a evasao em 5% por 2 turnos.
+Skills padrao de guardiao:
+  1. Investida Glacial | Custo: 1 | Tipo: damage_slow | Dano: 3 | Status: slow
+     Causa 3 de dano e aplica lentidao por 1 turno.
+  2. Bruma Alpina | Custo: 1 | Tipo: shield_evasion
+     Concede 2 de escudo e +5% evasao por 2 turnos.
+Bencao padrao: Neve Serena - Ao ser invocado, uma carta aleatoria do oponente em campo retorna para a mao.
+Historia: Arigus percorre os picos gelados, guiando rebanhos sob nevascas silenciosas. / Dizem que seus chifres guardam um frio antigo, capaz de acalmar a fúria das montanhas.
+
+36. Roenhell
+------------------------------------------------------------------------------------------
+ID: roenhell
+Numero: 33
+Tipo: Fera
+Elemento: terra
+Raridade/Categoria: Rara
+Valor base de reciclagem: 70
+HP: 10
+Altura: 2.2
+Fraqueza: agua
+Cor/tema: earth
+Campo associado: Terras de Chifre
+Descricao do campo: Aliados de terra ganham +3% de defesa enquanto Roenhell estiver em campo.
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\creatures\roenhell_bio.webp
+Habilidades:
+  1. Investida Rochosa | Custo: 1
+     Causa 3 de dano e aplica atordoamento leve por 1 turno.
+  2. Pele de Pedra | Custo: 1
+     Reduz dano recebido em 5% por 2 turnos.
+Skills padrao de guardiao:
+  1. Investida Rochosa | Custo: 1 | Tipo: damage_stun | Dano: 3 | Status: stun
+     Causa 3 de dano e aplica atordoamento por 1 turno.
+  2. Pele de Pedra | Custo: 1 | Tipo: armor_buff
+     Ganha +2 de armadura por 2 turnos.
+Bencao padrao: Chifres Ancestrais - Ao ser invocado, pode atacar 2 vezes no mesmo turno sem consumir mana.
+Historia: Roenhell guarda planicies antigas, seus chifres abrindo trilhas na rocha viva. / Quando ruge, a terra responde em ecos profundos, fortalecendo seus aliados.
+
+37. Moar
+------------------------------------------------------------------------------------------
+ID: moar
+Numero: 34
+Tipo: Mistica
+Elemento: puro
+Raridade/Categoria: Lendaria
+Valor base de reciclagem: 150
+HP: 11
+Altura: 2.4
+Fraqueza: fogo
+Cor/tema: pure
+Campo associado: Alvorada Branca
+Descricao do campo: Aliados puros recebem +3% de cura enquanto Moar estiver em campo.
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\creatures\moar_bio.webp
+Habilidades:
+  1. Lamina de Neve | Custo: 1
+     Causa 3 de dano puro e remove 1 debuff de si.
+  2. Manto Cristalino | Custo: 1
+     Concede 2 de escudo e +4% de resistencia por 2 turnos.
+Skills padrao de guardiao:
+  1. Lamina de Neve | Custo: 1 | Tipo: damage_cleanse | Dano: 3
+     Causa 3 de dano puro e remove 1 debuff de si.
+  2. Manto Cristalino | Custo: 1 | Tipo: shield_resist
+     Concede 2 de escudo e +4% resistencia por 2 turnos.
+Bencao padrao: Luz do Gelo - Ao ser invocado, todos os oponentes ficam congelados por 2 turnos.
+Historia: Moar desliza entre neves eternas, seus chifres refletindo a luz mais pura. / Sua presenca silencia tempestades e inspira criaturas misticas a resistir.
+
+38. Field
+------------------------------------------------------------------------------------------
+ID: F001
+Legacy ID: field_field
+Tipo: Campo
+Elemento: Puro
+Raridade/Categoria: Campo
+Valor base de reciclagem: 15
+Tipo de campo: Monstro
+Descricao: Criaturas do elemento Puro ou do tipo Monstro recebem +1 Dano / +1 HP neste campo. Criaturas Puras e Monstros recebem +2 Dano / +2 HP.
+Lore: Um campo fértil e exuberante, cheio de vida selvagem. Local perfeito para criaturas que prosperam na natureza primitiva.
+Bonus por elemento: puro: 1
+Bonus por tipo: monstro: 1
+Bonus especial: puroAndMonstro: {"damage":2,"hp":2}
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\scene-board\field_resultado.webp
+Habilidades:
+  - Nenhuma habilidade cadastrada
+
+39. Aerial
+------------------------------------------------------------------------------------------
+ID: F002
+Legacy ID: field_aerial
+Tipo: Campo
+Elemento: Ar
+Raridade/Categoria: Campo
+Valor base de reciclagem: 15
+Tipo de campo: Ave
+Descricao: Criaturas de Ar ou do tipo Ave recebem +1 Dano / +1 HP neste campo. Criaturas de Ar e Ave recebem +2 Dano / +2 HP.
+Lore: Céus cristalinos e tempestades etéreas. As correntes de ar dançam livremente, energizando todo ser que voa.
+Bonus por elemento: ar: 1
+Bonus por tipo: ave: 1
+Bonus especial: arAndAve: {"damage":2,"hp":2}
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\scene-board\aerial_resultado.webp
+Habilidades:
+  - Nenhuma habilidade cadastrada
+
+40. Beach
+------------------------------------------------------------------------------------------
+ID: F003
+Legacy ID: field_beach
+Tipo: Campo
+Elemento: Água
+Raridade/Categoria: Campo
+Valor base de reciclagem: 15
+Tipo de campo: Fera
+Descricao: Criaturas de Água ou do tipo Fera recebem +1 Dano / +1 HP neste campo. Criaturas de Água e Fera recebem +2 Dano / +2 HP.
+Lore: Uma praia tranquila banhada pelo mar. As ondas suaves trazem poder e vitalidade às criaturas aquáticas.
+Bonus por elemento: agua: 1
+Bonus por tipo: fera: 1
+Bonus especial: aguaAndFera: {"damage":2,"hp":2}
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\scene-board\beach_resultado.webp
+Habilidades:
+  - Nenhuma habilidade cadastrada
+
+41. Desert
+------------------------------------------------------------------------------------------
+ID: F004
+Legacy ID: field_desert
+Tipo: Campo
+Elemento: Terra
+Raridade/Categoria: Campo
+Valor base de reciclagem: 15
+Tipo de campo: Reptiloide
+Descricao: Criaturas de Terra ou do tipo Reptiloide recebem +1 Dano / +1 HP neste campo. Criaturas de Terra e Reptiloide recebem +2 Dano / +2 HP.
+Lore: Um deserto árido e desolado, sob um sol implacável. As criaturas que sobrevivem aqui são fortes e resilientes.
+Bonus por elemento: terra: 1
+Bonus por tipo: reptiloide: 1
+Bonus especial: terraAndReptiloide: {"damage":2,"hp":2}
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\scene-board\desert_resultado.webp
+Habilidades:
+  - Nenhuma habilidade cadastrada
+
+42. Draconic
+------------------------------------------------------------------------------------------
+ID: F005
+Legacy ID: field_draconic
+Tipo: Campo
+Elemento: Puro
+Raridade/Categoria: Campo
+Valor base de reciclagem: 15
+Tipo de campo: Draconídeo
+Descricao: Criaturas do elemento Puro ou do tipo Draconídeo recebem +1 Dano / +1 HP neste campo. Criaturas Puras e Draconídeas recebem +2 Dano / +2 HP.
+Lore: Um reino sagrado onde os dragões reinam supremos. A magia ancestral permeia cada sopro de vento.
+Bonus por elemento: puro: 1
+Bonus por tipo: draconideo: 1
+Bonus especial: puroAndDraconideo: {"damage":2,"hp":2}
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\scene-board\draconic_resultado.webp
+Habilidades:
+  - Nenhuma habilidade cadastrada
+
+43. Mistic Forest
+------------------------------------------------------------------------------------------
+ID: F006
+Legacy ID: field_mistic_forest
+Tipo: Campo
+Elemento: Ar
+Raridade/Categoria: Campo
+Valor base de reciclagem: 15
+Tipo de campo: Criatura Mística
+Descricao: Criaturas de Ar ou do tipo Criatura Mística recebem +1 Dano / +1 HP neste campo. Criaturas de Ar e Criatura Mística recebem +2 Dano / +2 HP.
+Lore: Uma floresta enevoada e mágica, onde a realidade se dobra às vontades sobrenaturais. Mistério flutua no ar.
+Bonus por elemento: ar: 1
+Bonus por tipo: mistica: 1
+Bonus especial: arAndMistica: {"damage":2,"hp":2}
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\scene-board\mystic-forest_resultado.webp
+Habilidades:
+  - Nenhuma habilidade cadastrada
+
+44. Mountain
+------------------------------------------------------------------------------------------
+ID: F007
+Legacy ID: field_mountain
+Tipo: Campo
+Elemento: Terra
+Raridade/Categoria: Campo
+Valor base de reciclagem: 15
+Tipo de campo: Fera
+Descricao: Criaturas de Terra ou do tipo Fera recebem +1 Dano / +1 HP neste campo. Criaturas de Terra e Fera recebem +2 Dano / +2 HP.
+Lore: Montanhas colossos que tocam as nuvens. Um terreno brutal onde apenas os mais fortes sobrevivem.
+Bonus por elemento: terra: 1
+Bonus por tipo: fera: 1
+Bonus especial: terraAndFera: {"damage":2,"hp":2}
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\scene-board\mountain_resultado.webp
+Habilidades:
+  - Nenhuma habilidade cadastrada
+
+45. Ocean
+------------------------------------------------------------------------------------------
+ID: F008
+Legacy ID: field_ocean
+Tipo: Campo
+Elemento: Água
+Raridade/Categoria: Campo
+Valor base de reciclagem: 15
+Tipo de campo: Criatura Mística
+Descricao: Criaturas de Água ou do tipo Criatura Mística recebem +1 Dano / +1 HP neste campo. Criaturas de Água e Criatura Mística recebem +2 Dano / +2 HP.
+Lore: Um oceano profundo e infinito, repleto de segredos antigos. As águas sussurram histórias esquecidas.
+Bonus por elemento: agua: 1
+Bonus por tipo: mistica: 1
+Bonus especial: aguaAndMistica: {"damage":2,"hp":2}
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\scene-board\ocean_resultado.webp
+Habilidades:
+  - Nenhuma habilidade cadastrada
+
+46. Shadow Mountain
+------------------------------------------------------------------------------------------
+ID: F009
+Legacy ID: field_shadow_mountain
+Tipo: Campo
+Elemento: Terra
+Raridade/Categoria: Campo
+Valor base de reciclagem: 15
+Tipo de campo: Criatura Sombria
+Descricao: Criaturas de Terra ou do tipo Criatura Sombria recebem +1 Dano / +1 HP neste campo. Criaturas de Terra e Criatura Sombria recebem +2 Dano / +2 HP.
+Lore: Uma montanha envolta em escuridão eterna. O próprio ar é carregado com malevolência antiga e poder sombrio.
+Bonus por elemento: terra: 1
+Bonus por tipo: sombria: 1
+Bonus especial: terraAndSombria: {"damage":2,"hp":2}
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\scene-board\shadow_resultado.webp
+Habilidades:
+  - Nenhuma habilidade cadastrada
+
+47. Snow
+------------------------------------------------------------------------------------------
+ID: F010
+Legacy ID: field_snow
+Tipo: Campo
+Elemento: Água
+Raridade/Categoria: Campo
+Valor base de reciclagem: 15
+Tipo de campo: Ave
+Descricao: Criaturas de Água ou do tipo Ave recebem +1 Dano / +1 HP neste campo. Criaturas de Água e Ave recebem +2 Dano / +2 HP.
+Lore: Um reino gelado onde a neve cai eternamente. Apenas os mais adaptados conseguem prosperar neste frio extremo.
+Bonus por elemento: agua: 1
+Bonus por tipo: ave: 1
+Bonus especial: aguaAndAve: {"damage":2,"hp":2}
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\scene-board\snow_resultado.webp
+Habilidades:
+  - Nenhuma habilidade cadastrada
+
+48. Swamp
+------------------------------------------------------------------------------------------
+ID: F011
+Legacy ID: field_swamp
+Tipo: Campo
+Elemento: Água
+Raridade/Categoria: Campo
+Valor base de reciclagem: 15
+Tipo de campo: Reptiloide
+Descricao: Criaturas de Água ou do tipo Reptiloide recebem +1 Dano / +1 HP neste campo. Criaturas de Água e Reptiloide recebem +2 Dano / +2 HP.
+Lore: Um pântano primordial, selvagem e perigoso. Vida estranha prospera neste ecossistema tóxico e vivo.
+Bonus por elemento: agua: 1
+Bonus por tipo: reptiloide: 1
+Bonus especial: aguaAndReptiloide: {"damage":2,"hp":2}
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\scene-board\swamp_resultado.webp
+Habilidades:
+  - Nenhuma habilidade cadastrada
+
+49. Vulcanus
+------------------------------------------------------------------------------------------
+ID: F012
+Legacy ID: field_vulcanus
+Tipo: Campo
+Elemento: Fogo
+Raridade/Categoria: Campo
+Valor base de reciclagem: 15
+Tipo de campo: Monstro
+Descricao: Criaturas de Fogo ou do tipo Monstro recebem +1 Dano / +1 HP neste campo. Criaturas de Fogo e Monstro recebem +2 Dano / +2 HP.
+Lore: Um vulcão ativo que queima eternamente. O poder destrutivo da lava alimenta criaturas nascidas do fogo.
+Bonus por elemento: fogo: 1
+Bonus por tipo: monstro: 1
+Bonus especial: fogoAndMonstro: {"damage":2,"hp":2}
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\scene-board\vulcanus_resultado.webp
+Habilidades:
+  - Nenhuma habilidade cadastrada
+
+50. Compre uma Carta
+------------------------------------------------------------------------------------------
+ID: effect_buymeacard
+Numero: 1
+Tipo: Efeito
+Elemento: puro
+Raridade/Categoria: Efeito
+Valor base de reciclagem: 15
+Custo: 0
+Cor/tema: pure
+Tipo de efeito: draw
+Valor do efeito: 1
+Alvo: self
+Duracao: 0
+Descricao: Permite ao player comprar +1 carta do baralho
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\effect-cards\buymeacard_resultado.webp
+Habilidades:
+  - Nenhuma habilidade cadastrada
+
+51. Troca Crítica
+------------------------------------------------------------------------------------------
+ID: effect_change_critical
+Numero: 2
+Tipo: Efeito
+Elemento: puro
+Raridade/Categoria: Efeito
+Valor base de reciclagem: 15
+Custo: 0
+Cor/tema: pure
+Tipo de efeito: swap
+Alvo: dual
+Duracao: 0
+Descricao: Troca um monstro do seu lado do campo pelo monstro do lado do campo do adversário
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\effect-cards\change-critical_resultado.webp
+Habilidades:
+  - Nenhuma habilidade cadastrada
+
+52. Fluido de Essência
+------------------------------------------------------------------------------------------
+ID: effect_essence_fluid
+Numero: 3
+Tipo: Efeito
+Elemento: puro
+Raridade/Categoria: Essencia
+Valor base de reciclagem: 15
+Custo: 0
+Cor/tema: pure
+Tipo de efeito: essence
+Valor do efeito: 2
+Alvo: self
+Duracao: 0
+Descricao: Dá +2 de essência ao usuário
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\effect-cards\essence-fluid_resultado.webp
+Habilidades:
+  - Nenhuma habilidade cadastrada
+
+53. Meteoro Final
+------------------------------------------------------------------------------------------
+ID: effect_final_meteor
+Numero: 4
+Tipo: Efeito
+Elemento: puro
+Raridade/Categoria: Efeito
+Valor base de reciclagem: 15
+Custo: 0
+Cor/tema: pure
+Tipo de efeito: damageAll
+Valor do efeito: 2
+Alvo: allEnemies
+Duracao: 0
+Descricao: Inflige +2 de dano a todos os monstros no campo do adversário
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\effect-cards\final-meteor_resultado.webp
+Habilidades:
+  - Nenhuma habilidade cadastrada
+
+54. Joia da Vida
+------------------------------------------------------------------------------------------
+ID: effect_jewel_of_life
+Numero: 5
+Tipo: Efeito
+Elemento: puro
+Raridade/Categoria: Efeito
+Valor base de reciclagem: 15
+Custo: 0
+Cor/tema: pure
+Tipo de efeito: heal
+Valor do efeito: 2
+Alvo: self
+Duracao: 0
+Descricao: Dá +2 orbes de vida (HP) ao usuário
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\effect-cards\jewel-of-life_resultado.webp
+Habilidades:
+  - Nenhuma habilidade cadastrada
+
+55. Escudo Protetor
+------------------------------------------------------------------------------------------
+ID: effect_protect_shield
+Numero: 6
+Tipo: Efeito
+Elemento: puro
+Raridade/Categoria: Efeito
+Valor base de reciclagem: 15
+Custo: 0
+Cor/tema: pure
+Tipo de efeito: shield
+Valor do efeito: 2
+Alvo: allyMonster
+Duracao: 0
+Descricao: Dá +2 de escudo para uma criatura no seu campo
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\effect-cards\protect-shield_resultado.webp
+Habilidades:
+  - Nenhuma habilidade cadastrada
+
+56. Compra Reversa
+------------------------------------------------------------------------------------------
+ID: effect_reverse_buy
+Numero: 7
+Tipo: Efeito
+Elemento: puro
+Raridade/Categoria: Efeito
+Valor base de reciclagem: 15
+Custo: 0
+Cor/tema: pure
+Tipo de efeito: drawOpponent
+Valor do efeito: 1
+Alvo: opponent
+Duracao: 0
+Descricao: O player compra uma carta do baralho do adversário
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\effect-cards\reverse-buy_resultado.webp
+Habilidades:
+  - Nenhuma habilidade cadastrada
+
+57. Sepultura do Espectro
+------------------------------------------------------------------------------------------
+ID: effect_spectrum_graveyard
+Numero: 8
+Tipo: Efeito
+Elemento: puro
+Raridade/Categoria: Efeito
+Valor base de reciclagem: 15
+Custo: 0
+Cor/tema: pure
+Tipo de efeito: resurrect
+Alvo: graveyardCreature
+Duracao: 1
+Descricao: Permite ressuscitar uma criatura do cemitério por 1 turno para atacar, depois retorna ao cemitério
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\effect-cards\spectrum-graveyard_resultado.webp
+Habilidades:
+  - Nenhuma habilidade cadastrada
+
+58. Ilusão de Teatro
+------------------------------------------------------------------------------------------
+ID: effect_theatre_ilusion
+Numero: 9
+Tipo: Efeito
+Elemento: puro
+Raridade/Categoria: Efeito
+Valor base de reciclagem: 15
+Custo: 0
+Cor/tema: pure
+Tipo de efeito: control
+Alvo: enemyMonster
+Duracao: 1
+Descricao: Permite controlar uma criatura do oponente por 1 turno
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\effect-cards\theatre-ilusion_resultado.webp
+Habilidades:
+  - Nenhuma habilidade cadastrada
+
+59. O Grande Muro
+------------------------------------------------------------------------------------------
+ID: effect_the_great_wall
+Numero: 10
+Tipo: Efeito
+Elemento: puro
+Raridade/Categoria: Efeito
+Valor base de reciclagem: 15
+Custo: 0
+Cor/tema: pure
+Tipo de efeito: shieldAll
+Valor do efeito: 2
+Alvo: allAllies
+Duracao: 2
+Descricao: Concede +2 de escudo a todas as criaturas do seu lado por 2 turnos
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\effect-cards\the-great-wall_resultado.webp
+Habilidades:
+  - Nenhuma habilidade cadastrada
+
+60. Frasco do Vazio
+------------------------------------------------------------------------------------------
+ID: effect_void_jar
+Numero: 11
+Tipo: Efeito
+Elemento: puro
+Raridade/Categoria: Efeito
+Valor base de reciclagem: 15
+Custo: 0
+Cor/tema: pure
+Tipo de efeito: destroyAll
+Alvo: allEnemies
+Duracao: 0
+Descricao: Manda todas as criaturas do campo do adversário para o cemitério
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\effect-cards\void-jar_resultado.webp
+Habilidades:
+  - Nenhuma habilidade cadastrada
+
+61. Ira do Julgamento
+------------------------------------------------------------------------------------------
+ID: effect_wrath_of_judgement
+Numero: 12
+Tipo: Efeito
+Elemento: puro
+Raridade/Categoria: Efeito
+Valor base de reciclagem: 15
+Custo: 0
+Cor/tema: pure
+Tipo de efeito: damageBuff
+Valor do efeito: 2
+Alvo: allyMonster
+Duracao: 1
+Descricao: Dá +2 de dano a uma criatura no seu campo por 1 turno
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\effect-cards\wrath-ofjudgement_resultado.webp
+Habilidades:
+  - Nenhuma habilidade cadastrada
+
+62. Ritual da Essencia
+------------------------------------------------------------------------------------------
+ID: effect_essence_ritual
+Numero: 13
+Tipo: Efeito
+Elemento: puro
+Raridade/Categoria: Efeito
+Valor base de reciclagem: 15
+Custo: 0
+Cor/tema: pure
+Tipo de efeito: essenceSacrifice
+Valor do efeito: 1
+Alvo: handSacrifice
+Duracao: 0
+Descricao: Sacrifique uma carta da sua mao para obter +1 de essencia
+Imagem: D:\GIT\Kadir-card-game\kadiroms\src\assets\img\effect-cards\essence_ritual_resultado.webp
+Habilidades:
+  - Nenhuma habilidade cadastrada

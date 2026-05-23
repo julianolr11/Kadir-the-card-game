@@ -81,6 +81,144 @@
   z-index: 100;
 }
 
+@keyframes returnToHandArigusAi {
+  0% {
+    transform: scale(1) translate(0, 0) rotate(0deg);
+    opacity: 1;
+    filter: none;
+  }
+  16% {
+    transform: scale(1.04) translate(-18px, 8px) rotate(-3deg);
+    opacity: 1;
+    filter: brightness(1.12);
+  }
+  34% {
+    transform: scale(0.98) translate(26px, -18px) rotate(5deg);
+    opacity: 0.95;
+  }
+  100% {
+    transform: scale(0.25) translate(150px, -230px) rotate(13deg);
+    opacity: 0;
+    filter: blur(3px);
+  }
+}
+
+@keyframes returnToHandArigusPlayer {
+  0% {
+    transform: scale(1) translate(0, 0) rotate(0deg);
+    opacity: 1;
+    filter: none;
+  }
+  16% {
+    transform: scale(1.04) translate(18px, -8px) rotate(3deg);
+    opacity: 1;
+    filter: brightness(1.12);
+  }
+  34% {
+    transform: scale(0.98) translate(-26px, 18px) rotate(-5deg);
+    opacity: 0.95;
+  }
+  100% {
+    transform: scale(0.25) translate(-150px, 230px) rotate(-13deg);
+    opacity: 0;
+    filter: blur(3px);
+  }
+}
+
+.returning-to-hand-ai.returning-to-hand-arigus {
+  animation: returnToHandArigusAi 1.05s cubic-bezier(.2, .9, .18, 1) forwards;
+  z-index: 250;
+}
+
+.returning-to-hand-player.returning-to-hand-arigus {
+  animation: returnToHandArigusPlayer 1.05s cubic-bezier(.2, .9, .18, 1) forwards;
+  z-index: 250;
+}
+
+.arigus-headbutt-impact {
+  position: absolute;
+  inset: -10%;
+  pointer-events: none;
+  z-index: 1600;
+  mix-blend-mode: screen;
+}
+
+.arigus-headbutt-player {
+  transform: scaleX(-1);
+}
+
+.arigus-impact-core,
+.arigus-impact-ring,
+.arigus-impact-streak {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+}
+
+.arigus-impact-core {
+  left: 8%;
+  top: 42%;
+  width: 34%;
+  height: 18%;
+  border-radius: 999px;
+  background: radial-gradient(circle at 20% 50%, rgba(230, 250, 255, 0.95), rgba(94, 190, 255, 0.34) 45%, transparent 72%);
+  filter: blur(7px);
+  animation: arigusImpactCore 0.8s ease-out forwards;
+}
+
+.arigus-impact-ring {
+  left: 18%;
+  top: 34%;
+  width: 28%;
+  height: 28%;
+  border-radius: 50%;
+  border: 2px solid rgba(170, 230, 255, 0.75);
+  box-shadow: 0 0 20px rgba(82, 190, 255, 0.45);
+  animation: arigusImpactRing 0.74s ease-out forwards;
+}
+
+.arigus-impact-streak {
+  left: 4%;
+  width: 48%;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgba(205, 245, 255, 0.92), transparent);
+  filter: blur(1px);
+  animation: arigusImpactStreak 0.74s ease-out forwards;
+}
+
+.arigus-impact-streak-1 {
+  top: 32%;
+}
+
+.arigus-impact-streak-2 {
+  top: 48%;
+  animation-delay: 70ms;
+}
+
+.arigus-impact-streak-3 {
+  top: 61%;
+  animation-delay: 130ms;
+}
+
+@keyframes arigusImpactCore {
+  0% { opacity: 0; transform: translateX(-18px) scaleX(0.35); }
+  28% { opacity: 1; transform: translateX(0) scaleX(1); }
+  100% { opacity: 0; transform: translateX(44px) scaleX(1.3); }
+}
+
+@keyframes arigusImpactRing {
+  0% { opacity: 0; transform: scale(0.3); }
+  30% { opacity: 0.95; transform: scale(0.82); }
+  100% { opacity: 0; transform: scale(1.55); }
+}
+
+@keyframes arigusImpactStreak {
+  0% { opacity: 0; transform: translateX(-20px) scaleX(0.25); }
+  24% { opacity: 0.9; }
+  100% { opacity: 0; transform: translateX(58px) scaleX(1.15); }
+}
+
 /* Spectral Slot Appearance Animation */
 @keyframes spectralSlotAppear {
   from {
@@ -277,5 +415,240 @@
   100% {
     opacity: 1;
     filter: blur(0px);
+  }
+}
+
+.continue-transition-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255, 218, 132, 0.18) 0%, rgba(60, 28, 92, 0.42) 32%, rgba(6, 4, 12, 0.94) 78%),
+    rgba(3, 2, 7, 0.82);
+  backdrop-filter: blur(7px) saturate(1.18);
+  animation: continueOverlayIn 1150ms cubic-bezier(.18,.72,.2,1) forwards;
+  pointer-events: all;
+}
+
+.continue-transition-rune {
+  position: absolute;
+  width: min(42vw, 420px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    repeating-conic-gradient(from 0deg, transparent 0deg 13deg, rgba(255, 230, 176, 0.72) 14deg 15deg, transparent 16deg 32deg),
+    radial-gradient(circle, transparent 0 58%, rgba(255, 230, 176, 0.24) 59% 61%, transparent 62%);
+  mask: radial-gradient(circle, transparent 0 52%, #000 53% 63%, transparent 64%);
+  filter: drop-shadow(0 0 18px rgba(255, 208, 113, 0.45));
+  animation: continueRuneSpin 5.5s linear infinite, continueRunePulse 1150ms ease-out forwards;
+}
+
+.continue-transition-card {
+  position: relative;
+  width: 78px;
+  height: 112px;
+  border-radius: 9px;
+  background:
+    linear-gradient(135deg, rgba(255, 230, 176, 0.35), transparent 28%),
+    url('../assets/img/card/verso.png') center/cover no-repeat;
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.55),
+    0 0 32px rgba(255, 190, 78, 0.34);
+  animation: continueCardLift 1150ms cubic-bezier(.18,.72,.2,1) forwards;
+}
+
+.continue-transition-text {
+  position: absolute;
+  top: calc(50% + 96px);
+  color: #ffe6b0;
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.8), 0 0 18px rgba(255, 198, 89, 0.28);
+  animation: continueTextGlow 1150ms ease-out forwards;
+}
+
+@keyframes continueOverlayIn {
+  0% { opacity: 0; }
+  18% { opacity: 1; }
+  78% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes continueRuneSpin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes continueRunePulse {
+  0% { opacity: 0; scale: .72; }
+  22% { opacity: .95; scale: 1; }
+  80% { opacity: .85; scale: 1.08; }
+  100% { opacity: 0; scale: 1.18; }
+}
+
+@keyframes continueCardLift {
+  0% { opacity: 0; transform: translateY(26px) rotateY(-28deg) scale(.82); }
+  24% { opacity: 1; transform: translateY(0) rotateY(0deg) scale(1); }
+  74% { opacity: 1; transform: translateY(-8px) rotateY(18deg) scale(1.04); }
+  100% { opacity: 0; transform: translateY(-22px) rotateY(52deg) scale(.92); }
+}
+
+@keyframes continueTextGlow {
+  0% { opacity: 0; transform: translateY(10px); }
+  30% { opacity: 1; transform: translateY(0); }
+  78% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-6px); }
+}
+
+.continue-transition-overlay.continue-transition-blackout {
+  z-index: 100000000;
+  background: #000;
+  backdrop-filter: none;
+  animation: continueBlackoutIn 680ms ease forwards;
+}
+
+.route-black-curtain {
+  position: fixed;
+  inset: 0;
+  z-index: 100000001;
+  background: #000;
+  pointer-events: all;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.route-black-curtain.covering {
+  opacity: 1;
+}
+
+.route-black-curtain.revealing {
+  animation: routeCurtainReveal 720ms ease forwards;
+}
+
+.route-black-curtain.covering::before {
+  content: '';
+  position: absolute;
+  width: min(56vw, 520px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, rgba(255, 213, 121, 0.14) 0 8%, transparent 9% 48%, rgba(255, 213, 121, 0.22) 49% 51%, transparent 52%),
+    repeating-conic-gradient(from 0deg, transparent 0deg 11deg, rgba(255, 225, 162, 0.62) 12deg 13deg, transparent 14deg 28deg);
+  mask: radial-gradient(circle, transparent 0 42%, #000 43% 63%, transparent 64%);
+  filter: drop-shadow(0 0 22px rgba(255, 194, 74, 0.42));
+  opacity: 0;
+  animation: routeCurtainRuneSpin 4.8s linear infinite, routeCurtainRuneAppear 3000ms ease forwards;
+}
+
+.route-black-curtain.covering::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(118, 43, 184, 0.34) 0%, rgba(64, 18, 95, 0.15) 26%, transparent 54%),
+    radial-gradient(circle at 50% 56%, rgba(255, 186, 68, 0.14), transparent 34%);
+  opacity: 0;
+  animation: routeCurtainAura 3000ms ease forwards;
+}
+
+.route-curtain-rune {
+  position: absolute;
+  width: min(36vw, 330px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 229, 176, 0.32);
+  box-shadow:
+    0 0 42px rgba(150, 62, 217, 0.28),
+    inset 0 0 28px rgba(255, 218, 132, 0.12);
+  opacity: 0;
+  animation: routeCurtainInnerRune 3000ms ease forwards;
+}
+
+.route-curtain-card {
+  position: relative;
+  z-index: 2;
+  width: 82px;
+  height: 118px;
+  border-radius: 10px;
+  background:
+    linear-gradient(135deg, rgba(255, 230, 176, 0.38), transparent 26%),
+    url('../assets/img/card/verso.png') center/cover no-repeat;
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.55),
+    0 0 34px rgba(255, 190, 78, 0.36);
+  opacity: 0;
+  animation: routeCurtainCardFloat 3000ms cubic-bezier(.18,.72,.2,1) forwards;
+}
+
+.route-curtain-text {
+  position: absolute;
+  z-index: 2;
+  top: calc(50% + 94px);
+  color: #ffe6b0;
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.8), 0 0 18px rgba(255, 198, 89, 0.3);
+  opacity: 0;
+  animation: routeCurtainTextPulse 3000ms ease forwards;
+}
+
+@keyframes continueBlackoutIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes routeCurtainRuneSpin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes routeCurtainRuneAppear {
+  0% { opacity: 0; scale: .86; }
+  18% { opacity: .78; scale: 1; }
+  76% { opacity: .9; scale: 1.06; }
+  100% { opacity: 0; scale: 1.16; }
+}
+
+@keyframes routeCurtainAura {
+  0% { opacity: 0; }
+  18% { opacity: 1; }
+  78% { opacity: .86; }
+  100% { opacity: 0; }
+}
+
+@keyframes routeCurtainInnerRune {
+  0% { opacity: 0; transform: scale(.82) rotate(-12deg); }
+  22% { opacity: .95; transform: scale(1) rotate(0deg); }
+  76% { opacity: .82; transform: scale(1.04) rotate(10deg); }
+  100% { opacity: 0; transform: scale(1.12) rotate(18deg); }
+}
+
+@keyframes routeCurtainCardFloat {
+  0% { opacity: 0; transform: translateY(18px) rotateY(-32deg) scale(.84); }
+  18% { opacity: 1; transform: translateY(0) rotateY(0deg) scale(1); }
+  72% { opacity: 1; transform: translateY(-8px) rotateY(20deg) scale(1.04); }
+  100% { opacity: 0; transform: translateY(-24px) rotateY(58deg) scale(.9); }
+}
+
+@keyframes routeCurtainTextPulse {
+  0% { opacity: 0; transform: translateY(8px); }
+  20% { opacity: 1; transform: translateY(0); }
+  78% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-6px); }
+}
+
+@keyframes routeCurtainReveal {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
   }
 }

@@ -24,15 +24,15 @@ module.exports = {
       name: { pt: 'Pele Rochosa', en: 'Rocky Hide' },
       cost: 1,
       desc: {
-        pt: 'Reduz dano recebido em 3%.',
-        en: 'Reduces damage taken by 3%.',
+        pt: 'reduz o dano recebido em 1.',
+        en: 'reduces damage taken by 1.',
       },
     },
   ],
   field: { pt: 'Solo Sagrado', en: 'Sacred Ground' },
   fielddesc: {
-    pt: 'Aliados recebem 3% menos dano enquanto Leoracal estiver em campo.',
-    en: 'Allies take 3% less damage while Leoracal is on the field.',
+    pt: 'Aliados recebem -1 de dano enquanto Leoracal estiver em campo.',
+    en: 'Allies take -1 damage while Leoracal is on the field.',
   },
   storyTitle: { pt: 'Rastro do deserto', en: 'Trail of the Desert' },
   story: [

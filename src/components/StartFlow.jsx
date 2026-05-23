@@ -41,6 +41,7 @@ const dialogos = {
 // btnStyle não utilizado
 
 function StartFlow({ onFinish, onGoHome, menuMusicRef }) {
+  const { lang, effectsVolume, setActiveGuardian, addCardsFromBooster } = useContext(AppContext);
   // menuMusicRef: ref global para controle da música do menu
   const candleAudioRef = useRef(null);
   const [candleKey, setCandleKey] = useState(0);
@@ -56,7 +57,7 @@ function StartFlow({ onFinish, onGoHome, menuMusicRef }) {
 
     if (candleRef) {
       candleRef.addEventListener('ended', handleCandleEnded);
-      candleRef.volume = 0.5;
+      candleRef.volume = (effectsVolume ?? 50) / 100;
       candleRef.currentTime = 0;
       candleRef.play().catch(() => {});
     }
@@ -79,8 +80,13 @@ function StartFlow({ onFinish, onGoHome, menuMusicRef }) {
         candleRef.pause();
       }
     };
-  }, [candleKey]);
-  const { lang, effectsVolume, setActiveGuardian, addCardsFromBooster } = useContext(AppContext);
+  }, [candleKey, effectsVolume]);
+
+  useEffect(() => {
+    if (candleAudioRef.current) {
+      candleAudioRef.current.volume = (effectsVolume ?? 50) / 100;
+    }
+  }, [effectsVolume]);
   const [step, setStep] = useState(0);
   const [showModal, setShowModal] = useState(false);
   const [displayedText, setDisplayedText] = useState('');
@@ -284,7 +290,10 @@ function StartFlow({ onFinish, onGoHome, menuMusicRef }) {
             backdropFilter: 'blur(2px)',
           }}
         >
-          <div className="startflow-cards" style={{ position: 'relative' }}>
+          <div
+            className={`startflow-cards${showPreview ? ' preview-open' : ''}`}
+            style={{ position: 'relative' }}
+          >
             {cardAnims.current.map((anim, i) => (
               <div
                 key={`card-${i}`}
@@ -431,10 +440,11 @@ function StartFlow({ onFinish, onGoHome, menuMusicRef }) {
           }}
         >
           <div
+            className="startflow-preview-content"
             style={{
               display: 'flex',
               flexDirection: 'row',
-              alignItems: 'flex-start',
+              alignItems: 'center',
               gap: 32,
             }}
           >
@@ -447,27 +457,18 @@ function StartFlow({ onFinish, onGoHome, menuMusicRef }) {
               }}
             />
             <button
-              style={{
-                height: 48,
-                alignSelf: 'flex-start',
-                marginLeft: 8,
-                background: '#ffe6b0',
-                color: '#1e1628',
-                border: 'none',
-                borderRadius: 12,
-                fontWeight: 700,
-                fontSize: 18,
-                boxShadow: '0 2px 8px #000a',
-                cursor: 'pointer',
-                padding: '0 18px',
-                transition: 'background 0.2s',
+              className="startflow-journey-btn"
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  localStorage.setItem('kadirStartFlowCompleted', 'true');
+                }
+                onGoHome();
               }}
-              onClick={onGoHome}
               aria-label={
                 lang === 'en' ? 'Go to Home Screen' : 'Ir para tela inicial'
               }
             >
-              {lang === 'en' ? 'Home' : 'Início'}
+              {lang === 'en' ? 'Start journey' : 'Iniciar jornada'}
             </button>
           </div>
         </div>

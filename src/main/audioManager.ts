@@ -1,19 +1,31 @@
 /**
  * Audio Manager para Electron
- * Gerencia reprodução de áudio com suporte a loop e controle de volume
+ * Mantem a janela liberada para reproduzir audio e evita mute acidental.
  */
 
 import { BrowserWindow } from 'electron';
 
 export const setupAudioManager = (mainWindow: BrowserWindow) => {
-  // Ativa permissões de áudio e media
+  const keepAudioEnabled = () => {
+    if (!mainWindow.isDestroyed()) {
+      mainWindow.webContents.audioMuted = false;
+    }
+  };
+
   mainWindow.webContents.session.setPermissionCheckHandler(() => true);
+  mainWindow.webContents.session.setPermissionRequestHandler(
+    (_webContents, _permission, callback) => {
+      callback(true);
+    },
+  );
 
-  // Desabilita restrições de autoplay
-  mainWindow.webContents.on('will-navigate', (event, url) => {
-    mainWindow.webContents.audioMuted = false;
-  });
+  mainWindow.webContents.on('will-navigate', keepAudioEnabled);
+  mainWindow.webContents.on('dom-ready', keepAudioEnabled);
+  mainWindow.webContents.on('did-finish-load', keepAudioEnabled);
+  mainWindow.webContents.on('did-navigate', keepAudioEnabled);
+  mainWindow.webContents.on('media-started-playing', keepAudioEnabled);
+  mainWindow.on('show', keepAudioEnabled);
+  mainWindow.on('focus', keepAudioEnabled);
 
-  // Garante que o áudio não será silenciado
-  mainWindow.webContents.audioMuted = false;
+  keepAudioEnabled();
 };

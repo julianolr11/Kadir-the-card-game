@@ -30,8 +30,8 @@ module.exports = {
   ],
   field: { pt: 'Pântano Esquecido', en: 'Forgotten Swamp' },
   fielddesc: {
-    pt: 'Inimigos têm sua velocidade reduzida em 6% enquanto Viborom estiver em campo.',
-    en: 'Enemies have their speed reduced by 6% while Viborom is on the field.',
+    pt: 'Inimigos têm sua velocidade reduzida em 1 enquanto Viborom estiver em campo.',
+    en: 'Enemies have their speed reduced by 1 while Viborom is on the field.',
   },
   storyTitle: { pt: 'Sussurros do Pântano', en: 'Whispers of the Swamp' },
   story: [
@@ -73,8 +73,8 @@ module.exports = {
     id: 'viborom_blessing',
     name: { pt: 'Miasma Tóxico', en: 'Toxic Miasma' },
     desc: {
-      pt: 'Criaturas venenosas ganham +3% de resistência enquanto Viborom estiver em campo.',
-      en: 'Poison creatures gain +3% resistance while Viborom is on the field.',
+      pt: 'Criaturas venenosas ganham +1 resistência enquanto Viborom estiver em campo.',
+      en: 'Poison creatures gain +1 resistance while Viborom is on the field.',
     },
   },
   unlockTable: [
@@ -86,7 +86,7 @@ module.exports = {
       id: 'VENOM_SKIN',
       name: { pt: 'Pele Venenosa', en: 'Venom Skin' },
       desc: {
-        pt: 'Recebe -1 de dano de poison por 2 turnos ao entrar em campo.',
+        pt: 'Recebe -1 de dano de veneno por 2 turnos ao entrar em campo.',
         en: 'Takes -1 poison damage for 2 turns when summoned.',
       },
     },
@@ -101,7 +101,7 @@ module.exports = {
         en: 'Deals 2 damage with multiple poison wounds.',
       },
       cost: 1,
-      type: 'damage_poison',
+      effectType: 'damage_poison',
     },
     // Nível 4 - Perk: Resistência Tóxica
     {
@@ -110,8 +110,8 @@ module.exports = {
       id: 'TOXIC_RESISTANCE',
       name: { pt: 'Resistência Tóxica', en: 'Toxic Resistance' },
       desc: {
-        pt: 'Recebe -20% de dano de poison.',
-        en: 'Takes -20% poison damage.',
+        pt: 'recebe 1 a menos de dano de veneno.',
+        en: 'takes -1 poison damage.',
       },
     },
     // Nível 5 - Habilidade: Nuvem Tóxica
@@ -125,7 +125,7 @@ module.exports = {
         en: 'Deals 3 damage and poisons for 3 turns.',
       },
       cost: 2,
-      type: 'damage_poison_dot',
+      effectType: 'damage_poison_dot',
     },
     // Nível 6 - Perk: Veneno Persistente
     {
@@ -134,7 +134,7 @@ module.exports = {
       id: 'PERSISTENT_VENOM',
       name: { pt: 'Veneno Persistente', en: 'Persistent Venom' },
       desc: {
-        pt: 'Poison causado por Viborom dura +1 turno.',
+        pt: 'veneno causado por Viborom dura +1 turno.',
         en: 'Poison caused by Viborom lasts +1 turn.',
       },
     },
@@ -149,7 +149,7 @@ module.exports = {
         en: 'Deals 4 damage and spreads poison to adjacent enemies.',
       },
       cost: 2,
-      type: 'aoe_poison_spread',
+      effectType: 'aoe_poison_spread',
     },
     // Nível 8 - Perk: Cura Tóxica
     {
@@ -173,7 +173,7 @@ module.exports = {
         en: 'Deals 4 damage and reduces enemy defense for 3 turns.',
       },
       cost: 3,
-      type: 'damage_defense_down',
+      effectType: 'damage_defense_down',
     },
     // Nível 10 - Habilidade: Morte Tóxica
     {
@@ -186,7 +186,7 @@ module.exports = {
         en: 'Ultimate: 4 damage and applies poison for 5 turns.',
       },
       cost: 4,
-      type: 'ultimate_poison',
+      effectType: 'ultimate_poison',
     },
   ],
 };

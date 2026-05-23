@@ -7,15 +7,18 @@ const MenuMusicPlayer = React.forwardRef((props, ref) => {
   const { musicVolume } = useContext(AppContext);
   const shouldPlayRef = useRef(true);
 
+  const playMenuMusic = () => {
+    if (!audioRef.current || !shouldPlayRef.current) return Promise.resolve();
+    audioRef.current.muted = false;
+    audioRef.current.volume = (musicVolume ?? 100) / 100;
+    return audioRef.current.play().catch(() => {});
+  };
+
   // Permite controle externo via ref
   React.useImperativeHandle(ref, () => ({
     play: () => {
       shouldPlayRef.current = true;
-      if (audioRef.current) {
-        audioRef.current.volume = (musicVolume ?? 100) / 100;
-        return audioRef.current.play();
-      }
-      return Promise.resolve();
+      return playMenuMusic();
     },
     pause: () => {
       shouldPlayRef.current = false;
@@ -41,13 +44,16 @@ const MenuMusicPlayer = React.forwardRef((props, ref) => {
             audioRef.current.currentTime >= audioRef.current.duration - 0.1)
         ) {
           audioRef.current.currentTime = 0;
-          audioRef.current.play().catch(() => {});
+          playMenuMusic();
         }
       }
     }, 100);
 
+    window.addEventListener('kadir-audio-unlocked', playMenuMusic);
+
     return () => {
       clearInterval(intervalId);
+      window.removeEventListener('kadir-audio-unlocked', playMenuMusic);
     };
   }, [musicVolume]);
 

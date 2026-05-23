@@ -6,14 +6,14 @@ module.exports = {
   height: 2.4,
   weakness: 'fogo',
   name: { pt: 'Moar', en: 'Moar' },
-  type: { pt: 'Mistica', en: 'Mystic' },
+  type: { pt: 'Mística', en: 'Mystic' },
   element: 'puro',
   img: require('../../img/creatures/moar_bio.webp'),
   color: 'pure',
   hp: 11,
   abilities: [
     {
-      name: { pt: 'Lamina de Neve', en: 'Snow Blade' },
+      name: { pt: 'Lâmina de Neve', en: 'Snow Blade' },
       cost: 1,
       desc: {
         pt: 'Causa 3 de dano puro e remove 1 debuff de si.',
@@ -24,15 +24,15 @@ module.exports = {
       name: { pt: 'Manto Cristalino', en: 'Crystal Mantle' },
       cost: 1,
       desc: {
-        pt: 'Concede 2 de escudo e +4% de resistencia por 2 turnos.',
-        en: 'Grants 2 shield and +4% resistance for 2 turns.',
+        pt: 'Concede 2 de escudo e +1 resistência por 2 turnos.',
+        en: 'Grants 2 shield and +1 resistance for 2 turns.',
       },
     },
   ],
   field: { pt: 'Alvorada Branca', en: 'White Dawn' },
   fielddesc: {
-    pt: 'Aliados puros recebem +3% de cura enquanto Moar estiver em campo.',
-    en: 'Pure allies receive +3% healing while Moar is on the field.',
+    pt: 'Aliados puros recebem +1 cura enquanto Moar estiver em campo.',
+    en: 'Pure allies receive +1 healing while Moar is on the field.',
   },
   storyTitle: { pt: 'Chifres da Aurora', en: 'Horns of the Aurora' },
   story: [
@@ -51,7 +51,7 @@ module.exports = {
   defaultSkills: [
     {
       id: 'moar_skill_lamina_neve',
-      name: { pt: 'Lamina de Neve', en: 'Snow Blade' },
+      name: { pt: 'Lâmina de Neve', en: 'Snow Blade' },
       desc: {
         pt: 'Causa 3 de dano puro e remove 1 debuff de si.',
         en: 'Deals 3 pure damage and removes 1 debuff from self.',
@@ -65,13 +65,13 @@ module.exports = {
       id: 'moar_skill_manto_cristalino',
       name: { pt: 'Manto Cristalino', en: 'Crystal Mantle' },
       desc: {
-        pt: 'Concede 2 de escudo e +4% resistencia por 2 turnos.',
-        en: 'Grants 2 shield and +4% resistance for 2 turns.',
+        pt: 'Concede 2 de escudo e +1 resistência por 2 turnos.',
+        en: 'Grants 2 shield and +1 resistance for 2 turns.',
       },
       cost: 1,
       type: 'shield_resist',
       shield: 2,
-      buff: { stat: 'resistance', value: 4, duration: 2 },
+      buff: { stat: 'resistance', value: 1, duration: 2 },
     },
   ],
   defaultBlessing: {
@@ -90,8 +90,8 @@ module.exports = {
       id: 'AURORA_WARD',
       name: { pt: 'Guarda Aurora', en: 'Aurora Ward' },
       desc: {
-        pt: 'Recebe +1 de resistencia quando estiver acima de 50% de HP.',
-        en: 'Gains +1 resistance when above 50% HP.',
+        pt: 'Recebe +1 de resistencia quando estiver acima de metade do HP.',
+        en: 'Gains +1 resistance when above half HP.',
       },
     },
     {
@@ -104,7 +104,7 @@ module.exports = {
         en: 'Deals 2 pure damage to all enemies and heals allies for 1 HP.',
       },
       cost: 2,
-      type: 'aoe_damage_heal',
+      effectType: 'aoe_damage_heal',
       damage: 2,
       heal: 1,
     },
@@ -116,6 +116,31 @@ module.exports = {
       desc: {
         pt: 'Ao entrar em campo, remove 1 debuff de todos os aliados.',
         en: 'When summoned, removes 1 debuff from all allies.',
+      },
+    },
+    {
+      level: 6,
+      type: 'skill',
+      id: 'moar_skill_neve_purificadora',
+      name: { pt: 'Neve Purificadora', en: 'Purifying Snow' },
+      desc: {
+        pt: 'Cura 2 de HP de um aliado e concede 1 de escudo por 1 turno.',
+        en: 'Heals 2 HP from an ally and grants 1 shield for 1 turn.',
+      },
+      cost: 2,
+      effectType: 'heal_shield',
+      heal: 2,
+      shield: 1,
+      duration: 1,
+    },
+    {
+      level: 7,
+      type: 'perk',
+      id: 'WHITE_VIGIL',
+      name: { pt: 'Vigilia Branca', en: 'White Vigil' },
+      desc: {
+        pt: 'No início do turno, se tiver 3 HP ou menos, remove 1 debuff e ganha 1 de escudo.',
+        en: 'At the start of the turn, if it has 3 HP or less, removes 1 debuff and gains 1 shield.',
       },
     },
   ],

@@ -101,7 +101,7 @@ module.exports = {
         en: 'Deals 2 damage and freezes the enemy for 1 turn.',
       },
       cost: 1,
-      type: 'damage_freeze',
+      effectType: 'damage_freeze',
     },
     // Nível 4 - Perk: Defesa Profunda
     {
@@ -121,11 +121,11 @@ module.exports = {
       id: 'alatoy_skill_implosao_aquatica',
       name: { pt: 'Implosão Aquática', en: 'Aquatic Implosion' },
       desc: {
-        pt: 'Causa 3 de dano e reduz defesa do inimigo em 10% por 2 turnos.',
-        en: 'Deals 3 damage and reduces enemy defense by 10% for 2 turns.',
+        pt: 'Causa 3 de dano e reduz defesa em 1 por 2 turnos.',
+        en: 'Deals 3 damage and reduces defense by 1 for 2 turns.',
       },
       cost: 2,
-      type: 'damage_defense_down',
+      effectType: 'damage_defense_down',
     },
     // Nível 6 - Perk: Reflexo Abissal
     {
@@ -149,7 +149,7 @@ module.exports = {
         en: 'Deals 3 area damage and reduces enemy speed for 1 turn.',
       },
       cost: 2,
-      type: 'aoe_slow',
+      effectType: 'aoe_slow',
     },
     // Nível 8 - Perk: Gélido Instintivo
     {
@@ -158,8 +158,8 @@ module.exports = {
       id: 'INSTINCTIVE_FROST',
       name: { pt: 'Gélido Instintivo', en: 'Instinctive Frost' },
       desc: {
-        pt: 'Ao ser atacado, 30% de chance de congelar o atacante por 1 turno.',
-        en: 'When attacked, 30% chance to freeze the attacker for 1 turn.',
+        pt: 'Ao ser atacado, jogue a moeda 1 vez; se der cara, congelar o atacante por 1 turno.',
+        en: 'When attacked, flip a coin once; on heads, freeze the attacker for 1 turn.',
       },
     },
     // Nível 9 - Habilidade: Abismo Gélido
@@ -173,7 +173,7 @@ module.exports = {
         en: 'Deals 4 damage and freezes the field for 2 turns.',
       },
       cost: 3,
-      type: 'field_freeze',
+      effectType: 'field_freeze',
     },
     // Nível 10 - Habilidade: Fúria Oceânica
     {
@@ -186,7 +186,7 @@ module.exports = {
         en: 'Deals 4 damage to all enemies and restores 2 HP.',
       },
       cost: 3,
-      type: 'ultimate_aoe_heal',
+      effectType: 'ultimate_aoe_heal',
     },
   ],
 };

@@ -24,15 +24,15 @@ module.exports = {
       name: { pt: 'Sopro Lunar', en: 'Lunar Breath' },
       cost: 1,
       desc: {
-        pt: 'Causa 2 de dano e tem chance de reduzir o ataque do inimigo.',
-        en: 'Deals 2 damage and has a chance to reduce the enemy’s attack.',
+        pt: 'Causa 2 de dano e jogue a moeda 1 vez; se der cara, reduzir o ataque do inimigo.',
+        en: 'Deals 2 damage and flips a coin once; on heads, reduce the enemy’s attack.',
       },
     },
   ],
   field: { pt: 'Reflexo do Lago', en: 'Lake Reflection' },
   fielddesc: {
-    pt: 'Criaturas de água recebem 3% a mais de defesa enquanto Lunethal estiver em campo.',
-    en: 'Water creatures gain 3% more defense while Lunethal is on the field.',
+    pt: 'Criaturas de água ganham +1 defesa enquanto Lunethal estiver em campo.',
+    en: 'Water creatures gain +1 defense while Lunethal is on the field.',
   },
   storyTitle: { pt: 'Lenda de Lunethal', en: 'Legend of Lunethal' },
   story: [
@@ -74,8 +74,8 @@ module.exports = {
     id: 'lunethal_blessing',
     name: { pt: 'Bênção da Lua', en: "Moon's Blessing" },
     desc: {
-      pt: 'Criaturas sagradas ganham +3% de velocidade enquanto Lunethal estiver em campo.',
-      en: 'Holy creatures gain +3% speed while Lunethal is on the field.',
+      pt: 'Criaturas sagradas ganham +1 velocidade enquanto Lunethal estiver em campo.',
+      en: 'Holy creatures gain +1 speed while Lunethal is on the field.',
     },
   },
   unlockTable: [
@@ -102,7 +102,7 @@ module.exports = {
         en: 'Deals 2 damage and heals 2 HP.',
       },
       cost: 1,
-      type: 'damage_heal',
+      effectType: 'damage_heal',
     },
     // Nível 4 - Perk: Reflexo da Lua
     {
@@ -126,7 +126,7 @@ module.exports = {
         en: 'Increases defense and heals 3 HP.',
       },
       cost: 2,
-      type: 'buff_heal',
+      effectType: 'buff_heal',
     },
     // Nível 6 - Perk: Bênção Noturna
     {
@@ -150,7 +150,7 @@ module.exports = {
         en: 'Deals 3 damage and heals all allies for 2 HP.',
       },
       cost: 2,
-      type: 'damage_team_heal',
+      effectType: 'damage_team_heal',
     },
     // Nível 8 - Perk: Luz Crescente
     {
@@ -174,7 +174,7 @@ module.exports = {
         en: 'Heals 4 HP to all allies.',
       },
       cost: 3,
-      type: 'team_heal',
+      effectType: 'team_heal',
     },
     // Nível 10 - Habilidade: Era da Luz Eterna
     {
@@ -187,7 +187,7 @@ module.exports = {
         en: 'Ultimate: 4 damage and heals 4 HP to all allies.',
       },
       cost: 4,
-      type: 'ultimate_team_heal',
+      effectType: 'ultimate_team_heal',
     },
   ],
 };

@@ -31,13 +31,13 @@ module.exports = {
   ],
   field: { pt: 'Caldeirão Vulcânico', en: 'Volcanic Cauldron' },
   fielddesc: {
-    pt: 'Aliados de fogo ganham +6% ataque; primeiro golpe de cada inimigo recebe 1 de queimadura.',
-    en: 'Fire allies gain +6% attack; each enemy takes 1 burn on their first strike.',
+    pt: 'Aliados de fogo ganham +1 ataque; primeiro golpe de cada inimigo recebe 1 de queimadura.',
+    en: 'Fire allies gain +1 attack; each enemy takes 1 burn on their first strike.',
   },
   storyTitle: { pt: 'Brasas que Não Dormem', en: 'Embers That Never Sleep' },
   story: [
     {
-      pt: 'Beoxyr ronda crateras antigas, onde o calor jamais cessou.',
+      pt: 'Beoxyr ronda cratéras antigas, onde o calor jamais cessou.',
       en: 'Beoxyr prowls ancient craters where the heat never died.',
     },
     {
@@ -67,8 +67,8 @@ module.exports = {
       id: 'beoxyr_skill_2',
       name: { pt: 'Fôlego Vulcânico', en: 'Volcanic Breath' },
       desc: {
-        pt: 'Causa 2 de dano em área e reduz defesa dos inimigos em 2% por 1 turno.',
-        en: 'Deals 2 area damage and reduces enemy defense by 2% for 1 turn.',
+        pt: 'Causa 2 de dano em área e reduz defesa em 1 por 1 turno.',
+        en: 'Deals 2 area damage and reduces defense by 1 for 1 turn.',
       },
       cost: 1,
       type: 'damage_debuff',
@@ -128,8 +128,8 @@ module.exports = {
       id: 'beoxyr_skill_6',
       name: { pt: 'Erupção Carmesim', en: 'Crimson Eruption' },
       desc: {
-        pt: 'Causa 4 de dano e aumenta ataque de fogo aliado em 6% por 2 turnos.',
-        en: 'Deals 4 damage and boosts fire ally attack by 6% for 2 turns.',
+        pt: 'Causa 4 de dano e concede +1 ataque aos aliados de fogo por 2 turnos.',
+        en: 'Deals 4 damage and grants +1 attack to fire allies for 2 turns.',
       },
       cost: 2,
     },
@@ -139,8 +139,8 @@ module.exports = {
       id: 'beoxyr_skill_7',
       name: { pt: 'Supremo: Forja Viva', en: 'Ultimate: Living Forge' },
       desc: {
-        pt: 'Supremo: 4 de dano em área, aplica queimadura 2 e concede +10% ataque de fogo por 2 turnos aos aliados.',
-        en: 'Ultimate: 4 area damage, applies burn 2, and grants allies +10% fire attack for 2 turns.',
+        pt: 'Supremo: 4 de dano em área, aplica queimadura 2 e concede +1 ataque de fogo por 2 turnos aos aliados.',
+        en: 'Ultimate: 4 area damage, applies burn 2, and grants +1 fire attack to allies for 2 turns.',
       },
       cost: 3,
     },

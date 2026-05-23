@@ -30,13 +30,13 @@ module.exports = {
   ],
   field: { pt: 'Céu Imaculado', en: 'Immaculate Sky' },
   fielddesc: {
-    pt: 'Aliados recebem 3% menos dano enquanto Griffor estiver em campo.',
-    en: 'Allies take 3% less damage while Griffor is on the field.',
+    pt: 'Aliados recebem -1 de dano enquanto Griffor estiver em campo.',
+    en: 'Allies take -1 damage while Griffor is on the field.',
   },
   storyTitle: { pt: 'Origem de Griffor', en: 'Origin of Griffor' },
   story: [
     {
-      pt: 'Griffor é uma ave lendária, símbolo de pureza e proteção.',
+      pt: 'Griffor é uma ave lenconcederia, símbolo de pureza e proteção.',
       en: 'Griffor is a legendary bird, symbol of purity and protection.',
     },
     {
@@ -62,8 +62,8 @@ module.exports = {
       id: 'griffor_skill_2',
       name: { pt: 'Salto Acrobático', en: 'Acrobatic Leap' },
       desc: {
-        pt: 'Causa 2 de dano e aumenta esquiva em 6% por 1 turno.',
-        en: 'Deals 2 damage and increases evasion by 6% for 1 turn.',
+        pt: 'Causa 2 de dano e ganha +1 esquiva por 1 turno.',
+        en: 'Deals 2 damage and gains +1 evasion for 1 turn.',
       },
       cost: 1,
       type: 'damage_buff',
@@ -101,7 +101,7 @@ module.exports = {
         en: 'Deals 2 damage twice consecutively.',
       },
       cost: 1,
-      type: 'multi_hit',
+      effectType: 'multi_hit',
     },
     // Nível 4 - Perk: Garras Protetoras
     {
@@ -121,11 +121,11 @@ module.exports = {
       id: 'griffor_skill_ataque_feral',
       name: { pt: 'Ataque Feral', en: 'Feral Attack' },
       desc: {
-        pt: 'Causa 4 de dano e ignora 5% da defesa inimiga.',
-        en: 'Deals 4 damage and ignores 5% of enemy defense.',
+        pt: 'Causa 4 de dano e ignora 1 ponto de defesa inimiga.',
+        en: 'Deals 4 damage and ignores 1 defense.',
       },
       cost: 2,
-      type: 'damage_shieldpierce',
+      effectType: 'damage_shieldpierce',
     },
     // Nível 6 - Perk: Fôlego Selvagem
     {
@@ -149,7 +149,7 @@ module.exports = {
         en: 'Deals 3 damage and acts twice per turn.',
       },
       cost: 2,
-      type: 'multi_turn',
+      effectType: 'multi_turn',
     },
     // Nível 8 - Perk: Garras Protetoras
     {
@@ -173,7 +173,7 @@ module.exports = {
         en: 'Deals 4 damage and reduces enemy defense.',
       },
       cost: 3,
-      type: 'damage_defense_down',
+      effectType: 'damage_defense_down',
     },
     // Nível 10 - Habilidade: Grito do Predador
     {
@@ -186,7 +186,7 @@ module.exports = {
         en: 'Ultimate: 4 damage, stuns the enemy, and recovers 2 HP.',
       },
       cost: 4,
-      type: 'ultimate_stun_heal',
+      effectType: 'ultimate_stun_heal',
     },
   ],
 };

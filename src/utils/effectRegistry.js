@@ -81,6 +81,20 @@ export function applyDamage(state, params) {
     return { newState: state, log: [], damageDealt: 0, hasAdvantage: false, hasDisadvantage: false, shieldHit: false, shieldBroken: false };
   }
 
+  if (target.firstAttackNegated) {
+    const newState = updateCreature(state, targetId, { firstAttackNegated: false });
+    return {
+      newState,
+      log: [`${target.name || 'Alvo'} negou o primeiro ataque recebido.`],
+      damageDealt: 0,
+      hasAdvantage: false,
+      hasDisadvantage: false,
+      shieldHit: false,
+      shieldBroken: false,
+      died: false,
+    };
+  }
+
   // Calcula modificador de elemento
   const { modifier: elementMod, hasAdvantage, hasDisadvantage } = getElementModifier(attackerElement, target.element);
 
@@ -467,7 +481,7 @@ function getCreatureSide(state, creatureId) {
 /**
  * Atualiza dados de uma criatura
  */
-function updateCreature(state, creatureId, updates) {
+export function updateCreature(state, creatureId, updates) {
   const newState = { ...state };
 
   // Atualiza player slots
@@ -523,7 +537,7 @@ export function getUnlockedAbilities(cardData, level) {
           name: unlock.name,
           cost: unlock.cost,
           desc: unlock.desc,
-          type: unlock.type,
+          type: unlock.effectType || unlock.type,
         });
         unlockedIds.add(unlock.id);
       }

@@ -18,13 +18,19 @@ import freezeIcon from '../assets/img/icons/freeze.png';
 import paralyzeIcon from '../assets/img/icons/paralyze.png';
 import poisonIcon from '../assets/img/icons/poison.png';
 import sleepIcon from '../assets/img/icons/sleep.png';
+import strikeGlassSfx from '../assets/sounds/effects/strike-glass.mp3';
+import damageSfx from '../assets/sounds/effects/damage.mp3';
+import victorySfx from '../assets/sounds/effects/victory.mp3';
+import defeatSfx from '../assets/sounds/effects/defeat.mp3';
 import StatusOverlayPortal from './StatusOverlayPortal.jsx';
 import LayeredStatusOverlayPortal from './LayeredStatusOverlayPortal.jsx';
 import GhostPreviewPortal from './GhostPreviewPortal.jsx';
 import HandPortal from './HandPortal.jsx';
+import BattleModalPortal from './BattleModalPortal.jsx';
 import swordPng from '../assets/img/icons/sword.png';
+import { unlockNextCampaignEnemy } from './CampaignTower.jsx';
 
-function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
+function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
   const {
     state,
     startBattle,
@@ -34,6 +40,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
     invokeFieldCard,
     startPlaying,
     useAbility,
+    sacrificeCreature,
     stealEnemyCard,
     revealEnemyCard,
     cancelRevealEnemy,
@@ -60,7 +67,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
     applyVirideerBless,
     cancelVirideerBless,
   } = useBattle();
-  const { cardCollection } = React.useContext(AppContext);
+  const { cardCollection, effectsVolume } = React.useContext(AppContext);
   const [activeCardIndex, setActiveCardIndex] = React.useState(null);
   const [deckCardDrawn, setDeckCardDrawn] = React.useState(false);
   const [opponentDeckCardDrawn, setOpponentDeckCardDrawn] = React.useState(false);
@@ -70,6 +77,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
   const [overlayBg, setOverlayBg] = React.useState(undefined);
   const [hoveredCard, setHoveredCard] = React.useState(null);
   const slotRefs = React.useRef({});
+  const cardVisualRefs = React.useRef({});
   const revealModalRef = React.useRef(null);
   const revealContainerRef = React.useRef(null);
   const [revealScale, setRevealScale] = React.useState(1);
@@ -79,6 +87,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
   const [poisonOverlays, setPoisonOverlays] = React.useState([]);
   const [freezeOverlays, setFreezeOverlays] = React.useState([]);
   const [shieldOverlays, setShieldOverlays] = React.useState([]);
+  const [shieldApplyIds, setShieldApplyIds] = React.useState({});
   const [burnFlames, setBurnFlames] = React.useState([]);
   const [burnGradients, setBurnGradients] = React.useState([]);
   const [elderoxOverlays, setElderoxOverlays] = React.useState([]);
@@ -87,12 +96,33 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
   const [selectedCreature, setSelectedCreature] = React.useState(null); // { slotIndex, creature } - abre modal de habilidades
   const [selectedAbility, setSelectedAbility] = React.useState(null); // { slotIndex, abilityIndex } - entra em modo targeting
   const [selectedFieldCreature, setSelectedFieldCreature] = React.useState(null); // { slotIndex, creature } - preview da carta em campo
+  const [usedAttackNoticeOpen, setUsedAttackNoticeOpen] = React.useState(false);
   const [spectralAnimationState, setSpectralAnimationState] = React.useState(null); // 'appearing', 'present', 'disappearing', null
+  const [overlayFrameTick, setOverlayFrameTick] = React.useState(0);
   const [spectralRenderCreature, setSpectralRenderCreature] = React.useState(null); // mantém criatura para animar saída
   // Estado unificado para o drawer do cemitério
   const [graveyardOpen, setGraveyardOpen] = React.useState(false);
-  const [essenceAnimating, setEssenceAnimating] = React.useState(false); // Animação de ganho de essência
-  const prevEssenceRef = React.useRef(state.player.essence);
+  const [essenceAnimating, setEssenceAnimating] = React.useState({ player: false, ai: false }); // Animação de ganho de essência
+  const prevEssenceRef = React.useRef({ player: state.player.essence, ai: state.ai.essence });
+  const essenceTimersRef = React.useRef({});
+  const lastEssenceRewardPulseRef = React.useRef(null);
+  const prevOrbsRef = React.useRef({ player: state.player.orbs, ai: state.ai.orbs });
+  const orbDamageTimersRef = React.useRef({});
+  const orbDisplayTimersRef = React.useRef({});
+  const lastDamageSoundKeysRef = React.useRef(new Set());
+  const resultSoundKeyRef = React.useRef(null);
+  const prevShieldValuesRef = React.useRef({});
+  const shieldApplyTimersRef = React.useRef({});
+  const [orbDamageState, setOrbDamageState] = React.useState({ player: false, ai: false });
+  const [displayedOrbs, setDisplayedOrbs] = React.useState({
+    player: state.player.orbs,
+    ai: state.ai.orbs,
+  });
+
+  const showUsedAttackNotice = React.useCallback(() => {
+    setUsedAttackNoticeOpen(true);
+    window.setTimeout(() => setUsedAttackNoticeOpen(false), 2000);
+  }, []);
 
   // estilos simples para modal centralizado
   const turnModalBgStyle = {
@@ -102,7 +132,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
     right: 0,
     bottom: 0,
     background: 'rgba(30,22,40,0.32)',
-    zIndex: 1000,
+    zIndex: 'var(--z-card-modal)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -140,6 +170,29 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
     fontWeight: 600,
   };
 
+  const noticeModalBgStyle = {
+    position: 'fixed',
+    inset: 0,
+    zIndex: 100000010,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    pointerEvents: 'none',
+  };
+
+  const noticeModalStyle = {
+    padding: '18px 26px',
+    borderRadius: 10,
+    border: '1px solid rgba(255, 230, 176, 0.62)',
+    background: 'rgba(16, 10, 24, 0.92)',
+    color: '#ffe6b0',
+    fontFamily: 'Poppins, sans-serif',
+    fontSize: 20,
+    fontWeight: 900,
+    textShadow: '0 2px 12px rgba(0,0,0,0.85)',
+    boxShadow: '0 18px 44px rgba(0,0,0,0.5), inset 0 0 20px rgba(255,230,176,0.08)',
+  };
+
   const cardCache = useMemo(() => ({}), []);
 
   // Resolve um ID (base ou inst├óncia) para { baseId, instance }
@@ -159,6 +212,31 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
   };
 
   const isFieldId = (id) => !!id && (/^f\d{3}$/i.test(id) || String(id).toLowerCase().startsWith('field'));
+
+  const normalizeAffinityText = (value) => String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+
+  const isBuffedByActiveField = (slot) => {
+    const fieldData = state.sharedField?.cardData;
+    if (!slot || !fieldData || !state.sharedField?.active) return false;
+    const creatureElement = normalizeAffinityText(slot.element);
+    const creatureType = normalizeAffinityText(slot.type);
+    const fieldElement = normalizeAffinityText(fieldData.element);
+    const fieldType = normalizeAffinityText(fieldData.fieldType);
+    const elementBoostKeys = Object.keys(fieldData.elementBoosts || {}).map(normalizeAffinityText);
+    const typeBoostKeys = Object.keys(fieldData.cardTypeBoosts || {}).map(normalizeAffinityText);
+
+    const matchesElement = elementBoostKeys.includes(creatureElement) || (!!fieldElement && creatureElement === fieldElement);
+    const matchesType = typeBoostKeys.some(type => creatureType.includes(type) || type.includes(creatureType))
+      || (!!fieldType && (creatureType.includes(fieldType) || fieldType.includes(creatureType)))
+      || (creatureType.includes('dracon') && (fieldType.includes('dracon') || typeBoostKeys.some(type => type.includes('dracon'))))
+      || ((creatureType.includes('drag') || creatureType.includes('dragon')) && (fieldType.includes('dracon') || fieldType.includes('drag') || typeBoostKeys.some(type => type.includes('dracon') || type.includes('drag'))));
+
+    return matchesElement || matchesType;
+  };
 
   const getCardData = (cardId) => {
     if (!cardId) return null;
@@ -204,8 +282,8 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
   };
 
   useEffect(() => {
-    if (state.phase === 'idle') startBattle(selectedDeck);
-  }, [state.phase, startBattle, selectedDeck]);
+    if (state.phase === 'idle') startBattle(battleConfig || selectedDeck);
+  }, [state.phase, startBattle, selectedDeck, battleConfig]);
 
   // cursor de ataque será aplicado apenas ao entrar em slots alvo (veja onMouseEnter/onMouseLeave abaixo)
 
@@ -235,26 +313,191 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
     }
   }, [state.activePlayer, state.turn]); // Adiciona state.turn para resetar a cada turno
 
-  // Detecta ganho de essência e ativa animação
-  useEffect(() => {
-    if (state.player.essence > prevEssenceRef.current) {
-      setEssenceAnimating(true);
-      setTimeout(() => setEssenceAnimating(false), 600);
-    }
-    prevEssenceRef.current = state.player.essence;
-  }, [state.player.essence]);
+  const triggerEssenceGain = React.useCallback((side) => {
+    if (side !== 'player' && side !== 'ai') return;
 
-  const renderOrbs = (count) => {
+    window.clearTimeout(essenceTimersRef.current[side]);
+    setEssenceAnimating((prev) => ({ ...prev, [side]: false }));
+
+    window.setTimeout(() => {
+      setEssenceAnimating((prev) => ({ ...prev, [side]: true }));
+      essenceTimersRef.current[side] = window.setTimeout(() => {
+        setEssenceAnimating((prev) => ({ ...prev, [side]: false }));
+      }, 980);
+    }, 20);
+  }, []);
+
+  // Detecta ganho de essência e ativa animação.
+  // O pulse explícito cobre kills em que o custo da ação compensa o +1 e o número final não sobe.
+  useEffect(() => {
+    ['player', 'ai'].forEach((side) => {
+      const current = state[side]?.essence ?? 0;
+      const previous = prevEssenceRef.current[side] ?? 0;
+
+      if (current > previous) {
+        triggerEssenceGain(side);
+      }
+
+      prevEssenceRef.current[side] = current;
+    });
+  }, [state.player.essence, state.ai.essence, triggerEssenceGain]);
+
+  useEffect(() => {
+    const pulse = state.essenceRewardPulse;
+    if (!pulse?.side || !pulse?.id || pulse.id === lastEssenceRewardPulseRef.current) return;
+
+    lastEssenceRewardPulseRef.current = pulse.id;
+    triggerEssenceGain(pulse.side);
+  }, [state.essenceRewardPulse, triggerEssenceGain]);
+
+  useEffect(() => {
+    return () => {
+      Object.values(essenceTimersRef.current).forEach((timerId) => {
+        window.clearTimeout(timerId);
+      });
+    };
+  }, []);
+
+  const playOrbDamageSound = React.useCallback(() => {
+    const audio = new Audio(strikeGlassSfx);
+    audio.volume = (effectsVolume ?? 50) / 100;
+    audio.play().catch(() => {});
+  }, [effectsVolume]);
+
+  const playDamageSound = React.useCallback(() => {
+    const audio = new Audio(damageSfx);
+    audio.volume = (effectsVolume ?? 50) / 100;
+    audio.play().catch(() => {});
+  }, [effectsVolume]);
+
+  const playResultSound = React.useCallback((winner) => {
+    const audio = new Audio(winner === 'player' ? victorySfx : defeatSfx);
+    audio.volume = (effectsVolume ?? 50) / 100;
+    audio.play().catch(() => {});
+  }, [effectsVolume]);
+
+  useEffect(() => {
+    const winner = state.gameResult?.winner;
+    if (!winner) {
+      resultSoundKeyRef.current = null;
+      return;
+    }
+
+    const soundKey = `${winner}:${state.gameResult?.turns || state.turn}`;
+    if (resultSoundKeyRef.current === soundKey) return;
+
+    resultSoundKeyRef.current = soundKey;
+    playResultSound(winner);
+  }, [playResultSound, state.gameResult, state.turn]);
+
+  useEffect(() => {
+    if (state.phase !== 'ended' || state.gameResult?.winner !== 'player') return;
+    if (battleConfig?.mode !== 'campaign' || typeof battleConfig?.opponent?.index !== 'number') return;
+    unlockNextCampaignEnemy(battleConfig.opponent.index);
+  }, [battleConfig, state.phase, state.gameResult]);
+
+  useEffect(() => {
+    const currentDamageKeys = new Set();
+
+    Object.entries(state.animations || {}).forEach(([id, animation]) => {
+      if (animation?.type !== 'damage') return;
+      const soundKey = `${id}:${animation.amount || 0}:${animation.shieldHit ? 'shield' : 'hit'}`;
+      currentDamageKeys.add(soundKey);
+
+      if (!lastDamageSoundKeysRef.current.has(soundKey)) {
+        playDamageSound();
+      }
+    });
+
+    lastDamageSoundKeysRef.current = currentDamageKeys;
+  }, [playDamageSound, state.animations]);
+
+  useEffect(() => {
+    ['player', 'ai'].forEach((side) => {
+      const previous = prevOrbsRef.current[side];
+      const current = state[side]?.orbs;
+
+      if (Number.isFinite(previous) && Number.isFinite(current) && current < previous) {
+        const hasDamageAnimation = Object.values(state.animations || {}).some((animation) => animation?.type === 'damage');
+        const delayMs = hasDamageAnimation ? 760 : 320;
+
+        window.clearTimeout(orbDisplayTimersRef.current[side]);
+        window.clearTimeout(orbDamageTimersRef.current[side]);
+
+        orbDisplayTimersRef.current[side] = window.setTimeout(() => {
+          setDisplayedOrbs((prev) => ({ ...prev, [side]: current }));
+          playOrbDamageSound();
+          setOrbDamageState((prev) => ({ ...prev, [side]: true }));
+          orbDamageTimersRef.current[side] = window.setTimeout(() => {
+            setOrbDamageState((prev) => ({ ...prev, [side]: false }));
+          }, 900);
+        }, delayMs);
+      } else if (Number.isFinite(current) && current >= previous) {
+        window.clearTimeout(orbDisplayTimersRef.current[side]);
+        setDisplayedOrbs((prev) => ({ ...prev, [side]: current }));
+      }
+
+      prevOrbsRef.current[side] = current;
+    });
+  }, [playOrbDamageSound, state.player.orbs, state.ai.orbs]);
+
+  useEffect(() => {
+    return () => {
+      Object.values(orbDamageTimersRef.current).forEach((timerId) => {
+        window.clearTimeout(timerId);
+      });
+      Object.values(orbDisplayTimersRef.current).forEach((timerId) => {
+        window.clearTimeout(timerId);
+      });
+    };
+  }, []);
+
+  useEffect(() => {
+    const nextShieldValues = {};
+    const allSlots = [
+      ...(state.player?.field?.slots || []),
+      ...(state.ai?.field?.slots || []),
+    ];
+
+    allSlots.forEach((slot) => {
+      if (!slot?.id) return;
+      const currentShield = Number(slot.shield || 0);
+      const previousShield = Number(prevShieldValuesRef.current[slot.id] || 0);
+      nextShieldValues[slot.id] = currentShield;
+
+      if (currentShield > 0 && currentShield > previousShield) {
+        window.clearTimeout(shieldApplyTimersRef.current[slot.id]);
+        setShieldApplyIds((prev) => ({ ...prev, [slot.id]: true }));
+        shieldApplyTimersRef.current[slot.id] = window.setTimeout(() => {
+          setShieldApplyIds((prev) => {
+            const next = { ...prev };
+            delete next[slot.id];
+            return next;
+          });
+        }, 1350);
+      }
+    });
+
+    prevShieldValuesRef.current = nextShieldValues;
+
+    return () => {
+      Object.values(shieldApplyTimersRef.current).forEach((timerId) => {
+        window.clearTimeout(timerId);
+      });
+    };
+  }, [state.player?.field?.slots, state.ai?.field?.slots]);
+
+  const renderOrbs = (count, side = 'player') => {
     const remaining = Number.isFinite(count) ? Math.max(0, count) : 0;
     const total = Math.max(3, remaining);
     return (
-      <div className="orbs">
+      <div className={`orbs ${orbDamageState[side] ? 'orbs-damage' : ''}`}>
         {Array.from({ length: total }).map((_, i) => (
           <img
             key={i}
             src={heartIcon}
             alt="orb"
-            className={`orb${i >= remaining ? ' orb-missing' : ''}`}
+            className={`orb${i >= remaining ? ' orb-missing' : ''}${orbDamageState[side] ? ' orb-damage-hit' : ''}`}
           />
         ))}
       </div>
@@ -284,12 +527,18 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
         }
       }
       if (!fieldData) return <div className={`card-chip card-chip-${variant}`}><div className="card-chip-label">{cardId}</div></div>;
-      const boostsEl = fieldData.elementBoosts || {};
-      const boostsType = fieldData.cardTypeBoosts || {};
-      const special = fieldData.specialBoosts || {};
       const name = typeof fieldData.name === 'object' ? fieldData.name.pt || fieldData.name.en : fieldData.name;
-      const desc = typeof fieldData.description === 'object' ? fieldData.description.pt || fieldData.description.en : fieldData.description;
       return (
+        <div className="slider-card-wrapper active" style={{ transform: variant === 'hand' ? 'scale(0.464)' : 'scale(0.6)', transformOrigin: variant === 'hand' ? 'left top' : 'center', pointerEvents: 'none' }} aria-label={name}>
+          <CreatureCardPreview
+            creature={fieldData}
+            isHolo={isHolo}
+            allowFlip={false}
+          />
+        </div>
+      );
+    }
+    /*
         <div className="slider-card-wrapper active" style={{ transform: variant === 'hand' ? 'scale(0.464)' : 'scale(0.6)', transformOrigin: variant === 'hand' ? 'left top' : 'center', pointerEvents: 'none' }}>
           <div className={`card-preview card-preview-field ${isHolo ? 'card-preview-holo' : ''}`}>
             <div className="card-preview-header">
@@ -323,7 +572,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
           </div>
         </div>
       );
-    }
+    */
     // ...código original para criaturas...
     // Usa baseId se disponível, caso contrário usa cardId
     const dataCardId = slotData?.baseId || cardId;
@@ -510,15 +759,8 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
   };
 
   const renderSlots = (slots = [], owner = 'player', spectralSlot = null) => {
-    let slotsClass = '';
-    if (owner === 'player' && spectralAnimationState === 'appearing') {
-      slotsClass = ' slots-shift-left';
-    } else if (owner === 'player' && spectralAnimationState === 'disappearing') {
-      slotsClass = ' slots-shift-right';
-    }
-
     return (
-    <div className={`slots slots-${owner}${slotsClass}`}>
+    <div className={`slots slots-${owner}`}>
       {slots.map((slot, i) => {
         const isTargetable = selectedAbility && owner !== state.activePlayer && slot && slot.hp > 0;
         const isSpectralTargetable = state.spectralAttackPending?.selectedAbility !== undefined && owner !== state.activePlayer && slot && slot.hp > 0;
@@ -526,13 +768,16 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
         const isPlayerCreature = owner === 'player' && slot && slot.hp > 0 && state.activePlayer === 'player';
         const isDying = slot && state.animations && state.animations[slot.id]?.death;
         const isAttacking = slot && state.animations && state.animations[slot.id]?.type === 'attacking';
+        const isHit = slot && state.animations && state.animations[slot.id]?.type === 'damage';
+        const isFieldBuffed = slot && (isBuffedByActiveField(slot) || (state.animations && state.animations[slot.id]?.type === 'fieldBuff'));
         const isReturning = slot && state.animations && state.animations[slot.id]?.type === 'returningToHand';
-        const returningClass = isReturning ? ` returning-to-hand-${state.animations[slot.id].owner}` : '';
+        const returnAnim = isReturning ? state.animations[slot.id] : null;
+        const returningClass = isReturning ? ` returning-to-hand-${returnAnim.owner}${returnAnim.source === 'arigus' ? ' returning-to-hand-arigus' : ''}` : '';
         return (
           <div
             key={i}
             ref={el => { if (slot) slotRefs.current[slot.id] = el; }}
-            className={`slot ${slot ? 'occupied' : 'empty'}${isTargetable || isSpectralTargetable ? ' slot-targetable' : ''}${isPlayerCreature ? ' slot-clickable' : ''}${isDying ? ' slot-death-animation' : ''}${isAttacking ? ' slot-attacking' : ''}${returningClass}`}
+            className={`slot ${slot ? 'occupied' : 'empty'}${isTargetable || isSpectralTargetable ? ' slot-targetable' : ''}${isPlayerCreature ? ' slot-clickable' : ''}${isDying ? ' slot-death-animation' : ''}${isAttacking ? ' slot-attacking' : ''}${isHit ? ' slot-hit-animation' : ''}${isFieldBuffed ? ' slot-field-buff' : ''}${returningClass}`}
               onMouseEnter={() => {
               if (slot) setHoveredCard({ cardId: slot.id, source: 'slot', owner, index: i });
               // só altera o cursor para espada se estamos em modo de seleção e o slot é alvo válido
@@ -577,7 +822,13 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
             style={{ cursor: isPlayerCreature ? 'pointer' : 'default' }}
           >
             {slot ? (
-            <div style={{ position: 'relative', transform: 'scale(0.6)', transformOrigin: 'center center', pointerEvents: 'none' }}>
+            <div
+              ref={el => {
+                if (slot && el) cardVisualRefs.current[slot.id] = el;
+                else if (slot) delete cardVisualRefs.current[slot.id];
+              }}
+              style={{ position: 'relative', transform: 'scale(0.6)', transformOrigin: 'center center', pointerEvents: 'none' }}
+            >
               {renderCardChip(slot.id, 'slot', slot)}
               <div className="status-icons-overlay">
                 {/* Escudo */}
@@ -603,6 +854,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
                       {anim.attackerId === 'effect_final_meteor' && (
                         <div className="damage-explosion" />
                       )}
+                      <div className={`damage-impact ${cls}`} />
                       <div className={`effect-float effect-damage ${cls}`}>-{anim.amount}</div>
                       {anim.shieldHit && <div className={`shield-shimmer${anim.shieldBroken ? ' shield-broken' : ''}`} />}
                       {/* Foguinho animado para burn tick */}
@@ -630,7 +882,17 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
                   // Wind visual when a card is blown back to hand
                   return (
                     <>
-                      <div className={`wind-blow wind-blow-${anim.owner}`} />
+                      {anim.source === 'arigus' ? (
+                        <div className={`arigus-headbutt-impact arigus-headbutt-${anim.owner}`}>
+                          <span className="arigus-impact-core" />
+                          <span className="arigus-impact-ring" />
+                          <span className="arigus-impact-streak arigus-impact-streak-1" />
+                          <span className="arigus-impact-streak arigus-impact-streak-2" />
+                          <span className="arigus-impact-streak arigus-impact-streak-3" />
+                        </div>
+                      ) : (
+                        <div className={`wind-blow wind-blow-${anim.owner}`} />
+                      )}
                     </>
                   );
                 }
@@ -666,7 +928,13 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
           }}
           style={{ cursor: 'pointer' }}
         >
-          <div style={{ position: 'relative', transform: 'scale(0.6)', transformOrigin: 'center center', pointerEvents: 'none' }}>
+          <div
+            ref={el => {
+              if (spectralSlot && el) cardVisualRefs.current[spectralSlot.id] = el;
+              else if (spectralSlot) delete cardVisualRefs.current[spectralSlot.id];
+            }}
+            style={{ position: 'relative', transform: 'scale(0.6)', transformOrigin: 'center center', pointerEvents: 'none' }}
+          >
             {/* Indicador de Criatura Espectral */}
             <div className="spectral-badge">👻</div>
             {renderCardChip(spectralSlot.id, 'slot', spectralSlot)}
@@ -783,6 +1051,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
       // expose functions rather than raw refs so they reflect latest state
       // eslint-disable-next-line no-param-reassign
       window.getKadirSlotRefs = () => slotRefs.current;
+      window.getKadirCardVisualRefs = () => cardVisualRefs.current;
       // eslint-disable-next-line no-param-reassign
       window.getKadirAnimations = () => state.animations || {};
     } catch (e) {
@@ -807,15 +1076,24 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
       const keys = Object.keys(state.animations || {});
       if (keys.length > 0) console.log('Current state.animations keys:', keys);
     } catch (e) {}
+    const liveIds = new Set([
+      ...(state.player?.field?.slots || []),
+      ...(state.ai?.field?.slots || []),
+      spectralRenderCreature,
+    ].filter(Boolean).map(slot => slot.id));
+    Object.keys(cardVisualRefs.current || {}).forEach((id) => {
+      if (!liveIds.has(id)) delete cardVisualRefs.current[id];
+    });
     const gather = (slots = []) => {
       slots.forEach(slot => {
         if (!slot) return;
         const anim = state.animations?.[slot.id];
         const hasSleep = (slot.statusEffects || []).some(e => e.type === 'sleep' && e.duration > 0) || (anim && anim.type === 'sleep');
         const hasPar = (slot.statusEffects || []).some(e => e.type === 'paralyze' && e.duration > 0) || (anim && anim.type === 'paralyze');
+        const hasFreeze = (slot.statusEffects || []).some(e => e.type === 'freeze' && e.duration > 0) || (anim && anim.type === 'freeze');
         const hasBleed = (slot.statusEffects || []).some(e => e.type === 'bleed' && e.duration > 0) || (anim && anim.type === 'bleed');
         const hasBurn = (slot.statusEffects || []).some(e => e.type === 'burn' && e.duration > 0) || (anim && anim.type === 'burn');
-        const el = slotRefs.current[slot.id];
+        const el = cardVisualRefs.current[slot.id] || slotRefs.current[slot.id];
         if (!el) {
           // Log missing ref when an animation exists for this slot
           if (anim && anim.type === 'elderoxDouble') {
@@ -825,7 +1103,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
         }
         const r = el.getBoundingClientRect();
         if (hasSleep) {
-          sleep.push({ id: slot.id, left: r.left + (r.width / 2), top: r.top + (r.height * 0.18) });
+          sleep.push({ id: slot.id, left: r.left + (r.width / 2), top: r.top + (r.height * 0.18), width: r.width, height: r.height });
         }
         if (hasPar) {
           // four corners (small offset inside)
@@ -838,51 +1116,54 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
         if (hasBleed) {
           const baseLeft = r.left + (r.width / 2);
           const baseTop = r.top + (r.height * 0.28); // moved further down
-          const offsets = [-10, 10];
+          const offsets = [-18, 0, 18];
           for (let i = 0; i < offsets.length; i++) {
             bleed.push({ id: `${slot.id}-bleed-${i}`, left: baseLeft + offsets[i], top: baseTop, idx: i });
           }
         }
 
         if ((slot.statusEffects || []).some(e => e.type === 'poison' && e.duration > 0) || (anim && anim.type === 'poison')) {
-          // Create 3 poison bubble particles rising from lower-left to upper area of card
+          // Create poison bubble particles rising from lower-left to upper area of card
           // shift bubbles right by ~55px and up by 110px (additional -20px upward)
           const baseLeft = r.left + (r.width * 0.28) + 55;
           const baseTop = r.top + (r.height * 0.68) - 110;
           // Arrange bubbles: index0 = medium-left, index1 = small-middle, index2 = large-right
-          const bubbleOffsets = [-22, 0, 22];
-          const bubbleSizes = [18, 12, 26];
-          const bubbleRises = [-56, -44, -96];
-          const bubbleDur = [3000, 3200, 3800]; // slower, more prolonged animations
-          for (let i = 0; i < 3; i++) {
+          const bubbleOffsets = [-34, -12, 10, 32];
+          const bubbleSizes = [16, 10, 24, 14];
+          const bubbleRises = [-64, -44, -104, -74];
+          const bubbleDur = [3400, 2900, 4100, 3600];
+          for (let i = 0; i < 4; i++) {
             poison.push({ id: `${slot.id}-poison-${i}`, left: baseLeft + bubbleOffsets[i], top: baseTop, size: bubbleSizes[i], delay: i * 320, rise: bubbleRises[i], dur: bubbleDur[i] });
           }
         }
 
         if (hasBurn) {
-          // gradient overlay covering the lower portion of the card (bottom->top red/orange)
-          const gradWidth = Math.round(r.width * 0.98);
-          const gradHeight = Math.round(r.height * 0.46);
+          // Gradient and flames stay inside the visible card instead of spilling past the slot.
+          const gradWidth = Math.round(r.width * 1.01);
+          const gradHeight = Math.round(r.height * 0.52);
           const gradLeft = r.left + (r.width / 2);
-          // place gradient higher so it overlays the lower part of the card (not below it).
-          // lower it additional 3px as requested (previously +11), so total offset becomes +14px
-          const gradTop = r.top + (r.height * 0.72) + 14;
+          const burnYOffset = 36;
+          const burnTopNudge = 6;
+          const gradTop = r.top + (r.height * 0.88) + burnYOffset + burnTopNudge;
           burnGrad.push({ id: slot.id + '-burn-grad', left: gradLeft, top: gradTop, width: gradWidth, height: gradHeight });
 
-          // more detailed flame particles placed near the base of the card
           const flameBaseLeft = r.left + (r.width / 2);
-          // put flames higher so they appear over the card's base artwork
-          const flameBaseTop = r.top + (r.height * 0.72);
-          // use up to 5 flames spread across the card width for natural coverage (wider lateral spread)
-          const flameOffsets = [-74, -48, 0, 48, 74];
-          const flameSizes = [34, 28, 36, 28, 24];
-          const flameDur = [3400, 2800, 3800, 2800, 2600];
+          const flameBaseTop = r.top + (r.height * 0.76) + burnYOffset - 20 + burnTopNudge;
+          const flameOffsets = [-0.34, -0.22, -0.08, 0.09, 0.23, 0.34].map(offset => Math.round(r.width * offset));
+          const baseFlameSize = Math.max(18, Math.min(34, Math.round(r.width * 0.145)));
+          const flameSizes = [
+            baseFlameSize,
+            Math.round(baseFlameSize * 0.82),
+            Math.round(baseFlameSize * 1.12),
+            Math.round(baseFlameSize * 0.94),
+            Math.round(baseFlameSize * 0.88),
+            Math.round(baseFlameSize * 0.72),
+          ];
+          const flameDur = [3600, 2850, 3950, 3150, 2700, 3300];
           for (let i = 0; i < flameOffsets.length; i++) {
-            // increase vertical spread so flames are more staggered up/down
-            const yOffset = (i - Math.floor(flameOffsets.length / 2)) * 8; // larger vertical jitter
-            // move half the flames ~30px lower for depth (move even-indexed flames)
-            const extraDown = (i % 2 === 0) ? 30 : 0;
-            burnFl.push({ id: `${slot.id}-burn-flame-${i}`, left: flameBaseLeft + flameOffsets[i], top: flameBaseTop + yOffset + extraDown, idx: i, w: flameSizes[i], h: Math.round(flameSizes[i] * 1.3), dur: flameDur[i], delay: i * 220 });
+            const yOffset = (i - Math.floor(flameOffsets.length / 2)) * 5;
+            const extraDown = (i % 2 === 0) ? Math.round(r.height * 0.028) : 0;
+            burnFl.push({ id: `${slot.id}-burn-flame-${i}`, left: flameBaseLeft + flameOffsets[i], top: flameBaseTop + yOffset + extraDown, idx: i, w: flameSizes[i], h: Math.round(flameSizes[i] * 1.28), dur: flameDur[i], delay: i * 220 });
           }
         }
 
@@ -901,7 +1182,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
         }
 
         // Freeze overlay
-        if ((slot.statusEffects || []).some(e => e.type === 'freeze' && e.duration > 0) || (anim && anim.type === 'freeze')) {
+        if (hasFreeze && !hasPar) {
           const fWidth = Math.round(r.width * 1.04);
           const fHeight = Math.round(r.height * 1.04);
           // center of slot
@@ -913,7 +1194,15 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
         // Shield overlay: center shield icon + subtle blue->transparent gradient from bottom->top
         if ((slot.shield || 0) > 0) {
           // posição original: centro do slot
-          shield.push({ id: slot.id, left: r.left + (r.width / 2), top: r.top + (r.height / 2), width: r.width, height: r.height, amount: slot.shield });
+          shield.push({
+            id: slot.id,
+            left: r.left + (r.width / 2),
+            top: r.top + (r.height / 2),
+            width: r.width,
+            height: r.height,
+            amount: slot.shield,
+            isApplying: !!shieldApplyIds[slot.id],
+          });
         }
       });
     };
@@ -921,6 +1210,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
     try {
       gather(state.player?.field?.slots || []);
       gather(state.ai?.field?.slots || []);
+      if (spectralRenderCreature) gather([spectralRenderCreature]);
     } catch (e) {
       // ignore
     }
@@ -933,7 +1223,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
     setBurnFlames(burnFl);
     setBurnGradients(burnGrad);
     setElderoxOverlays(elderox);
-  }, [state.animations, state.player?.field?.slots, state.ai?.field?.slots]);
+  }, [shieldApplyIds, state.animations, state.player?.field?.slots, state.ai?.field?.slots, spectralRenderCreature, overlayFrameTick]);
 
   // DEBUG: loga quando overlays do Elderox aparecem (temporário)
   useEffect(() => {
@@ -944,18 +1234,19 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
 
   // Determina o background do board (novo bg calculado a partir do campo ativo)
   const boardBg = state.sharedField.active && state.sharedField.id ? (() => {
-    let fieldData = null;
+    let fieldData = state.sharedField?.cardData || null;
     try {
       const fieldCards = require('../assets/cards/field/exampleFieldCards').default;
-      fieldData = fieldCards.find(c => c.id === state.sharedField.id);
+      fieldData = fieldData || fieldCards.find(c => c.id === state.sharedField.id || c.legacyId === state.sharedField.id);
     } catch (e) {
-      fieldData = null;
+      fieldData = fieldData || null;
     }
     if (!fieldData) {
       fieldData = getCardData(state.sharedField.id);
     }
-    if (fieldData && fieldData.img) {
-      const img = typeof fieldData.img === 'string' ? fieldData.img : (fieldData.img?.default || '');
+    const fieldImage = fieldData?.img || fieldData?.image;
+    if (fieldImage) {
+      const img = typeof fieldImage === 'string' ? fieldImage : (fieldImage?.default || '');
       return img ? `url(${img})` : undefined;
     }
     return undefined;
@@ -1010,12 +1301,50 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
     }
   }, [state.spectralAttackPending?.creature, spectralAnimationState, spectralRenderCreature]);
 
+  useEffect(() => {
+    if (
+      spectralAnimationState !== 'appearing'
+      && spectralAnimationState !== 'present'
+      && spectralAnimationState !== 'disappearing'
+    ) {
+      return undefined;
+    }
+
+    let frameId = 0;
+    let stopped = false;
+    const start = performance.now();
+    const tick = (now) => {
+      if (stopped) return;
+      setOverlayFrameTick((value) => value + 1);
+      if (now - start < 1050) {
+        frameId = requestAnimationFrame(tick);
+      }
+    };
+
+    frameId = requestAnimationFrame(tick);
+    return () => {
+      stopped = true;
+      if (frameId) cancelAnimationFrame(frameId);
+    };
+  }, [spectralAnimationState]);
+
+  const playerDeckCountForDraw = state.player.deck?.length || 0;
+  const playerHandCountForDraw = state.player.hand?.length || 0;
+  const canDrawPlayerCard = state.activePlayer === 'player' && !deckCardDrawn && playerDeckCountForDraw > 0 && playerHandCountForDraw < 7;
+  const drawBlockedReason = playerHandCountForDraw >= 7
+    ? 'Mao cheia'
+    : playerDeckCountForDraw <= 0
+      ? 'Baralho vazio'
+      : deckCardDrawn
+        ? 'Carta ja comprada neste turno'
+        : '';
+
   return (
     <>
     {sleepOverlays && sleepOverlays.length > 0 && (
       <LayeredStatusOverlayPortal zValue="var(--z-creature-effects)" idSuffix="sleep">
         {sleepOverlays.map(o => (
-          <div key={`zzz-${o.id}`} className="sleep-zzz" style={{ position: 'absolute', left: `${o.left}px`, top: `${o.top}px`, transform: 'translate(-50%,-50%)' }} aria-hidden>
+          <div key={`zzz-${o.id}`} className="sleep-zzz" style={{ position: 'absolute', left: `${o.left}px`, top: `${o.top}px`, width: `${Math.round(o.width * 0.78)}px`, height: `${Math.round(o.height * 0.34)}px`, transform: 'translate(-50%,-50%)' }} aria-hidden>
             <span>Z</span>
             <span>Z</span>
             <span>Z</span>
@@ -1035,8 +1364,16 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
     {shieldOverlays && shieldOverlays.length > 0 && (
       <LayeredStatusOverlayPortal zValue="var(--z-shield)" idSuffix="shield">
         {shieldOverlays.map(o => (
-          <div key={`shield-${o.id}`} className="shield-overlay" style={{ position: 'absolute', left: `${o.left}px`, top: `${o.top}px`, width: `${o.width}px`, height: `${o.height}px`, transform: 'translate(-50%,-50%)' }} aria-hidden>
+          <div key={`shield-${o.id}`} className={`shield-overlay${o.isApplying ? ' shield-apply' : ''}`} style={{ position: 'absolute', left: `${o.left}px`, top: `${o.top}px`, width: `${o.width}px`, height: `${o.height}px`, transform: 'translate(-50%,-50%)' }} aria-hidden>
             <div className="shield-gradient" />
+            {o.isApplying && (
+              <>
+                <div className="shield-apply-ring" />
+                <div className="shield-apply-spark shield-apply-spark-1" />
+                <div className="shield-apply-spark shield-apply-spark-2" />
+                <div className="shield-apply-spark shield-apply-spark-3" />
+              </>
+            )}
             <img src={shieldIcon} className="shield-center" alt="shield" />
           </div>
         ))}
@@ -1074,6 +1411,19 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
             aria-hidden
           >
             <div className="freeze-snowflake-group" aria-hidden>
+                {Array.from({ length: 18 }).map((_, snowIdx) => (
+                  <span
+                    key={`freeze-snow-${f.id}-${snowIdx}`}
+                    className={`freeze-falling-snowflake freeze-falling-snowflake-${(snowIdx % 6) + 1}`}
+                    style={{
+                      ['--snow-left']: `${6 + ((snowIdx * 17) % 88)}%`,
+                      ['--snow-size']: `${5 + (snowIdx % 5) * 2}px`,
+                      ['--snow-delay']: `${-(snowIdx * 0.41).toFixed(2)}s`,
+                      ['--snow-duration']: `${4.8 + (snowIdx % 6) * 0.52}s`,
+                      ['--snow-drift']: `${((snowIdx % 2 === 0 ? 1 : -1) * (8 + (snowIdx % 4) * 4))}px`,
+                    }}
+                  />
+                ))}
                 <svg className="freeze-snowflake freeze-snowflake-tl" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden focusable="false">
                   <g stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none">
                     <path d="M12 2 L12 22" />
@@ -1100,7 +1450,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
     {burnGradients && burnGradients.length > 0 && (
       <StatusOverlayPortal>
         {burnGradients.map(g => (
-          <div key={`burn-grad-${g.id}`} className="burn-gradient" style={{ position: 'absolute', left: `${g.left}px`, top: `${g.top}px`, width: `${g.width}px`, height: `${g.height}px`, transform: 'translate(-50%,-30%)' }} aria-hidden />
+          <div key={`burn-grad-${g.id}`} className="burn-gradient" style={{ position: 'absolute', left: `${g.left}px`, top: `${g.top}px`, width: `${g.width}px`, height: `${g.height}px` }} aria-hidden />
         ))}
       </StatusOverlayPortal>
     )}
@@ -1122,7 +1472,23 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
               animationDelay: `${f.delay || 0}ms`,
             }}
             aria-hidden
-          />
+          >
+            <span className="burn-fire-layer burn-fire-left">
+              <span className="burn-fire-main" />
+              <span className="burn-fire-particle" />
+            </span>
+            <span className="burn-fire-layer burn-fire-center">
+              <span className="burn-fire-main" />
+              <span className="burn-fire-particle" />
+            </span>
+            <span className="burn-fire-layer burn-fire-right">
+              <span className="burn-fire-main" />
+              <span className="burn-fire-particle" />
+            </span>
+            <span className="burn-fire-layer burn-fire-bottom">
+              <span className="burn-fire-main" />
+            </span>
+          </div>
         ))}
       </StatusOverlayPortal>
     )}
@@ -1139,6 +1505,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
       </StatusOverlayPortal>
     )}
     {state.returnCardPending && (
+      <BattleModalPortal>
       <div style={turnModalBgStyle}>
         <div style={turnModalStyle}>
           <div style={{ fontWeight: 700, marginBottom: 12 }}>Escolha uma criatura para retornar à mão</div>
@@ -1179,8 +1546,10 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
           <button style={turnModalBtnStyle} onClick={cancelReturnCard}>Cancelar</button>
         </div>
       </div>
+      </BattleModalPortal>
     )}
     {state.poisonPending && (
+      <BattleModalPortal>
       <div style={turnModalBgStyle}>
         <div style={turnModalStyle}>
           <div style={{ fontWeight: 700, marginBottom: 12 }}>Escolha uma criatura para envenenar</div>
@@ -1221,6 +1590,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
           <button style={turnModalBtnStyle} onClick={cancelPoisonCard}>Cancelar</button>
         </div>
       </div>
+      </BattleModalPortal>
     )}
     {state.stealCardPending && (
       <div style={turnModalBgStyle}>
@@ -1259,12 +1629,14 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
     )}
 
     {state.revealOpponentPending && (
+      <BattleModalPortal>
       <div style={turnModalBgStyle}>
         <div style={{ ...turnModalStyle, maxHeight: 'none', overflowY: 'visible' }} ref={revealModalRef}>
           <div style={{ fontWeight: 700, marginBottom: 8 }}>{state.revealOpponentPending.guardianName} revelou uma carta - escolha para ver</div>
           <div style={{ display: 'flex', gap: 8, justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap', padding: '6px 4px' }}>
             {((state.revealOpponentPending && state.revealOpponentPending.owner === 'ai') ? (state.player?.hand || []) : (state.ai?.hand || [])).map((cardId, idx) => {
               const revealed = state.revealedOpponentIndex === idx;
+              const selectedForReveal = state.revealOpponentSelectedIndex === idx;
               return (
                 <button
                   key={`reveal-card-${idx}`}
@@ -1289,9 +1661,13 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
                     }}
                   aria-label={`Revelar carta ${idx + 1}`}
                 >
-                  <div ref={revealContainerRef} style={{ width: 160, height: 240, transform: 'none', transformOrigin: 'top center', display: 'inline-block' }}>
+                  <div
+                    ref={revealContainerRef}
+                    className={`leoracal-reveal-card${selectedForReveal ? ' is-selected' : ''}${revealed ? ' is-revealed' : ''}`}
+                    style={{ width: 160, height: 240, transform: 'none', transformOrigin: 'top center', display: 'inline-block' }}
+                  >
                     {revealed ? (
-                      <div style={{ width: 160, height: 240, display: 'inline-block', overflow: 'visible', position: 'relative' }}>
+                      <div className="leoracal-reveal-front" style={{ width: 160, height: 240, display: 'inline-block', overflow: 'visible', position: 'relative' }}>
                         <div style={{ width: 369, position: 'absolute', left: '50%', top: 0, transform: 'translateX(-50%) scale(0.434)', transformOrigin: 'top center', pointerEvents: 'none', fontSize: '12px', lineHeight: 1.25 }}>
                           {(() => {
                             try {
@@ -1325,6 +1701,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
                       </div>
                     ) : (
                       <div
+                        className={`leoracal-reveal-back${selectedForReveal ? ' is-selected' : ''}`}
                         style={{
                           width: 160,
                           height: 240,
@@ -1346,6 +1723,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
           <button style={turnModalBtnStyle} onClick={cancelRevealEnemy}>Fechar</button>
         </div>
       </div>
+      </BattleModalPortal>
     )}
     {state.swapCardPending && state.swapCardPending.step === 'selectField' && (
       <div style={turnModalBgStyle}>
@@ -1621,12 +1999,12 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
               {/* Fim do drawer do cemitério */}
         <div className="side ai-side">
           <div className="side-header">
-            <div className="side-left">{renderOrbs(state.ai.orbs)}</div>
+            <div className="side-left">{renderOrbs(displayedOrbs.ai, 'ai')}</div>
             <div className="side-right">
               {/* deck-chip removido do lado do adversário */}
             </div>
                 {/* Essência do adversário */}
-                <div className="opponent-essence">
+                <div className={`opponent-essence ${essenceAnimating.ai ? 'essence-gain' : ''}`}>
                   <img src={essenceIcon} alt="essência" />
                   <span>{state.ai.essence}</span>
                 </div>
@@ -1642,12 +2020,12 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
           {state.sharedField.active && state.sharedField.id ? (
             (() => {
               // Busca os dados completos da carta de campo
-              let fieldData = null;
+              let fieldData = state.sharedField?.cardData || null;
               try {
                 const fieldCards = require('../assets/cards/field/exampleFieldCards').default;
-                fieldData = fieldCards.find(c => c.id === state.sharedField.id);
+                fieldData = fieldData || fieldCards.find(c => c.id === state.sharedField.id || c.legacyId === state.sharedField.id);
               } catch (e) {
-                fieldData = null;
+                fieldData = fieldData || null;
               }
 
               // Se não encontrar, tenta getCardData
@@ -1664,8 +2042,8 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
               }
 
               const name = typeof fieldData.name === 'object' ? fieldData.name.pt || fieldData.name.en : fieldData.name;
-              const description = typeof fieldData.description === 'object' ? fieldData.description.pt || fieldData.description.en : fieldData.description;
-              const img = typeof fieldData.img === 'string' ? fieldData.img : (fieldData.img?.default || '');
+              const fieldImage = fieldData.img || fieldData.image;
+              const img = typeof fieldImage === 'string' ? fieldImage : (fieldImage?.default || '');
 
               return (
                 <div
@@ -1689,11 +2067,10 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
                     </div>
                     <CreatureCardPreview
                       creature={{
-                        id: fieldData.id,
-                        name: name || 'Campo',
-                        lore: fieldData.lore,
-                        description: description || '',
-                        img: img,
+                        ...fieldData,
+                        name: fieldData.name || name || 'Campo',
+                        img,
+                        image: img,
                         type: 'field',
                         forceFieldClass: true,
                       }}
@@ -1715,10 +2092,10 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
         </div>
 
         <div className="player-orbs">
-          {renderOrbs(state.player.orbs)}
+          {renderOrbs(displayedOrbs.player, 'player')}
         </div>
 
-        <div className={`player-essence ${essenceAnimating ? 'essence-gain' : ''}`}>
+        <div className={`player-essence ${essenceAnimating.player ? 'essence-gain' : ''}`}>
           <img src={essenceIcon} alt="essência" />
           <span>{state.player.essence}</span>
         </div>
@@ -1750,8 +2127,9 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
       <div className="deck-draw">
         <div style={{ position: 'relative', display: 'inline-block' }}>
           <div
-            className={`deck-card-back ${deckCardDrawn ? 'drawn' : ''}`}
+            className={`deck-card-back ${deckCardDrawn ? 'drawn' : ''}${!canDrawPlayerCard && state.activePlayer === 'player' ? ' deck-card-disabled' : ''}`}
             style={{ backgroundImage: `url(${cardVerso})` }}
+            title={!canDrawPlayerCard && state.activePlayer === 'player' ? drawBlockedReason : undefined}
             onClick={() => {
               if (state.activePlayer !== 'player') return;
               if (deckCardDrawn) return;
@@ -1763,7 +2141,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
           />
           <div className="deck-count-pill deck-count-player">Cartas: {state.player.deck.length}</div>
         </div>
-        {state.activePlayer === 'player' && !deckCardDrawn && (
+        {canDrawPlayerCard && (
           <div className="deck-draw-indicator">
             <div className="deck-draw-indicator-text">Comprar</div>
             <div className="deck-draw-indicator-arrow">&darr;</div>
@@ -1801,6 +2179,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
       </HandPortal>
 
       {activeCardIndex !== null && state.player.hand[activeCardIndex] && (
+        <BattleModalPortal>
         <div className="card-preview-overlay" onClick={() => setActiveCardIndex(null)}>
 
           <div className="card-preview-container" onClick={(e) => e.stopPropagation()}>
@@ -1844,6 +2223,18 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
               if (cardData?.type === 'field') {
                 return (
                   <div style={{ width: 370 }}>
+                    <CreatureCardPreview
+                      creature={cardData}
+                      isHolo={isHolo}
+                      allowFlip={false}
+                    />
+                  </div>
+                );
+              }
+              /*
+              if (cardData?.type === 'field') {
+                return (
+                  <div style={{ width: 370 }}>
                     <div className={`card-preview card-preview-field ${isHolo ? 'card-preview-holo' : ''}`}>
                       <div className="card-preview-header">
                         <span className="card-preview-name" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -1868,6 +2259,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
                   </div>
                 );
               }
+              */
               // Preview padrão para outras cartas
               return (
                 <CreatureCardPreview
@@ -1938,6 +2330,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
             })()}
           </div>
         </div>
+        </BattleModalPortal>
       )}
 
       {/* Ghost Preview - aparece ao passar o mouse */}
@@ -1988,23 +2381,16 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
 
             if (!cardData) return null;
 
-            // Se for carta de efeito ou campo, usar preview especial simplificado
+            // Campo/efeito usam o mesmo componente do preview grande para manter visual consistente.
             if (cardData.type === 'effect' || cardData.type === 'field') {
               return (
                 <div style={{ transform: 'scale(0.75)', transformOrigin: 'top left', maxWidth: 280 }}>
-                  <div className="card-preview card-preview-field">
-                    <div className="card-preview-header">
-                      <span className="card-preview-name">
-                        {typeof cardData.name === 'object' ? cardData.name.pt || cardData.name.en : cardData.name}
-                      </span>
-                    </div>
-                    <div className="card-preview-art-wrapper" style={{ height: 140 }}>
-                      <img src={cardData.img} alt={typeof cardData.name === 'object' ? cardData.name.pt || cardData.name.en : cardData.name} className="card-preview-art" />
-                    </div>
-                    <div className="card-preview-field-desc" style={{ fontSize: '11px', padding: '8px' }}>
-                      {typeof cardData.description === 'object' ? cardData.description.pt || cardData.description.en : cardData.description}
-                    </div>
-                  </div>
+                  <CreatureCardPreview
+                    creature={cardData}
+                    onClose={null}
+                    isHolo={isHolo}
+                    allowFlip={false}
+                  />
                 </div>
               );
             }
@@ -2044,12 +2430,19 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
       </div>
     )}
 
+    {usedAttackNoticeOpen && (
+      <div style={noticeModalBgStyle}>
+        <div style={noticeModalStyle}>esta carta ja atacou</div>
+      </div>
+    )}
+
     {/* Modal de Habilidades da Criatura Espectral */}
     {selectedCreature && selectedCreature.isSpectral && (() => {
       const creature = selectedCreature.creature;
       const cardData = getCardData(creature.id);
 
       return (
+        <BattleModalPortal>
         <div className="card-preview-overlay" onClick={() => setSelectedCreature(null)}>
           <div className="card-preview-container" onClick={(e) => e.stopPropagation()}>
             <CreatureCardPreview
@@ -2082,6 +2475,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
             />
           </div>
         </div>
+        </BattleModalPortal>
       );
     })()}
 
@@ -2092,8 +2486,9 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
       const isHolo = instance?.isHolo || false;
 
       return (
+        <BattleModalPortal>
         <div className="card-preview-overlay" onClick={() => setSelectedFieldCreature(null)}>
-          <div className="card-preview-container" onClick={(e) => e.stopPropagation()}>
+          <div className="card-preview-container field-preview-container" onClick={(e) => e.stopPropagation()}>
             <CreatureCardPreview
               creature={cardData}
               onClose={() => setSelectedFieldCreature(null)}
@@ -2111,6 +2506,12 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
                 const cost = selectedFieldCreature.creature.abilities[abilityIndex]?.cost || 0;
                 const canAfford = (state.player.essence || 0) >= cost;
                 const isIncapacitated = (selectedFieldCreature.creature.statusEffects || []).some(e => ['paralyze', 'freeze', 'sleep'].includes(e.type) && e.duration > 0);
+                const alreadyAttacked = state.creaturesWithUsedAbility && state.creaturesWithUsedAbility.has(selectedFieldCreature.creature.id);
+                if (alreadyAttacked) {
+                  setSelectedFieldCreature(null);
+                  showUsedAttackNotice();
+                  return;
+                }
                 if (!canAfford || isIncapacitated) return;
                 setSelectedAbility({ slotIndex: selectedFieldCreature.slotIndex, abilityIndex });
                 setSelectedFieldCreature(null);
@@ -2119,8 +2520,22 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
               maxHp={selectedFieldCreature.creature.maxHp}
               playerEssence={state.player.essence}
             />
+            {state.activePlayer === 'player' && (
+              <button
+                type="button"
+                className="sacrifice-creature-btn"
+                onClick={() => {
+                  sacrificeCreature('player', selectedFieldCreature.slotIndex);
+                  setSelectedFieldCreature(null);
+                }}
+              >
+                <img src={essenceIcon} alt="" />
+                <span>Sacrificar</span>
+              </button>
+            )}
           </div>
         </div>
+        </BattleModalPortal>
       );
     })()}
     {state.phase === 'coinflip' && (
@@ -2139,12 +2554,13 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
         killFeed={state.killFeed}
         battleStats={state.battleStats}
         playerDeck={selectedDeck}
-        onClose={() => onNavigate?.('home')}
+        onClose={() => onNavigate?.(battleConfig?.mode === 'campaign' ? 'campaign' : 'home')}
       />
     )}
 
     {/* Modal de Seleção de Alvo para Cartas de Efeito */}
     {state.effectCardPending && (
+      <BattleModalPortal>
       <div className="effect-target-modal" onClick={cancelEffectCard}>
         <div className="effect-target-container" onClick={(e) => e.stopPropagation()}>
           <div className="effect-target-title">Selecione um alvo</div>
@@ -2347,6 +2763,7 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
           </div>
         </div>
       </div>
+      </BattleModalPortal>
     )}
 
     {/* Modal Espectral Removido - Agora usando Slot no Campo */}
@@ -2355,10 +2772,10 @@ function BoardInner({ onNavigate, selectedDeck, menuMusicRef }) {
   );
 }
 
-export default function BattleBoard({ onNavigate, selectedDeck, menuMusicRef }) {
+export default function BattleBoard({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
   return (
     <BattleProvider>
-      <BoardInner onNavigate={onNavigate} selectedDeck={selectedDeck} menuMusicRef={menuMusicRef} />
+      <BoardInner onNavigate={onNavigate} selectedDeck={selectedDeck} battleConfig={battleConfig} menuMusicRef={menuMusicRef} />
     </BattleProvider>
   );
 }

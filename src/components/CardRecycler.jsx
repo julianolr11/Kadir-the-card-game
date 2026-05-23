@@ -1,10 +1,10 @@
-import React, { useContext, useState, useMemo } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { AppContext } from '../context/AppContext';
 import { getCreatureRarity, RARITY_CONFIG, getCardValue } from '../assets/rarityData.js';
 import creaturePool from '../assets/cards';
+import CreatureCardPreview from './CreatureCardPreview.jsx';
 import '../styles/card-recycler.css';
 
-// Imports dos ícones de elementos
 import aguaIcon from '../assets/img/elements/agua.png';
 import arIcon from '../assets/img/elements/ar.png';
 import fogoIcon from '../assets/img/elements/fogo.png';
@@ -24,100 +24,215 @@ const elementIcons = {
   earth: terraIcon,
 };
 
+const elementColors = {
+  agua: '#4a9eff',
+  water: '#4a9eff',
+  fogo: '#ff5722',
+  fire: '#ff5722',
+  terra: '#8b6f47',
+  earth: '#8b6f47',
+  ar: '#a8dadc',
+  air: '#a8dadc',
+  puro: '#e8d4b0',
+  pure: '#e8d4b0',
+};
+
+function getLocalizedName(value, langKey, fallback) {
+  if (!value) return fallback;
+  if (typeof value === 'object') return value[langKey] || value.pt || value.en || fallback;
+  return value;
+}
+
+function getImageSrc(img) {
+  if (!img) return '';
+  return typeof img === 'string' ? img : img?.default || '';
+}
+
 function CardRecycler({ lang = 'ptbr' }) {
   const { cardCollection, addCoins, removeCardInstance } = useContext(AppContext);
   const [selectedCards, setSelectedCards] = useState(new Set());
-  const [expandedRarity, setExpandedRarity] = useState(null);
-  const [expandedSubsections, setExpandedSubsections] = useState({});
+  const [focusedCardId, setFocusedCardId] = useState(null);
+  const [sendQuantity, setSendQuantity] = useState(1);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [rarityFilter, setRarityFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [valueFilter, setValueFilter] = useState('all');
+  const [quantityFilter, setQuantityFilter] = useState('all');
   const [recyclingInProgress, setRecyclingInProgress] = useState(false);
 
   const langKey = lang === 'ptbr' ? 'pt' : lang;
 
-  // Agrupa cards por raridade
-  const cardsByRarity = useMemo(() => {
-    const grouped = {
-      essence: [],
-      field: [],
-      common: [],
-      uncommon: [],
-      rare: [],
-      epic: [],
-      legendary: [],
-    };
+  const availableCards = useMemo(() => {
+    if (!cardCollection || typeof cardCollection !== 'object') return [];
 
-    if (!cardCollection || typeof cardCollection !== 'object') return grouped;
+    return Object.entries(cardCollection)
+      .map(([creatureId, instances]) => {
+        if (!Array.isArray(instances)) return null;
 
-    // Para cada criatura na coleção
-    Object.entries(cardCollection).forEach(([creatureId, instances]) => {
-      if (!Array.isArray(instances)) return;
+        const creatureData = creaturePool.find((card) => card.id === creatureId);
+        const availableInstances = instances
+          .map((instance, index) => ({
+            instance,
+            index,
+            key: `${creatureId}_${index}`,
+            value: getCardValue(creatureId, instance, creatureData),
+          }))
+          .filter((item) => !selectedCards.has(item.key));
 
-      instances.forEach((instance, instanceIndex) => {
-        const key = `${creatureId}_${instanceIndex}`;
+        if (availableInstances.length === 0) return null;
 
-        // Pula cartas que já estão selecionadas
-        if (selectedCards.has(key)) return;
-
-        const creatureData = creaturePool.find(c => c.id === creatureId);
-        const cardValue = getCardValue(creatureId, instance, creatureData);
-        const rarity = getCreatureRarity(creatureId);
-
-        // Decide target group: essence and field are top-level categories
+        const rarityData = getCreatureRarity(creatureId);
         const type = typeof creatureData?.type === 'string' ? creatureData.type : 'creature';
-        if (type === 'field') {
-          grouped.field.push({
-            ...instance,
-            creatureId,
-            originalIndex: instanceIndex,
-            rarity: 'field',
-            value: cardValue,
-          });
-        } else if (type === 'effect' && creatureData?.effectType === 'essence') {
-          grouped.essence.push({
-            ...instance,
-            creatureId,
-            originalIndex: instanceIndex,
-            rarity: 'essence',
-            value: cardValue,
-          });
-        } else if (grouped[rarity.rarity]) {
-          grouped[rarity.rarity].push({
-            ...instance,
-            creatureId,
-            originalIndex: instanceIndex,
-            rarity: rarity.rarity,
-            value: cardValue,
-          });
-        }
-      });
+        const rarityKey = type === 'field'
+          ? 'field'
+          : type === 'effect' && creatureData?.effectType === 'essence'
+            ? 'essence'
+            : rarityData.rarity;
+
+        return {
+          creatureId,
+          creatureData,
+          name: getLocalizedName(creatureData?.name || creatureData?.title, langKey, creatureId),
+          element: creatureData?.element || 'puro',
+          img: creatureData?.img,
+          type,
+          rarity: rarityKey,
+          rarityName: rarityKey === 'field'
+            ? 'Campo'
+            : rarityKey === 'essence'
+              ? 'Essencia'
+              : RARITY_CONFIG[rarityKey]?.name || rarityKey,
+          rarityColor: rarityKey === 'field'
+            ? '#66c2ff'
+            : rarityKey === 'essence'
+              ? '#7bd26b'
+              : RARITY_CONFIG[rarityKey]?.color || '#ffffff',
+          quantity: availableInstances.length,
+          valueEach: availableInstances[0]?.value || 0,
+          instances: availableInstances,
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [cardCollection, langKey, selectedCards]);
+
+  const filteredCards = useMemo(() => {
+    return availableCards.filter((card) => {
+      if (rarityFilter !== 'all' && card.rarity !== rarityFilter) return false;
+      if (typeFilter !== 'all' && card.type !== typeFilter) return false;
+
+      if (valueFilter === 'low' && card.valueEach > 50) return false;
+      if (valueFilter === 'mid' && (card.valueEach < 51 || card.valueEach > 150)) return false;
+      if (valueFilter === 'high' && card.valueEach < 151) return false;
+
+      if (quantityFilter === 'one' && card.quantity !== 1) return false;
+      if (quantityFilter === 'few' && (card.quantity < 2 || card.quantity > 4)) return false;
+      if (quantityFilter === 'many' && card.quantity < 5) return false;
+
+      return true;
     });
+  }, [availableCards, quantityFilter, rarityFilter, typeFilter, valueFilter]);
 
-    return grouped;
-  }, [cardCollection, selectedCards]);
+  const selectedCardsDetails = useMemo(() => {
+    const grouped = new Map();
 
-  // Calcula valor total a receber
-  const totalCoinsCalculated = useMemo(() => {
-    let total = 0;
     selectedCards.forEach((key) => {
       const [creatureId, index] = key.split('_');
       const instances = cardCollection?.[creatureId];
-      if (instances && instances[index]) {
-        const instance = instances[index];
-        const creatureData = creaturePool.find(c => c.id === creatureId);
-        total += getCardValue(creatureId, instance, creatureData);
-      }
-    });
-    return total;
-  }, [selectedCards, cardCollection]);
+      const instance = instances?.[Number(index)];
+      if (!instance) return;
 
-  const toggleCardSelection = (creatureId, index) => {
-    const key = `${creatureId}_${index}`;
-    const newSelected = new Set(selectedCards);
-    if (newSelected.has(key)) {
-      newSelected.delete(key);
-    } else {
-      newSelected.add(key);
+      const creatureData = creaturePool.find((card) => card.id === creatureId);
+      const value = getCardValue(creatureId, instance, creatureData);
+      const rarityData = getCreatureRarity(creatureId);
+
+      if (!grouped.has(creatureId)) {
+        grouped.set(creatureId, {
+          creatureId,
+          name: getLocalizedName(creatureData?.name || creatureData?.title, langKey, creatureId),
+          element: creatureData?.element || 'puro',
+          img: creatureData?.img,
+          rarityName: RARITY_CONFIG[rarityData.rarity]?.name || rarityData.rarity,
+          keys: [],
+          quantity: 0,
+          valueEach: value,
+          totalValue: 0,
+        });
+      }
+
+      const entry = grouped.get(creatureId);
+      entry.keys.push(key);
+      entry.quantity += 1;
+      entry.totalValue += value;
+    });
+
+    return Array.from(grouped.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [cardCollection, langKey, selectedCards]);
+
+  const totalCoinsCalculated = useMemo(
+    () => selectedCardsDetails.reduce((total, card) => total + card.totalValue, 0),
+    [selectedCardsDetails],
+  );
+
+  const availableCardsCount = useMemo(
+    () => availableCards.reduce((total, card) => total + card.quantity, 0),
+    [availableCards],
+  );
+
+  const potentialCoins = useMemo(
+    () => availableCards.reduce((total, card) => total + card.quantity * card.valueEach, 0),
+    [availableCards],
+  );
+
+  const focusedCard = useMemo(() => {
+    if (focusedCardId) {
+      const found = filteredCards.find((card) => card.creatureId === focusedCardId);
+      if (found) return found;
     }
-    setSelectedCards(newSelected);
+    return filteredCards[0] || null;
+  }, [filteredCards, focusedCardId]);
+
+  useEffect(() => {
+    if (!focusedCard) {
+      setFocusedCardId(null);
+      setSendQuantity(1);
+      return;
+    }
+
+    setFocusedCardId(focusedCard.creatureId);
+    setSendQuantity((current) => Math.min(Math.max(current, 1), focusedCard.quantity));
+  }, [focusedCard]);
+
+  const focusCard = (creatureId) => {
+    setFocusedCardId(creatureId);
+    setSendQuantity(1);
+  };
+
+  const sendFocusedToQueue = () => {
+    if (!focusedCard) return;
+
+    const nextSelected = new Set(selectedCards);
+    focusedCard.instances.slice(0, sendQuantity).forEach((item) => {
+      nextSelected.add(item.key);
+    });
+    setSelectedCards(nextSelected);
+  };
+
+  const removeOneFromQueue = (card) => {
+    const nextSelected = new Set(selectedCards);
+    const lastKey = card.keys[card.keys.length - 1];
+    if (lastKey) nextSelected.delete(lastKey);
+    setSelectedCards(nextSelected);
+  };
+
+  const removeAllFromQueue = (card) => {
+    const nextSelected = new Set(selectedCards);
+    card.keys.forEach((key) => nextSelected.delete(key));
+    setSelectedCards(nextSelected);
+  };
+
+  const clearSelection = () => {
+    setSelectedCards(new Set());
   };
 
   const handleRecycleCards = async () => {
@@ -125,23 +240,16 @@ function CardRecycler({ lang = 'ptbr' }) {
 
     setRecyclingInProgress(true);
     try {
-      // Oferece moedas
       addCoins(totalCoinsCalculated);
 
-      // Remove cards da coleção
       selectedCards.forEach((key) => {
         const [creatureId, index] = key.split('_');
         const instances = cardCollection?.[creatureId];
-        if (instances && instances[index]) {
-          const instanceId = instances[index].instanceId;
-          removeCardInstance(creatureId, instanceId);
-        }
+        const instanceId = instances?.[Number(index)]?.instanceId;
+        if (instanceId) removeCardInstance(creatureId, instanceId);
       });
 
-      // Limpa seleção
       setSelectedCards(new Set());
-
-      // Feedback visual
       setTimeout(() => setRecyclingInProgress(false), 500);
     } catch (error) {
       console.error('Erro ao reciclar cards:', error);
@@ -149,294 +257,303 @@ function CardRecycler({ lang = 'ptbr' }) {
     }
   };
 
-  const getRarityColor = (rarity) => {
-    if (rarity === 'essence') return '#7bd26b';
-    if (rarity === 'field') return '#66c2ff';
-    return RARITY_CONFIG[rarity]?.color || '#ffffff';
-  };
-
-  const getRarityName = (rarity) => {
-    if (rarity === 'essence') return 'Essência';
-    if (rarity === 'field') return 'Campo';
-    return RARITY_CONFIG[rarity]?.name || rarity;
-  };
-
-  // Pega todas as cartas selecionadas com detalhes
-  const selectedCardsDetails = useMemo(() => {
-    const details = [];
-    selectedCards.forEach((key) => {
-      const [creatureId, index] = key.split('_');
-      const instances = cardCollection?.[creatureId];
-      if (instances && instances[index]) {
-        const instance = instances[index];
-        const creatureData = creaturePool.find(c => c.id === creatureId);
-        const rarity = getCreatureRarity(creatureId);
-        const value = getCardValue(creatureId, instance, creatureData);
-        details.push({
-          key,
-          creatureId,
-          index,
-          instance,
-          creatureData,
-          value,
-          name: creatureData
-            ? (typeof creatureData.name === 'object' ? creatureData.name[langKey] : creatureData.name)
-            : creatureId,
-          element: creatureData?.element || 'puro',
-          img: creatureData?.img,
-        });
-      }
-    });
-    return details;
-  }, [selectedCards, cardCollection, langKey]);
-
-  const toggleSubsection = (rarity, section) => {
-    const key = `${rarity}_${section}`;
-    setExpandedSubsections(prev => ({ ...prev, [key]: !prev[key] }));
-  };
-
-  const renderCardItem = (card) => {
-    const key = `${card.creatureId}_${card.originalIndex}`;
-    const isSelected = selectedCards.has(key);
-    const creatureData = creaturePool.find(c => c.id === card.creatureId);
-    const cardName = creatureData
-      ? (typeof creatureData.name === 'object' ? creatureData.name[langKey] : creatureData.name)
-      : card.creatureId;
-    const cardElement = creatureData?.element || 'puro';
-    const cardImg = creatureData?.img;
-
-    const elementColors = {
-      agua: '#4a9eff',
-      water: '#4a9eff',
-      fogo: '#ff5722',
-      fire: '#ff5722',
-      terra: '#8b6f47',
-      earth: '#8b6f47',
-      ar: '#a8dadc',
-      air: '#a8dadc',
-      puro: '#e8d4b0',
-      pure: '#e8d4b0',
-    };
-
-    return (
-      <div
-        key={key}
-        className={`recycled-card-item ${isSelected ? 'selected' : ''}`}
-        onClick={() => toggleCardSelection(card.creatureId, card.originalIndex)}
-        style={{ borderLeftColor: elementColors[cardElement] || '#a87e2d' }}
-      >
-        <div className="card-item-thumbnail">
-          {cardImg && (
-            <img
-              src={typeof cardImg === 'string' ? cardImg : cardImg?.default || ''}
-              alt={cardName}
-              className="card-thumbnail-img"
-            />
-          )}
+  return (
+    <div className="recycler-layout recycler-workbench">
+      <div className="recycler-hero">
+        <div>
+          <span className="recycler-eyebrow">Reciclar cartas</span>
+          <h2>Escolha, envie para a fila e recicle</h2>
+          <p>Veja todas as cartas como no editar, confira quantidade, raridade e valor antes de enviar para reciclagem.</p>
         </div>
-        <div className="card-item-info">
-          <div className="card-item-header">
-            <div className="card-item-name">
-              {cardName}
-              {card.isHolo && <span className="holo-badge">✨</span>}
-            </div>
-            {elementIcons[cardElement] && (
-              <img
-                src={elementIcons[cardElement]}
-                alt={cardElement}
-                className="card-element-icon"
-              />
-            )}
+        <div className="recycler-metrics">
+          <div className="recycler-metric">
+            <span>Disponiveis</span>
+            <strong>{availableCardsCount}</strong>
           </div>
-          <div className="card-item-details">
-            <span className="card-detail-item">Nv. {card.level ?? 0}</span>
-            <span className="card-detail-separator">•</span>
-            <span className="card-detail-item">XP: {card.xp || 0}</span>
-            <span className="card-detail-separator">•</span>
-            <span className="card-detail-item" style={{ fontSize: '0.7rem', opacity: 0.6 }}>ID: {card.instanceId?.slice(0, 6)}</span>
+          <div className="recycler-metric">
+            <span>Na fila</span>
+            <strong>{selectedCards.size}</strong>
           </div>
-        </div>
-        <div className="card-item-value">
-          +{card.value} <span className="coin-icon">🪙</span>
+          <div className="recycler-metric recycler-metric-gold">
+            <span>Total</span>
+            <strong>{totalCoinsCalculated}</strong>
+          </div>
         </div>
       </div>
-    );
-  };
 
-  return (
-    <div className="recycler-layout">
-      {/* Coluna Esquerda: Lista de Cartas Disponíveis */}
-      <div className="recycler-left">
-        <div className="recycler-section-header">
-          <h3>Cartas Disponíveis</h3>
-        </div>
-        <div className="recycler-rarities">
-          {Object.entries(cardsByRarity).map(([rarity, cards]) => (
-            <div key={rarity} className="rarity-section">
-              <button
-                className="rarity-header-btn"
-                onClick={() => setExpandedRarity(expandedRarity === rarity ? null : rarity)}
-                style={{
-                  borderLeftColor: getRarityColor(rarity),
-                }}
-              >
-                <span className="rarity-label">{getRarityName(rarity)}</span>
-                <span className="rarity-count">{cards.length} cartas</span>
-                <span className="expand-icon">
-                  {expandedRarity === rarity ? '▼' : '▶'}
-                </span>
-              </button>
+      <div className="recycler-columns">
+        <div className="recycler-left recycler-browser">
+          <div className="recycler-grid-panel">
+            <div className="recycler-section-header">
+              <div>
+                <span className="section-kicker">Colecao</span>
+                <h3>Todas as cartas</h3>
+              </div>
+              <div className="recycler-collection-actions">
+                <span className="recycler-small-total">{filteredCards.length}/{availableCards.length} cartas</span>
+                <button
+                  type="button"
+                  className={`recycler-filter-toggle ${filtersOpen ? 'active' : ''}`}
+                  onClick={() => setFiltersOpen((open) => !open)}
+                >
+                  Filtros
+                </button>
+              </div>
+            </div>
 
-              {expandedRarity === rarity && (
-                <div className="rarity-cards-list">
-                  {(() => {
+            {filtersOpen && (
+              <div className="recycler-filter-bar">
+                <label>
+                  <span>Raridade</span>
+                  <select value={rarityFilter} onChange={(event) => setRarityFilter(event.target.value)}>
+                    <option value="all">Todas</option>
+                    <option value="essence">Essencia</option>
+                    <option value="field">Campo</option>
+                    <option value="common">Comum</option>
+                    <option value="uncommon">Incomum</option>
+                    <option value="rare">Rara</option>
+                    <option value="epic">Epica</option>
+                    <option value="legendary">Lendaria</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Tipo</span>
+                  <select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)}>
+                    <option value="all">Todos</option>
+                    <option value="creature">Criatura</option>
+                    <option value="effect">Efeito</option>
+                    <option value="field">Campo</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Valor</span>
+                  <select value={valueFilter} onChange={(event) => setValueFilter(event.target.value)}>
+                    <option value="all">Todos</option>
+                    <option value="low">Ate 50</option>
+                    <option value="mid">51 a 150</option>
+                    <option value="high">151+</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Quantidade</span>
+                  <select value={quantityFilter} onChange={(event) => setQuantityFilter(event.target.value)}>
+                    <option value="all">Todas</option>
+                    <option value="one">1x</option>
+                    <option value="few">2x a 4x</option>
+                    <option value="many">5x+</option>
+                  </select>
+                </label>
+              </div>
+            )}
 
-                    // Top-level 'essence' and 'field' sections render a flat list
-                    if (rarity === 'essence') {
-                      if (!cards.length) return <div className="rarity-empty">Nenhuma carta de essência</div>;
-                      return <div className="subsection-list">{cards.map(c => renderCardItem(c))}</div>;
-                    }
+            <div className="recycler-card-grid">
+              {filteredCards.length > 0 ? (
+                filteredCards.map((card) => {
+                  const isFocused = focusedCard?.creatureId === card.creatureId;
+                  const imgSrc = getImageSrc(card.img);
 
-                    if (rarity === 'field') {
-                      if (!cards.length) return <div className="rarity-empty">Nenhuma carta de campo</div>;
-                      return <div className="subsection-list">{cards.map(c => renderCardItem(c))}</div>;
-                    }
-
-                    // For 'common' rarity, show only creature cards as a flat list (no subsections)
-                    if (rarity === 'common') {
-                      const creatureCardsOnly = cards.filter(card => {
-                        const cd = creaturePool.find(c => c.id === card.creatureId);
-                        const t = (typeof cd?.type === 'string') ? cd.type : 'creature';
-                        return t !== 'field' && !(t === 'effect' && cd?.effectType === 'essence');
-                      });
-                      if (!creatureCardsOnly.length) return <div className="rarity-empty">Nenhuma carta {getRarityName(rarity).toLowerCase()}</div>;
-                      return <div className="subsection-list">{creatureCardsOnly.map(c => renderCardItem(c))}</div>;
-                    }
-
-                    // For rarity groups, show only creature cards as a flat list (no subsections)
-                    const creatureCardsOnly = cards.filter(card => {
-                      const cd = creaturePool.find(c => c.id === card.creatureId);
-                      const t = (typeof cd?.type === 'string') ? cd.type : 'creature';
-                      return t !== 'field' && !(t === 'effect' && cd?.effectType === 'essence');
-                    });
-
-                    if (!creatureCardsOnly.length) {
-                      return <div className="rarity-empty">Nenhuma carta {getRarityName(rarity).toLowerCase()}</div>;
-                    }
-
-                    return (
-                      <div>
-                        <div className="subsection-list">
-                          {creatureCardsOnly.map(c => renderCardItem(c))}
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </div>
+                  return (
+                    <button
+                      type="button"
+                      key={card.creatureId}
+                      className={`recycler-card-tile ${isFocused ? 'focused' : ''}`}
+                      onClick={() => focusCard(card.creatureId)}
+                      style={{ borderColor: isFocused ? card.rarityColor : undefined }}
+                    >
+                      <span className="recycler-card-qty">{card.quantity}x</span>
+                      {imgSrc ? (
+                        <img src={imgSrc} alt={card.name} />
+                      ) : (
+                        <span className="recycler-card-placeholder">{card.name.slice(0, 2).toUpperCase()}</span>
+                      )}
+                      <span className="recycler-card-name">{card.name}</span>
+                    </button>
+                  );
+                })
+              ) : (
+                <div className="recycler-empty-grid">Nenhuma carta encontrada com esses filtros.</div>
               )}
             </div>
-          ))}
+          </div>
+
+          <aside className="recycler-detail-panel">
+            {focusedCard ? (
+              <>
+                <div className="recycler-full-card-preview">
+                  {focusedCard.creatureData ? (
+                    <CreatureCardPreview
+                      creature={focusedCard.creatureData}
+                      level={focusedCard.instances[0]?.instance?.level ?? 0}
+                      isHolo={Boolean(focusedCard.instances[0]?.instance?.isHolo)}
+                      allowFlip={false}
+                    />
+                  ) : (
+                    <div className="recycler-detail-image" style={{ borderColor: focusedCard.rarityColor }}>
+                      {getImageSrc(focusedCard.img) ? (
+                        <img src={getImageSrc(focusedCard.img)} alt={focusedCard.name} />
+                      ) : (
+                        <span>{focusedCard.name.slice(0, 2).toUpperCase()}</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="recycler-detail-copy">
+                  <span className="recycler-eyebrow">Carta selecionada</span>
+                  <h3>{focusedCard.name}</h3>
+                  <div className="recycler-detail-tags">
+                    <span style={{ borderColor: focusedCard.rarityColor }}>{focusedCard.rarityName}</span>
+                    {elementIcons[focusedCard.element] && (
+                      <span>
+                        <img src={elementIcons[focusedCard.element]} alt={focusedCard.element} />
+                        {focusedCard.element}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="recycler-detail-stats">
+                  <div>
+                    <span>Valor cada</span>
+                    <strong>{focusedCard.valueEach}</strong>
+                  </div>
+                  <div>
+                    <span>Valor envio</span>
+                    <strong>{focusedCard.valueEach * sendQuantity}</strong>
+                  </div>
+                </div>
+
+                <div className="recycler-send-row">
+                  <label htmlFor="recycle-quantity">Enviar quantidade</label>
+                  <div className="recycler-stepper">
+                    <button
+                      type="button"
+                      onClick={() => setSendQuantity((value) => Math.max(1, value - 1))}
+                      disabled={sendQuantity <= 1}
+                    >
+                      -
+                    </button>
+                    <input
+                      id="recycle-quantity"
+                      type="number"
+                      min="1"
+                      max={focusedCard.quantity}
+                      value={sendQuantity}
+                      onChange={(event) => {
+                        const next = Number(event.target.value) || 1;
+                        setSendQuantity(Math.min(Math.max(next, 1), focusedCard.quantity));
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setSendQuantity((value) => Math.min(focusedCard.quantity, value + 1))}
+                      disabled={sendQuantity >= focusedCard.quantity}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                <button type="button" className="send-to-recycle-btn" onClick={sendFocusedToQueue}>
+                  Enviar
+                </button>
+              </>
+            ) : (
+              <div className="selected-empty">
+                <div className="selected-empty-icon">+</div>
+                <p>Nenhuma carta disponivel</p>
+              </div>
+            )}
+          </aside>
         </div>
-      </div>
 
-      {/* Divisor */}
-      <div className="recycler-divider"></div>
+        <div className="recycler-divider" />
 
-      {/* Coluna Direita: Cartas Selecionadas */}
-      <div className="recycler-right">
-        <div className="recycler-section-header">
-          <h3>Cartas para Reciclar</h3>
-          <span className="selected-badge">{selectedCards.size}</span>
-        </div>
+        <div className="recycler-right">
+          <div className="recycler-section-header">
+            <div>
+              <span className="section-kicker">Fila</span>
+              <h3>Cartas para reciclar</h3>
+            </div>
+            <div className="selected-header-actions">
+              {selectedCards.size > 0 && (
+                <button type="button" className="clear-selection-btn" onClick={clearSelection}>
+                  Limpar
+                </button>
+              )}
+              <span className="selected-badge">{selectedCards.size}</span>
+            </div>
+          </div>
 
-        <div className="selected-cards-list">
-          {selectedCardsDetails.length > 0 ? (
-            selectedCardsDetails.map((card) => {
-              const elementColors = {
-                agua: '#4a9eff',
-                water: '#4a9eff',
-                fogo: '#ff5722',
-                fire: '#ff5722',
-                terra: '#8b6f47',
-                earth: '#8b6f47',
-                ar: '#a8dadc',
-                air: '#a8dadc',
-                puro: '#e8d4b0',
-                pure: '#e8d4b0',
-              };
-
-              return (
+          <div className="selected-cards-list">
+            {selectedCardsDetails.length > 0 ? (
+              selectedCardsDetails.map((card) => (
                 <div
-                  key={card.key}
+                  key={card.creatureId}
                   className="selected-card-item"
                   style={{ borderLeftColor: elementColors[card.element] || '#a87e2d' }}
                 >
                   <button
                     className="remove-card-btn"
-                    onClick={() => toggleCardSelection(card.creatureId, card.index)}
-                    title="Remover"
+                    onClick={() => removeOneFromQueue(card)}
+                    title="Remover uma"
+                    type="button"
                   >
-                    ×
+                    -
+                  </button>
+                  <button
+                    className="remove-all-card-btn"
+                    onClick={() => removeAllFromQueue(card)}
+                    title="Remover todas"
+                    type="button"
+                  >
+                    x
                   </button>
                   <div className="card-item-thumbnail">
-                    {card.img && (
-                      <img
-                        src={typeof card.img === 'string' ? card.img : card.img?.default || ''}
-                        alt={card.name}
-                        className="card-thumbnail-img"
-                      />
+                    {getImageSrc(card.img) && (
+                      <img src={getImageSrc(card.img)} alt={card.name} className="card-thumbnail-img" />
                     )}
                   </div>
                   <div className="card-item-info">
                     <div className="card-item-header">
-                      <div className="card-item-name">
-                        {card.name}
-                        {card.instance.isHolo && <span className="holo-badge">✨</span>}
-                      </div>
-                      {elementIcons[card.element] && (
-                        <img
-                          src={elementIcons[card.element]}
-                          alt={card.element}
-                          className="card-element-icon"
-                        />
-                      )}
+                      <div className="card-item-name">{card.name}</div>
+                      <span className="queue-quantity">{card.quantity}x</span>
                     </div>
                     <div className="card-item-details">
-                      <span className="card-detail-item">Nv. {card.instance.level ?? 0}</span>
-                      <span className="card-detail-separator">•</span>
-                      <span className="card-detail-item">XP: {card.instance.xp || 0}</span>
+                      <span className="card-detail-item">{card.rarityName}</span>
+                      <span className="card-detail-separator">/</span>
+                      <span className="card-detail-item">{card.valueEach} cada</span>
                     </div>
                   </div>
-                  <div className="card-item-value">
-                    +{card.value} <span className="coin-icon">🪙</span>
-                  </div>
+                  <div className="card-item-value">+{card.totalValue}</div>
                 </div>
-              );
-            })
-          ) : (
-            <div className="selected-empty">
-              <p>Nenhuma carta selecionada</p>
-              <p className="selected-empty-hint">Clique nas cartas da esquerda para adicionar</p>
-            </div>
-          )}
-        </div>
-
-        {/* Footer com Total e Botão */}
-        <div className="recycler-footer">
-          <div className="recycler-summary">
-            <span className="total-coins-label">Ganho Total:</span>
-            <span className="total-coins-value">
-              <strong>{totalCoinsCalculated}</strong> <span className="coin-icon">🪙</span>
-            </span>
+              ))
+            ) : (
+              <div className="selected-empty">
+                <div className="selected-empty-icon">+</div>
+                <p>Nenhuma carta na fila</p>
+                <p className="selected-empty-hint">Clique em uma carta da esquerda e use Enviar para adicionar aqui.</p>
+              </div>
+            )}
           </div>
 
-          <button
-            className={`recycle-button ${selectedCards.size === 0 ? 'disabled' : ''} ${recyclingInProgress ? 'recycling' : ''}`}
-            onClick={handleRecycleCards}
-            disabled={selectedCards.size === 0 || recyclingInProgress}
-          >
-            {recyclingInProgress ? 'Reciclando...' : 'Reciclar Cartas'}
-          </button>
+          <div className="recycler-footer">
+            <div className="recycler-summary">
+              <span className="total-coins-label">Valor total</span>
+              <span className="total-coins-value">
+                <strong>{totalCoinsCalculated}</strong> moedas
+              </span>
+            </div>
+
+            <button
+              className={`recycle-button ${selectedCards.size === 0 ? 'disabled' : ''} ${recyclingInProgress ? 'recycling' : ''}`}
+              onClick={handleRecycleCards}
+              disabled={selectedCards.size === 0 || recyclingInProgress}
+              type="button"
+            >
+              {recyclingInProgress ? 'Reciclando...' : 'Reciclar'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -24,15 +24,15 @@ module.exports = {
       name: { pt: 'Asas Vorpais', en: 'Vorpine Wings' },
       cost: 1,
       desc: {
-        pt: 'Ganha +12% esquiva por 2 turnos e o próximo ataque recebe +10% de crítico.',
-        en: 'Grants +12% dodge for 2 turns and next hit gains +10% crit.',
+        pt: 'Ganha +1 esquiva por 2 turnos e o próximo ataque recebe +1 dano se a moeda der cara.',
+        en: 'Grants +1 evasion for 2 turns and next hit gains +1 damage on heads.',
       },
     },
   ],
   field: { pt: 'Olho da Tempestade', en: 'Eye of the Storm' },
   fielddesc: {
-    pt: 'Aliados de ar ganham +7% velocidade; inimigos têm 8% de chance de falhar ataques leves.',
-    en: 'Air allies gain +7% speed; enemies have 8% chance to miss light attacks.',
+    pt: 'Aliados de ar ganham +1 velocidade; inimigos têm o primeiro ataque leve inimigo custa +1 essência.',
+    en: 'Air allies gain +1 speed; enemies have the first enemy light attack costs +1 essence.',
   },
   storyTitle: { pt: 'Fera que Bebe Ventos', en: 'Beast that Drinks Winds' },
   story: [
@@ -57,8 +57,8 @@ module.exports = {
       id: 'zephyron_skill_1',
       name: { pt: 'Lâmina de Ventania', en: 'Gale Blade' },
       desc: {
-        pt: 'Causa 3 de dano e 25% de chance de paralisar 1 turno.',
-        en: 'Deals 3 damage and has 25% chance to paralyze for 1 turn.',
+        pt: 'Causa 3 de dano e jogue a moeda 1 vez; se der cara, paralisa 1 turno.',
+        en: 'Deals 3 damage. Flip a coin once; on heads, paralyzes for 1 turn.',
       },
       cost: 1,
       type: 'damage_debuff',
@@ -67,8 +67,8 @@ module.exports = {
       id: 'zephyron_skill_2',
       name: { pt: 'Eco Tempestuoso', en: 'Storm Echo' },
       desc: {
-        pt: 'Causa 2 de dano em área e reduz precisão inimiga em 5% por 2 turnos.',
-        en: 'Deals 2 area damage and lowers enemy accuracy by 5% for 2 turns.',
+        pt: 'Causa 2 de dano em área e reduz precisão inimiga em 1 por 2 turnos.',
+        en: 'Deals 2 area damage and applies imprecision for 2 turns.',
       },
       cost: 1,
       type: 'damage_debuff',
@@ -78,8 +78,8 @@ module.exports = {
     id: 'zephyron_blessing',
     name: { pt: 'Tempestade Paralisante', en: 'Paralyzing Storm' },
     desc: {
-      pt: 'Ao ser invocado paralisa todas as criaturas adversárias por 1 turno.',
-      en: 'When summoned, paralyzes all enemy creatures for 1 turn.',
+      pt: 'Ao ser invocado paralisa todas as criaturas adversárias por 2 turnos.',
+      en: 'When summoned, paralyzes all enemy creatures for 2 turns.',
     },
   },
   unlockTable: [
@@ -114,8 +114,8 @@ module.exports = {
       id: 'zephyron_skill_5',
       name: { pt: 'Carapaça de Vento', en: 'Wind Carapace' },
       desc: {
-        pt: 'Ganha 3 de escudo e +10% esquiva por 2 turnos.',
-        en: 'Gains 3 shield and +10% dodge for 2 turns.',
+        pt: 'Ganha 3 de escudo e +1 esquiva por 2 turnos.',
+        en: 'Gains 3 shield and +1 evasion for 2 turns.',
       },
       cost: 2,
     },
@@ -128,8 +128,8 @@ module.exports = {
       id: 'zephyron_skill_6',
       name: { pt: 'Lamento das Nuvens', en: 'Cloud Lament' },
       desc: {
-        pt: 'Causa 4 de dano e reduz velocidade inimiga em 10% por 2 turnos.',
-        en: 'Deals 4 damage and reduces enemy speed by 10% for 2 turns.',
+        pt: 'Causa 4 de dano e reduz velocidade inimiga em 1 por 2 turnos.',
+        en: 'Deals 4 damage and applies slow for 2 turns.',
       },
       cost: 2,
     },
@@ -139,8 +139,8 @@ module.exports = {
       id: 'zephyron_skill_7',
       name: { pt: 'Supremo: Banquete de Tempestades', en: 'Ultimate: Storm Banquet' },
       desc: {
-        pt: 'Supremo: 4 de dano em todos, aplica sangramento 2 e concede +12% velocidade aos aliados de ar por 2 turnos.',
-        en: 'Ultimate: 4 damage to all, applies bleed 2, and grants air allies +12% speed for 2 turns.',
+        pt: 'Supremo: 4 de dano em todos, aplica sangramento 2 e concede +1 velocidade aos aliados de ar por 2 turnos.',
+        en: 'Ultimate: 4 damage to all, applies bleed 2, and grants air allies +1 speed for 2 turns.',
       },
       cost: 3,
     },

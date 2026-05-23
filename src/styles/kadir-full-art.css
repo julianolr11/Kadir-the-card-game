@@ -1,0 +1,450 @@
+.kadir-full-art-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50000000;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(100, 48, 158, 0.22), transparent 42%),
+    rgba(0, 0, 0, 0.84);
+  backdrop-filter: blur(9px);
+  animation: kadirFullArtFade 220ms ease both;
+}
+
+.kadir-full-art-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+}
+
+.kadir-full-art-close {
+  position: absolute;
+  top: 6px;
+  right: 0;
+  z-index: 4;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(255, 232, 174, 0.42);
+  border-radius: 50%;
+  background: rgba(14, 8, 20, 0.86);
+  color: #ffe8ae;
+  cursor: pointer;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1;
+  box-shadow: 0 0 22px rgba(150, 84, 255, 0.28);
+  transition: transform 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.kadir-full-art-close:hover {
+  transform: scale(1.06);
+  border-color: rgba(255, 232, 174, 0.82);
+  color: #ffffff;
+}
+
+.kadir-full-art-card {
+  position: relative;
+  width: min(420px, 82vw);
+  aspect-ratio: 0.68;
+  overflow: hidden;
+  border-radius: 24px;
+  background: #07050b;
+  border: 2px solid rgba(255, 232, 174, 0.62);
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.72),
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+    0 0 42px rgba(112, 63, 255, 0.36),
+    inset 0 0 36px rgba(255, 255, 255, 0.06);
+  color: #fff;
+  isolation: isolate;
+  animation: kadirFullArtRise 360ms cubic-bezier(0.2, 0.88, 0.25, 1.18) both;
+}
+
+.kadir-full-art-card::before {
+  content: '';
+  position: absolute;
+  inset: 10px;
+  z-index: 3;
+  pointer-events: none;
+  border: 1px solid rgba(255, 232, 174, 0.48);
+  border-radius: 18px;
+  box-shadow:
+    inset 0 0 30px rgba(255, 232, 174, 0.12),
+    0 0 20px rgba(255, 232, 174, 0.12);
+}
+
+.kadir-full-art-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 18% 8%, rgba(255, 255, 255, 0.32), transparent 18%),
+    radial-gradient(ellipse at 76% 18%, rgba(116, 255, 241, 0.18), transparent 24%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.18), transparent 26%, transparent 62%, rgba(255, 255, 255, 0.08));
+  mix-blend-mode: screen;
+  opacity: 0.76;
+}
+
+.kadir-full-art-image {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-size: auto calc(100% * var(--full-art-scale, 1.04));
+  background-repeat: no-repeat;
+  background-position: center;
+  filter: saturate(1.18) contrast(1.08) brightness(0.92);
+}
+
+.kadir-full-art-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.58) 0%, transparent 20%, transparent 51%, rgba(2, 0, 8, 0.94) 100%),
+    radial-gradient(circle at 50% 45%, transparent 38%, rgba(4, 0, 12, 0.48) 76%),
+    linear-gradient(105deg, rgba(255, 255, 255, 0.1), transparent 22%, transparent 76%, rgba(255, 255, 255, 0.08));
+}
+
+.kadir-full-art-shine {
+  position: absolute;
+  inset: -18%;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    linear-gradient(112deg, transparent 16%, rgba(255, 255, 255, 0.06) 35%, rgba(255, 255, 255, 0.42) 44%, rgba(127, 255, 243, 0.24) 49%, rgba(255, 255, 255, 0.18) 55%, transparent 70%),
+    radial-gradient(ellipse at 42% 38%, rgba(255, 255, 255, 0.2), transparent 28%),
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 8px);
+  mix-blend-mode: screen;
+  opacity: 0.82;
+  filter: blur(0.2px) saturate(1.25);
+  animation: kadirFullArtSweep 5.8s cubic-bezier(0.34, 0.02, 0.2, 1) infinite;
+}
+
+.kadir-full-art-shine::before,
+.kadir-full-art-shine::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: 30px;
+  mix-blend-mode: screen;
+}
+
+.kadir-full-art-shine::before {
+  background:
+    linear-gradient(100deg, transparent 25%, rgba(255, 255, 255, 0.34) 42%, rgba(91, 236, 255, 0.2) 51%, transparent 66%);
+  filter: blur(10px);
+  opacity: 0.62;
+  transform: translateX(-18%) skewX(-10deg);
+}
+
+.kadir-full-art-shine::after {
+  background:
+    radial-gradient(ellipse at 40% 24%, rgba(255, 255, 255, 0.24), transparent 18%),
+    radial-gradient(ellipse at 58% 62%, rgba(110, 255, 244, 0.18), transparent 20%);
+  filter: blur(4px);
+  opacity: 0.5;
+  animation: kadirFullArtLiquidDrift 7s ease-in-out infinite alternate;
+}
+
+.kadir-full-art-header {
+  position: absolute;
+  z-index: 4;
+  top: 24px;
+  left: 24px;
+  right: 24px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  text-shadow: 0 3px 12px rgba(0, 0, 0, 0.9);
+}
+
+.kadir-full-art-header div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.kadir-full-art-header strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #fff5cf;
+  font-size: 28px;
+  line-height: 1;
+}
+
+.kadir-full-art-element {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.34));
+}
+
+.kadir-full-art-header span {
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 13px;
+  font-style: italic;
+  font-weight: 700;
+}
+
+.kadir-full-art-header b {
+  color: #ffe8ae;
+  font-size: 18px;
+}
+
+.kadir-full-art-info {
+  position: absolute;
+  z-index: 4;
+  left: 24px;
+  right: 24px;
+  bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.kadir-full-art-blessing,
+.kadir-full-art-skills,
+.kadir-full-art-stats {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.035) 34%, rgba(5, 2, 10, 0.62)),
+    radial-gradient(circle at 12% 0%, rgba(118, 255, 239, 0.18), transparent 42%),
+    rgba(10, 6, 18, 0.54);
+  backdrop-filter: blur(12px) saturate(1.35);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -18px 34px rgba(0, 0, 0, 0.22),
+    inset 0 0 22px rgba(255, 255, 255, 0.055),
+    0 12px 34px rgba(0, 0, 0, 0.28);
+}
+
+.kadir-full-art-blessing::before,
+.kadir-full-art-skills::before,
+.kadir-full-art-stats::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(110deg, transparent 8%, rgba(255, 255, 255, 0.16) 24%, transparent 42%),
+    radial-gradient(ellipse at 28% 0%, rgba(255, 255, 255, 0.18), transparent 34%);
+  opacity: 0.58;
+  mix-blend-mode: screen;
+}
+
+.kadir-full-art-blessing {
+  padding: 12px 14px;
+  border-radius: 14px;
+}
+
+.kadir-full-art-blessing span {
+  display: block;
+  margin-bottom: 4px;
+  color: #ffe8ae;
+  font-size: 14px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.kadir-full-art-blessing p,
+.kadir-full-art-skills p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  line-height: 1.28;
+}
+
+.kadir-full-art-skills {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  overflow: hidden;
+  border-radius: 14px;
+}
+
+.kadir-full-art-skills div {
+  position: relative;
+  padding: 11px 12px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02)),
+    rgba(255, 255, 255, 0.026);
+}
+
+.kadir-full-art-skills header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.kadir-full-art-skills strong {
+  display: block;
+  color: #ffffff;
+  font-size: 13px;
+  line-height: 1.12;
+}
+
+.kadir-full-art-cost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+  min-width: 18px;
+  flex: 0 0 auto;
+}
+
+.kadir-full-art-cost img {
+  width: 15px;
+  height: 15px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 5px rgba(78, 208, 255, 0.72));
+}
+
+.kadir-full-art-stats {
+  min-height: 44px;
+  display: grid;
+  grid-template-columns: 1fr 0.64fr 42px 54px 54px;
+  gap: 8px;
+  align-items: center;
+  padding: 0 12px;
+  border-radius: 999px;
+  color: #fff5cf;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.kadir-full-art-level,
+.kadir-full-art-hp,
+.kadir-full-art-weakness {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 42px;
+  height: 34px;
+  justify-self: end;
+  color: #fff;
+  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.7);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.kadir-full-art-level {
+  border: 1px solid rgba(95, 215, 255, 0.32);
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(17, 46, 72, 0.8), rgba(6, 13, 25, 0.78));
+}
+
+.kadir-full-art-weakness {
+  border: 1px solid rgba(255, 232, 174, 0.24);
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(255, 232, 174, 0.1), rgba(8, 4, 13, 0.72));
+}
+
+.kadir-full-art-hp {
+  border: 0;
+  border-radius: 999px;
+  background: radial-gradient(circle at 35% 30%, rgba(255, 246, 166, 0.22), rgba(215, 25, 74, 0.36) 62%, rgba(90, 6, 25, 0.42));
+}
+
+.kadir-full-art-level img,
+.kadir-full-art-hp img,
+.kadir-full-art-weakness img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.65));
+}
+
+.kadir-full-art-note {
+  margin-top: 14px;
+  color: rgba(255, 232, 174, 0.78);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.kadir-full-art-fogo {
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.72), 0 0 48px rgba(255, 109, 31, 0.35);
+}
+
+.kadir-full-art-agua {
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.72), 0 0 48px rgba(55, 191, 255, 0.35);
+}
+
+.kadir-full-art-terra {
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.72), 0 0 48px rgba(57, 214, 122, 0.34);
+}
+
+.kadir-full-art-ar {
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.72), 0 0 48px rgba(240, 244, 255, 0.3);
+}
+
+@keyframes kadirFullArtFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes kadirFullArtRise {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes kadirFullArtSweep {
+  0%,
+  18% {
+    transform: translateX(-54%) rotate(-2deg);
+    opacity: 0.18;
+  }
+  46% {
+    opacity: 0.9;
+  }
+  72%,
+  100% {
+    transform: translateX(54%) rotate(2deg);
+    opacity: 0.28;
+  }
+}
+
+@keyframes kadirFullArtLiquidDrift {
+  from {
+    transform: translate3d(-2%, -1%, 0) scale(1);
+  }
+  to {
+    transform: translate3d(3%, 2%, 0) scale(1.04);
+  }
+}
+
+@media (max-height: 760px) {
+  .kadir-full-art-card {
+    width: min(350px, 76vw);
+  }
+
+  .kadir-full-art-header strong {
+    font-size: 23px;
+  }
+
+  .kadir-full-art-info {
+    left: 20px;
+    right: 20px;
+    bottom: 20px;
+  }
+}

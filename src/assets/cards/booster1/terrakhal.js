@@ -16,23 +16,23 @@ module.exports = {
       name: { pt: 'Garras de Areia', en: 'Sand Claws' },
       cost: 1,
       desc: {
-        pt: 'Causa 3 de dano e reduz velocidade do alvo em 5% por 1 turno.',
-        en: 'Deals 3 damage and reduces target speed by 5% for 1 turn.',
+        pt: 'Causa 3 de dano e aplica lentidão por 1 turno.',
+        en: 'Deals 3 damage and applies slow for 1 turn.',
       },
     },
     {
       name: { pt: 'Tempestade de Pó', en: 'Dust Storm' },
       cost: 1,
       desc: {
-        pt: 'Causa 2 de dano em área e reduz precisão de todos os inimigos em 6%.',
-        en: 'Deals 2 area damage and lowers all enemy accuracy by 6%.',
+        pt: 'Causa 2 de dano em área e reduz precisão de todos os inimigos em 1.',
+        en: 'Deals 2 area damage and applies imprecision.',
       },
     },
   ],
   field: { pt: 'Areias Séculas', en: 'Ancient Sands' },
   fielddesc: {
-    pt: 'Aliados de terra ganham +5% defesa e velocidade reduzida de inimigos em +3% enquanto Terrakhal estiver em campo.',
-    en: 'Earth allies gain +5% defense and enemy speed reduction is +3% higher while Terrakhal is on the field.',
+    pt: 'Aliados de terra ganham +1 defesa e inimigos sofrem -1 velocidade enquanto Terrakhal estiver em campo.',
+    en: 'Earth allies gain +1 defense and enemies suffer -1 speed while Terrakhal is on the field.',
   },
   storyTitle: { pt: 'Viajante das Dunas Eternas', en: 'Traveler of Eternal Dunes' },
   story: [
@@ -67,8 +67,8 @@ module.exports = {
       id: 'terrakhal_skill_2',
       name: { pt: 'Abraço da Terra', en: 'Earth Embrace' },
       desc: {
-        pt: 'Ganha escudo 2, reduz dano recebido em 3% e aumenta defesa em 2%.',
-        en: 'Gains 2 shield, reduces damage taken by 3%, and increases defense by 2%.',
+        pt: 'Ganha 2 de escudo, reduz o dano recebido em 1 e ganha +1 defesa.',
+        en: 'Gains 2 shield, reduces damage taken by 1, and gains +1 defense.',
       },
       cost: 1,
       type: 'buff',
@@ -78,8 +78,8 @@ module.exports = {
     id: 'terrakhal_blessing',
     name: { pt: 'Rota Antiga', en: 'Ancient Route' },
     desc: {
-      pt: 'Aliados de terra ganham +3% defesa e +6% precisão enquanto Terrakhal estiver em campo.',
-      en: 'Earth allies gain +3% defense and +6% accuracy while Terrakhal is on the field.',
+      pt: 'Aliados de terra ganham +1 defesa e +1 precisão enquanto Terrakhal estiver em campo.',
+      en: 'Earth allies gain +1 defense and +1 accuracy while Terrakhal is on the field.',
     },
   },
   unlockTable: [
@@ -90,8 +90,8 @@ module.exports = {
       id: 'terrakhal_skill_3',
       name: { pt: 'Tremor Terrestre', en: 'Earth Tremor' },
       desc: {
-        pt: 'Causa 3 de dano e reduz velocidade de todos por 4% por 1 turno.',
-        en: 'Deals 3 damage and reduces all speed by 4% for 1 turn.',
+        pt: 'Causa 3 de dano e reduz velocidade de todos em 1 por 1 turno.',
+        en: 'Deals 3 damage and applies slow for 1 turn.',
       },
       cost: 1,
     },
@@ -103,8 +103,8 @@ module.exports = {
       id: 'terrakhal_skill_4',
       name: { pt: 'Arenito Impiedoso', en: 'Merciless Sandstone' },
       desc: {
-        pt: 'Causa 3 de dano e reduz precisão do alvo em 8% por 2 turnos.',
-        en: 'Deals 3 damage and lowers target accuracy by 8% for 2 turns.',
+        pt: 'Causa 3 de dano e reduz precisão do alvo em 1 por 2 turnos.',
+        en: 'Deals 3 damage and applies imprecision for 2 turns.',
       },
       cost: 2,
     },
@@ -114,8 +114,8 @@ module.exports = {
       id: 'terrakhal_skill_5',
       name: { pt: 'Crosta Protetora', en: 'Protective Crust' },
       desc: {
-        pt: 'Ganha 3 de escudo e +12% resistência por 2 turnos.',
-        en: 'Gains 3 shield and +12% resistance for 2 turns.',
+        pt: 'Ganha 3 de escudo e +1 resistência por 2 turnos.',
+        en: 'Gains 3 shield and +1 resistance for 2 turns.',
       },
       cost: 2,
     },
@@ -128,8 +128,8 @@ module.exports = {
       id: 'terrakhal_skill_6',
       name: { pt: 'Duna Enfurecida', en: 'Raging Dune' },
       desc: {
-        pt: 'Causa 4 de dano em área e aumenta defesa pessoal em 5% por 2 turnos.',
-        en: 'Deals 4 area damage and increases own defense by 5% for 2 turns.',
+        pt: 'Causa 4 de dano em área e ganha +1 defesa por 2 turnos.',
+        en: 'Deals 4 area damage and gains +1 defense for 2 turns.',
       },
       cost: 2,
     },
@@ -139,8 +139,8 @@ module.exports = {
       id: 'terrakhal_skill_7',
       name: { pt: 'Supremo: Miragem Eterna', en: 'Ultimate: Eternal Mirage' },
       desc: {
-        pt: 'Supremo: 4 de dano em todos, reduz velocidade de inimigos em 15% e concede +8% defesa a aliados de terra por 2 turnos.',
-        en: 'Ultimate: 4 damage to all, reduces enemy speed by 15%, and grants earth allies +8% defense for 2 turns.',
+        pt: 'Supremo: 4 de dano em todos, reduz velocidade dos inimigos em 1 e concede +1 defesa a aliados de terra por 2 turnos.',
+        en: 'Ultimate: 4 damage to all, applies slow, and grants earth allies +1 defense for 2 turns.',
       },
       cost: 3,
     },

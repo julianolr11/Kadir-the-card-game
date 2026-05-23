@@ -30,8 +30,8 @@ module.exports = {
   ],
   field: { pt: 'Céu Flamejante', en: 'Flaming Sky' },
   fielddesc: {
-    pt: 'Aumenta dano de fogo em 3% enquanto Ignis estiver em campo.',
-    en: 'Increases fire damage by 3% while Ignis is on the field.',
+    pt: 'Criaturas de fogo causam +1 dano no primeiro ataque enquanto Ignis estiver em campo.',
+    en: 'Fire creatures deal +1 damage on their first attack while Ignis is on the field.',
   },
   storyTitle: { pt: 'Origem de Ignis', en: 'Origin of Ignis' },
   story: [
@@ -98,8 +98,8 @@ module.exports = {
       id: 'ignis_skill_4',
       name: { pt: 'Inferno Concentrado', en: 'Focused Inferno' },
       desc: {
-        pt: 'Causa 3 de dano e aumenta próprio ataque em 5% por 2 turnos.',
-        en: 'Deals 3 damage and increases own attack by 5% for 2 turns.',
+        pt: 'Causa 3 de dano e ganha +1 ataque por 2 turnos.',
+        en: 'Deals 3 damage and gains +1 attack for 2 turns.',
       },
       cost: 2,
     },

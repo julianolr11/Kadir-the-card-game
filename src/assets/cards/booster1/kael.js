@@ -24,15 +24,15 @@ module.exports = {
       name: { pt: 'Pele Escorregadia', en: 'Slippery Hide' },
       cost: 1,
       desc: {
-        pt: 'Reduz dano recebido em 3%.',
-        en: 'Reduces damage taken by 3%.',
+        pt: 'reduz o dano recebido em 1.',
+        en: 'reduces damage taken by 1.',
       },
     },
   ],
   field: { pt: 'Lago Sagrado', en: 'Sacred Lake' },
   fielddesc: {
-    pt: 'Aliados recebem 2% menos dano enquanto Kael estiver em campo.',
-    en: 'Allies take 2% less damage while Kael is on the field.',
+    pt: 'Aliados recebem -1 de dano enquanto Kael estiver em campo.',
+    en: 'Allies take -1 damage while Kael is on the field.',
   },
   storyTitle: { pt: 'Origem de Kael', en: 'Origin of Kael' },
   story: [
@@ -41,7 +41,7 @@ module.exports = {
       en: 'Kael is a wild beast that inhabits rivers, swamps, and lakes of turbulent waters. Extremely cunning, it learned to use the environment itself as a weapon, moving through the currents with speed and precision.',
     },
     {
-      pt: 'Seu corpo é forte e flexível, coberto por uma pelagem constantemente encharcada, e seus olhos atentos nunca perdem um alvo. Kael não ataca de forma direta: ele cerca, confunde e espera o momento exato para avançar.',
+      pt: 'Seu corpo é forte e flexível, coberto por uma pelagem constantemente encharcada, e seus olhos aténtos nunca perdem um alvo. Kael não ataca de forma direta: ele cerca, confunde e espera o momento exato para avançar.',
       en: 'Its body is strong and flexible, covered in a constantly soaked coat, and its watchful eyes never lose a target. Kael does not attack directly: it circles, confuses, and waits for the exact moment to strike.',
     },
     {
@@ -67,8 +67,8 @@ module.exports = {
       id: 'kael_skill_2',
       name: { pt: 'Cristal Refrigerador', en: 'Chilling Crystal' },
       desc: {
-        pt: 'Causa 2 de dano e reduz velocidade do inimigo em 10%.',
-        en: 'Deals 2 damage and reduces enemy speed by 10%.',
+        pt: 'Causa 2 de dano e aplica lentidão.',
+        en: 'Deals 2 damage and applies slow.',
       },
       cost: 1,
       type: 'damage_debuff',
@@ -76,9 +76,9 @@ module.exports = {
   ],
   defaultBlessing: {
     id: 'kael_blessing',
-    name: { pt: 'Ataque Peneça', en: 'Piercing Strike' },
+    name: { pt: 'Ataque Perfurante', en: 'Piercing Strike' },
     desc: {
-      pt: 'Ao ser invocado, dá 1 de dano 3 vezes a criaturas aleatórias. Se houver só 1 criatura, ela toma 3 de dano direto.',
+      pt: 'Ao ser invocado, concede 1 de dano 3 vezes a criaturas aleatórias. Se houver só 1 criatura, ela toma 3 de dano direto.',
       en: 'When summoned, deals 1 damage 3 times to random creatures. If there is only 1, it takes 3 direct damage.',
     },
   },
@@ -106,7 +106,7 @@ module.exports = {
         en: 'Deals 2 area damage and freezes for 1 turn.',
       },
       cost: 1,
-      type: 'aoe_freeze',
+      effectType: 'aoe_freeze',
     },
     // Nível 4 - Perk: Reflexo Gélido
     {
@@ -126,11 +126,11 @@ module.exports = {
       id: 'kael_skill_prisma_gelado',
       name: { pt: 'Prisma Gelado', en: 'Icy Prism' },
       desc: {
-        pt: 'Causa 3 de dano e reflete 5% do dano recebido.',
-        en: 'Deals 3 damage and reflects 5% of damage taken.',
+        pt: 'Causa 3 de dano e reflete 1 de dano recebido.',
+        en: 'Deals 3 damage and reflects 1 damage taken.',
       },
       cost: 2,
-      type: 'damage_reflect',
+      effectType: 'damage_reflect',
     },
     // Nível 6 - Perk: Resistência Profunda
     {
@@ -139,8 +139,8 @@ module.exports = {
       id: 'DEEP_RESISTANCE',
       name: { pt: 'Resistência Profunda', en: 'Deep Resistance' },
       desc: {
-        pt: 'Recebe -20% de dano de gelo.',
-        en: 'Takes -20% ice damage.',
+        pt: 'recebe -1 de dano de gelo.',
+        en: 'takes -1 ice damage.',
       },
     },
     // Nível 7 - Habilidade: Inverno Eterno
@@ -154,7 +154,7 @@ module.exports = {
         en: 'Deals 4 damage and freezes the field for 2 turns.',
       },
       cost: 2,
-      type: 'field_freeze',
+      effectType: 'field_freeze',
     },
     // Nível 8 - Perk: Fôlego Ártico
     {
@@ -178,7 +178,7 @@ module.exports = {
         en: 'Deals 4 damage and paralyzes all enemies.',
       },
       cost: 3,
-      type: 'aoe_paralyze',
+      effectType: 'aoe_paralyze',
     },
     // Nível 10 - Habilidade: Era do Gelo
     {
@@ -191,7 +191,7 @@ module.exports = {
         en: 'Ultimate: 4 damage and freezes the field for 3 turns.',
       },
       cost: 4,
-      type: 'ultimate_field_freeze',
+      effectType: 'ultimate_field_freeze',
     },
   ],
 };

@@ -6,10 +6,13 @@ import MenuMusicPlayer from '../components/MenuMusicPlayer';
 import IntroMusicPlayer from '../components/IntroMusicPlayer';
 import LoadingScreen from '../components/LoadingScreen';
 import SplashScreen from '../components/SplashScreen';
+import AudioUnlock from '../components/AudioUnlock';
 import HomeScreen from '../components/HomeScreen';
 import StartFlow from '../components/StartFlow';
 import DeckBuilder from '../components/DeckBuilder';
 import BattleBoard from '../components/BattleBoard';
+import CampaignTower from '../components/CampaignTower';
+import KadirFullArtPreview from '../components/KadirFullArtPreview';
 import { AppProvider } from '../context/AppContext';
 import { BattleProvider } from '../context/BattleContext';
 import BoosterResultsSlider from '../components/BoosterResultsSlider';
@@ -23,6 +26,8 @@ export default function App() {
   const [screen, setScreen] = useState('loading');
   const [checkingUpdate, setCheckingUpdate] = useState(false);
   const [battleDeck, setBattleDeck] = useState(null);
+  const [battleConfig, setBattleConfig] = useState<any>(null);
+  const [routeCurtain, setRouteCurtain] = useState<'hidden' | 'covering' | 'revealing'>('hidden');
   const menuMusicRef = useRef(null);
   const introMusicRef = useRef(null);
 
@@ -139,11 +144,27 @@ export default function App() {
 
   // Navegação central
   const handleNavigate = (route: string, params?: any) => {
-    if (route === 'iniciar') setScreen('startflow');
-    else if (route === 'home') setScreen('home');
+    if (route === 'iniciar') {
+      const hasStartedJourney = localStorage.getItem('kadirStartFlowCompleted') === 'true';
+      setScreen(hasStartedJourney ? 'home' : 'startflow');
+    }
+    else if (route === 'home') {
+      if (params?.transition === 'continue') {
+        setRouteCurtain('covering');
+        setScreen('home');
+        window.setTimeout(() => {
+          setRouteCurtain('revealing');
+          window.setTimeout(() => setRouteCurtain('hidden'), 720);
+        }, 3000);
+      } else {
+        setScreen('home');
+      }
+    }
     else if (route === 'deck') setScreen('deck');
+    else if (route === 'campaign') setScreen('campaign');
     else if (route === 'battle') {
       setBattleDeck(params?.deck || null);
+      setBattleConfig(params || null);
       setScreen('battle');
     }
     else if (route === 'opcoes') setScreen('opcoes');
@@ -161,6 +182,8 @@ export default function App() {
 
   return (
     <AppProvider>
+      <AudioUnlock />
+      <KadirFullArtPreview />
       {(screen === 'loading' || screen === 'menu') && <IntroMusicPlayer ref={introMusicRef} />}
       {screen !== 'battle' && screen !== 'loading' && <MenuMusicPlayer ref={menuMusicRef} />}
       {checkingUpdate && (
@@ -218,14 +241,32 @@ export default function App() {
       {screen === 'deck' && (
         <DeckBuilder onNavigate={handleNavigate} />
       )}
+      {screen === 'campaign' && (
+        <CampaignTower
+          onBack={() => setScreen('home')}
+          onStartBattle={(opponent: any) => handleNavigate('battle', { mode: 'campaign', opponent })}
+        />
+      )}
       {screen === 'battle' && (
         <BattleProvider>
           <BattleBoard
             onNavigate={handleNavigate}
             selectedDeck={battleDeck}
+            battleConfig={battleConfig}
             menuMusicRef={menuMusicRef}
           />
         </BattleProvider>
+      )}
+      {routeCurtain !== 'hidden' && (
+        <div className={`route-black-curtain ${routeCurtain}`} aria-hidden>
+          {routeCurtain === 'covering' && (
+            <>
+              <div className="route-curtain-rune" />
+              <div className="route-curtain-card" />
+              <div className="route-curtain-text">Carregando jornada</div>
+            </>
+          )}
+        </div>
       )}
     </AppProvider>
   );

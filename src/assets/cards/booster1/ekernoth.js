@@ -16,23 +16,23 @@ module.exports = {
       name: { pt: 'Garra Marinada', en: 'Brine Claw' },
       cost: 1,
       desc: {
-        pt: 'Causa 4 de dano água e reduz defesa do alvo em 6% por 1 turno.',
-        en: 'Deals 4 water damage and lowers target defense by 6% for 1 turn.',
+        pt: 'Causa 4 de dano água e reduz defesa em 1 por 1 turno.',
+        en: 'Deals 4 water damage and lowers target defense by 1 for 1 turn.',
       },
     },
     {
       name: { pt: 'Redemoinho Esmagador', en: 'Crushing Maelstrom' },
       cost: 2,
       desc: {
-        pt: 'Causa 3 de dano em área e aplica -10% velocidade por 2 turnos.',
-        en: 'Deals 3 area damage and applies -10% speed for 2 turns.',
+        pt: 'Causa 3 de dano em área e aplica -1 velocidade por 2 turnos.',
+        en: 'Deals 3 area damage and applies -1 speed for 2 turns.',
       },
     },
   ],
   field: { pt: 'Abismo Salino', en: 'Saline Abyss' },
   fielddesc: {
-    pt: 'Ao invocar, cria um escudo de água: aliados ganham +8% defesa e redução de 15% do dano sofrido.',
-    en: 'On invoke, creates a water shield: allies gain +8% defense and 15% damage reduction.',
+    pt: 'Ao invocar, cria um escudo de água: aliados ganham +1 defesa e redução de 1 do dano sofrido.',
+    en: 'On invoke, creates a water shield: allies gain +1 defense and 1 damage reduction.',
   },
   storyTitle: { pt: 'Titã do Profundo', en: 'Titan of the Deep' },
   story: [
@@ -73,8 +73,8 @@ module.exports = {
       id: 'ekernoth_skill_1',
       name: { pt: 'Soco de Maré', en: 'Tidal Strike' },
       desc: {
-        pt: 'Causa 4 de dano água e reduz defesa em 6%.',
-        en: 'Deals 4 water damage and lowers defense by 6%.',
+        pt: 'Causa 4 de dano água e reduz defesa em 1.',
+        en: 'Deals 4 water damage and lowers defense by 1.',
       },
       cost: 1,
       type: 'damage',
@@ -83,8 +83,8 @@ module.exports = {
       id: 'ekernoth_skill_2',
       name: { pt: 'Corrente Presa', en: 'Undertow' },
       desc: {
-        pt: 'Causa 2 de dano em área e reduz velocidade dos inimigos em 8% por 1 turno.',
-        en: 'Deals 2 area damage and lowers enemy speed by 8% for 1 turn.',
+        pt: 'Causa 2 de dano em área e aplica lentidão por 1 turno.',
+        en: 'Deals 2 area damage and lowers enemy speed by 1 for 1 turn.',
       },
       cost: 1,
       type: 'damage_debuff',
@@ -94,8 +94,8 @@ module.exports = {
     id: 'ekernoth_blessing',
     name: { pt: 'Benção dos Abismos', en: 'Blessing of the Abyss' },
     desc: {
-      pt: 'Aliados ganham +6% defesa e reduzem dano sofrido em 10%; inimigos sofrem -4% precisão.',
-      en: 'Allies gain +6% defense and reduce damage taken by 10%; enemies suffer -4% accuracy.',
+      pt: 'Aliados ganham +1 defesa e reduzem o dano sofrido em 1; inimigos sofrem -1 precisão.',
+      en: 'Allies gain +1 defense and reduce damage taken by 1; enemies suffer imprecision.',
     },
   },
   unlockTable: [
@@ -118,11 +118,11 @@ module.exports = {
       id: 'ekernoth_skill_pressao_profundo',
       name: { pt: 'Pressão do Profundo', en: 'Abyssal Pressure' },
       desc: {
-        pt: 'Causa 3 de dano em área e reduz defesa dos inimigos em 10% por 2 turnos.',
-        en: 'Deals 3 area damage and reduces enemy defense by 10% for 2 turns.',
+        pt: 'Causa 3 de dano em área e reduz defesa em 1 por 2 turnos.',
+        en: 'Deals 3 area damage and reduces defense by 1 for 2 turns.',
       },
       cost: 2,
-      type: 'aoe_defense_down',
+      effectType: 'aoe_defense_down',
     },
     // Nível 4 - Perk: Escudo Salino
     {
@@ -142,11 +142,11 @@ module.exports = {
       id: 'ekernoth_skill_tormenta_esmagadora',
       name: { pt: 'Tormenta Esmagadora', en: 'Crushing Storm' },
       desc: {
-        pt: 'Causa 4 de dano em área e reduz velocidade dos inimigos em 12% por 2 turnos.',
-        en: 'Deals 4 area damage and reduces enemy speed by 12% for 2 turns.',
+        pt: 'Causa 4 de dano em área e aplica lentidão por 2 turnos.',
+        en: 'Deals 4 area damage and applies slow for 2 turns.',
       },
       cost: 2,
-      type: 'aoe_slow',
+      effectType: 'aoe_slow',
     },
     // Nível 6 - Perk: Fúria do Abismo
     {
@@ -170,7 +170,7 @@ module.exports = {
         en: 'Deals 3 damage to all and blocks 1 attack for nearby allies for 1 turn.',
       },
       cost: 2,
-      type: 'aoe_block',
+      effectType: 'aoe_block',
     },
     // Nível 8 - Perk: Pressão Constante
     {
@@ -194,7 +194,7 @@ module.exports = {
         en: 'Deals 4 area damage and pulls all enemies to the center (reduces evasion).',
       },
       cost: 3,
-      type: 'aoe_pull',
+      effectType: 'aoe_pull',
     },
     // Nível 10 - Habilidade: Maelstrom Abissal
     {
@@ -203,11 +203,11 @@ module.exports = {
       id: 'ekernoth_skill_maelstrom_abissal',
       name: { pt: 'Maelstrom Abissal', en: 'Abyssal Maelstrom' },
       desc: {
-        pt: 'Supremo: 5 de dano em todos, reduz velocidade em 15%, defesa em 10% por 3 turnos e ganha escudo que absorve 3 de dano.',
-        en: 'Ultimate: 5 damage to all, reduces speed by 15%, defense by 10% for 3 turns, and gains a shield absorbing 3 damage.',
+        pt: 'Supremo: 5 de dano em todos, aplica lentidão, defesa em 1 por 3 turnos e ganha escudo que absorve 3 de dano.',
+        en: 'Ultimate: 5 damage to all, applies slow, lowers defense by 1 for 3 turns, and gains a shield absorbing 3 damage.',
       },
       cost: 4,
-      type: 'ultimate_aoe_shield',
+      effectType: 'ultimate_aoe_shield',
     },
   ],
 };

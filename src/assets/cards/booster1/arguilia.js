@@ -31,8 +31,8 @@ module.exports = {
   ],
   field: { pt: 'Rio Sagrado', en: 'Sacred River' },
   fielddesc: {
-    pt: 'Criaturas de água recebem 3% menos dano enquanto Arguilia estiver em campo.',
-    en: 'Water creatures take 3% less damage while Arguilia is on the field.',
+    pt: 'Criaturas de água recebem -1 de dano enquanto Arguilia estiver em campo.',
+    en: 'Water creatures take -1 damage while Arguilia is on the field.',
   },
   storyTitle: {
     pt: 'A Voz dos Rios Eternos',
@@ -105,7 +105,7 @@ module.exports = {
         en: 'Deals 2 damage and paralyzes the enemy for 1 turn.',
       },
       cost: 1,
-      type: 'damage_paralyze',
+      effectType: 'damage_paralyze',
     },
     // Nível 4 - Perk: Imunidade Tóxica
     {
@@ -114,8 +114,8 @@ module.exports = {
       id: 'TOXIC_IMMUNITY',
       name: { pt: 'Imunidade Tóxica', en: 'Toxic Immunity' },
       desc: {
-        pt: 'Recebe -50% de dano de veneno.',
-        en: 'Takes -50% poison damage.',
+        pt: 'recebe -1 de dano de veneno.',
+        en: 'takes -1 poison damage.',
       },
     },
     // Nível 5 - Habilidade: Enxame Tóxico
@@ -129,7 +129,7 @@ module.exports = {
         en: 'Deals 2 damage to all enemies and applies poison for 2 turns.',
       },
       cost: 2,
-      type: 'aoe_poison',
+      effectType: 'aoe_poison',
     },
     // Nível 6 - Perk: Rio Curativo
     {
@@ -153,7 +153,7 @@ module.exports = {
         en: 'Grants water shield (absorbs 2 damage) to all allies for 2 turns.',
       },
       cost: 2,
-      type: 'team_shield',
+      effectType: 'team_shield',
     },
     // Nível 8 - Perk: Veneno Persistente
     {
@@ -177,7 +177,7 @@ module.exports = {
         en: 'Deals 3 damage. If the target is poisoned, deal +1 damage.',
       },
       cost: 2,
-      type: 'damage_poison_bonus',
+      effectType: 'damage_poison_bonus',
     },
     // Nível 10 - Habilidade: Praga Apocalíptica
     {
@@ -186,11 +186,11 @@ module.exports = {
       id: 'arguilia_skill_praga_apocaliptica',
       name: { pt: 'Praga Apocalíptica', en: 'Apocalyptic Plague' },
       desc: {
-        pt: 'Causa 4 de dano e aplica veneno permanente até o fim do combate.',
+        pt: 'Causa 4 de dano e aplica veneno permanente até o fim do combaté.',
         en: 'Deals 4 damage and applies permanent poison until combat ends.',
       },
       cost: 3,
-      type: 'ultimate_poison',
+      effectType: 'ultimate_poison',
     },
   ],
 };

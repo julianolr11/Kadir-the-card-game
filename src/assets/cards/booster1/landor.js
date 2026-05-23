@@ -35,8 +35,8 @@ module.exports = {
   ],
   field: { pt: 'Correntes Boreais', en: 'Boreal Currents' },
   fielddesc: {
-    pt: 'Aumenta a velocidade das criaturas de ar em 3% enquanto Landor estiver em campo.',
-    en: 'Increases air creatures speed by 3% while Landor is on the field.',
+    pt: 'Criaturas de ar ganham +1 velocidade enquanto Landor estiver em campo.',
+    en: 'Air creatures gain +1 speed while Landor is on the field.',
   },
   storyTitle: { pt: 'O Guardião dos Ventos', en: 'Guardian of the Winds' },
   story: [
@@ -96,11 +96,11 @@ module.exports = {
       id: 'landor_skill_folha_cortante',
       name: { pt: 'Folha Cortante', en: 'Cutting Leaf' },
       desc: {
-        pt: 'Causa 2 de dano e 50% de chance de aplicar sangramento por 2 turnos.',
-        en: 'Deals 2 damage and 50% chance to apply bleed for 2 turns.',
+        pt: 'Causa 2 de dano e jogue a moeda 1 vez; se der cara, aplica sangramento por 2 turnos.',
+        en: 'Deals 2 damage and flips a coin once; on heads, apply bleed for 2 turns.',
       },
       cost: 1,
-      type: 'damage_bleed',
+      effectType: 'damage_bleed',
       damage: 2,
       chance: 0.5,
       statusEffect: 'bleed',
@@ -128,7 +128,7 @@ module.exports = {
         en: 'Applies <span class="debuff-root">root</span> for 2 turns (cannot swap position).',
       },
       cost: 1,
-      type: 'apply_root',
+      effectType: 'apply_root',
       statusEffect: 'root',
       duration: 2,
     },
@@ -154,7 +154,7 @@ module.exports = {
         en: 'Heals 3 HP and removes all debuffs.',
       },
       cost: 2,
-      type: 'heal_cleanse',
+      effectType: 'heal_cleanse',
       heal: 3,
     },
     // Nível 8 - Perk: Casca Protetora
@@ -179,7 +179,7 @@ module.exports = {
         en: 'Deals 3 damage to all enemies.',
       },
       cost: 3,
-      type: 'aoe_damage',
+      effectType: 'aoe_damage',
       damage: 3,
     },
     // Nível 10 - Habilidade: Renascimento
@@ -193,7 +193,7 @@ module.exports = {
         en: 'Revives with 3 HP upon death (once per match).',
       },
       cost: 0,
-      type: 'self_revive',
+      effectType: 'self_revive',
     },
   ],
 };

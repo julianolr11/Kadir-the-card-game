@@ -16,23 +16,23 @@ module.exports = {
       name: { pt: 'Manto Crepuscular', en: 'Duskmantle' },
       cost: 1,
       desc: {
-        pt: 'Fica furtivo à noite: +12% esquiva e o próximo ataque causa +1 de dano puro.',
-        en: 'Turns stealthy at night: +12% evasion and next strike deals +1 pure damage.',
+        pt: 'Fica furtivo à noite: +1 esquiva e o próximo ataque causa +1 de dano puro.',
+        en: 'Turns stealthy at night: +1 evasion and next strike deals +1 pure damage.',
       },
     },
     {
       name: { pt: 'Absorção Elemental', en: 'Elemental Siphon' },
       cost: 1,
       desc: {
-        pt: 'Rouba 2% de ataque e 2% de defesa de inimigos ao redor por 2 turnos.',
-        en: 'Steals 2% attack and 2% defense from nearby foes for 2 turns.',
+        pt: 'Rouba +1 ataque e +1 defesa de inimigos ao redor por 2 turnos.',
+        en: 'Steals +1 attack and +1 defense from nearby foes for 2 turns.',
       },
     },
   ],
   field: { pt: 'Véu Noctilucente', en: 'Noctilucent Veil' },
   fielddesc: {
-    pt: 'Enquanto Agolir estiver em campo, aliados puros ganham +4% resistência e +6% esquiva à noite.',
-    en: 'While Agolir is on the field, pure allies gain +4% resistance and +6% dodge at night.',
+    pt: 'Enquanto Agolir estiver em campo, aliados puros ganham +1 resistência e +1 esquiva à noite.',
+    en: 'While Agolir is on the field, pure allies gain +1 resistance and +1 evasion at night.',
   },
   storyTitle: { pt: 'Sobrevivente da Sombra', en: 'Shadow Survivor' },
   story: [
@@ -57,8 +57,8 @@ module.exports = {
       id: 'agolir_skill_1',
       name: { pt: 'Lâmina Oculta', en: 'Hidden Blade' },
       desc: {
-        pt: 'Causa 3 de dano; à noite ganha +10% crit nesse ataque.',
-        en: 'Deals 3 damage; at night gains +10% crit on this attack.',
+        pt: 'Causa 3 de dano; à noite ganha +1 dano se a moeda der cara nesse ataque.',
+        en: 'Deals 3 damage; at night gains +1 damage on heads on this attack.',
       },
       cost: 1,
       type: 'damage',
@@ -78,8 +78,8 @@ module.exports = {
     id: 'agolir_blessing',
     name: { pt: 'Fome Rara', en: 'Rare Hunger' },
     desc: {
-      pt: 'Aliados puros recuperam 1 de HP ao iniciar a noite e ganham +3% resistência.',
-      en: 'Pure allies recover 1 HP when night begins and gain +3% resistance.',
+      pt: 'Aliados puros recuperam 1 de HP ao iniciar a noite e ganham +1 resistência.',
+      en: 'Pure allies recover 1 HP when night begins and gain +1 resistance.',
     },
   },
   unlockTable: [
@@ -103,8 +103,8 @@ module.exports = {
       id: 'agolir_skill_4',
       name: { pt: 'Sopro dos Antigos', en: 'Ancients Breath' },
       desc: {
-        pt: 'Causa 3 de dano puro e reduz defesa do alvo em 5% por 2 turnos.',
-        en: 'Deals 3 pure damage and lowers target defense by 5% for 2 turns.',
+        pt: 'Causa 3 de dano puro e reduz defesa em 1 por 2 turnos.',
+        en: 'Deals 3 pure damage and lowers target defense by 1 for 2 turns.',
       },
       cost: 2,
     },
@@ -128,8 +128,8 @@ module.exports = {
       id: 'agolir_skill_6',
       name: { pt: 'Eco Nocturno', en: 'Nocturnal Echo' },
       desc: {
-        pt: 'Causa 4 de dano; à noite, ganha +15% esquiva por 1 turno.',
-        en: 'Deals 4 damage; at night, gains +15% dodge for 1 turn.',
+        pt: 'Causa 4 de dano; à noite, ganha +1 esquiva por 1 turno.',
+        en: 'Deals 4 damage; at night, gains +1 evasion for 1 turn.',
       },
       cost: 2,
     },
@@ -139,8 +139,8 @@ module.exports = {
       id: 'agolir_skill_7',
       name: { pt: 'Supremo: Eclipse Vivo', en: 'Ultimate: Living Eclipse' },
       desc: {
-        pt: 'Supremo: 4 de dano puro em todos, drena 1 de energia de cada inimigo e concede +12% esquiva e +6% resistência aos aliados por 2 turnos.',
-        en: 'Ultimate: 4 pure damage to all, drains 1 energy from each enemy and grants allies +12% dodge and +6% resistance for 2 turns.',
+        pt: 'Supremo: 4 de dano puro em todos, drena 1 de energia de cada inimigo e concede +1 esquiva e +1 resistência aos aliados por 2 turnos.',
+        en: 'Ultimate: 4 pure damage to all, drains 1 energy from each enemy and grants allies +1 evasion and +1 resistance for 2 turns.',
       },
       cost: 3,
     },

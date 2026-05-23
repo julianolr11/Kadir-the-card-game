@@ -15,7 +15,7 @@ module.exports = {
       name: { pt: 'Impacto Bestial', en: 'Beast Strike' },
       cost: 1,
       desc: {
-        pt: 'Causa 4 de dano, aplica bleed leve e derruba (knockdown) 1 turno.',
+        pt: 'Causa 4 de dano, aplica sangramento leve e derruba (knockdown) 1 turno.',
         en: 'Deals 4 damage, applies light bleed and knocks down 1 turn.',
       },
     },
@@ -23,15 +23,15 @@ module.exports = {
       name: { pt: 'Fúria Vulcânica', en: 'Volcanic Rage' },
       cost: 1,
       desc: {
-        pt: 'Ganha +8% ataque por 2 turnos e 20% de chance de paralisar ao atacar.',
-        en: 'Gain +8% attack for 2 turns and 20% chance to paralyze on hit.',
+        pt: 'Ganha +1 ataque por 2 turnos e jogue a moeda 1 vez; se der cara, paralisa ao atacar.',
+        en: 'Gain +1 attack for 2 turns and flips a coin once; on heads, paralyzes on hit.',
       },
     },
   ],
   field: { pt: 'Fenda Vulcânica', en: 'Volcanic Rift' },
   fielddesc: {
-    pt: 'Aliados ganham +5% ataque e ataques corpo a corpo aplicam queimadura leve.',
-    en: 'Allies gain +5% attack and melee hits apply light burn.',
+    pt: 'Aliados ganham +1 ataque e ataques corpo a corpo aplicam queimadura leve.',
+    en: 'Allies gain +1 attack and melee hits apply light burn.',
   },
   storyTitle: { pt: 'Origem de Drazraq', en: 'Origin of Drazraq' },
   story: [
@@ -56,8 +56,8 @@ module.exports = {
       id: 'drazaq_skill_1',
       name: { pt: 'Golpe Vulcânico', en: 'Volcanic Slash' },
       desc: {
-        pt: 'Causa 4 de dano, aplica queimadura e 30% de chance de bleed.',
-        en: 'Deals 4 damage, applies burn and 30% chance to bleed.',
+        pt: 'Causa 4 de dano, aplica queimadura e jogue a moeda 1 vez; se der cara, sangramento.',
+        en: 'Deals 4 damage, applies burn and flips a coin once; on heads, bleed.',
       },
       cost: 1,
       type: 'damage_dot',
@@ -66,8 +66,8 @@ module.exports = {
       id: 'drazaq_skill_2',
       name: { pt: 'Maldição Obscura', en: 'Dark Curse' },
       desc: {
-        pt: 'Causa 3 de dano e reduz ataque em 10% por 2 turnos.',
-        en: 'Deals 3 damage and reduces attack by 10% for 2 turns.',
+        pt: 'Causa 3 de dano e reduz ataque em 1 por 2 turnos.',
+        en: 'Deals 3 damage and reduces attack by 1 for 2 turns.',
       },
       cost: 1,
       type: 'damage_debuff',
@@ -89,8 +89,8 @@ module.exports = {
       id: 'drazaq_skill_3',
       name: { pt: 'Sucção de Lava', en: 'Lava Drain' },
       desc: {
-        pt: 'Causa 3 de dano, cura 50% e aplica burn leve.',
-        en: 'Deals 3 damage, heals 50% and applies light burn.',
+        pt: 'Causa 3 de dano, cura 2 de HP e aplica queimadura leve.',
+        en: 'Deals 3 damage, heals 2 HP and applies light burn.',
       },
       cost: 1,
     },
@@ -101,8 +101,8 @@ module.exports = {
       id: 'drazaq_skill_4',
       name: { pt: 'Garras Vulcânicas', en: 'Volcanic Claws' },
       desc: {
-        pt: 'Causa 4 de dano, bleed 2 turnos e -8% armadura.',
-        en: 'Deals 4 damage, bleed 2 turns and -8% armor.',
+        pt: 'Causa 4 de dano, sangramento 2 turnos e -1 defesa.',
+        en: 'Deals 4 damage, bleed 2 turns and -1 defense.',
       },
       cost: 2,
     },
@@ -125,8 +125,8 @@ module.exports = {
       id: 'drazaq_skill_6',
       name: { pt: 'Portal da Perdição', en: 'Portal of Perdition' },
       desc: {
-        pt: 'Causa 4 de dano, -8% em todos stats do alvo e 20% de paralisar.',
-        en: 'Deals 4 damage, -8% all stats to target, 20% paralyze.',
+        pt: 'Causa 4 de dano, -1 em ataque e defesa do alvo e jogue a moeda 1 vez; se der cara, paralisa.',
+        en: 'Deals 4 damage, -1 attack and defense to target, flip a coin once; on heads, paralyzes.',
       },
       cost: 2,
     },
@@ -138,7 +138,7 @@ module.exports = {
       id: 'drazaq_skill_7',
       name: { pt: 'Consumidor de Almas', en: 'Soul Devourer' },
       desc: {
-        pt: 'Supremo: 4 de dano, remove buffs e aplica bleed extremo 3 turnos.',
+        pt: 'Supremo: 4 de dano, remove buffs e aplica sangramento extremo 3 turnos.',
         en: 'Ultimate: 4 damage, removes buffs and applies extreme bleed 3 turns.',
       },
       cost: 3,

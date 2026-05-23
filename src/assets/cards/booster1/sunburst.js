@@ -77,8 +77,8 @@ module.exports = {
     id: 'sunburst_blessing',
     name: { pt: 'Radiância Solar', en: 'Solar Radiance' },
     desc: {
-      pt: 'Criaturas de luz ganham +3% de ataque enquanto Sunburst estiver em campo.',
-      en: 'Light creatures gain +3% attack while Sunburst is on the field.',
+      pt: 'Criaturas de luz ganham +1 ataque enquanto Sunburst estiver em campo.',
+      en: 'Light creatures gain +1 attack while Sunburst is on the field.',
     },
   },
   unlockTable: [
@@ -105,7 +105,7 @@ module.exports = {
         en: 'Deals 2 damage and removes enemy buffs.',
       },
       cost: 1,
-      type: 'damage_dispel',
+      effectType: 'damage_dispel',
     },
     // Nível 4 - Perk: Radiação Solar
     {
@@ -129,7 +129,7 @@ module.exports = {
         en: 'Deals 3 damage and deals extra damage for 2 turns.',
       },
       cost: 2,
-      type: 'damage_dot',
+      effectType: 'damage_dot',
     },
     // Nível 6 - Perk: Luz Protetora
     {
@@ -153,7 +153,7 @@ module.exports = {
         en: 'Deals 4 damage and temporarily increases attack.',
       },
       cost: 2,
-      type: 'damage_buff',
+      effectType: 'damage_buff',
     },
     // Nível 8 - Perk: Luz Persistente
     {
@@ -177,7 +177,7 @@ module.exports = {
         en: 'Creates an aura that increases defense of all allies for 3 turns.',
       },
       cost: 3,
-      type: 'team_defense_buff',
+      effectType: 'team_defense_buff',
     },
     // Nível 10 - Habilidade: Apoteose Solar
     {
@@ -190,7 +190,7 @@ module.exports = {
         en: 'Ultimate: 4 damage and purifies the battlefield.',
       },
       cost: 4,
-      type: 'ultimate_dispel',
+      effectType: 'ultimate_dispel',
     },
   ],
 };

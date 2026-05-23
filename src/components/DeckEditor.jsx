@@ -59,8 +59,6 @@ function DeckLibraryGrid({
   addCardToDeck = () => {},
   setHoveredCard = () => {},
   setHoveredCardId = () => {},
-  setHoveredCardForInstances = () => {},
-  setTooltipPosition = () => {},
 }) {
   // Parâmetros do grid
   // Garante que cards é sempre array
@@ -101,16 +99,10 @@ function DeckLibraryGrid({
         onMouseEnter={(e) => {
           setHoveredCard(card.data);
           setHoveredCardId(card.id);
-          if (hasMultipleInstances) {
-            setHoveredCardForInstances(card.id);
-            const rect = e.currentTarget.getBoundingClientRect();
-            setTooltipPosition({ x: rect.right + 10, y: rect.top });
-          }
         }}
         onMouseLeave={() => {
           setHoveredCard(null);
           setHoveredCardId(null);
-          setHoveredCardForInstances(null);
         }}
         style={{ ...style, animationDelay: `${idx * 50}ms`, position: 'relative', width: cardWidth, height: cardHeight, margin: 8, opacity: unavailable ? 0.5 : 1 }}
       >
@@ -146,26 +138,6 @@ function DeckLibraryGrid({
         <div className="deck-library-card-count">{countInDeck}/{availableCount + countInDeck}</div>
         {hasMultipleInstances && availableCount > 0 && (<div className="multiple-instances-indicator" title="Múltiplas cópias disponíveis">{availableCount}x</div>)}
         <div className="deck-library-actions">
-          {(() => {
-            const isField = (() => {
-              const id = card.id?.toString().toLowerCase();
-              const isFieldId = /^f\d{3}$/.test(id) || id?.startsWith('field_');
-              const isFieldCategory = card.data?.category && String(card.data.category).toLowerCase().includes('campo');
-              return isFieldId || isFieldCategory;
-            })();
-            const isEffect = card.data?.type === 'effect' || String(card.id).toLowerCase().startsWith('effect_');
-            if (isField || isEffect) return null;
-            return (
-              <button
-                className="deck-action-btn deck-action-edit"
-                disabled={unavailable}
-                onClick={(e) => { e.stopPropagation(); if (!unavailable) openCardLoadout(card.id); }}
-                title="Editar habilidades"
-              >
-                ✎
-              </button>
-            );
-          })()}
           <button
             className="deck-action-btn deck-action-add"
             disabled={isDisabled || unavailable}
@@ -322,7 +294,7 @@ const getName = (nameObj, lang = 'ptbr') => {
 };
 
 function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCards = [], onClose, onSave }) {
-  const { lang = 'ptbr', getCardInstances, cardCollection, saveGuardianLoadout, loadGuardianLoadout, addCoins, removeCardInstance } = React.useContext(AppContext) || {};
+  const { lang = 'ptbr', getCardInstances, cardCollection, setCardCollection, saveGuardianLoadout, loadGuardianLoadout, addCoins, removeCardInstance } = React.useContext(AppContext) || {};
   const langKey = lang === 'en' ? 'en' : 'pt';
   const [deckName, setDeckName] = useState(initialDeckName || `Deck ${deckId}`);
   const [editingName, setEditingName] = useState(false);
@@ -344,8 +316,6 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
   const [selectedCardForInstance, setSelectedCardForInstance] = useState(null);
   const [instanceSlotIndex, setInstanceSlotIndex] = useState(null);
   const [recyclingInProgress, setRecyclingInProgress] = useState(false);
-  const [hoveredCardForInstances, setHoveredCardForInstances] = useState(null);
-  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [showCardLoadoutModal, setShowCardLoadoutModal] = useState(false);
   const [editingCardId, setEditingCardId] = useState(null);
   const [editingCardData, setEditingCardData] = useState(null);
@@ -414,14 +384,13 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
       return false;
     }
     const instances = getCardInstances(cardId);
-    if (instances && instances.length > 1) {
+    if (instances && instances.length > 0) {
       setSelectedCardForInstance(cardId);
       setInstanceSlotIndex(slotIndex);
       setShowInstanceSelector(true);
       return false;
     }
-    const instanceId = instances && instances.length === 1 ? instances[0].instanceId : null;
-    return finishAddingCardToDeck(instanceId, slotIndex);
+    return false;
   };
 
   const finishAddingCardToDeck = (instanceId, slotIndex = null) => {
@@ -501,6 +470,45 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
       console.error('Erro ao reciclar:', error);
       setRecyclingInProgress(false);
     }
+  };
+
+  const handleAdornInstance = (cardId, instanceId, preferredSacrificeIds = []) => {
+    if (!cardId || !instanceId || !cardCollection || !setCardCollection) return false;
+    const instances = Array.isArray(cardCollection[cardId]) ? cardCollection[cardId] : [];
+    const selected = instances.find((inst) => inst.instanceId === instanceId);
+    const nonHoloInstances = instances.filter((inst) => !inst.isHolo);
+    if (!selected || selected.isHolo || nonHoloInstances.length < 10) return false;
+
+    const validSacrificeIds = new Set(
+      nonHoloInstances
+        .filter((inst) => inst.instanceId !== instanceId)
+        .map((inst) => inst.instanceId)
+    );
+    const sacrificeIds = [
+      ...preferredSacrificeIds.filter((id) => validSacrificeIds.has(id)),
+      ...nonHoloInstances
+        .filter((inst) => inst.instanceId !== instanceId && !preferredSacrificeIds.includes(inst.instanceId))
+        .map((inst) => inst.instanceId),
+    ].slice(0, 9);
+    if (sacrificeIds.length < 9) return false;
+
+    const sacrificeSet = new Set(sacrificeIds);
+    const nextCollection = {
+      ...cardCollection,
+      [cardId]: instances
+        .filter((inst) => !sacrificeSet.has(inst.instanceId))
+        .map((inst) => (
+          inst.instanceId === instanceId
+            ? { ...inst, isHolo: true, adornedAt: new Date().toISOString() }
+            : inst
+        )),
+    };
+
+    setCardCollection(nextCollection);
+    setDeckCards((currentDeck) => currentDeck.map((id) => (
+      sacrificeSet.has(id) ? null : id
+    )));
+    return true;
   };
 
   const moveCard = (fromIndex, toIndex) => {
@@ -584,6 +592,13 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
     setEditingSelectedSkills(existing?.selectedSkills || [null, null]);
     setEditingSelectedPerk(existing?.selectedPerk || null);
     setShowCardLoadoutModal(true);
+  };
+
+  const handleEditInstanceCard = (cardId) => {
+    setShowInstanceSelector(false);
+    setSelectedCardForInstance(null);
+    setInstanceSlotIndex(null);
+    openCardLoadout(cardId);
   };
 
   const saveCardLoadout = () => {
@@ -867,16 +882,7 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
           addCardToDeck={addCardToDeck}
           setHoveredCard={setHoveredCard}
           setHoveredCardId={setHoveredCardId}
-          setHoveredCardForInstances={setHoveredCardForInstances}
-          setTooltipPosition={setTooltipPosition}
         />
-        {hoveredCardForInstances && (
-          <div className="instances-tooltip" style={{ position: 'fixed', left: `${tooltipPosition.x}px`, top: `${tooltipPosition.y}px`, zIndex: 9999 }}>
-            <div className="instances-tooltip-header"><strong>Cópias Disponíveis</strong><span className="instances-tooltip-count">{getCardInstances(hoveredCardForInstances).length} cópias</span></div>
-            <div className="instances-tooltip-list">{getCardInstances(hoveredCardForInstances).sort((a, b) => { if (b.level !== a.level) return b.level - a.level; return b.xp - a.xp; }).map((instance, idx) => (<div key={instance.instanceId} className="instances-tooltip-item"><span className="instance-copy-number">#{idx + 1}</span><span className="instance-level">Nv. {instance.level}</span><span className="instance-xp">{instance.xp} XP</span>{instance.isHolo && <span className="instance-holo-badge">✨ Holo</span>}</div>))}</div>
-            <div className="instances-tooltip-hint">Clique para selecionar qual usar</div>
-          </div>
-        )}
         {/* Ghost/hover preview removido para não atrapalhar o fluxo no deckbuilder */}
         {showSavedToast && <div className="deck-saved-toast">✓ Salvo</div>}
         {showDeckIncompleteWarning && (
@@ -971,6 +977,9 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
             instances={getAvailableInstances(selectedCardForInstance)}
             onSelect={handleInstanceSelected}
             onRecycle={handleRecycleInstance}
+            onEdit={handleEditInstanceCard}
+            onAdorn={handleAdornInstance}
+            adornTotalCount={(getCardInstances(selectedCardForInstance) || []).filter((inst) => !inst.isHolo).length}
             onClose={() => setShowInstanceSelector(false)}
             title={lang === 'ptbr' ? 'Selecione uma cópia para o deck' : 'Select a card copy for deck'}
             lang={lang}

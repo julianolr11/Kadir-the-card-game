@@ -4,6 +4,7 @@ import {
   processStatusEffects,
   isNightTurn,
   removeCreatureDebuffs,
+  applyHeal,
 } from '../utils/effectRegistry';
 
 function makeState({ attacker, target, turn = 1, playerExtras = [], aiExtras = [] } = {}) {
@@ -621,5 +622,132 @@ describe('puro — conditional defense, first-hit, and cleanse perks', () => {
     const resultHigh = processStatusEffects(stateHigh, 'c1');
     expect(resultHigh.newState.player.field.slots[0].shield).toBe(0);
     expect(resultHigh.newState.player.field.slots[0].buffs).toHaveLength(1);
+  });
+});
+
+describe('terra — armor stacking, rising fury, dodge/heal reactions, team heal', () => {
+  test('armor buffs stack and reduce damage the same way flatDamageReduction does', () => {
+    const attacker = makeCreature({ id: 'atk' });
+    const target = makeCreature({ id: 'tgt', buffs: [{ id: 'a1', stat: 'armor', value: 1, duration: 999 }, { id: 'a2', stat: 'armor', value: 1, duration: 999 }] });
+    const state = makeState({ attacker, target });
+
+    const result = applyDamage(state, { attackerId: 'atk', targetId: 'tgt', baseDamage: 5, applyCombatPerks: true });
+
+    expect(result.damageDealt).toBe(3);
+  });
+
+  test('armorGrowthIfAboveHalfHp adds an armor buff at turn start only above half HP (GROUNDING_FORCE)', () => {
+    const above = makeCreature({ id: 'c1', hp: 8, maxHp: 10, perkEffects: { armorGrowthIfAboveHalfHp: 1 } });
+    const stateAbove = makeState({ attacker: above, target: null });
+    const resultAbove = processStatusEffects(stateAbove, 'c1');
+    expect(resultAbove.newState.player.field.slots[0].buffs.filter(b => b.stat === 'armor')).toHaveLength(1);
+
+    const below = makeCreature({ id: 'c1', hp: 3, maxHp: 10, perkEffects: { armorGrowthIfAboveHalfHp: 1 } });
+    const stateBelow = makeState({ attacker: below, target: null });
+    const resultBelow = processStatusEffects(stateBelow, 'c1');
+    expect(resultBelow.newState.player.field.slots[0].buffs.filter(b => b.stat === 'armor')).toHaveLength(0);
+  });
+
+  test('armorOnLowHpThreshold triggers once when HP drops to the threshold (TITAN_STANCE)', () => {
+    const attacker = makeCreature({ id: 'atk' });
+    const target = makeCreature({ id: 'tgt', hp: 5, perkEffects: { armorOnLowHpThreshold: { threshold: 4, value: 1 } } });
+    const state = makeState({ attacker, target });
+
+    const firstHit = applyDamage(state, { attackerId: 'atk', targetId: 'tgt', baseDamage: 2, applyCombatPerks: true });
+    const freshAfterFirst = firstHit.newState.ai.field.slots[0];
+    expect(freshAfterFirst.hp).toBe(3);
+    expect(freshAfterFirst.buffs.filter(b => b.stat === 'armor')).toHaveLength(1);
+    expect(freshAfterFirst.titanStanceTriggered).toBe(true);
+
+    // Um segundo golpe abaixo do limiar não deve empilhar armadura de novo
+    const secondHit = applyDamage(firstHit.newState, { attackerId: 'atk', targetId: 'tgt', baseDamage: 1, applyCombatPerks: true });
+    expect(secondHit.newState.ai.field.slots[0].buffs.filter(b => b.stat === 'armor')).toHaveLength(1);
+  });
+
+  test('risingFuryOnAttack stacks an attack buff on the attacker after each attack (RISING_FURY)', () => {
+    const attacker = makeCreature({ id: 'atk', perkEffects: { risingFuryOnAttack: 1 } });
+    const target = makeCreature({ id: 'tgt', hp: 20 });
+    const state = makeState({ attacker, target });
+
+    const first = applyDamage(state, { attackerId: 'atk', targetId: 'tgt', baseDamage: 3, applyCombatPerks: true });
+    expect(first.newState.player.field.slots[0].buffs.filter(b => b.stat === 'attack')).toHaveLength(1);
+
+    const second = applyDamage(first.newState, { attackerId: 'atk', targetId: 'tgt', baseDamage: 3, applyCombatPerks: true });
+    expect(second.newState.player.field.slots[0].buffs.filter(b => b.stat === 'attack')).toHaveLength(2);
+    // O segundo ataque já sai +1 mais forte por causa do stack anterior
+    expect(second.damageDealt).toBe(4);
+  });
+
+  test('dodgeOnDamageTaken permanently stacks dodge chance after taking damage (EVASIVE_INSTINCT)', () => {
+    const attacker = makeCreature({ id: 'atk' });
+    const target = makeCreature({ id: 'tgt', perkEffects: { dodgeOnDamageTaken: 0.15 } });
+    const state = makeState({ attacker, target });
+
+    const result = applyDamage(state, { attackerId: 'atk', targetId: 'tgt', baseDamage: 3, applyCombatPerks: true });
+
+    expect(result.newState.ai.field.slots[0].buffs).toContainEqual(
+      expect.objectContaining({ stat: 'dodge', value: 0.15 }),
+    );
+  });
+
+  test('healOnDodge heals the target when it successfully dodges (GRACEFUL_STEPS)', () => {
+    const attacker = makeCreature({ id: 'atk' });
+    const target = makeCreature({ id: 'tgt', hp: 5, maxHp: 10, perkEffects: { dodgeChance: 1, healOnDodge: 1 } });
+    const state = makeState({ attacker, target });
+
+    const result = applyDamage(state, { attackerId: 'atk', targetId: 'tgt', baseDamage: 3, applyCombatPerks: true });
+
+    expect(result.dodged).toBe(true);
+    expect(result.newState.ai.field.slots[0].hp).toBe(6);
+  });
+
+  test('blindChanceOnAttack applies blind to the target on a successful roll (SHINING_HORN)', () => {
+    const attacker = makeCreature({ id: 'atk', perkEffects: { blindChanceOnAttack: 0.5 } });
+    const target = makeCreature({ id: 'tgt', hp: 10 });
+    const state = makeState({ attacker, target });
+
+    const randomSpy = jest.spyOn(Math, 'random').mockReturnValue(0);
+    const result = applyDamage(state, { attackerId: 'atk', targetId: 'tgt', baseDamage: 3, applyCombatPerks: true });
+    randomSpy.mockRestore();
+
+    expect(result.newState.ai.field.slots[0].statusEffects.some(e => e.type === 'blind')).toBe(true);
+  });
+
+  test('teamHealOnTurnStart heals every living ally on the same side (MORNING_AURORA)', () => {
+    const healer = makeCreature({ id: 'c1', hp: 10, maxHp: 10, perkEffects: { teamHealOnTurnStart: 2 } });
+    const ally = makeCreature({ id: 'ally1', hp: 3, maxHp: 10 });
+    const state = makeState({ attacker: healer, target: null, playerExtras: [ally] });
+
+    const result = processStatusEffects(state, 'c1');
+
+    expect(result.newState.player.field.slots[1].hp).toBe(5);
+  });
+});
+
+describe('applyHeal healAmplifyAura (NIGHT_BLESSING fix)', () => {
+  test('amplifies healing received by any ally on the same side', () => {
+    const amplifier = makeCreature({ id: 'buffer', perkEffects: { healAmplifyAura: 1 } });
+    const wounded = makeCreature({ id: 'ally1', hp: 3, maxHp: 10 });
+    const state = makeState({ attacker: amplifier, target: null, playerExtras: [wounded] });
+
+    const result = applyHeal(state, { targetId: 'ally1', healAmount: 2 });
+
+    expect(result.newState.player.field.slots[1].hp).toBe(6);
+  });
+});
+
+describe('regression: applyBuff/applyDebuff must apply flat perk values as flat, not percent', () => {
+  test('DEFENSE_REDUCTION-style debuff reduces damage by a flat amount, not by 100% per stack', () => {
+    const attacker = makeCreature({ id: 'atk', perkEffects: { defenseDebuffOnAttack: { value: 1, duration: 2 } } });
+    const target = makeCreature({ id: 'tgt', hp: 20 });
+    const state = makeState({ attacker, target });
+
+    // Primeiro golpe aplica o debuff de -1 defesa no alvo (não afeta este próprio golpe)
+    const first = applyDamage(state, { attackerId: 'atk', targetId: 'tgt', baseDamage: 3, applyCombatPerks: true });
+    expect(first.damageDealt).toBe(3);
+
+    // O segundo golpe já deve refletir a defesa reduzida: 3 + 1 (defesa em -1) = 4, nunca 6 (o que daria um bug de -100%)
+    const second = applyDamage(first.newState, { attackerId: 'atk', targetId: 'tgt', baseDamage: 3, applyCombatPerks: true });
+    expect(second.damageDealt).toBe(4);
   });
 });

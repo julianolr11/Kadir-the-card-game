@@ -520,6 +520,9 @@ export function BattleProvider({ children }) {
       case 'MOON_REFLECT':
         combatPerkEffects.reflectDamage = { element: 'puro', value: 1 };
         break;
+      case 'NIGHT_BLESSING':
+        combatPerkEffects.healAmplifyAura = 1;
+        break;
       case 'RISING_LIGHT':
         combatPerkEffects.nightAllyAttackAura = 1;
         break;
@@ -650,6 +653,39 @@ export function BattleProvider({ children }) {
         break;
       case 'PROTECTIVE_CLAWS_EVASION':
         combatPerkEffects.shieldIfBuffActiveOnTurnStart = { stat: 'dodge', amount: 1 };
+        break;
+
+      // Terra — Roenhell
+      case 'HARDENED_HIDE':
+        combatPerkEffects.flatDamageReduction = 1;
+        break;
+      case 'GROUNDING_FORCE':
+        combatPerkEffects.armorGrowthIfAboveHalfHp = 1;
+        break;
+      case 'TITAN_STANCE':
+        combatPerkEffects.armorOnLowHpThreshold = { threshold: 4, value: 1 };
+        break;
+
+      // Terra — Raptauros
+      case 'TOUGH_HIDE':
+        combatPerkEffects.flatDamageReduction = 1;
+        break;
+      case 'RISING_FURY':
+        combatPerkEffects.risingFuryOnAttack = 1;
+        break;
+      case 'EVASIVE_INSTINCT':
+        combatPerkEffects.dodgeOnDamageTaken = 0.15;
+        break;
+
+      // Terra — Virideer
+      case 'GRACEFUL_STEPS':
+        combatPerkEffects.healOnDodge = 1;
+        break;
+      case 'SHINING_HORN':
+        combatPerkEffects.blindChanceOnAttack = 0.5;
+        break;
+      case 'MORNING_AURORA':
+        combatPerkEffects.teamHealOnTurnStart = 1;
         break;
 
       default:
@@ -1833,7 +1869,7 @@ export function BattleProvider({ children }) {
           const targetIdx = enemyIndices[Math.floor(Math.random() * enemyIndices.length)];
           const targetSlot = newState.ai.field.slots[targetIdx];
           const debuffResult = effectRegistry.applyDebuff(newState, {
-            targetId: targetSlot.id, stat, value, duration, name: 'Enfraquecido',
+            targetId: targetSlot.id, stat, value, duration, name: 'Enfraquecido', type: 'flat',
           });
           newState.ai = debuffResult.newState.ai;
           newState.log = [...newState.log, `${creature.name} enfraqueceu ${targetSlot.name}!`];
@@ -4469,7 +4505,7 @@ export function BattleProvider({ children }) {
       if (indices.length > 0) {
         const idx = getRandomIndex(indices);
         const debuffResult = effectRegistry.applyDebuff(s, {
-          targetId: playerSlots[idx].id, stat, value, duration, name: 'Enfraquecido',
+          targetId: playerSlots[idx].id, stat, value, duration, name: 'Enfraquecido', type: 'flat',
         });
         s.player = debuffResult.newState.player;
         nextLog = [...nextLog, `${creatureName} enfraqueceu ${playerSlots[idx].name}!`];

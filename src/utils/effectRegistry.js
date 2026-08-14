@@ -108,9 +108,17 @@ export function applyDamage(state, params) {
     const dodgeFromNight = isNight ? (target.perkEffects?.nightSelfBuff?.dodge || 0) : 0;
     const totalDodgeChance = dodgeFromPerk + dodgeFromBuffs + dodgeFromNight;
     if (totalDodgeChance > 0 && Math.random() < totalDodgeChance) {
+      let dodgeState = state;
+      const dodgeLog = [`${target.name || 'Alvo'} esquivou do ataque!`];
+      // Perk: cura ao esquivar (ex: GRACEFUL_STEPS)
+      if (target.perkEffects?.healOnDodge) {
+        const healResult = applyHeal(dodgeState, { targetId, healAmount: target.perkEffects.healOnDodge });
+        dodgeState = healResult.newState;
+        dodgeLog.push(...healResult.log);
+      }
       return {
-        newState: state,
-        log: [`${target.name || 'Alvo'} esquivou do ataque!`],
+        newState: dodgeState,
+        log: dodgeLog,
         damageDealt: 0,
         hasAdvantage: false,
         hasDisadvantage: false,
@@ -178,8 +186,11 @@ export function applyDamage(state, params) {
       }
     }
 
-    // Redução de dano do alvo: fixa, resistência mágica (vantagem elemental), resistência elemental específica
+    // Redução de dano do alvo: fixa, armadura acumulada, resistência mágica (vantagem elemental), resistência elemental específica
     damage -= (target.perkEffects?.flatDamageReduction || 0);
+    damage -= (target.buffs || [])
+      .filter(b => b.stat === 'armor')
+      .reduce((sum, b) => sum + (b.value || 0), 0);
     if (hasAdvantage) {
       damage -= (target.perkEffects?.magicResistance || 0);
     }
@@ -299,7 +310,7 @@ export function applyDamage(state, params) {
     // Reduz defesa do alvo ao ser atingido por este atacante
     if (!died && attacker.perkEffects?.defenseDebuffOnAttack) {
       const { value, duration } = attacker.perkEffects.defenseDebuffOnAttack;
-      const debuffResult = applyDebuff(newState, { targetId, stat: 'defense', value, duration, name: 'Defesa Reduzida' });
+      const debuffResult = applyDebuff(newState, { targetId, stat: 'defense', value, duration, name: 'Defesa Reduzida', type: 'flat' });
       newState = debuffResult.newState;
       log.push(...debuffResult.log);
     }
@@ -307,6 +318,22 @@ export function applyDamage(state, params) {
     // Chance de paralisar o alvo ao atacar
     if (!died && attacker.perkEffects?.paralyzeChanceOnAttack && Math.random() < attacker.perkEffects.paralyzeChanceOnAttack) {
       const statusResult = applyStatusEffect(newState, { targetId, effectType: 'paralyze', duration: 1, attackerId });
+      newState = statusResult.newState;
+      log.push(...statusResult.log);
+    }
+
+    // A cada ataque, acumula +X de ataque até o final do turno (ex: RISING_FURY)
+    if (attacker.perkEffects?.risingFuryOnAttack) {
+      const buffResult = applyBuff(newState, {
+        targetId: attackerId, stat: 'attack', value: attacker.perkEffects.risingFuryOnAttack, duration: 1, name: 'Fúria Crescente', type: 'flat',
+      });
+      newState = buffResult.newState;
+      log.push(...buffResult.log);
+    }
+
+    // Chance de aplicar cegueira ao atacar
+    if (!died && attacker.perkEffects?.blindChanceOnAttack && Math.random() < attacker.perkEffects.blindChanceOnAttack) {
+      const statusResult = applyStatusEffect(newState, { targetId, effectType: 'blind', duration: 1, attackerId });
       newState = statusResult.newState;
       log.push(...statusResult.log);
     }
@@ -364,6 +391,27 @@ export function applyDamage(state, params) {
         log.push(...shieldResult.log);
       }
     }
+
+    // Ganha esquiva permanente ao receber dano (ex: EVASIVE_INSTINCT)
+    if (target.perkEffects?.dodgeOnDamageTaken) {
+      const buffResult = applyBuff(newState, {
+        targetId, stat: 'dodge', value: target.perkEffects.dodgeOnDamageTaken, duration: 999, name: 'Instinto Selvagem', type: 'flat',
+      });
+      newState = buffResult.newState;
+      log.push(...buffResult.log);
+    }
+
+    // Ganha armadura permanente na primeira vez que o HP cai a um limiar (ex: TITAN_STANCE)
+    if (target.perkEffects?.armorOnLowHpThreshold) {
+      const { threshold, value } = target.perkEffects.armorOnLowHpThreshold;
+      const freshTarget = findCreatureById(newState, targetId);
+      if (freshTarget && freshTarget.hp > 0 && freshTarget.hp <= threshold && !freshTarget.titanStanceTriggered) {
+        const buffResult = applyBuff(newState, { targetId, stat: 'armor', value, duration: 999, name: 'Postura de Titã', type: 'flat' });
+        newState = buffResult.newState;
+        newState = updateCreature(newState, targetId, { titanStanceTriggered: true });
+        log.push(...buffResult.log);
+      }
+    }
   }
 
   return { newState, log, damageDealt: finalDamage, hasAdvantage, hasDisadvantage, shieldHit: hadShield, shieldBroken, died, wasCrit };
@@ -388,8 +436,16 @@ export function applyHeal(state, params) {
     return { newState: state, log: [], healAmount: 0 };
   }
 
+  // Perk de time: amplifica toda cura recebida por aliados (ex: NIGHT_BLESSING)
+  const targetSide = getCreatureSide(state, targetId);
+  const healAmplify = targetSide
+    ? (state[targetSide]?.field?.slots || [])
+      .filter(c => c && c.hp > 0)
+      .reduce((sum, c) => sum + (c.perkEffects?.healAmplifyAura || 0), 0)
+    : 0;
+
   const maxHp = target.maxHp || target.hp;
-  const actualHeal = Math.min(healAmount, maxHp - target.hp);
+  const actualHeal = Math.min(healAmount + healAmplify, maxHp - target.hp);
   const newHp = target.hp + actualHeal;
 
   const newState = updateCreature(state, targetId, { hp: newHp });
@@ -402,7 +458,7 @@ export function applyHeal(state, params) {
  * Aplica buff (aumento temporário de stats)
  */
 export function applyBuff(state, params) {
-  const { targetId, stat, value, duration, name } = params;
+  const { targetId, stat, value, duration, name, type = 'percent' } = params;
   const target = findCreatureById(state, targetId);
 
   if (!target || target.hp <= 0) {
@@ -411,11 +467,11 @@ export function applyBuff(state, params) {
 
   const buff = {
     id: `buff_${Date.now()}`,
-    name: name || `+${Math.round(value * 100)}% ${stat}`,
+    name: name || (type === 'flat' ? `+${value} ${stat}` : `+${Math.round(value * 100)}% ${stat}`),
     stat,
     value,
     duration,
-    type: 'percent',
+    type,
   };
 
   const buffs = [...(target.buffs || []), buff];
@@ -597,6 +653,28 @@ export function processStatusEffects(state, creatureId) {
   // Reseta o consumo do "primeiro golpe do turno" (perks como PROTECTIVE_WISDOM)
   if (creature.perkEffects?.firstHitDamageReduction) {
     newState = updateCreature(newState, creatureId, { firstHitUsedThisTurn: false });
+  }
+
+  // Perk: acumula armadura no início do turno enquanto estiver acima de metade do HP (ex: GROUNDING_FORCE)
+  if (creature.perkEffects?.armorGrowthIfAboveHalfHp && creature.hp > (creature.maxHp || creature.hp) / 2) {
+    const buffResult = applyBuff(newState, {
+      targetId: creatureId, stat: 'armor', value: creature.perkEffects.armorGrowthIfAboveHalfHp, duration: 999, name: 'Força Telúrica', type: 'flat',
+    });
+    newState = buffResult.newState;
+    log = [...log, ...buffResult.log];
+  }
+
+  // Perk: cura todos os aliados no início do turno (ex: MORNING_AURORA)
+  if (creature.perkEffects?.teamHealOnTurnStart) {
+    const side = getCreatureSide(newState, creatureId);
+    if (side) {
+      const allySlots = (newState[side]?.field?.slots || []).filter(c => c && c.hp > 0);
+      allySlots.forEach((ally) => {
+        const healResult = applyHeal(newState, { targetId: ally.id, healAmount: creature.perkEffects.teamHealOnTurnStart });
+        newState = healResult.newState;
+      });
+      log = [...log, `${creature.name} curou todos os aliados.`];
+    }
   }
 
   // Redução de dano contínuo (DoT): perk permanente + buffs temporários (ex: ao entrar em campo)

@@ -54,17 +54,19 @@ module.exports = {
   defaultSkills: [
     {
       id: 'arguilia_skill_1',
-      name: { pt: 'Picada Envenenada', en: 'Poisoned Bite' },
+      name: { pt: 'Canto Purificador', en: 'Purifying Song' },
       desc: {
-        pt: 'Causa 3 de dano e envenena o inimigo.',
-        en: 'Deals 3 damage and poisons the enemy.',
+        pt: 'Causa 3 de dano e recupera 1 de vida.',
+        en: 'Deals 3 damage and restores 1 HP.',
       },
       cost: 1,
-      type: 'damage_debuff',
+      damage: 3,
+      heal: 1,
+      type: 'damage_heal',
     },
     {
       id: 'arguilia_skill_2',
-      name: { pt: 'Teia Venenosa', en: 'Venomous Web' },
+      name: { pt: 'Corrente Sagrada', en: 'Sacred Current' },
       desc: {
         pt: 'Causa 2 de dano e reduz velocidade do inimigo.',
         en: 'Deals 2 damage and reduces enemy speed.',
@@ -99,7 +101,7 @@ module.exports = {
       level: 3,
       type: 'skill',
       id: 'arguilia_skill_neurotoxina',
-      name: { pt: 'Neurotoxina', en: 'Neurotoxin' },
+      name: { pt: 'Canto Hipnótico', en: 'Hypnotic Song' },
       desc: {
         pt: 'Causa 2 de dano e paralisa o inimigo por 1 turno.',
         en: 'Deals 2 damage and paralyzes the enemy for 1 turn.',
@@ -112,10 +114,10 @@ module.exports = {
       level: 4,
       type: 'perk',
       id: 'TOXIC_IMMUNITY',
-      name: { pt: 'Imunidade Tóxica', en: 'Toxic Immunity' },
+      name: { pt: 'Pureza das Águas', en: 'Water Purity' },
       desc: {
-        pt: 'recebe -1 de dano de veneno.',
-        en: 'takes -1 poison damage.',
+        pt: 'Recebe -1 de dano de efeitos contínuos.',
+        en: 'Takes 1 less damage from damage-over-time effects.',
       },
     },
     // Nível 5 - Habilidade: Enxame Tóxico
@@ -123,13 +125,16 @@ module.exports = {
       level: 5,
       type: 'skill',
       id: 'arguilia_skill_enxame_toxico',
-      name: { pt: 'Enxame Tóxico', en: 'Toxic Swarm' },
+      name: { pt: 'Dilúvio Sagrado', en: 'Sacred Deluge' },
       desc: {
-        pt: 'Causa 2 de dano a todos os inimigos e aplica veneno por 2 turnos.',
-        en: 'Deals 2 damage to all enemies and applies poison for 2 turns.',
+        pt: 'Causa 2 de dano a todos os inimigos e reduz a velocidade por 2 turnos.',
+        en: 'Deals 2 damage to all enemies and reduces speed for 2 turns.',
       },
       cost: 2,
-      effectType: 'aoe_poison',
+      damage: 2,
+      statusEffect: 'slow',
+      duration: 2,
+      effectType: 'aoe_slow',
     },
     // Nível 6 - Perk: Rio Curativo
     {
@@ -160,10 +165,10 @@ module.exports = {
       level: 8,
       type: 'perk',
       id: 'PERSISTENT_POISON',
-      name: { pt: 'Veneno Persistente', en: 'Persistent Poison' },
+      name: { pt: 'Corrente Persistente', en: 'Persistent Current' },
       desc: {
-        pt: 'Veneno causado por Arguilia dura +1 turno.',
-        en: 'Poison caused by Arguilia lasts +1 turn.',
+        pt: 'Reduções de velocidade causadas por Arguilia duram +1 turno.',
+        en: 'Speed reductions caused by Arguilia last 1 extra turn.',
       },
     },
     // Nível 9 - Habilidade: Praga do Rio
@@ -171,26 +176,30 @@ module.exports = {
       level: 9,
       type: 'skill',
       id: 'arguilia_skill_praga_rio',
-      name: { pt: 'Praga do Rio', en: 'River Plague' },
+      name: { pt: 'Maré Crescente', en: 'Rising Tide' },
       desc: {
-        pt: 'Causa 3 de dano. Se o alvo estiver envenenado, causa +1 de dano.',
-        en: 'Deals 3 damage. If the target is poisoned, deal +1 damage.',
+        pt: 'Causa 3 de dano. Se o alvo estiver lento, causa +1 de dano.',
+        en: 'Deals 3 damage. If the target is slowed, deal +1 damage.',
       },
       cost: 2,
-      effectType: 'damage_poison_bonus',
+      damage: 3,
+      effectType: 'damage_slow_bonus',
     },
     // Nível 10 - Habilidade: Praga Apocalíptica
     {
       level: 10,
       type: 'skill',
       id: 'arguilia_skill_praga_apocaliptica',
-      name: { pt: 'Praga Apocalíptica', en: 'Apocalyptic Plague' },
+      name: { pt: 'Rio Eterno', en: 'Eternal River' },
       desc: {
-        pt: 'Causa 4 de dano e aplica veneno permanente até o fim do combaté.',
-        en: 'Deals 4 damage and applies permanent poison until combat ends.',
+        pt: 'Causa 4 de dano e congela o alvo por 2 turnos.',
+        en: 'Deals 4 damage and freezes the target for 2 turns.',
       },
       cost: 3,
-      effectType: 'ultimate_poison',
+      damage: 4,
+      statusEffect: 'freeze',
+      duration: 2,
+      effectType: 'ultimate_freeze',
     },
   ],
 };

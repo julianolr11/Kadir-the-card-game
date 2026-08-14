@@ -14,6 +14,7 @@ import sleepIcon from '../assets/img/icons/sleep.png';
 import bleedIcon from '../assets/img/icons/bleed.png';
 import shieldIcon from '../assets/img/icons/shield.png';
 import '../styles/deckbuilder.css';
+import StatusText from './StatusText';
 
 const GUARDIANS_DATA = require('../assets/guardiansData');
 
@@ -61,6 +62,70 @@ const PERK_DATA = {
     desc: {
       pt: '+10% XP por abate do guardião',
       en: '+10% XP per guardian kill',
+    },
+    hpBonus: 0,
+  },
+  CRIT_CHANCE: {
+    name: { pt: 'Golpe Crítico', en: 'Critical Strike' },
+    desc: {
+      pt: '15% de chance de causar +2 de dano crítico ao atacar.',
+      en: '15% chance to deal +2 critical damage when attacking.',
+    },
+    hpBonus: 0,
+  },
+  DODGE_INCREASE: {
+    name: { pt: 'Esquiva Aumentada', en: 'Increased Dodge' },
+    desc: {
+      pt: '15% de chance de esquivar completamente de um ataque recebido.',
+      en: '15% chance to fully dodge an incoming attack.',
+    },
+    hpBonus: 0,
+  },
+  EVASION_BONUS: {
+    name: { pt: 'Bônus de Evasão', en: 'Evasion Bonus' },
+    desc: {
+      pt: '20% de chance de esquivar completamente de um ataque recebido.',
+      en: '20% chance to fully dodge an incoming attack.',
+    },
+    hpBonus: 0,
+  },
+  EVASION_PLUS_8: {
+    name: { pt: '+8% Evasão', en: '+8% Evasion' },
+    desc: {
+      pt: '8% de chance de esquivar completamente de um ataque recebido.',
+      en: '8% chance to fully dodge an incoming attack.',
+    },
+    hpBonus: 0,
+  },
+  DEFENSE_REDUCTION: {
+    name: { pt: 'Golpe Corrosivo', en: 'Corrosive Strike' },
+    desc: {
+      pt: 'Ao atacar, reduz a defesa do inimigo em 1 por 2 turnos.',
+      en: 'When attacking, reduces enemy defense by 1 for 2 turns.',
+    },
+    hpBonus: 0,
+  },
+  LIFESTEAL_INCREASE: {
+    name: { pt: 'Roubo de Vida', en: 'Lifesteal' },
+    desc: {
+      pt: 'Recupera 1 de vida sempre que causa dano em um ataque.',
+      en: 'Recovers 1 HP whenever it deals damage in an attack.',
+    },
+    hpBonus: 0,
+  },
+  MAGIC_RESISTANCE: {
+    name: { pt: 'Resistência Mágica', en: 'Magic Resistance' },
+    desc: {
+      pt: 'Reduz em 1 o dano recebido de ataques com vantagem elemental.',
+      en: 'Reduces damage taken by 1 from attacks with elemental advantage.',
+    },
+    hpBonus: 0,
+  },
+  PARALYZE_CHANCE_10: {
+    name: { pt: 'Toque Paralisante', en: 'Paralyzing Touch' },
+    desc: {
+      pt: '10% de chance de paralisar o inimigo por 1 turno ao atacar.',
+      en: '10% chance to paralyze the enemy for 1 turn when attacking.',
     },
     hpBonus: 0,
   },
@@ -405,6 +470,27 @@ function DeckBuilder({ onNavigate }) {
     setEditingDeckIndex(idx);
   }
 
+  function handleTraining(idx) {
+    const current = slots[idx];
+    const deckData = current ? getDeck(current.id) : null;
+    const cardCount = Array.isArray(deckData?.cards) ? deckData.cards.length : 0;
+
+    if (!deckData?.guardianId || cardCount !== 20) {
+      setErrorMessage(
+        lang === 'en'
+          ? 'Complete this deck with 1 Guardian and 20 cards before training.'
+          : 'Complete este deck com 1 Guardião e 20 cartas antes de treinar.',
+      );
+      setTimeout(() => setErrorMessage(''), 3500);
+      return;
+    }
+
+    onNavigate('battle', {
+      deck: { ...deckData, id: current.id, name: current.name },
+      mode: 'training',
+    });
+  }
+
   function handleDelete(idx) {
     const current = slots[idx];
     if (!current) return;
@@ -717,9 +803,17 @@ function DeckBuilder({ onNavigate }) {
         </button>
 
         <div className="deckbuilder-titles">
+          <span className="deckbuilder-kicker">Arsenal do jogador</span>
           <h1>{showRecycler ? 'Reciclar Cartas' : 'Meus Decks'}</h1>
           <p>{showRecycler ? 'Converta cartas repetidas em moedas' : 'Máximo de 4 decks. Cada deck usa 1 guardião + 20 cartas.'}</p>
         </div>
+
+        {!showRecycler && (
+          <div className="deckbuilder-capacity">
+            <strong>{slots.filter(Boolean).length}</strong>
+            <span>de {MAX_DECKS} decks</span>
+          </div>
+        )}
 
         <button
           className="recycler-toggle-btn"
@@ -765,11 +859,13 @@ function DeckBuilder({ onNavigate }) {
                           const guardianId = deckData?.guardianId;
                           const guardianData = guardianId ? getGuardianData(guardianId) : null;
                           const guardianImageUrl = guardianData?.img ? guardianData.img : null;
+                          const guardianName = getName(guardianData?.name) || 'Guardião';
+                          const cardCount = Array.isArray(deckData?.cards) ? deckData.cards.length : 0;
 
             return (
               <div
                 key={slotKey}
-                className={`deck-slot${slot ? ' deck-slot-filled' : ' deck-slot-empty'}${isOpening ? ' deck-slot-opening' : ''}`}
+                className={`deck-overview-slot${slot ? ' deck-overview-slot-filled' : ' deck-overview-slot-empty'}${isOpening ? ' deck-slot-opening' : ''}`}
                               style={guardianImageUrl ? {
                                 backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.7)), url(${guardianImageUrl})`,
                                 backgroundSize: 'cover',
@@ -777,11 +873,16 @@ function DeckBuilder({ onNavigate }) {
                               } : {}}
               >
                 <div className="deck-slot-top">
-                  <div className="deck-slot-title">
-                    {slot ? slot.name : `Deck ${idx + 1}`}
+                  <div>
+                    <span className="deck-slot-index">Deck {String(idx + 1).padStart(2, '0')}</span>
+                    <div className="deck-slot-title">
+                      {slot ? slot.name : 'Espaço disponível'}
+                    </div>
                   </div>
                   <div className="deck-slot-status">
-                    {slot ? 'Pronto para editar' : 'Vazio'}
+                    {slot
+                      ? (guardianId && cardCount === 20 ? 'Pronto para treino' : 'Incompleto')
+                      : 'Vazio'}
                   </div>
                 </div>
 
@@ -794,24 +895,43 @@ function DeckBuilder({ onNavigate }) {
                     }}
                   >
                     <span className="deck-slot-plus">+</span>
-                    Criar deck
+                    <span><strong>Criar novo deck</strong><small>Escolha um guardião e monte sua estratégia</small></span>
                   </button>
                 )}
 
                 {slot && (
-                  <div className="deck-slot-actions">
-                    <button
-                      className="deck-slot-btn"
-                      onClick={() => handleEdit(idx)}
-                    >
-                      Editar
-                    </button>
-                    <button
-                      className="deck-slot-btn danger"
-                      onClick={() => handleDelete(idx)}
-                    >
-                      Apagar
-                    </button>
+                  <div className="deck-slot-filled-content">
+                    <div className="deck-slot-summary">
+                      <div><small>Guardião</small><strong>{guardianName}</strong></div>
+                      <div className="deck-slot-card-count"><strong>{cardCount}</strong><small>/ 20 cartas</small></div>
+                    </div>
+                    <div className="deck-slot-actions">
+                      <button
+                        className="deck-slot-btn training"
+                        onClick={() => handleTraining(idx)}
+                        disabled={!guardianId || cardCount !== 20}
+                        title={!guardianId || cardCount !== 20
+                          ? 'Complete o deck para liberar o treino'
+                          : `Treinar com ${slot.name}`}
+                      >
+                        <span className="deck-training-icon" aria-hidden>⚔</span>
+                        Treinar vs IA
+                        <small>Teste sua estratégia contra um oponente</small>
+                      </button>
+                      <button
+                        className="deck-slot-btn"
+                        onClick={() => handleEdit(idx)}
+                      >
+                        Editar deck <span aria-hidden="true">→</span>
+                      </button>
+                      <button
+                        className="deck-slot-btn danger"
+                        onClick={() => handleDelete(idx)}
+                        aria-label={`Apagar ${slot.name}`}
+                      >
+                        Apagar
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -969,7 +1089,7 @@ function DeckBuilder({ onNavigate }) {
                                       unlock.displayText,
                                       langKey,
                                     )
-                                  : getName(unlock.desc)}
+                                  : <StatusText text={getName(unlock.desc)} />}
                               </div>
                               {isSkill && unlock.cost && (
                                 <div className="loadout-skill-cost">

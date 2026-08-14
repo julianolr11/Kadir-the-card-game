@@ -25,10 +25,10 @@ class GridErrorBoundary extends React.Component {
 }
 import soulEssence from '../assets/img/icons/soul-essence.png';
 import puroIcon from '../assets/img/elements/puro.png';
-import { Grid as FixedSizeGrid } from 'react-window';
 import { AppContext } from '../context/AppContext';
 import CreatureCardPreview from './CreatureCardPreview';
 import CardInstanceSelector from './CardInstanceSelector';
+import { FullArtCard } from './KadirFullArtPreview';
 import sphereMenuSound from '../assets/sounds/effects/sphereMenuSound.js';
 import packageSound from '../assets/sounds/effects/packageSound.js';
 
@@ -57,12 +57,40 @@ function DeckLibraryGrid({
   handleDragEnd = () => {},
   openCardLoadout = () => {},
   addCardToDeck = () => {},
-  setHoveredCard = () => {},
-  setHoveredCardId = () => {},
 }) {
   // Parâmetros do grid
   // Garante que cards é sempre array
   const safeCards = Array.isArray(cards) ? cards : [];
+  const [renderCount, setRenderCount] = useState(() => Math.min(24, safeCards.length));
+
+  useEffect(() => {
+    setRenderCount(Math.min(24, safeCards.length));
+    if (safeCards.length <= 24) return undefined;
+
+    let cancelled = false;
+    let idleId;
+    let revealed = 24;
+    const revealNextBatch = () => {
+      if (cancelled) return;
+      revealed = Math.min(revealed + 12, safeCards.length);
+      setRenderCount(revealed);
+      if (revealed < safeCards.length) {
+        idleId = window.requestIdleCallback
+          ? window.requestIdleCallback(revealNextBatch, { timeout: 120 })
+          : window.setTimeout(revealNextBatch, 16);
+      }
+    };
+
+    idleId = window.requestIdleCallback
+      ? window.requestIdleCallback(revealNextBatch, { timeout: 120 })
+      : window.setTimeout(revealNextBatch, 16);
+
+    return () => {
+      cancelled = true;
+      if (window.cancelIdleCallback && typeof idleId === 'number') window.cancelIdleCallback(idleId);
+      else window.clearTimeout(idleId);
+    };
+  }, [safeCards.length]);
   const columnCount = 10;
   const cardWidth = 128;
   const cardHeight = 188;
@@ -87,7 +115,6 @@ function DeckLibraryGrid({
     const bestAvailableInstance = getBestAvailableInstance(card.id);
     // Se não houver instância disponível, mostra a carta como desabilitada
     const displayLevel = bestAvailableInstance?.level || 1;
-    const displayIsHolo = bestAvailableInstance?.isHolo || false;
     const unavailable = !bestAvailableInstance;
     return (
       <div
@@ -96,15 +123,7 @@ function DeckLibraryGrid({
         draggable={!isDisabled && !unavailable}
         onDragStart={(e) => !isDisabled && !unavailable && handleDragStart(e, card.id, false)}
         onDragEnd={handleDragEnd}
-        onMouseEnter={(e) => {
-          setHoveredCard(card.data);
-          setHoveredCardId(card.id);
-        }}
-        onMouseLeave={() => {
-          setHoveredCard(null);
-          setHoveredCardId(null);
-        }}
-        style={{ ...style, animationDelay: `${idx * 50}ms`, position: 'relative', width: cardWidth, height: cardHeight, margin: 8, opacity: unavailable ? 0.5 : 1 }}
+        style={{ ...style, animationDelay: `${Math.min(idx, 6) * 20}ms`, position: 'relative', width: cardWidth, height: cardHeight, margin: 8, opacity: unavailable ? 0.5 : 1 }}
       >
         {card.data.id === 'f001' ? (
           <div className="slider-card-wrapper active" style={{ transform: 'scale(0.319)', transformOrigin: 'top left', pointerEvents: 'none' }}>
@@ -132,7 +151,7 @@ function DeckLibraryGrid({
           </div>
         ) : (
           <div style={{ transform: 'scale(0.319)', transformOrigin: 'top left', pointerEvents: 'none' }}>
-            <CreatureCardPreview creature={card.data} onClose={null} level={displayLevel} isHolo={displayIsHolo} allowFlip={false} />
+            <CreatureCardPreview creature={card.data} onClose={null} level={displayLevel} isHolo={false} allowFlip={false} />
           </div>
         )}
         <div className="deck-library-card-count">{countInDeck}/{availableCount + countInDeck}</div>
@@ -158,7 +177,7 @@ function DeckLibraryGrid({
   // Grid puro CSS: renderiza todas as cartas em um container flex/grid
   return (
     <div className="deck-library-grid deck-library-grid-css">
-      {safeCards.map((card, idx) => {
+      {safeCards.slice(0, renderCount).map((card, idx) => {
         // Reaproveita a lógica do Cell
         const columnIndex = idx % columnCount;
         const rowIndex = Math.floor(idx / columnCount);
@@ -308,8 +327,6 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
   const [sortBy, setSortBy] = useState('name-asc');
   const [draggedCardId, setDraggedCardId] = useState(null);
   const [dragOverSlot, setDragOverSlot] = useState(null);
-  const [hoveredCard, setHoveredCard] = useState(null);
-  const [hoveredCardId, setHoveredCardId] = useState(null);
   const [showSavedToast, setShowSavedToast] = useState(false);
   const [showDeckIncompleteWarning, setShowDeckIncompleteWarning] = useState(false);
   const [showInstanceSelector, setShowInstanceSelector] = useState(false);
@@ -319,6 +336,7 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
   const [showCardLoadoutModal, setShowCardLoadoutModal] = useState(false);
   const [editingCardId, setEditingCardId] = useState(null);
   const [editingCardData, setEditingCardData] = useState(null);
+  const [editingInstanceId, setEditingInstanceId] = useState(null);
   const [editingSelectedSkills, setEditingSelectedSkills] = useState([null, null]);
   const [editingSelectedPerk, setEditingSelectedPerk] = useState(null);
   const successSoundRef = useRef(null);
@@ -326,18 +344,32 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
   const isFirstRender = useRef(true);
   const lastSavedRef = useRef({ name: initialDeckName || `Deck ${deckId}`, cards: initialCards, guardianId: guardianId || null });
 
-  const getInstanceById = (instanceId) => {
-    if (!instanceId || !cardCollection) return null;
-    for (const cardId in cardCollection) {
-      const instance = cardCollection[cardId].find(inst => inst.instanceId === instanceId);
-      if (instance) return instance;
-    }
-    return null;
-  };
+  const instanceById = useMemo(() => {
+    const index = new Map();
+    if (!cardCollection || typeof cardCollection !== 'object') return index;
+    Object.entries(cardCollection).forEach(([cardId, instances]) => {
+      (instances || []).forEach((instance) => index.set(instance.instanceId, { ...instance, cardId: instance.cardId || cardId }));
+    });
+    return index;
+  }, [cardCollection]);
+
+  const deckInstanceIds = useMemo(() => new Set(deckCards.filter(Boolean)), [deckCards]);
+  const deckCountByCard = useMemo(() => {
+    const counts = new Map();
+    deckCards.forEach((instanceId) => {
+      const instance = instanceById.get(instanceId);
+      if (instance?.cardId) counts.set(instance.cardId, (counts.get(instance.cardId) || 0) + 1);
+    });
+    return counts;
+  }, [deckCards, instanceById]);
+
+  const getInstanceById = (instanceId) => instanceById.get(instanceId) || null;
 
   const getBestInstance = (cardId) => {
     const instances = getCardInstances(cardId);
     if (!instances || instances.length === 0) return null;
+    const fullArtInstance = instances.find(inst => inst.isFullArt);
+    if (fullArtInstance) return fullArtInstance;
     const holoInstance = instances.find(inst => inst.isHolo);
     if (holoInstance) return holoInstance;
     const sorted = [...instances].sort((a, b) => b.level - a.level);
@@ -347,13 +379,14 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
   const getAvailableInstances = (cardId) => {
     const instances = getCardInstances(cardId);
     if (!instances || instances.length === 0) return [];
-    const instancesInDeck = deckCards.filter(id => id !== null);
-    return instances.filter(inst => !instancesInDeck.includes(inst.instanceId));
+    return instances.filter(inst => !deckInstanceIds.has(inst.instanceId));
   };
 
   const getBestAvailableInstance = (cardId) => {
     const availableInstances = getAvailableInstances(cardId);
     if (!availableInstances || availableInstances.length === 0) return null;
+    const fullArtInstance = availableInstances.find(inst => inst.isFullArt);
+    if (fullArtInstance) return fullArtInstance;
     const holoInstance = availableInstances.find(inst => inst.isHolo);
     if (holoInstance) return holoInstance;
     const sorted = [...availableInstances].sort((a, b) => b.level - a.level);
@@ -361,10 +394,7 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
   };
 
   const countCardInDeck = (cardId) => {
-    return deckCards.filter((instanceId) => {
-      const instance = getInstanceById(instanceId);
-      return instance && instance.cardId === cardId;
-    }).length;
+    return deckCountByCard.get(cardId) || 0;
   };
 
   const canAddCard = (cardId) => {
@@ -511,6 +541,33 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
     return true;
   };
 
+  const handleFullArtInstance = (cardId, instanceId, preferredSacrificeIds = []) => {
+    if (!cardId || !instanceId || !cardCollection || !setCardCollection) return false;
+    const instances = Array.isArray(cardCollection[cardId]) ? cardCollection[cardId] : [];
+    const selected = instances.find((inst) => inst.instanceId === instanceId);
+    const eligibleHolos = instances.filter((inst) => inst.isHolo && !inst.isFullArt);
+    if (!selected?.isHolo || selected.isFullArt || eligibleHolos.length < 10) return false;
+
+    const validSacrificeIds = new Set(eligibleHolos.filter((inst) => inst.instanceId !== instanceId).map((inst) => inst.instanceId));
+    const sacrificeIds = [
+      ...preferredSacrificeIds.filter((id) => validSacrificeIds.has(id)),
+      ...eligibleHolos.filter((inst) => inst.instanceId !== instanceId && !preferredSacrificeIds.includes(inst.instanceId)).map((inst) => inst.instanceId),
+    ].slice(0, 9);
+    if (sacrificeIds.length < 9) return false;
+
+    const sacrificeSet = new Set(sacrificeIds);
+    setCardCollection({
+      ...cardCollection,
+      [cardId]: instances
+        .filter((inst) => !sacrificeSet.has(inst.instanceId))
+        .map((inst) => inst.instanceId === instanceId
+          ? { ...inst, isHolo: true, isFullArt: true, fullArtAt: new Date().toISOString() }
+          : inst),
+    });
+    setDeckCards((currentDeck) => currentDeck.map((id) => sacrificeSet.has(id) ? null : id));
+    return true;
+  };
+
   const moveCard = (fromIndex, toIndex) => {
     const newDeck = [...deckCards];
     const temp = newDeck[fromIndex];
@@ -583,22 +640,23 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
     return Array.isArray(cards) ? cards : [];
   }, [cardCollection, searchTerm, elementFilter, typeFilter, sortBy, langKey, guardianCardId]);
 
-  const openCardLoadout = (cardId) => {
+  const openCardLoadout = (cardId, instanceId = null) => {
     const data = getCardData(cardId);
     if (!data) return;
     setEditingCardId(cardId);
     setEditingCardData(data);
+    setEditingInstanceId(instanceId);
     const existing = loadGuardianLoadout ? loadGuardianLoadout(cardId) : null;
     setEditingSelectedSkills(existing?.selectedSkills || [null, null]);
     setEditingSelectedPerk(existing?.selectedPerk || null);
     setShowCardLoadoutModal(true);
   };
 
-  const handleEditInstanceCard = (cardId) => {
+  const handleEditInstanceCard = (cardId, instanceId) => {
     setShowInstanceSelector(false);
     setSelectedCardForInstance(null);
     setInstanceSlotIndex(null);
-    openCardLoadout(cardId);
+    openCardLoadout(cardId, instanceId);
   };
 
   const saveCardLoadout = () => {
@@ -611,6 +669,7 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
     setShowCardLoadoutModal(false);
     setEditingCardId(null);
     setEditingCardData(null);
+    setEditingInstanceId(null);
   };
 
   useEffect(() => {
@@ -784,7 +843,7 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
                         </div>
                       ) : (
                         <div style={{ transform: 'scale(0.33)', transformOrigin: 'center', pointerEvents: 'none' }}>
-                          <CreatureCardPreview creature={cardData} onClose={null} level={instance.level || 1} isHolo={instance.isHolo || false} allowFlip={false} />
+                          <CreatureCardPreview creature={cardData} onClose={null} level={instance.level || 1} isHolo={false} allowFlip={false} />
                         </div>
                       )}
                     </div>
@@ -813,7 +872,7 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
                             {!isField && !isEffect && (
                               <button
                                 className="deck-action-btn deck-action-edit"
-                                onClick={(e) => { e.stopPropagation(); openCardLoadout(instance.cardId); }}
+                                onClick={(e) => { e.stopPropagation(); openCardLoadout(instance.cardId, instance.instanceId); }}
                                 title="Editar habilidades"
                               >
                                 ✎
@@ -880,8 +939,6 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
           handleDragEnd={handleDragEnd}
           openCardLoadout={openCardLoadout}
           addCardToDeck={addCardToDeck}
-          setHoveredCard={setHoveredCard}
-          setHoveredCardId={setHoveredCardId}
         />
         {/* Ghost/hover preview removido para não atrapalhar o fluxo no deckbuilder */}
         {showSavedToast && <div className="deck-saved-toast">✓ Salvo</div>}
@@ -980,6 +1037,8 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
             onEdit={handleEditInstanceCard}
             onAdorn={handleAdornInstance}
             adornTotalCount={(getCardInstances(selectedCardForInstance) || []).filter((inst) => !inst.isHolo).length}
+            onFullArt={handleFullArtInstance}
+            fullArtTotalCount={(getCardInstances(selectedCardForInstance) || []).filter((inst) => inst.isHolo && !inst.isFullArt).length}
             onClose={() => setShowInstanceSelector(false)}
             title={lang === 'ptbr' ? 'Selecione uma cópia para o deck' : 'Select a card copy for deck'}
             lang={lang}
@@ -1024,9 +1083,10 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
                                 ? editingCardData.defaultSkills.slice(0, 2)
                                 : (Array.isArray(editingCardData.abilities) ? editingCardData.abilities.slice(0, 2) : [])),
                         };
-                        return (
-                          <CreatureCardPreview creature={creaturePreviewData} onClose={null} level={1} isHolo={false} allowFlip />
-                        );
+                        const editingInstance = editingInstanceId ? getInstanceById(editingInstanceId) : null;
+                        return editingInstance?.isFullArt
+                          ? <FullArtCard card={creaturePreviewData} lang={lang} level={editingInstance.level || 0} />
+                          : <CreatureCardPreview creature={creaturePreviewData} onClose={null} level={editingInstance?.level || 1} isHolo={Boolean(editingInstance?.isHolo)} allowFlip />;
                       })()}
                     </div>
                   </div>

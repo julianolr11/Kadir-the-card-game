@@ -105,7 +105,7 @@ module.exports = {
       type: 'skill',
       id: 'ekeranth_skill_1',
       name: { pt: 'Fúria Flamejante', en: 'Flaming Fury' },
-      displayText: {
+      desc: {
         pt: 'Causa 2 de dano ao inimigo',
         en: 'Deals 2 damage to the enemy',
       },
@@ -116,7 +116,7 @@ module.exports = {
       type: 'skill',
       id: 'ekeranth_skill_2',
       name: { pt: 'Rajada de Fogo', en: 'Fire Burst' },
-      displayText: {
+      desc: {
         pt: 'Causa 1 de dano a 2 inimigos aleatórios em campo',
         en: 'Deals 1 damage to 2 random enemies on the field',
       },
@@ -127,7 +127,7 @@ module.exports = {
       type: 'skill',
       id: 'ekeranth_skill_3',
       name: { pt: 'Sopro Abrasador', en: 'Searing Breath' },
-      displayText: {
+      desc: {
         pt: 'Aplica 🔥 a um inimigo por 2 turnos (–1 Vida por turno).',
         en: 'Applies 🔥 to an enemy for 2 turns (–1 HP per turn).',
       },
@@ -139,7 +139,7 @@ module.exports = {
       type: 'perk',
       id: 'HP_PLUS_1',
       name: { pt: '+1 de vida', en: '+1 HP' },
-      displayText: {
+      desc: {
         pt: 'nv 2 - + 1 de vida\ninicia com + 1 de vida',
         en: 'Lv 2 - +1 HP\nStart with +1 HP',
       },
@@ -150,7 +150,7 @@ module.exports = {
       type: 'skill',
       id: 'ekeranth_skill_4',
       name: { pt: 'Erupção', en: 'Eruption' },
-      displayText: {
+      desc: {
         pt: 'Causa 3 de dano a um inimigo',
         en: 'Deals 3 damage to an enemy',
       },
@@ -169,7 +169,7 @@ module.exports = {
       type: 'perk',
       id: 'KILL_XP_BONUS_10',
       name: { pt: '+1 XP por abaté', en: '+1 XP per kill' },
-      displayText: {
+      desc: {
         pt: '+1 XP por abaté do guardião',
         en: '+1 XP per guardian kill',
       },
@@ -180,7 +180,7 @@ module.exports = {
       type: 'skill',
       id: 'ekeranth_skill_6',
       name: { pt: 'Meteoro Flamejante', en: 'Flaming Meteor' },
-      displayText: {
+      desc: {
         pt: 'Causa 2 de dano e aplica 🔥 por 2 turnos (–1 Vida por turno).',
         en: 'Deals 2 damage and applies 🔥 for 2 turns (–1 HP per turn).',
       },
@@ -192,7 +192,7 @@ module.exports = {
       type: 'skill',
       id: 'ekeranth_skill_7',
       name: { pt: 'Rugido do Vulcão', en: "Volcano's Roar" },
-      displayText: {
+      desc: {
         pt: 'Causa 4 de dano ao inimigo',
         en: 'Deals 4 damage to the enemy',
       },

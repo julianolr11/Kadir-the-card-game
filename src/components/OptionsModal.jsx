@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useContext } from 'react';
+import React, { useState, useContext } from 'react';
 import FeedbackModal from './FeedbackModal';
 import { AppContext } from '../context/AppContext';
 import '../styles/animations.css';
@@ -38,10 +38,26 @@ const translations = {
   },
 };
 
+const RESOLUTION_OPTIONS = [
+  { value: '1280x720', label: '1280 × 720 (HD)' },
+  { value: '1366x768', label: '1366 × 768 (HD)' },
+  { value: '1600x900', label: '1600 × 900 (HD+)' },
+  { value: '1920x1080', label: '1920 × 1080 (Full HD)' },
+  { value: '2560x1440', label: '2560 × 1440 (QHD)' },
+  { value: '3840x2160', label: '3840 × 2160 (4K)' },
+];
+
+const parseResolution = (value) => {
+  const match = /^(\d+)x(\d+)$/.exec(value || '');
+  return match
+    ? { width: Number(match[1]), height: Number(match[2]) }
+    : { width: 1280, height: 720 };
+};
+
 function OptionsModal({
   visible,
   onClose,
-  onApply,
+  onApply = () => {},
   initialLang = 'ptbr',
   initialMusicVolume = 50,
   initialEffectsVolume = 50,
@@ -87,6 +103,7 @@ function OptionsModal({
   );
   const [showFeedback, setShowFeedback] = useState(false);
   const [feedbackStatus, setFeedbackStatus] = useState('idle'); // idle | sent | error
+  const [isApplying, setIsApplying] = useState(false);
 
   const handleLangChange = (e) => setLocalLang(e.target.value);
   const handleMusicVolumeChange = (e) => {
@@ -102,7 +119,7 @@ function OptionsModal({
     localStorage.setItem('effectsVolume', value);
   };
 
-  const handleApply = () => {
+  const handleApply = async () => {
     localStorage.setItem('lang', localLang);
     localStorage.setItem('musicVolume', localMusicVolume);
     localStorage.setItem('effectsVolume', localEffectsVolume);
@@ -111,6 +128,21 @@ function OptionsModal({
     setLang(localLang);
     setMusicVolume(Number(localMusicVolume));
     setEffectsVolume(Number(localEffectsVolume));
+    const { width, height } = parseResolution(resolution);
+
+    setIsApplying(true);
+    try {
+      await window.electron?.ipcRenderer?.applyDisplaySettings?.({
+        width,
+        height,
+        fullscreen,
+      });
+    } catch (error) {
+      console.error('Não foi possível aplicar as opções de vídeo:', error);
+    } finally {
+      setIsApplying(false);
+    }
+
     if (onApply)
       onApply({
         lang: localLang,
@@ -121,43 +153,6 @@ function OptionsModal({
       });
     if (onClose) onClose();
   };
-
-  // Só dispara IPC após interação do usuário (ignora o mount)
-  const didMountFullscreen = useRef(false);
-  useEffect(() => {
-    if (didMountFullscreen.current) {
-      if (window.electron && window.electron.ipcRenderer) {
-        const width = resolution === '1920x1080' ? 1920 : 1280;
-        const height = resolution === '1920x1080' ? 1080 : 720;
-        window.electron.ipcRenderer.sendMessage('set-resolution', {
-          width,
-          height,
-          fullscreen,
-        });
-      }
-      if (onApply) onApply({ lang, volume, fullscreen, resolution });
-    } else {
-      didMountFullscreen.current = true;
-    }
-  }, [fullscreen]);
-
-  const didMountResolution = useRef(false);
-  useEffect(() => {
-    if (didMountResolution.current) {
-      if (window.electron && window.electron.ipcRenderer) {
-        const width = resolution === '1920x1080' ? 1920 : 1280;
-        const height = resolution === '1920x1080' ? 1080 : 720;
-        window.electron.ipcRenderer.sendMessage('set-resolution', {
-          width,
-          height,
-          fullscreen,
-        });
-      }
-      if (onApply) onApply({ lang, volume, fullscreen, resolution });
-    } else {
-      didMountResolution.current = true;
-    }
-  }, [resolution]);
 
   const labelStyle = {
     color: '#ffe6b0',
@@ -177,9 +172,11 @@ function OptionsModal({
   const t = translations[lang] || translations.ptbr;
   return (
     <React.Fragment>
-      <div style={modalBgStyle}>
-        <div style={modalStyle} className="modal-zoom-in">
+      <div style={modalBgStyle} className="options-modal-overlay">
+        <div style={modalStyle} className="modal-zoom-in options-modal-panel">
+          <span className="options-modal-kicker">CONFIGURAÇÕES DO JOGO</span>
           <h2
+            className="options-modal-title"
             style={{
               color: '#ffe6b0',
               fontWeight: 700,
@@ -191,7 +188,7 @@ function OptionsModal({
           >
             {t.options}
           </h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+          <div className="options-modal-fields" style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
             {/* ...campos de opções... */}
             <div>
               <label style={labelStyle}>{t.language}</label>
@@ -262,14 +259,19 @@ function OptionsModal({
                 value={resolution}
                 onChange={(e) => setResolution(e.target.value)}
                 style={selectStyle}
+                disabled={fullscreen}
               >
-                <option value="1280x720" style={optionStyle}>
-                  {t.res1}
-                </option>
-                <option value="1920x1080" style={optionStyle}>
-                  {t.res2}
-                </option>
+                {RESOLUTION_OPTIONS.map((item) => (
+                  <option key={item.value} value={item.value} style={optionStyle}>
+                    {item.label}
+                  </option>
+                ))}
               </select>
+              {fullscreen && (
+                <small className="options-resolution-hint">
+                  Em tela cheia, o jogo usa a resolução nativa do monitor.
+                </small>
+              )}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <label
@@ -351,6 +353,7 @@ function OptionsModal({
             </div>
           </div>
           <div
+            className="options-modal-actions"
             style={{
               marginTop: 32,
               display: 'flex',
@@ -359,14 +362,15 @@ function OptionsModal({
               position: 'relative',
             }}
           >
-            <button onClick={handleApply} style={btnStyle}>
-              {t.apply}
+            <button className="options-action-btn options-action-primary" onClick={handleApply} style={btnStyle} disabled={isApplying}>
+              {isApplying ? 'Aplicando…' : t.apply}
             </button>
-            <button onClick={handleClose} style={btnStyle}>
+            <button className="options-action-btn options-action-secondary" onClick={handleClose} style={btnStyle}>
               {t.close}
             </button>
             {/* Botão de feedback flutuante no canto inferior direito do modal */}
             <button
+              className="options-feedback-btn"
               onClick={() => setShowFeedback(true)}
               style={{
                 ...btnStyle,

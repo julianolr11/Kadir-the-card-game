@@ -9,12 +9,12 @@
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
 import path from 'path';
-import { app, BrowserWindow, shell, ipcMain } from 'electron';
+import { app, BrowserWindow, shell, ipcMain, screen } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
-import { setupResolutionIPC } from './ipcResolution';
+import setupResolutionIPC from './ipcResolution';
 import { setupAudioManager } from './audioManager';
 
 // Novo fluxo: inicialização do autoUpdater será feita sob demanda via IPC
@@ -76,13 +76,22 @@ const createWindow = async () => {
     '../../src/assets/img/icons/iconlive.png',
   );
 
+  const primaryWorkArea = screen.getPrimaryDisplay().workArea;
+  const initialScale = Math.min(
+    1,
+    primaryWorkArea.width / 1280,
+    primaryWorkArea.height / 720,
+  );
+  const initialWidth = Math.round(1280 * initialScale);
+  const initialHeight = Math.round(720 * initialScale);
+
   mainWindow = new BrowserWindow({
     show: false,
-    width: 1920,
-    height: 1080,
-    // Prevent the user from resizing or maximizing the window
-    resizable: false,
-    maximizable: false,
+    width: initialWidth,
+    height: initialHeight,
+    // O palco interno mantém 16:9; o redimensionamento real é controlado nas opções.
+    resizable: true,
+    maximizable: true,
     frame: false, // Remove barra de ferramentas e botões
     icon: iconPath,
     webPreferences: {

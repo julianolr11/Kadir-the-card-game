@@ -37,28 +37,28 @@ module.exports = {
   storyTitle: { pt: 'Vazio Faminto', en: 'Ravenous Void' },
   story: [
     {
-      pt: 'Noctyra nasceu nas correntes silenciosas que atravessam o céu quando a luz se apaga.',
-      en: 'Noctyra was born in the silent currents that cross the sky when light vanishes.',
+      pt: 'Nihil despertou no intervalo entre os elementos, onde a essência perde forma e retorna ao vazio.',
+      en: 'Nihil awakened in the space between elements, where essence loses form and returns to the void.',
     },
     {
-      pt: 'Criatura sombria de asas finas, move-se entre vibrações do ar que os olhos não alcançam.',
-      en: 'A shadowy, thin-winged creature moving between air vibrations beyond sight.',
+      pt: 'Seu corpo não é carne nem sombra: é uma fenda faminta que imita a forma das criaturas que devora.',
+      en: 'Its body is neither flesh nor shadow, but a hungry rift that mimics the creatures it devours.',
     },
     {
-      pt: 'Contornos azulados das asas são fendas de energia aérea marcando onde já passou… ou ainda observa.',
-      en: 'Bluish wing outlines are rifts of aerial energy, marking where it has passed—or still watches.',
+      pt: 'As marcas azuladas em sua pele são correntes de energia roubada, ainda tentando escapar.',
+      en: 'The blue marks across its hide are streams of stolen energy still trying to escape.',
     },
     {
-      pt: 'Durante o voo distorce o ar, confundindo sentidos e antecipando movimentos.',
-      en: 'In flight it warps the air, confusing senses and anticipating movements.',
+      pt: 'Nihil enfraquece suas presas antes do ataque, drenando resistência, essência e vontade.',
+      en: 'Nihil weakens its prey before striking, draining resistance, essence, and will.',
     },
     {
-      pt: 'Não enfrenta de frente: cerca, enfraquece e some antes do contra-ataque.',
-      en: 'It never clashes head-on: it surrounds, weakens, then vanishes before counterattack.',
+      pt: 'Quanto mais energia consome, mais sólido se torna — e mais difícil é lembrar o que existia antes dele.',
+      en: 'The more energy it consumes, the more solid it becomes, and the harder it is to remember what existed before it.',
     },
     {
-      pt: 'Onde o vento hesita, ela já decidiu o desfecho. Corte de Corrente.',
-      en: 'Where the wind falters, it already chose the outcome. Current Cut.',
+      pt: 'Quando o silêncio toma o campo, Nihil já começou a se alimentar.',
+      en: 'When silence overtakes the battlefield, Nihil has already begun to feed.',
     },
   ],
 

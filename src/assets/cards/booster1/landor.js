@@ -94,7 +94,7 @@ module.exports = {
       level: 3,
       type: 'skill',
       id: 'landor_skill_folha_cortante',
-      name: { pt: 'Folha Cortante', en: 'Cutting Leaf' },
+      name: { pt: 'Pena Cortante', en: 'Cutting Feather' },
       desc: {
         pt: 'Causa 2 de dano e jogue a moeda 1 vez; se der cara, aplica sangramento por 2 turnos.',
         en: 'Deals 2 damage and flips a coin once; on heads, apply bleed for 2 turns.',
@@ -111,7 +111,7 @@ module.exports = {
       level: 4,
       type: 'perk',
       id: 'NATURAL_HEAL',
-      name: { pt: 'Cura Natural', en: 'Natural Heal' },
+      name: { pt: 'Fôlego do Norte', en: 'Northern Breath' },
       desc: {
         pt: 'Recupera 1 de vida no início do turno se estiver com menos de metade do HP.',
         en: 'Recovers 1 HP at the start of the turn if below half HP.',
@@ -122,10 +122,10 @@ module.exports = {
       level: 5,
       type: 'skill',
       id: 'landor_skill_raizes_prendentes',
-      name: { pt: 'Raízes Prendentes', en: 'Binding Roots' },
+      name: { pt: 'Vórtice Prendente', en: 'Binding Vortex' },
       desc: {
-        pt: 'Aplica <span class="debuff-root">enraizar</span> por 2 turnos (não pode trocar de lugar).',
-        en: 'Applies <span class="debuff-root">root</span> for 2 turns (cannot swap position).',
+        pt: 'Prende o alvo em um vórtice por 2 turnos, impedindo a troca de posição.',
+        en: 'Traps the target in a vortex for 2 turns, preventing position swaps.',
       },
       cost: 1,
       effectType: 'apply_root',
@@ -137,10 +137,10 @@ module.exports = {
       level: 6,
       type: 'perk',
       id: 'VERDANT_INSPIRATION',
-      name: { pt: 'Inspiração Verdejante', en: 'Verdant Inspiration' },
+      name: { pt: 'Inspiração Boreal', en: 'Boreal Inspiration' },
       desc: {
-        pt: 'Aliados de planta ganham +1 de ataque por 1 turno ao entrarem em campo.',
-        en: 'Plant allies gain +1 attack for 1 turn when summoned.',
+        pt: 'Aliados de ar ganham +1 de ataque por 1 turno ao entrarem em campo.',
+        en: 'Air allies gain +1 attack for 1 turn when summoned.',
       },
     },
     // Nível 7 - Habilidade: Cura Profunda
@@ -148,7 +148,7 @@ module.exports = {
       level: 7,
       type: 'skill',
       id: 'landor_skill_cura_profunda',
-      name: { pt: 'Cura Profunda', en: 'Deep Heal' },
+      name: { pt: 'Brisa Restauradora', en: 'Restorative Breeze' },
       desc: {
         pt: 'Cura 3 de vida e remove todos os debuffs.',
         en: 'Heals 3 HP and removes all debuffs.',
@@ -162,7 +162,7 @@ module.exports = {
       level: 8,
       type: 'perk',
       id: 'PROTECTIVE_BARK',
-      name: { pt: 'Casca Protetora', en: 'Protective Bark' },
+      name: { pt: 'Plumagem Protetora', en: 'Protective Plumage' },
       desc: {
         pt: 'Recebe -1 de dano de ataques físicos.',
         en: 'Takes -1 damage from physical attacks.',
@@ -173,7 +173,7 @@ module.exports = {
       level: 9,
       type: 'skill',
       id: 'landor_skill_tempestade_espinhos',
-      name: { pt: 'Tempestade de Espinhos', en: 'Thornstorm' },
+      name: { pt: 'Tempestade de Lâminas', en: 'Bladestorm' },
       desc: {
         pt: 'Causa 3 de dano a todos os inimigos.',
         en: 'Deals 3 damage to all enemies.',
@@ -187,7 +187,7 @@ module.exports = {
       level: 10,
       type: 'skill',
       id: 'landor_skill_renascimento',
-      name: { pt: 'Renascimento', en: 'Rebirth' },
+      name: { pt: 'Segundo Vento', en: 'Second Wind' },
       desc: {
         pt: 'Revive com 3 de vida ao morrer (1 vez por partida).',
         en: 'Revives with 3 HP upon death (once per match).',

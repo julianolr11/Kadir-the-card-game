@@ -203,13 +203,17 @@ export default function CampaignTower({ onBack, onStartBattle }) {
     >
       <div className="campaign-tower-bg" />
       <header className="campaign-tower-header">
-        <button className="campaign-back-btn" onClick={onBack}>Voltar</button>
+        <button className="campaign-back-btn" onClick={onBack}>
+          <span aria-hidden>←</span> Voltar
+        </button>
         <div>
           <p className="campaign-kicker">Campanha</p>
-          <h1>Torres dos Guardioes</h1>
+          <h1>Torres dos Guardiões</h1>
+          <div className="campaign-title-rule" aria-hidden><span /></div>
         </div>
         <div className="campaign-progress-pill">
-          {Math.min(progress + 1, CAMPAIGN_TOTAL_LEVELS)}/{CAMPAIGN_TOTAL_LEVELS}
+          <span>Progresso</span>
+          <strong>{Math.min(progress + 1, CAMPAIGN_TOTAL_LEVELS)}/{CAMPAIGN_TOTAL_LEVELS}</strong>
         </div>
       </header>
 
@@ -222,6 +226,7 @@ export default function CampaignTower({ onBack, onStartBattle }) {
               disabled={!tower.unlocked}
               onClick={() => setSelectedTowerKey(tower.key)}
             >
+              <img className="campaign-type-badge" src={tower.badge} alt="" aria-hidden />
               <span className="campaign-type-rank">{tower.rank}</span>
               <span className="campaign-type-name">{tower.label}</span>
               <span className="campaign-type-progress">{tower.completedCount}/{CAMPAIGN_LEVELS_PER_TOWER}</span>
@@ -231,7 +236,10 @@ export default function CampaignTower({ onBack, onStartBattle }) {
 
         <section className="campaign-tower-ladder">
           <div className="campaign-tower-title">
-            <span>Torre {selectedTower?.rank}</span>
+            <div>
+              <span>Torre {selectedTower?.rank}</span>
+              <small>{selectedTower?.completedCount} de {CAMPAIGN_LEVELS_PER_TOWER} combates vencidos</small>
+            </div>
             <strong>{selectedTower?.label}</strong>
           </div>
           {selectedTower?.levels.map((enemy) => (
@@ -254,14 +262,14 @@ export default function CampaignTower({ onBack, onStartBattle }) {
             {activeEnemy?.img && <img src={activeEnemy.img} alt={activeEnemy.name} />}
             <div className="campaign-preview-shade" />
             <div className="campaign-preview-text">
-              <span>Proximo combate</span>
+              <span>Próximo combate</span>
               <strong>{activeEnemy?.name}</strong>
               <small>{activeEnemy?.subtitle}</small>
-              <em>{selectedTower?.label} - Nivel {(activeEnemy?.levelIndex || 0) + 1}</em>
+              <em>{selectedTower?.label} · Nível {(activeEnemy?.levelIndex || 0) + 1}</em>
             </div>
           </div>
           <button className="campaign-start-btn" onClick={() => activeEnemy && onStartBattle(activeEnemy)}>
-            Enfrentar Guardiao
+            <span>Enfrentar Guardião</span><b aria-hidden>→</b>
           </button>
         </aside>
       </main>

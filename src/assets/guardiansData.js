@@ -2262,4 +2262,11 @@ const guardiansData = {
   // Adicione mais guardiões conforme necessário...
 };
 
-module.exports = guardiansData;
+// Fonte única: as mesmas habilidades usadas na batalha abastecem o editor.
+const guardianCards = require('./cards').filter(card => card?.isGuardian);
+const liveGuardiansData = guardianCards.reduce((result, card) => {
+  result[card.id] = { ...(guardiansData[card.id] || {}), ...card };
+  return result;
+}, {});
+
+module.exports = liveGuardiansData;

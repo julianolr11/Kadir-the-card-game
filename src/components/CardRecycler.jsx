@@ -48,8 +48,17 @@ function getImageSrc(img) {
   return typeof img === 'string' ? img : img?.default || '';
 }
 
+function parseCardInstanceKey(key) {
+  const separatorIndex = key.indexOf('::');
+  if (separatorIndex < 0) return { cardId: key, index: -1 };
+  return {
+    cardId: key.slice(0, separatorIndex),
+    instanceId: key.slice(separatorIndex + 2),
+  };
+}
+
 function CardRecycler({ lang = 'ptbr' }) {
-  const { cardCollection, addCoins, removeCardInstance } = useContext(AppContext);
+  const { cardCollection, decks, activeGuardian, recycleCardInstances } = useContext(AppContext);
   const [selectedCards, setSelectedCards] = useState(new Set());
   const [focusedCardId, setFocusedCardId] = useState(null);
   const [sendQuantity, setSendQuantity] = useState(1);
@@ -61,6 +70,15 @@ function CardRecycler({ lang = 'ptbr' }) {
   const [recyclingInProgress, setRecyclingInProgress] = useState(false);
 
   const langKey = lang === 'ptbr' ? 'pt' : lang;
+
+  const protectedInstanceIds = useMemo(() => {
+    const ids = new Set();
+    Object.values(decks || {}).forEach((deck) => {
+      (deck?.cards || []).filter(Boolean).forEach((instanceId) => ids.add(instanceId));
+    });
+    if (activeGuardian?.selectedInstanceId) ids.add(activeGuardian.selectedInstanceId);
+    return ids;
+  }, [activeGuardian?.selectedInstanceId, decks]);
 
   const availableCards = useMemo(() => {
     if (!cardCollection || typeof cardCollection !== 'object') return [];
@@ -74,9 +92,10 @@ function CardRecycler({ lang = 'ptbr' }) {
           .map((instance, index) => ({
             instance,
             index,
-            key: `${creatureId}_${index}`,
+            key: `${creatureId}::${instance.instanceId}`,
             value: getCardValue(creatureId, instance, creatureData),
           }))
+          .filter((item) => item.instance?.instanceId && !protectedInstanceIds.has(item.instance.instanceId))
           .filter((item) => !selectedCards.has(item.key));
 
         if (availableInstances.length === 0) return null;
@@ -114,7 +133,7 @@ function CardRecycler({ lang = 'ptbr' }) {
       })
       .filter(Boolean)
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [cardCollection, langKey, selectedCards]);
+  }, [cardCollection, langKey, protectedInstanceIds, selectedCards]);
 
   const filteredCards = useMemo(() => {
     return availableCards.filter((card) => {
@@ -137,9 +156,9 @@ function CardRecycler({ lang = 'ptbr' }) {
     const grouped = new Map();
 
     selectedCards.forEach((key) => {
-      const [creatureId, index] = key.split('_');
+      const { cardId: creatureId, instanceId } = parseCardInstanceKey(key);
       const instances = cardCollection?.[creatureId];
-      const instance = instances?.[Number(index)];
+      const instance = instances?.find((item) => item?.instanceId === instanceId);
       if (!instance) return;
 
       const creatureData = creaturePool.find((card) => card.id === creatureId);
@@ -235,19 +254,16 @@ function CardRecycler({ lang = 'ptbr' }) {
     setSelectedCards(new Set());
   };
 
-  const handleRecycleCards = async () => {
-    if (selectedCards.size === 0) return;
+  const handleRecycleCards = () => {
+    if (selectedCards.size === 0 || recyclingInProgress) return;
 
     setRecyclingInProgress(true);
     try {
-      addCoins(totalCoinsCalculated);
-
-      selectedCards.forEach((key) => {
-        const [creatureId, index] = key.split('_');
-        const instances = cardCollection?.[creatureId];
-        const instanceId = instances?.[Number(index)]?.instanceId;
-        if (instanceId) removeCardInstance(creatureId, instanceId);
-      });
+      const requests = Array.from(selectedCards, (key) => parseCardInstanceKey(key));
+      const result = recycleCardInstances(requests);
+      if (result.skipped.length > 0) {
+        console.warn('Algumas cartas não foram recicladas por estarem em uso ou não existirem mais.', result.skipped);
+      }
 
       setSelectedCards(new Set());
       setTimeout(() => setRecyclingInProgress(false), 500);
@@ -493,22 +509,6 @@ function CardRecycler({ lang = 'ptbr' }) {
                   className="selected-card-item"
                   style={{ borderLeftColor: elementColors[card.element] || '#a87e2d' }}
                 >
-                  <button
-                    className="remove-card-btn"
-                    onClick={() => removeOneFromQueue(card)}
-                    title="Remover uma"
-                    type="button"
-                  >
-                    -
-                  </button>
-                  <button
-                    className="remove-all-card-btn"
-                    onClick={() => removeAllFromQueue(card)}
-                    title="Remover todas"
-                    type="button"
-                  >
-                    x
-                  </button>
                   <div className="card-item-thumbnail">
                     {getImageSrc(card.img) && (
                       <img src={getImageSrc(card.img)} alt={card.name} className="card-thumbnail-img" />
@@ -526,6 +526,26 @@ function CardRecycler({ lang = 'ptbr' }) {
                     </div>
                   </div>
                   <div className="card-item-value">+{card.totalValue}</div>
+                  <div className="queue-item-actions">
+                    <button
+                      className="remove-card-btn"
+                      onClick={() => removeOneFromQueue(card)}
+                      title="Diminuir quantidade"
+                      aria-label={`Remover uma cópia de ${card.name}`}
+                      type="button"
+                    >
+                      −
+                    </button>
+                    <button
+                      className="remove-all-card-btn"
+                      onClick={() => removeAllFromQueue(card)}
+                      title="Remover da fila"
+                      aria-label={`Remover todas as cópias de ${card.name}`}
+                      type="button"
+                    >
+                      ×
+                    </button>
+                  </div>
                 </div>
               ))
             ) : (

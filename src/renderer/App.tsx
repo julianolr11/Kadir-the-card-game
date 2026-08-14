@@ -41,21 +41,32 @@ export default function App() {
   const [releaseNotes, setReleaseNotes] = useState('');
   const [updateVersion, setUpdateVersion] = useState('');
 
-  // Detectar fullscreen
+  // Restaurar preferências de vídeo e refletir o estado nativo do Electron no DOM.
   useEffect(() => {
-    const checkFullscreen = () => {
-      const isFullscreen = document.fullscreenElement ||
-        (document as any).webkitFullscreenElement ||
-        (document as any).mozFullScreenElement;
-      document.body.classList.toggle('is-fullscreen', !!isFullscreen);
+    const savedResolution = localStorage.getItem('resolution') || '1280x720';
+    const resolutionMatch = /^(\d+)x(\d+)$/.exec(savedResolution);
+    const resolution = resolutionMatch
+      ? { width: Number(resolutionMatch[1]), height: Number(resolutionMatch[2]) }
+      : { width: 1280, height: 720 };
+    const fullscreen = localStorage.getItem('fullscreen') === 'true';
+
+    const reflectDisplayState = (state: { fullscreen: boolean }) => {
+      document.body.classList.toggle('is-fullscreen', state.fullscreen);
     };
-    document.addEventListener('fullscreenchange', checkFullscreen);
-    document.addEventListener('webkitfullscreenchange', checkFullscreen);
-    document.addEventListener('mozfullscreenchange', checkFullscreen);
+
+    const unsubscribe = window.electron?.ipcRenderer?.onDisplayStateChanged?.(
+      reflectDisplayState,
+    );
+
+    window.electron?.ipcRenderer?.applyDisplaySettings?.({
+      ...resolution,
+      fullscreen,
+    }).then(reflectDisplayState).catch((error: unknown) => {
+      console.error('Não foi possível restaurar as opções de vídeo:', error);
+    });
+
     return () => {
-      document.removeEventListener('fullscreenchange', checkFullscreen);
-      document.removeEventListener('webkitfullscreenchange', checkFullscreen);
-      document.removeEventListener('mozfullscreenchange', checkFullscreen);
+      unsubscribe?.();
     };
   }, []);
 
@@ -260,11 +271,17 @@ export default function App() {
       {routeCurtain !== 'hidden' && (
         <div className={`route-black-curtain ${routeCurtain}`} aria-hidden>
           {routeCurtain === 'covering' && (
-            <>
+            <div className="route-curtain-content">
               <div className="route-curtain-rune" />
-              <div className="route-curtain-card" />
-              <div className="route-curtain-text">Carregando jornada</div>
-            </>
+              <div className="route-curtain-card" aria-hidden />
+              <div className="route-curtain-copy">
+                <span className="route-curtain-kicker">KADIR</span>
+                <div className="route-curtain-text">Preparando sua jornada</div>
+                <div className="route-curtain-progress" aria-hidden>
+                  <i /><i /><i />
+                </div>
+              </div>
+            </div>
           )}
         </div>
       )}

@@ -289,6 +289,7 @@ function Shop({ onBack }) {
       />
 
       {/* Botão de Voltar (Direita) */}
+      <div className="shop-shell">
       <button
         className="shop-back-btn"
         onClick={onBack}
@@ -300,16 +301,26 @@ function Shop({ onBack }) {
           }
         }}
       >
-        <span className="shop-back-text">Principal</span>
+        <span className="shop-back-text">Voltar</span>
         <span className="shop-back-arrow">→</span>
       </button>
 
       {/* Título e Saldo de Moedas */}
       <div className="shop-header">
-        <h1 className="shop-title">Loja</h1>
-        <div className="shop-coins-display">
-          <img src={coinIcon} alt="Moedas" className="coin-icon-large" />
-          <span className="coin-amount">{coins.toLocaleString()}</span>
+        <div className="shop-heading">
+          <span className="shop-eyebrow">Mercado do reino</span>
+          <h1 className="shop-title">Loja</h1>
+        </div>
+        <div className="shop-wallet">
+          <div className="shop-wallet-item">
+            <img src={coinIcon} alt="Moedas" className="coin-icon-large" />
+            <div><span>Seu saldo</span><strong>{coins.toLocaleString()}</strong></div>
+          </div>
+          <div className="shop-wallet-divider" />
+          <div className="shop-wallet-item shop-wallet-boosters">
+            <span className="shop-pack-icon">◆</span>
+            <div><span>Boosters</span><strong>{boosters}</strong></div>
+          </div>
         </div>
       </div>
 
@@ -320,7 +331,9 @@ function Shop({ onBack }) {
           <div className={`shop-preview-card ${isFading ? 'fade-out' : 'fade-in'}`}>
             {selectedProduct && (
               <>
+                <div className="preview-kicker">Oferta selecionada</div>
                 <div className="preview-image-container">
+                  <div className="preview-spotlight" aria-hidden="true" />
                   <img
                     src={selectedProduct.image}
                     alt={selectedProduct.name[currentLang]}
@@ -350,16 +363,24 @@ function Shop({ onBack }) {
                   <p className="preview-product-description">
                     {selectedProduct.description[currentLang]}
                   </p>
-                  <div className="preview-product-price">
-                    <img src={coinIcon} alt="Moedas" className="coin-icon-small" />
-                    <span className="price-amount">{selectedProduct.price}</span>
+                  <div className="preview-benefits">
+                    <span>Entrega imediata</span>
+                    <span>{selectedProduct.type === 'booster' ? 'Conteúdo surpresa' : 'Raridade garantida'}</span>
+                  </div>
+                  <div className="preview-purchase-row">
+                    <div className="preview-product-price">
+                      <span className="preview-price-label">Preço</span>
+                      <img src={coinIcon} alt="Moedas" className="coin-icon-small" />
+                      <span className="price-amount">{selectedProduct.price}</span>
+                    </div>
                   </div>
                   <button
                     className={`purchase-button ${!canAfford ? 'disabled' : ''} ${purchaseSuccess ? 'success' : ''}`}
                     onClick={handlePurchase}
                     disabled={!canAfford || purchaseSuccess}
                   >
-                    {purchaseSuccess ? '✓ Comprado!' : !canAfford ? 'Moedas Insuficientes' : 'Comprar'}
+                    <span>{purchaseSuccess ? '✓ Comprado!' : !canAfford ? 'Moedas insuficientes' : 'Comprar agora'}</span>
+                    {canAfford && !purchaseSuccess && <span className="purchase-button-arrow">→</span>}
                   </button>
                 </div>
               </>
@@ -369,16 +390,35 @@ function Shop({ onBack }) {
 
         {/* Coluna Direita: Grid de Produtos */}
         <div className="shop-products-column">
+          <div className="shop-catalog-header">
+            <div>
+              <span className="shop-eyebrow">Catálogo</span>
+              <h2>Escolha sua recompensa</h2>
+            </div>
+            <span className="shop-offer-count">{SHOP_PRODUCTS.length} ofertas</span>
+          </div>
           <div className="shop-products-grid">
             {SHOP_PRODUCTS.map((product) => (
               <div
                 key={product.id}
                 className={`product-card ${selectedProduct?.id === product.id ? 'selected' : ''} ${product.rarityColor ? 'rarity-card' : ''}`}
                 onClick={() => handleProductClick(product)}
+                role="button"
+                tabIndex={0}
+                aria-pressed={selectedProduct?.id === product.id}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    handleProductClick(product);
+                  }
+                }}
                 style={product.rarityColor ? {
                   borderColor: product.rarityColor
                 } : {}}
               >
+                {selectedProduct?.id === product.id && (
+                  <span className="product-selected-mark">Selecionado</span>
+                )}
                 <div className="product-card-image">
                   <img
                     src={product.image}
@@ -392,6 +432,9 @@ function Shop({ onBack }) {
                   {/* rarity indicator removed from product card per UI request */}
                 </div>
                 <div className="product-card-info">
+                  <span className="product-card-type">
+                    {product.type === 'booster' ? `${product.quantity} ${product.quantity === 1 ? 'booster' : 'boosters'}` : 'Carta garantida'}
+                  </span>
                   <h3 className="product-card-name">{product.name[currentLang]}</h3>
                   <div className="product-card-price">
                     <img src={coinIcon} alt="Moedas" className="coin-icon-small" />
@@ -404,9 +447,6 @@ function Shop({ onBack }) {
         </div>
       </div>
 
-      {/* Informação de Boosters Atuais */}
-      <div className="shop-booster-info">
-        <span>Boosters disponíveis: <strong>{boosters}</strong></span>
       </div>
 
       {/* Modal de Revelação de Carta */}

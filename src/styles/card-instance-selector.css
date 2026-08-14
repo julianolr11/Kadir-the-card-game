@@ -234,6 +234,13 @@
   text-shadow: 0 0 8px rgba(251, 191, 36, 0.8);
 }
 
+.holo-badge.full-art-badge {
+  border-color: rgba(255, 215, 112, .72);
+  background: linear-gradient(110deg, rgba(88,44,18,.95), rgba(192,132,35,.92));
+  color: #fff0bd;
+  text-shadow: 0 0 12px rgba(255,205,92,.55);
+}
+
 @keyframes glow {
   0%,
   100% {
@@ -410,6 +417,15 @@
   flex: 0 0 370px;
   transform: scale(0.66);
   transform-origin: top left;
+}
+
+.instance-card-preview-scale.full-art-preview > .kadir-full-art-card {
+  width: 420px;
+  min-width: 420px;
+  flex: 0 0 420px;
+  transform: scale(0.585);
+  transform-origin: top left;
+  animation: none;
 }
 
 .instance-card-preview-scale.adorning {
@@ -593,6 +609,23 @@
   opacity: 0.52;
   filter: grayscale(0.18);
 }
+
+.instance-preview-fullart-btn {
+  width: 100%;
+  min-height: 42px;
+  margin-top: 9px;
+  border: 1px solid rgba(255, 220, 126, .8);
+  border-radius: 9px;
+  background: linear-gradient(110deg, #4e2511, #d19a32 48%, #6b3517);
+  color: #fff2c8;
+  font: 900 12px/1 'Cinzel', serif;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  box-shadow: 0 8px 24px rgba(209,154,50,.28), inset 0 1px rgba(255,255,255,.25);
+  cursor: pointer;
+}
+.instance-preview-fullart-btn:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.15); }
+.instance-preview-fullart-btn:disabled { cursor: not-allowed; opacity: .48; filter: grayscale(.3); }
 
 .instance-selector-btn {
   flex: 1;

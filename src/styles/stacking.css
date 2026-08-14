@@ -29,6 +29,7 @@
    --z-battle-backdrop: 10600;
    --z-ghost-preview: 11000;
    --z-card-modal: 12000;
+   --z-battle-result: 20000;
 
    /* Named shortcuts for common effects */
    --z-shield: 4200; /* sits under hand/ghost but above creature art */
@@ -93,7 +94,8 @@
 }
 
 /* Battle result modal and overlay */
-.battle-result-overlay, .battle-result-modal { z-index: var(--z-battle-backdrop) !important; }
+.battle-result-overlay { z-index: var(--z-battle-result) !important; }
+.battle-result-modal { z-index: 1 !important; }
 
 /* Status/Effects portal and common effect layers */
 #kadir-status-overlays, .layer-effects, .z-effects { z-index: var(--z-effects-base) !important; }

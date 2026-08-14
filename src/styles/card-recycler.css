@@ -572,7 +572,7 @@
 .selected-card-item {
   position: relative;
   min-height: 76px;
-  padding: 10px 42px 10px 10px;
+  padding: 10px;
   border: 1px solid rgba(255,255,255,0.08);
   border-left: 4px solid;
   border-radius: 8px;
@@ -662,10 +662,9 @@
 
 .remove-card-btn,
 .remove-all-card-btn {
-  position: absolute;
-  right: 8px;
-  width: 24px;
-  height: 24px;
+  position: static;
+  width: 28px;
+  height: 28px;
   border: 1px solid rgba(255,255,255,0.16);
   border-radius: 50%;
   background: rgba(24,10,10,0.86);
@@ -673,16 +672,27 @@
   cursor: pointer;
   display: grid;
   place-items: center;
-  font-size: 0.94rem;
+  font-size: 1rem;
   line-height: 1;
 }
 
-.remove-card-btn {
-  top: 8px;
+.queue-item-actions {
+  flex: 0 0 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.remove-all-card-btn {
-  top: 38px;
+.remove-card-btn:hover {
+  border-color: rgba(243,199,94,.5);
+  background: rgba(95,65,18,.78);
+  color: #ffe5a1;
+}
+
+.remove-all-card-btn:hover {
+  border-color: rgba(255,112,112,.5);
+  background: rgba(102,26,31,.82);
+  color: #ffc0b8;
 }
 
 .selected-empty {

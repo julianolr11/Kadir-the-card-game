@@ -8,6 +8,7 @@ import airSfx from '../assets/sounds/effects/elements/air.MP3';
 import battleMusic from '../assets/sounds/music/battle-music.mp3';
 import * as effectRegistry from '../utils/effectRegistry';
 import { creatureRarities, RARITY_TIERS } from '../assets/rarityData';
+import { resolveAbility } from '../logic/abilityResolver';
 
 export const BattleContext = createContext(null);
 
@@ -78,9 +79,10 @@ const getCreaturePowerScore = (card) => {
 const buildCampaignAiDeck = (opponent, stage) => {
   const maxRarityRank = RARITY_ORDER[stage.maxRarity] || 0;
   const typeKey = opponent?.typeKey ? normalizeCampaignType(opponent.typeKey) : null;
-  const allCreatures = (Array.isArray(creaturesPool) ? creaturesPool : [])
+  const validCreatures = (Array.isArray(creaturesPool) ? creaturesPool : [])
+    .filter((card) => card?.id && card.type !== 'field' && card.type !== 'effect');
+  const allCreatures = validCreatures
     .filter((card) => {
-      if (!card?.id || card.type === 'field' || card.type === 'effect') return false;
       if (typeKey && normalizeCampaignType(card.type) !== typeKey) return false;
       return true;
     })
@@ -97,13 +99,28 @@ const buildCampaignAiDeck = (opponent, stage) => {
   const opponentCard = opponentCardId && creaturesPool.find(card => card.id === opponentCardId);
   const selected = opponentCard ? [opponentCard.id] : [];
   const sourcePool = pool.length > 0 ? pool : allCreatures;
-  const windowSize = Math.min(sourcePool.length, Math.max(3, 4 + stage.buildLevel));
-  const candidates = sourcePool.slice(0, windowSize);
+  const minimumUniqueCards = Math.ceil(stage.deckSize / 2);
+  const windowSize = Math.max(minimumUniqueCards, 4 + stage.buildLevel);
+  const candidateIds = [
+    ...sourcePool,
+    ...allCreatures,
+    ...validCreatures.sort((a, b) => getCreaturePowerScore(a) - getCreaturePowerScore(b)),
+  ].map(card => card.id);
+  const candidates = [...new Set(candidateIds)].slice(0, windowSize);
+  const copyCounts = selected.reduce((counts, cardId) => {
+    counts[cardId] = (counts[cardId] || 0) + 1;
+    return counts;
+  }, {});
 
   let cursor = 0;
   while (selected.length < stage.deckSize && candidates.length > 0) {
-    selected.push(candidates[cursor % candidates.length].id);
+    const cardId = candidates[cursor % candidates.length];
+    if ((copyCounts[cardId] || 0) < 2) {
+      selected.push(cardId);
+      copyCounts[cardId] = (copyCounts[cardId] || 0) + 1;
+    }
     cursor += 1;
+    if (cursor >= candidates.length * 2) break;
   }
 
   return shuffle(selected);
@@ -257,6 +274,20 @@ const isDragonCreature = (creature) => {
   return typeText.includes('drac') || typeText.includes('dragon') || typeText.includes('dragão') || typeText.includes('dragao');
 };
 
+// Monta os buffs iniciais de uma criatura recém-invocada (ex: esquiva temporária de perks como AGILE_SPIRIT)
+const buildInitialBuffs = (build) => {
+  const evasion = build?.perkEffects?.evasionOnSummon;
+  if (!evasion) return [];
+  return [{
+    id: `buff_evasion_summon_${Date.now()}`,
+    name: 'Esquiva ao Invocar',
+    stat: 'dodge',
+    value: evasion.value,
+    duration: evasion.duration,
+    type: 'flat',
+  }];
+};
+
 export function BattleProvider({ children }) {
   const { decks, cardCollection, effectsVolume, musicVolume, loadGuardianLoadout } = useContext(AppContext);
   const battleAudioRef = useRef(null);
@@ -291,6 +322,9 @@ export function BattleProvider({ children }) {
       }
     }
 
+    // Efeitos de combate genéricos concedidos por perks (consumidos por effectRegistry/BattleContext)
+    const combatPerkEffects = {};
+
     // Aplica perks conhecidos
     switch (selectedPerkId) {
       case 'ATTACK_PLUS_1':
@@ -314,6 +348,62 @@ export function BattleProvider({ children }) {
         break;
       case 'EXTRA_STAMINA':
         dragonAllyAttackBonus = true;
+        break;
+      // Fogo — Ashfang
+      case 'LAVA_SKIN':
+        combatPerkEffects.flatDamageReduction = 1;
+        break;
+      case 'VOLCANIC_BREATH':
+        combatPerkEffects.healOnKill = 1;
+        break;
+      case 'INCANDESCENT_FURY':
+        combatPerkEffects.burnDamageBonus = 1;
+        break;
+      case 'WILD_INSTINCT':
+        combatPerkEffects.attackOnDamageTaken = 1;
+        break;
+      // Fogo — Digitama
+      case 'AGILE_SPIRIT':
+        combatPerkEffects.evasionOnSummon = { value: 0.15, duration: 2 };
+        break;
+      case 'PERSISTENT_FLAME':
+        combatPerkEffects.burnDurationBonus = 1;
+        break;
+      case 'MYSTIC_BREATH':
+        combatPerkEffects.healOnKill = 1;
+        break;
+      case 'PROTECTIVE_FIRE':
+        combatPerkEffects.shieldIfStatusActiveOnTurnStart = { status: 'burn', amount: 1 };
+        break;
+      // Fogo — Ekeranth
+      case 'ARMOR_PLUS_2':
+        combatPerkEffects.flatDamageReduction = 2;
+        break;
+      // Perks genéricos compartilhados por vários guardiões
+      case 'CRIT_CHANCE':
+        combatPerkEffects.critChance = 0.15;
+        combatPerkEffects.critBonus = 2;
+        break;
+      case 'DODGE_INCREASE':
+        combatPerkEffects.dodgeChance = 0.15;
+        break;
+      case 'EVASION_BONUS':
+        combatPerkEffects.dodgeChance = 0.2;
+        break;
+      case 'EVASION_PLUS_8':
+        combatPerkEffects.dodgeChance = 0.08;
+        break;
+      case 'DEFENSE_REDUCTION':
+        combatPerkEffects.defenseDebuffOnAttack = { value: 1, duration: 2 };
+        break;
+      case 'LIFESTEAL_INCREASE':
+        combatPerkEffects.lifestealOnDamage = 1;
+        break;
+      case 'MAGIC_RESISTANCE':
+        combatPerkEffects.magicResistance = 1;
+        break;
+      case 'PARALYZE_CHANCE_10':
+        combatPerkEffects.paralyzeChanceOnAttack = 0.1;
         break;
       default:
         break;
@@ -472,24 +562,7 @@ export function BattleProvider({ children }) {
           return required <= maxLevel;
         })
         .slice(0, 2)
-        .map((s) => ({
-          name: s.name,
-          cost: s.cost || 1,
-          desc: s.desc,
-          damage: s.damage,
-          type: s.type,
-          statusEffect: s.statusEffect,
-          duration: s.duration,
-          value: s.value,
-          removeShield: s.removeShield,
-          coinStatusEffect: s.coinStatusEffect,
-          coinStatusDuration: s.coinStatusDuration,
-          coinStatusValue: s.coinStatusValue,
-          coinExtraDamage: s.coinExtraDamage,
-          coinSelfDamage: s.coinSelfDamage,
-          healOnKill: s.healOnKill,
-          _skillId: s.id,
-        }));
+        .map((s) => ({ ...s, cost: s.cost || 1, _skillId: s.id }));
     }
     if (selectedAbilities.length === 0) {
       selectedAbilities = (creatureData.abilities || []).slice(0, 2);
@@ -497,7 +570,7 @@ export function BattleProvider({ children }) {
 
     const hp = baseHp + hpBoost;
     const maxHp = hp;
-    return { atk, def, hp, maxHp, abilities: selectedAbilities, perkEffects: { shieldOnSummon, firstAttackNegated, dragonAllyAttackBonus }, hasIgnisBlessing, hasVirideerBlessing, hasEkerenthBlessing, hasOwlberothBlessing, hasNihilBlessing, hasDrazraqBlessing, hasLeoracalBlessing, hasSeractBlessing, hasNoctyraBlessing, hasMawthornBlessing, hasAlatoyBlessing, hasPawferionBlessing, hasEkonosBlessing, hasBeoxyrBlessing, hasArguíliaBlessing, hasKaelBlessing, hasAshfangBlessing, hasZephyronBlessing, hasArigusBlessing, hasRoenhellBlessing, hasMoarBlessing, hasElderoxBlessing, hasGravhyrBlessing, hasDraakBlessing };
+    return { atk, def, hp, maxHp, abilities: selectedAbilities, perkEffects: { shieldOnSummon, firstAttackNegated, dragonAllyAttackBonus, ...combatPerkEffects }, hasIgnisBlessing, hasVirideerBlessing, hasEkerenthBlessing, hasOwlberothBlessing, hasNihilBlessing, hasDrazraqBlessing, hasLeoracalBlessing, hasSeractBlessing, hasNoctyraBlessing, hasMawthornBlessing, hasAlatoyBlessing, hasPawferionBlessing, hasEkonosBlessing, hasBeoxyrBlessing, hasArguíliaBlessing, hasKaelBlessing, hasAshfangBlessing, hasZephyronBlessing, hasArigusBlessing, hasRoenhellBlessing, hasMoarBlessing, hasElderoxBlessing, hasGravhyrBlessing, hasDraakBlessing };
   }, [loadGuardianLoadout, cardCollection]);
 
   const playFieldChangeSound = useCallback(() => {
@@ -1340,6 +1413,10 @@ export function BattleProvider({ children }) {
       }
       console.log('summonFromHand resolved baseId:', baseId);
 
+      const sourceInstance = (cardCollection?.[baseId] || []).find(
+        (inst) => inst.instanceId === cardId
+      );
+
       // Verifica se é carta de efeito - NÃO PODE SER INVOCADA
       if (String(baseId).toLowerCase().startsWith('effect_')) {
         return {
@@ -1385,6 +1462,9 @@ export function BattleProvider({ children }) {
       const creature = {
         id: cardId, // Mantém o instanceId original para identificação única
         baseId: baseId, // ID da base da criatura para carregar dados
+        // Preserva a variante visual no estado da batalha para campo e previews.
+        isHolo: Boolean(sourceInstance?.isHolo),
+        isFullArt: Boolean(sourceInstance?.isFullArt),
         name: creatureData.name?.pt || creatureData.name?.en || baseId,
         type: creatureData.type?.pt || creatureData.type?.en,
         element: creatureData.element || 'puro',
@@ -1393,12 +1473,13 @@ export function BattleProvider({ children }) {
         atk: summonAtk,
         def: build.def,
         abilities: build.abilities,
-        buffs: [],
+        buffs: buildInitialBuffs(build),
         debuffs: [],
         shield: build.perkEffects?.shieldOnSummon?.amount || 0,
         shieldTurns: build.perkEffects?.shieldOnSummon?.duration || 0,
         statusEffects: [],
         firstAttackNegated: !!build.perkEffects?.firstAttackNegated,
+        perkEffects: build.perkEffects || {},
         hasGravhyrBlessing: !!build.hasGravhyrBlessing,
         hasDraakBlessing: !!build.hasDraakBlessing,
       };
@@ -1578,6 +1659,17 @@ export function BattleProvider({ children }) {
           // Rouba 1 vida do adversário e adiciona ao jogador
           newState.player.orbs = Math.min(currentPlayerOrbs + 1, 5);
           newState.ai.orbs = Math.max(currentAiOrbs - 1, 0);
+          if (newState.ai.orbs === 0) {
+            newState.phase = 'ended';
+            newState.gameResult = {
+              winner: 'player',
+              loser: 'ai',
+              kills: newState.killFeed,
+              turns: newState.turn,
+              stats: newState.battleStats,
+            };
+            newState.log.push('A Noctyra drenou o último orbe do adversário! FIM DE JOGO!');
+          }
           newState.log.push(`${creature.name} drenou 1 vida do adversário!`);
         } else if (currentPlayerOrbs >= 5) {
           newState.log.push(`${creature.name} não pode drenar vida - você já está com vida máxima!`);
@@ -2731,6 +2823,7 @@ export function BattleProvider({ children }) {
               value: ability.value,
             }
           : mappings.find(m => descText.includes(m.key)));
+      const resolvedAbility = resolveAbility(ability);
       let result;
       let animPayload = null;
 
@@ -2742,13 +2835,14 @@ export function BattleProvider({ children }) {
         ? Math.random() < 0.5
         : null;
       const coinDamageBonus = coinIsHeads && ability.coinExtraDamage ? ability.coinExtraDamage : 0;
-      const baseDamage = (typeof ability.damage === 'number' ? ability.damage : (ability.cost * 2 + 1)) + draakDamageBonus + coinDamageBonus;
+      const baseDamage = resolvedAbility.damage + draakDamageBonus + coinDamageBonus;
       result = effectRegistry.applyDamage(s, {
         attackerId,
         targetId,
         baseDamage,
         attackerElement: attacker.element,
         ignoreShield: !!ability.removeShield,
+        applyCombatPerks: true,
       });
 
       // Marca a criatura como tendo usado uma habilidade neste turno
@@ -2808,17 +2902,17 @@ export function BattleProvider({ children }) {
 
           // Se tiver status effect na descrição, aplica também
           let sleepApplied = false;
-          if (match) {
-            console.log('Aplicando status effect adicional:', match.type);
+          if (!ability.coinStatusEffect) resolvedAbility.statuses.forEach((status) => {
+            console.log('Aplicando status effect adicional:', status.type);
             const statusResult = effectRegistry.applyStatusEffect(result.newState, {
               targetId,
-              effectType: match.type,
-              duration: match.duration,
-              value: match.value,
+              effectType: status.type,
+              duration: status.duration,
+              value: status.value,
               attackerId,
             });
             // Detecta se foi aplicado sleep
-            if (match.type === 'sleep') {
+            if (status.type === 'sleep') {
               // Verifica se o status foi realmente aplicado (duração > 0)
               const targetAfter = statusResult.newState[targetSide].field.slots.find(slot => slot?.id === targetId);
               if (targetAfter && (targetAfter.statusEffects || []).some(e => e.type === 'sleep' && e.duration > 0)) {
@@ -2827,9 +2921,28 @@ export function BattleProvider({ children }) {
             }
             result.newState = statusResult.newState;
             result.log = [...result.log, ...statusResult.log];
-          }
+          });
 
           // Deduz essência e aplica animação de dano
+          if (resolvedAbility.heal) {
+            const healResult = effectRegistry.applyHeal(result.newState, {
+              targetId: attackerId,
+              healAmount: resolvedAbility.heal,
+            });
+            result.newState = healResult.newState;
+            result.log = [...result.log, ...healResult.log];
+          }
+
+          if (resolvedAbility.shield) {
+            const shieldResult = effectRegistry.applyShield(result.newState, {
+              targetId: attackerId,
+              shieldAmount: resolvedAbility.shield,
+              duration: ability.duration || 1,
+            });
+            result.newState = shieldResult.newState;
+            result.log = [...result.log, ...shieldResult.log];
+          }
+
           if (ability.coinStatusEffect && coinIsHeads) {
             const statusResult = effectRegistry.applyStatusEffect(result.newState, {
               targetId,
@@ -3762,9 +3875,20 @@ export function BattleProvider({ children }) {
     if (build.hasNoctyraBlessing) {
       const aiOrbs = s.ai?.orbs || 0;
       const playerOrbs = s.player?.orbs || 0;
-      if (aiOrbs < 5 && playerOrbs > 1) {
+      if (aiOrbs < 5 && playerOrbs > 0) {
         s.ai = { ...s.ai, orbs: Math.min(aiOrbs + 1, 5) };
         s.player = { ...s.player, orbs: Math.max(playerOrbs - 1, 0) };
+        if (s.player.orbs === 0) {
+          s.phase = 'ended';
+          s.gameResult = {
+            winner: 'ai',
+            loser: 'player',
+            kills: s.killFeed,
+            turns: s.turn,
+            stats: s.battleStats,
+          };
+          nextLog = [...nextLog, 'A Noctyra drenou seu último orbe! FIM DE JOGO!'];
+        }
         nextLog = [...nextLog, `${creatureName} drenou 1 vida do seu guardião!`];
       }
     }
@@ -4139,12 +4263,13 @@ export function BattleProvider({ children }) {
             atk: summonAtk,
             def: build.def,
             abilities: build.abilities,
-            buffs: [],
+            buffs: buildInitialBuffs(build),
             debuffs: [],
             shield: build.perkEffects?.shieldOnSummon?.amount || 0,
             shieldTurns: build.perkEffects?.shieldOnSummon?.duration || 0,
             statusEffects: [],
             firstAttackNegated: !!build.perkEffects?.firstAttackNegated,
+            perkEffects: build.perkEffects || {},
             hasGravhyrBlessing: !!build.hasGravhyrBlessing,
             hasDraakBlessing: !!build.hasDraakBlessing,
           };
@@ -4318,12 +4443,13 @@ export function BattleProvider({ children }) {
             atk: summonAtk,
             def: build.def,
             abilities: build.abilities,
-            buffs: [],
+            buffs: buildInitialBuffs(build),
             debuffs: [],
             shield: build.perkEffects?.shieldOnSummon?.amount || 0,
             shieldTurns: build.perkEffects?.shieldOnSummon?.duration || 0,
             statusEffects: [],
             firstAttackNegated: !!build.perkEffects?.firstAttackNegated,
+            perkEffects: build.perkEffects || {},
             hasGravhyrBlessing: !!build.hasGravhyrBlessing,
             hasDraakBlessing: !!build.hasDraakBlessing,
           };
@@ -4369,12 +4495,13 @@ export function BattleProvider({ children }) {
             atk: summonAtk,
             def: build.def,
             abilities: build.abilities,
-            buffs: [],
+            buffs: buildInitialBuffs(build),
             debuffs: [],
           shield: build.perkEffects?.shieldOnSummon?.amount || 0,
           shieldTurns: build.perkEffects?.shieldOnSummon?.duration || 0,
           statusEffects: [],
           firstAttackNegated: !!build.perkEffects?.firstAttackNegated,
+          perkEffects: build.perkEffects || {},
           hasGravhyrBlessing: !!build.hasGravhyrBlessing,
           hasDraakBlessing: !!build.hasDraakBlessing,
         };

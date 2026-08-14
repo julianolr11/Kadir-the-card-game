@@ -2,9 +2,11 @@ import React, { useEffect, useMemo } from 'react';
 import { BattleProvider, useBattle } from '../context/BattleContext';
 import { AppContext } from '../context/AppContext';
 import CreatureCardPreview from './CreatureCardPreview.jsx';
+import { FullArtCard } from './KadirFullArtPreview.jsx';
 import BattleResultModal from './BattleResultModal.jsx';
 import CoinFlip from './CoinFlip.jsx';
 import heartIcon from '../assets/img/icons/hearticon.png';
+import coinIcon from '../assets/img/icons/head.png';
 import essenceIcon from '../assets/img/icons/soul-essence.png';
 import cardVerso from '../assets/img/card/verso.png';
 import '../styles/battle.css';
@@ -29,6 +31,13 @@ import HandPortal from './HandPortal.jsx';
 import BattleModalPortal from './BattleModalPortal.jsx';
 import swordPng from '../assets/img/icons/sword.png';
 import { unlockNextCampaignEnemy } from './CampaignTower.jsx';
+import StatusText from './StatusText.jsx';
+
+const getBattleExitRoute = (battleConfig) => {
+  if (battleConfig?.mode === 'campaign') return 'campaign';
+  if (battleConfig?.mode === 'training') return 'deck';
+  return 'home';
+};
 
 function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
   const {
@@ -67,7 +76,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
     applyVirideerBless,
     cancelVirideerBless,
   } = useBattle();
-  const { cardCollection, effectsVolume } = React.useContext(AppContext);
+  const { cardCollection, effectsVolume, lang = 'ptbr', coins, spendCoins } = React.useContext(AppContext);
   const [activeCardIndex, setActiveCardIndex] = React.useState(null);
   const [deckCardDrawn, setDeckCardDrawn] = React.useState(false);
   const [opponentDeckCardDrawn, setOpponentDeckCardDrawn] = React.useState(false);
@@ -97,6 +106,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
   const [selectedAbility, setSelectedAbility] = React.useState(null); // { slotIndex, abilityIndex } - entra em modo targeting
   const [selectedFieldCreature, setSelectedFieldCreature] = React.useState(null); // { slotIndex, creature } - preview da carta em campo
   const [usedAttackNoticeOpen, setUsedAttackNoticeOpen] = React.useState(false);
+  const [abandonConfirmOpen, setAbandonConfirmOpen] = React.useState(false);
   const [spectralAnimationState, setSpectralAnimationState] = React.useState(null); // 'appearing', 'present', 'disappearing', null
   const [overlayFrameTick, setOverlayFrameTick] = React.useState(0);
   const [spectralRenderCreature, setSpectralRenderCreature] = React.useState(null); // mantém criatura para animar saída
@@ -111,6 +121,8 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
   const orbDisplayTimersRef = React.useRef({});
   const lastDamageSoundKeysRef = React.useRef(new Set());
   const resultSoundKeyRef = React.useRef(null);
+  const endSequenceKeyRef = React.useRef(null);
+  const endSequenceTimersRef = React.useRef([]);
   const prevShieldValuesRef = React.useRef({});
   const shieldApplyTimersRef = React.useRef({});
   const [orbDamageState, setOrbDamageState] = React.useState({ player: false, ai: false });
@@ -118,6 +130,31 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
     player: state.player.orbs,
     ai: state.ai.orbs,
   });
+  const [endSequence, setEndSequence] = React.useState({
+    active: false,
+    stage: 'idle',
+    winner: null,
+    showModal: false,
+  });
+  const abandonPenalty = Math.min(50, Math.max(0, Number(coins) || 0));
+
+  const confirmAbandonBattle = React.useCallback(() => {
+    if (abandonPenalty > 0) spendCoins(abandonPenalty);
+
+    const previousAbandons = Number(localStorage.getItem('kadirBattleAbandons') || 0);
+    localStorage.setItem('kadirBattleAbandons', String(previousAbandons + 1));
+    setAbandonConfirmOpen(false);
+    onNavigate?.(getBattleExitRoute(battleConfig));
+  }, [abandonPenalty, battleConfig?.mode, onNavigate, spendCoins]);
+
+  useEffect(() => {
+    if (!abandonConfirmOpen) return undefined;
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') setAbandonConfirmOpen(false);
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [abandonConfirmOpen]);
 
   const showUsedAttackNotice = React.useCallback(() => {
     setUsedAttackNoticeOpen(true);
@@ -391,10 +428,60 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
   }, [playResultSound, state.gameResult, state.turn]);
 
   useEffect(() => {
+    const winner = state.gameResult?.winner;
+    if (state.phase !== 'ended' || !winner) {
+      endSequenceKeyRef.current = null;
+      setEndSequence({ active: false, stage: 'idle', winner: null, showModal: false });
+      return undefined;
+    }
+
+    const sequenceKey = `${winner}:${state.gameResult?.turns || state.turn}`;
+    if (endSequenceKeyRef.current === sequenceKey) return undefined;
+    endSequenceKeyRef.current = sequenceKey;
+
+    endSequenceTimersRef.current.forEach(window.clearTimeout);
+    endSequenceTimersRef.current = [];
+    setEndSequence({ active: true, stage: 'impact', winner, showModal: false });
+
+    endSequenceTimersRef.current.push(window.setTimeout(() => {
+      setEndSequence((current) => ({ ...current, stage: 'silence' }));
+    }, 1150));
+
+    endSequenceTimersRef.current.push(window.setTimeout(() => {
+      setEndSequence((current) => ({ ...current, stage: 'verdict' }));
+    }, 2350));
+
+    endSequenceTimersRef.current.push(window.setTimeout(() => {
+      setEndSequence((current) => ({ ...current, active: false, stage: 'complete', showModal: true }));
+    }, 4600));
+
+    return () => {
+      endSequenceTimersRef.current.forEach(window.clearTimeout);
+      endSequenceTimersRef.current = [];
+    };
+  }, [state.gameResult?.turns, state.gameResult?.winner, state.phase, state.turn]);
+
+  useEffect(() => {
     if (state.phase !== 'ended' || state.gameResult?.winner !== 'player') return;
     if (battleConfig?.mode !== 'campaign' || typeof battleConfig?.opponent?.index !== 'number') return;
     unlockNextCampaignEnemy(battleConfig.opponent.index);
   }, [battleConfig, state.phase, state.gameResult]);
+
+  // Portais de status vivem fora do tabuleiro. Limpa as animações assim que a
+  // batalha termina para que nenhum buff/debuff atravesse o modal de resultado.
+  useEffect(() => {
+    if (state.phase !== 'ended') return;
+    setHoveredCard(null);
+    setSleepOverlays([]);
+    setParalyzeOverlays([]);
+    setBleedOverlays([]);
+    setPoisonOverlays([]);
+    setFreezeOverlays([]);
+    setShieldOverlays([]);
+    setBurnFlames([]);
+    setBurnGradients([]);
+    setElderoxOverlays([]);
+  }, [state.phase]);
 
   useEffect(() => {
     const currentDamageKeys = new Set();
@@ -575,7 +662,8 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
     */
     // ...código original para criaturas...
     // Usa baseId se disponível, caso contrário usa cardId
-    const dataCardId = slotData?.baseId || cardId;
+    const resolvedCard = resolveCardId(cardId);
+    const dataCardId = slotData?.baseId || resolvedCard.baseId || cardId;
     const data = getCardData(dataCardId);
     if (!data) return <div className={`card-chip card-chip-${variant}`}><div className="card-chip-label">{cardId}</div></div>;
     const name = typeof data?.name === 'object' ? data?.name?.pt || data?.name?.en : data?.name || cardId;
@@ -613,21 +701,33 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
           </div>
         );
       }
-      const { instance } = resolveCardId(cardId);
+      const { instance } = resolvedCard;
       const level = instance?.level || 1;
       const isHolo = instance?.isHolo || false;
       return (
         <div className={`card-chip card-chip-${variant}`}>
           <div style={{ transform: 'scale(0.464)', transformOrigin: 'left top', pointerEvents: 'none' }}>
-            <CreatureCardPreview creature={data} onClose={null} level={level} isHolo={isHolo} allowFlip={false} />
+            {instance?.isFullArt
+              ? <FullArtCard card={data} lang={lang} level={level} />
+              : <CreatureCardPreview creature={data} onClose={null} level={level} isHolo={isHolo} allowFlip={false} />}
           </div>
         </div>
       );
     }
     // slot — mesma aparência da mão, só que maior
-    const { instance } = resolveCardId(cardId);
+    const { instance } = resolvedCard;
     const level = instance?.level || 1;
-    const isHolo = instance?.isHolo || false;
+    const isHolo = Boolean(slotData?.isHolo ?? instance?.isHolo);
+    const isFullArt = Boolean(slotData?.isFullArt ?? instance?.isFullArt);
+    if (isFullArt) {
+      return (
+        <div className="card-slot-preview full-art-battle-card">
+          <div className="full-art-slot-scale">
+            <FullArtCard card={data} lang={lang} level={level} currentHp={slotData?.hp} />
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="card-slot-preview">
         <CreatureCardPreview
@@ -705,7 +805,9 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                     {elementIcon && <img src={elementIcon} alt={element} className="ability-element-icon" />}
                     <span className="ability-name-full">{ab.name?.pt || ab.name?.en}</span>
                   </div>
-                  <div className="ability-desc" dangerouslySetInnerHTML={{ __html: processDescription(ab.desc?.pt || ab.desc?.en) }} />
+                  <div className="ability-desc">
+                    <StatusText text={ab.desc?.pt || ab.desc?.en} />
+                  </div>
                 </div>
               ))}
             </div>
@@ -1726,6 +1828,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
       </BattleModalPortal>
     )}
     {state.swapCardPending && state.swapCardPending.step === 'selectField' && (
+      <BattleModalPortal>
       <div style={turnModalBgStyle}>
         <div style={turnModalStyle}>
           <div style={{ fontWeight: 700, marginBottom: 12 }}>Escolha uma criatura em campo para trocar</div>
@@ -1766,8 +1869,10 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
           <button style={turnModalBtnStyle} onClick={cancelSwap}>Cancelar</button>
         </div>
       </div>
+      </BattleModalPortal>
     )}
     {state.swapCardPending && state.swapCardPending.step === 'selectGraveyard' && (
+      <BattleModalPortal>
       <div style={turnModalBgStyle}>
         <div style={turnModalStyle}>
           <div style={{ fontWeight: 700, marginBottom: 12 }}>Escolha uma criatura do cemitério para trazer</div>
@@ -1807,6 +1912,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
           <button style={turnModalBtnStyle} onClick={cancelSwap}>Cancelar</button>
         </div>
       </div>
+      </BattleModalPortal>
     )}
     {/* Modal para ressurreição do Ignis */}
     {state.resurrectionPending && (
@@ -1868,8 +1974,56 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
     )}
     <div className="battle-root">
       <div className="battle-topbar">
-        <button className="battle-exit" onClick={() => onNavigate?.('home')}>Sair</button>
+        <button
+          className="battle-exit"
+          onClick={() => {
+            if (state.phase === 'ended') {
+              onNavigate?.(getBattleExitRoute(battleConfig));
+              return;
+            }
+            setAbandonConfirmOpen(true);
+          }}
+        >
+          Sair
+        </button>
       </div>
+
+      {abandonConfirmOpen && (
+        <div className="battle-abandon-overlay" role="presentation" onMouseDown={() => setAbandonConfirmOpen(false)}>
+          <section
+            className="battle-abandon-dialog"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="battle-abandon-title"
+            aria-describedby="battle-abandon-description"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <span className="battle-abandon-kicker">Retirada de batalha</span>
+            <div className="battle-abandon-emblem" aria-hidden="true">!</div>
+            <h2 id="battle-abandon-title">Abandonar a partida?</h2>
+            <p id="battle-abandon-description">
+              Esta batalha contará como abandono e você perderá todas as recompensas conquistadas nela.
+            </p>
+            <div className="battle-abandon-penalty">
+              <span>Penalidade</span>
+              <strong>
+                <img src={coinIcon} alt="" />
+                −{abandonPenalty} moedas
+              </strong>
+              {coins < 50 && <small>Seu saldo atual será zerado.</small>}
+            </div>
+            <div className="battle-abandon-actions">
+              <button type="button" className="battle-abandon-stay" onClick={() => setAbandonConfirmOpen(false)}>
+                Continuar lutando
+              </button>
+              <button type="button" className="battle-abandon-confirm" onClick={confirmAbandonBattle}>
+                Abandonar partida
+              </button>
+            </div>
+            <small className="battle-abandon-hint">Pressione Esc para voltar à batalha</small>
+          </section>
+        </div>
+      )}
 
       <div className="opponent-hand">
         <div className="opponent-hand-cards">
@@ -1924,6 +2078,18 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
           <span className="graveyard-toggle-count">{(state.ai.graveyard?.length || 0) + (state.player.graveyard?.length || 0)}</span>
         </button>
         <div className={`graveyard-drawer graveyard-drawer-unified${graveyardOpen ? ' open' : ''}`} onClick={e => e.stopPropagation()}>
+          <div className="graveyard-unified-header">
+            <div>
+              <span className="graveyard-unified-kicker">REGISTRO DA BATALHA</span>
+              <strong>Cemitério</strong>
+            </div>
+            <button
+              type="button"
+              className="graveyard-unified-close"
+              onClick={() => setGraveyardOpen(false)}
+              aria-label="Fechar cemitério"
+            >×</button>
+          </div>
           <div className="graveyard-drawer-content">
             {/* Linha do cemitério do oponente */}
             <div className="graveyard-row graveyard-row-opponent">
@@ -1948,7 +2114,11 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                   );
                 })
               ) : (
-                <div className="graveyard-drawer-empty">Nenhuma criatura derrotada</div>
+                <div className="graveyard-drawer-empty">
+                  <span aria-hidden>◇</span>
+                  <strong>Área vazia</strong>
+                  <small>Nenhuma criatura adversária derrotada</small>
+                </div>
               )}
             </div>
             {/* Linha do cemitério do usuário */}
@@ -1974,7 +2144,11 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                   );
                 })
               ) : (
-                <div className="graveyard-drawer-empty">Nenhuma criatura derrotada</div>
+                <div className="graveyard-drawer-empty">
+                  <span aria-hidden>◇</span>
+                  <strong>Área vazia</strong>
+                  <small>Nenhuma criatura sua foi derrotada</small>
+                </div>
               )}
             </div>
           </div>
@@ -2261,6 +2435,9 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
               }
               */
               // Preview padrão para outras cartas
+              if (instance?.isFullArt) {
+                return <FullArtCard card={cardData} lang={lang} level={level} />;
+              }
               return (
                 <CreatureCardPreview
                   creature={cardData}
@@ -2354,7 +2531,14 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
             const { instance } = resolveCardId(hoveredCard.cardId);
             const cardData = getCardData(hoveredCard.cardId);
             const level = instance?.level || 1;
-            const isHolo = instance?.isHolo || false;
+
+            const hoveredSlot = hoveredCard.source === 'slot'
+              && hoveredCard.owner
+              && hoveredCard.index !== undefined
+              ? state[hoveredCard.owner]?.field?.slots?.[hoveredCard.index]
+              : null;
+            const isFullArt = Boolean(hoveredSlot?.isFullArt ?? instance?.isFullArt);
+            const isHolo = !isFullArt && Boolean(hoveredSlot?.isHolo ?? instance?.isHolo);
 
             // Busca HP atual do slot se for criatura em campo
             let currentHp = null;
@@ -2380,6 +2564,19 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
             }
 
             if (!cardData) return null;
+
+            if (isFullArt) {
+              return (
+                <div className="ghost-preview-full-art">
+                  <FullArtCard
+                    card={cardData}
+                    lang={lang}
+                    level={level}
+                    currentHp={currentHp}
+                  />
+                </div>
+              );
+            }
 
             // Campo/efeito usam o mesmo componente do preview grande para manter visual consistente.
             if (cardData.type === 'effect' || cardData.type === 'field') {
@@ -2484,12 +2681,34 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
       const cardData = getCardData(selectedFieldCreature.creature.id);
       const level = instance?.level || 1;
       const isHolo = instance?.isHolo || false;
+      const isFullArt = Boolean(selectedFieldCreature.creature.isFullArt ?? instance?.isFullArt);
 
       return (
         <BattleModalPortal>
         <div className="card-preview-overlay" onClick={() => setSelectedFieldCreature(null)}>
           <div className="card-preview-container field-preview-container" onClick={(e) => e.stopPropagation()}>
-            <CreatureCardPreview
+            {isFullArt ? (
+              <FullArtCard
+                card={cardData}
+                lang={lang}
+                level={level}
+                currentHp={selectedFieldCreature.creature.hp}
+                onAbilityClick={(abilityIndex) => {
+                  const cost = selectedFieldCreature.creature.abilities[abilityIndex]?.cost || 0;
+                  const canAfford = (state.player.essence || 0) >= cost;
+                  const isIncapacitated = (selectedFieldCreature.creature.statusEffects || []).some(e => ['paralyze', 'freeze', 'sleep'].includes(e.type) && e.duration > 0);
+                  const alreadyAttacked = state.creaturesWithUsedAbility && state.creaturesWithUsedAbility.has(selectedFieldCreature.creature.id);
+                  if (alreadyAttacked) {
+                    setSelectedFieldCreature(null);
+                    showUsedAttackNotice();
+                    return;
+                  }
+                  if (!canAfford || isIncapacitated) return;
+                  setSelectedAbility({ slotIndex: selectedFieldCreature.slotIndex, abilityIndex });
+                  setSelectedFieldCreature(null);
+                }}
+              />
+            ) : <CreatureCardPreview
               creature={cardData}
               onClose={() => setSelectedFieldCreature(null)}
               level={level}
@@ -2519,7 +2738,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
               currentHp={selectedFieldCreature.creature.hp}
               maxHp={selectedFieldCreature.creature.maxHp}
               playerEssence={state.player.essence}
-            />
+            />}
             {state.activePlayer === 'player' && (
               <button
                 type="button"
@@ -2547,14 +2766,36 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
         }}
       />
     )}
-    {state.phase === 'ended' && state.gameResult && (
+    {state.phase === 'ended' && state.gameResult && endSequence.active && (
+      <div
+        className={`battle-finale battle-finale-${endSequence.winner === 'player' ? 'victory' : 'defeat'} battle-finale-${endSequence.stage}`}
+        role="status"
+        aria-live="assertive"
+      >
+        <div className="battle-finale-vignette" />
+        <div className="battle-finale-flash" />
+        <div className="battle-finale-ring" />
+        <div className="battle-finale-sparks" aria-hidden="true">
+          {Array.from({ length: 14 }).map((_, index) => (
+            <i key={index} style={{ '--spark-index': index }} />
+          ))}
+        </div>
+        <div className="battle-finale-copy">
+          <span>{endSequence.winner === 'player' ? 'O último coração se partiu' : 'Sua última chama se apagou'}</span>
+          <strong>{endSequence.winner === 'player' ? 'Vitória decisiva' : 'Derrota'}</strong>
+          <small>{endSequence.winner === 'player' ? 'O campo pertence a você' : 'Toda lenda renasce de uma queda'}</small>
+        </div>
+      </div>
+    )}
+
+    {state.phase === 'ended' && state.gameResult && endSequence.showModal && (
 
       <BattleResultModal
         gameResult={state.gameResult}
         killFeed={state.killFeed}
         battleStats={state.battleStats}
         playerDeck={selectedDeck}
-        onClose={() => onNavigate?.(battleConfig?.mode === 'campaign' ? 'campaign' : 'home')}
+        onClose={() => onNavigate?.(getBattleExitRoute(battleConfig))}
       />
     )}
 

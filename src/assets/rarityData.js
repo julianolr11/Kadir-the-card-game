@@ -160,6 +160,7 @@ const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 export const getCardValue = (cardId, instance = {}, cardMeta = null) => {
   const level = instance?.level || 0;
   const isHolo = !!instance?.isHolo;
+  const isFullArt = !!instance?.isFullArt;
 
   // Detecta tipo da carta
   let type = null;
@@ -195,8 +196,9 @@ export const getCardValue = (cardId, instance = {}, cardMeta = null) => {
 
   // Bônus holo: flat +30
   const holoBonus = isHolo ? 30 : 0;
+  const fullArtBonus = isFullArt ? 150 : 0;
 
-  return Math.floor(baseValue + levelBonus + holoBonus);
+  return Math.floor(baseValue + levelBonus + holoBonus + fullArtBonus);
 };
 
 /**

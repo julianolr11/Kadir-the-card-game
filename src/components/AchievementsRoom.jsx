@@ -66,7 +66,10 @@ export default function AchievementsRoom({ onBack }) {
         </div>
         <div className="achievements-progress">
           <img src={trophyIcon} alt="" />
-          <span>{unlockedCount}/{badges.length}</span>
+          <span>
+            <small>Insígnias</small>
+            <strong>{unlockedCount}/{badges.length}</strong>
+          </span>
         </div>
       </header>
 
@@ -74,8 +77,11 @@ export default function AchievementsRoom({ onBack }) {
         <section className={`achievements-trophy-focus${unlockedCount === badges.length ? ' unlocked' : ' locked'}`}>
           <img src={trophyIcon} alt="" />
           <span>Campanha</span>
-          <strong>Torres dos Guardioes</strong>
-          <small>{unlockedCount === badges.length ? 'Todas as torres vencidas' : 'Venca cada torre para revelar suas insignias'}</small>
+          <strong>Torres dos Guardiões</strong>
+          <small>{unlockedCount === badges.length ? 'Todas as torres vencidas' : 'Vença cada torre para revelar suas insígnias'}</small>
+          <div className="achievements-trophy-progress" aria-label={`${unlockedCount} de ${badges.length} insígnias`}>
+            <i style={{ width: `${(unlockedCount / badges.length) * 100}%` }} />
+          </div>
         </section>
 
         <section className="achievements-badge-grid" aria-label="Insignias da campanha">
@@ -91,6 +97,9 @@ export default function AchievementsRoom({ onBack }) {
                 <span>{badge.unlocked ? 'Conquistada' : `${badge.progress}/${LEVELS_PER_TOWER}`}</span>
                 <strong>{badge.label}</strong>
                 <small>{badge.unlocked ? 'Torre vencida' : 'Bloqueada'}</small>
+                <div className="achievement-badge-meter" aria-hidden>
+                  <i style={{ width: `${(badge.progress / LEVELS_PER_TOWER) * 100}%` }} />
+                </div>
               </div>
             </article>
           ))}
@@ -98,7 +107,7 @@ export default function AchievementsRoom({ onBack }) {
       </main>
 
       <button className="achievements-bottom-back-btn" type="button" onClick={onBack}>
-        Voltar ao menu principal
+        <span aria-hidden>←</span> Voltar ao menu principal
       </button>
     </section>
   );

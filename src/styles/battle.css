@@ -1402,7 +1402,30 @@
   padding: 0;
 }
 
-.slots .slot.occupied .card-slot-preview > div {
+.card-chip-hand .kadir-full-art-card {
+  width: 390px;
+  min-width: 390px;
+  max-width: 390px;
+  animation: none;
+}
+
+.full-art-slot-scale {
+  transform: scale(1);
+  transform-origin: center center;
+  pointer-events: none;
+}
+
+.slots .slot.occupied .card-slot-preview.full-art-battle-card > .full-art-slot-scale {
+  transform: scale(1);
+}
+
+.ghost-preview-full-art > .kadir-full-art-card {
+  width: 370px;
+  min-width: 370px;
+  animation: none;
+}
+
+.slots .slot.occupied .card-slot-preview:not(.full-art-battle-card) > div {
   transform: scale(1);
   transform-origin: center center;
   pointer-events: none;
@@ -2604,7 +2627,7 @@
   color: #ffe6b0;
   font-weight: 800;
   font-size: 1.1rem;
-  padding: 10px 32px;
+  padding: 10px 12px;
   border: 3px solid rgba(255, 107, 107, 0.6);
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(168, 126, 45, 0.2);
@@ -3054,4 +3077,568 @@ body.is-fullscreen .graveyard-container {
     opacity: 0;
     transform: scale(0) rotate(360deg);
   }
+}
+
+/* ================================================================
+   ARENA RITUAL — acabamento exclusivo dos componentes do campo.
+   Mantém cartas, previews e escalas completamente independentes.
+   ================================================================ */
+
+.board {
+  isolation: isolate;
+  border: 1px solid rgba(211, 171, 91, 0.22);
+  background-color: #100b19;
+  background-image:
+    radial-gradient(circle at 50% 49%, rgba(103, 63, 151, 0.22) 0, transparent 31%),
+    radial-gradient(ellipse at 50% 50%, rgba(36, 22, 55, 0.76) 0, rgba(10, 7, 16, 0.96) 78%),
+    linear-gradient(90deg, transparent 49.9%, rgba(214, 179, 103, 0.035) 50%, transparent 50.1%);
+  box-shadow:
+    0 22px 65px rgba(0, 0, 0, 0.58),
+    inset 0 0 80px rgba(0, 0, 0, 0.56),
+    inset 0 1px rgba(255, 228, 164, 0.06);
+}
+
+.board::after {
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.42), transparent 13%, transparent 87%, rgba(0, 0, 0, 0.42)),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.25), transparent 15%, transparent 85%, rgba(0, 0, 0, 0.28));
+  border: 1px solid rgba(255, 222, 151, 0.05);
+  box-shadow: inset 0 0 55px rgba(2, 0, 7, 0.68);
+}
+
+.slot.empty {
+  opacity: 1;
+  border: 1px solid rgba(191, 167, 212, 0.3);
+  outline: 1px dashed rgba(220, 205, 235, 0.24);
+  outline-offset: -7px;
+  background:
+    radial-gradient(circle at 50% 46%, rgba(140, 94, 187, 0.12), transparent 48%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.025), rgba(68, 37, 91, 0.1));
+  box-shadow:
+    inset 0 0 34px rgba(74, 39, 102, 0.16),
+    0 8px 25px rgba(0, 0, 0, 0.12);
+  transition: border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+
+.slot.empty::before {
+  content: '';
+  position: absolute;
+  inset: 14px;
+  border: 1px solid rgba(218, 195, 232, 0.06);
+  border-radius: 10px;
+  pointer-events: none;
+}
+
+.slot.empty::after {
+  content: '◇';
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: rgba(218, 188, 238, 0.16);
+  font-size: 38px;
+  font-family: Georgia, serif;
+  text-shadow: 0 0 18px rgba(165, 101, 210, 0.22);
+  pointer-events: none;
+}
+
+.slots-ai .slot.empty {
+  border-color: rgba(202, 134, 137, 0.25);
+  background:
+    radial-gradient(circle at 50% 46%, rgba(139, 55, 77, 0.1), transparent 48%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.02), rgba(75, 28, 55, 0.08));
+}
+
+.slots-player .slot.empty:hover {
+  border-color: rgba(194, 156, 229, 0.48);
+  box-shadow:
+    inset 0 0 38px rgba(112, 63, 151, 0.22),
+    0 0 18px rgba(106, 62, 150, 0.1);
+}
+
+.shared-field {
+  overflow: visible;
+  border: 1px solid rgba(193, 143, 239, 0.4);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(130, 74, 179, 0.32), transparent 60%),
+    linear-gradient(155deg, rgba(74, 42, 102, 0.92), rgba(31, 18, 46, 0.94));
+  box-shadow:
+    0 14px 35px rgba(0, 0, 0, 0.38),
+    inset 0 1px rgba(255, 232, 255, 0.12),
+    inset 0 0 30px rgba(156, 91, 207, 0.2);
+}
+
+.shared-field::before {
+  content: 'CAMPO';
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  z-index: 1;
+  transform: translateX(-50%);
+  padding: 3px 14px;
+  border: 1px solid rgba(200, 162, 225, 0.28);
+  border-radius: 999px;
+  background: #171020;
+  color: rgba(230, 207, 240, 0.66);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  pointer-events: none;
+}
+
+.shared-field::after {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  z-index: 0;
+  border: 1px solid rgba(232, 208, 247, 0.09);
+  border-radius: 9px;
+  pointer-events: none;
+}
+
+.field-inactive {
+  color: rgba(223, 198, 236, 0.54);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.65);
+}
+
+.board-divider-line {
+  height: 1px;
+  border: 0;
+  background: linear-gradient(90deg, transparent, rgba(221, 185, 100, 0.42) 8%, #f1d98f 50%, rgba(221, 185, 100, 0.42) 92%, transparent);
+  box-shadow: 0 0 8px rgba(246, 218, 138, 0.48), 0 0 22px rgba(137, 85, 174, 0.22);
+}
+
+.board-divider-jewel {
+  filter: drop-shadow(0 0 7px rgba(241, 210, 119, 0.72)) drop-shadow(0 0 14px rgba(128, 67, 171, 0.5));
+}
+
+.turn-indicator {
+  min-width: 90px;
+  padding: 11px 18px;
+  border: 1px solid rgba(202, 166, 95, 0.22);
+  border-radius: 12px;
+  background: linear-gradient(145deg, rgba(29, 20, 42, 0.96), rgba(14, 10, 23, 0.96));
+  color: #f1dda5;
+  font-family: Georgia, serif;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: center;
+  box-shadow: 0 9px 22px rgba(0, 0, 0, 0.38), inset 0 1px rgba(255, 235, 190, 0.08);
+}
+
+.player-orbs,
+.side-left .orbs {
+  padding: 8px 12px;
+  border: 1px solid rgba(215, 169, 91, 0.14);
+  border-radius: 14px;
+  background: linear-gradient(90deg, rgba(15, 9, 22, 0.74), rgba(31, 18, 42, 0.6), rgba(15, 9, 22, 0.74));
+  box-shadow: inset 0 1px rgba(255, 226, 164, 0.05), 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.player-essence,
+.opponent-essence {
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 9px 24px rgba(0, 0, 0, 0.38), inset 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.end-turn-btn {
+  border: 1px solid rgba(230, 195, 118, 0.46);
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(63, 43, 79, 0.96), rgba(34, 23, 47, 0.98));
+  color: #f4dfa9;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35), inset 0 1px rgba(255, 239, 200, 0.1);
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.end-turn-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(241, 210, 135, 0.74);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4), 0 0 14px rgba(193, 145, 72, 0.14);
+}
+
+.deck-count-pill {
+  border: 1px solid rgba(218, 183, 109, 0.22);
+  border-radius: 999px;
+  background: rgba(14, 10, 20, 0.86);
+  color: #e9d49d;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* Cinematic pause between the final heart and the result modal */
+.battle-finale {
+  position: fixed;
+  inset: 0;
+  z-index: 90000;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  pointer-events: all;
+  isolation: isolate;
+}
+
+.battle-finale-vignette,
+.battle-finale-flash,
+.battle-finale-ring,
+.battle-finale-sparks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.battle-finale-vignette {
+  z-index: -2;
+  background:
+    radial-gradient(circle at 50% 50%, transparent 0 16%, rgba(5, 3, 8, .34) 48%, rgba(2, 1, 4, .96) 100%),
+    rgba(4, 2, 7, .42);
+  opacity: 0;
+  animation: battle-finale-darken 1.7s cubic-bezier(.2,.7,.2,1) forwards;
+  backdrop-filter: saturate(.55) contrast(1.16);
+}
+
+.battle-finale-flash {
+  z-index: -1;
+  opacity: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(255,255,255,.96), var(--finale-glow) 9%, transparent 38%);
+  mix-blend-mode: screen;
+  animation: battle-finale-flash 1.15s ease-out both;
+}
+
+.battle-finale-victory {
+  --finale-accent: #f7cf73;
+  --finale-bright: #fff2ba;
+  --finale-glow: rgba(234, 169, 60, .76);
+  --finale-shadow: rgba(225, 151, 36, .38);
+}
+
+.battle-finale-defeat {
+  --finale-accent: #d67984;
+  --finale-bright: #f4c6c8;
+  --finale-glow: rgba(133, 30, 49, .8);
+  --finale-shadow: rgba(113, 19, 37, .48);
+}
+
+.battle-finale-ring {
+  top: 50%;
+  left: 50%;
+  width: 90px;
+  height: 90px;
+  inset: auto;
+  border: 2px solid var(--finale-bright);
+  border-radius: 50%;
+  opacity: 0;
+  box-shadow: 0 0 20px var(--finale-glow), inset 0 0 20px var(--finale-glow);
+  transform: translate(-50%, -50%);
+  animation: battle-finale-ring 1.4s cubic-bezier(.12,.65,.2,1) both;
+}
+
+.battle-finale-sparks {
+  top: 50%;
+  left: 50%;
+  width: 1px;
+  height: 1px;
+  inset: auto;
+}
+
+.battle-finale-sparks i {
+  --spark-angle: calc(var(--spark-index) * 25.714deg);
+  position: absolute;
+  width: 3px;
+  height: 54px;
+  border-radius: 999px;
+  opacity: 0;
+  background: linear-gradient(to top, transparent, var(--finale-accent));
+  box-shadow: 0 0 8px var(--finale-glow);
+  transform-origin: 50% 0;
+  transform: rotate(var(--spark-angle)) translateY(-32px) scaleY(.2);
+  animation: battle-finale-spark 1.25s calc(var(--spark-index) * 18ms) ease-out both;
+}
+
+.battle-finale-copy {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: min(760px, 88vw);
+  text-align: center;
+  opacity: 0;
+  transform: scale(.9);
+}
+
+.battle-finale-verdict .battle-finale-copy {
+  animation: battle-finale-verdict-in 1.15s cubic-bezier(.16,.8,.2,1) both;
+}
+
+.battle-finale-copy::before,
+.battle-finale-copy::after {
+  content: '';
+  width: min(430px, 62vw);
+  height: 1px;
+  margin: 17px 0;
+  background: linear-gradient(90deg, transparent, var(--finale-accent), transparent);
+  box-shadow: 0 0 12px var(--finale-glow);
+}
+
+.battle-finale-copy span,
+.battle-finale-copy small {
+  font-family: 'Poppins', sans-serif;
+  text-transform: uppercase;
+}
+
+.battle-finale-copy span {
+  color: var(--finale-accent);
+  font-size: clamp(.66rem, 1vw, .85rem);
+  font-weight: 900;
+  letter-spacing: .24em;
+}
+
+.battle-finale-copy strong {
+  color: var(--finale-bright);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(3rem, 8vw, 7.4rem);
+  font-weight: 600;
+  letter-spacing: .015em;
+  line-height: .96;
+  text-shadow: 0 5px 24px rgba(0,0,0,.9), 0 0 42px var(--finale-shadow);
+}
+
+.battle-finale-copy small {
+  color: rgba(255, 238, 207, .72);
+  font-size: clamp(.58rem, .85vw, .75rem);
+  font-weight: 700;
+  letter-spacing: .16em;
+}
+
+.battle-finale-defeat .battle-finale-copy strong {
+  letter-spacing: .06em;
+}
+
+@keyframes battle-finale-darken {
+  0% { opacity: 0; }
+  42% { opacity: .48; }
+  100% { opacity: 1; }
+}
+
+@keyframes battle-finale-flash {
+  0% { opacity: 0; transform: scale(.12); }
+  8% { opacity: 1; }
+  34% { opacity: .42; transform: scale(1.05); }
+  100% { opacity: 0; transform: scale(1.7); }
+}
+
+@keyframes battle-finale-ring {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.25); }
+  12% { opacity: .95; }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(12); border-width: 0; }
+}
+
+@keyframes battle-finale-spark {
+  0% { opacity: 0; transform: rotate(var(--spark-angle)) translateY(-25px) scaleY(.2); }
+  13% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(var(--spark-angle)) translateY(-42vh) scaleY(1.15); }
+}
+
+@keyframes battle-finale-verdict-in {
+  0% { opacity: 0; transform: scale(.88) translateY(12px); filter: blur(8px); }
+  55% { opacity: 1; filter: blur(0); }
+  100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .battle-finale-vignette { animation-duration: .2s; }
+  .battle-finale-flash,
+  .battle-finale-ring,
+  .battle-finale-sparks { display: none; }
+  .battle-finale-verdict .battle-finale-copy { animation-duration: .2s; }
+}
+
+/* Abandon battle confirmation */
+.battle-abandon-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100000020;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 50% 46%, rgba(105, 43, 45, .18), transparent 34%),
+    rgba(5, 3, 8, .78);
+  backdrop-filter: blur(9px) saturate(.65);
+  animation: battle-abandon-overlay-in 180ms ease-out both;
+}
+
+.battle-abandon-dialog {
+  position: relative;
+  width: min(460px, 92vw);
+  box-sizing: border-box;
+  overflow: hidden;
+  padding: 30px 34px 24px;
+  border: 1px solid rgba(225, 183, 112, .42);
+  border-radius: 15px;
+  background:
+    radial-gradient(circle at 50% 0, rgba(136, 60, 63, .21), transparent 45%),
+    linear-gradient(155deg, rgba(39, 24, 42, .98), rgba(13, 9, 18, .99));
+  color: #f8e8bd;
+  text-align: center;
+  box-shadow: 0 30px 90px rgba(0,0,0,.72), inset 0 1px rgba(255,242,210,.08);
+  animation: battle-abandon-dialog-in 280ms cubic-bezier(.18,.8,.24,1.12) both;
+}
+
+.battle-abandon-dialog::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 12%;
+  width: 76%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #d29a55, transparent);
+  box-shadow: 0 0 16px rgba(210,154,85,.48);
+}
+
+.battle-abandon-kicker {
+  color: #d99f59;
+  font: 900 10px 'Poppins', sans-serif;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+
+.battle-abandon-emblem {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  margin: 15px auto 12px;
+  border: 1px solid rgba(223, 131, 105, .48);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(151, 51, 51, .43), rgba(70, 27, 36, .4));
+  color: #f2b38c;
+  font: 600 29px Georgia, serif;
+  box-shadow: 0 0 24px rgba(179, 58, 55, .18), inset 0 0 15px rgba(255,177,129,.08);
+}
+
+.battle-abandon-dialog h2 {
+  margin: 0;
+  color: #ffe9b8;
+  font: 600 29px/1.1 Georgia, 'Times New Roman', serif;
+  text-shadow: 0 3px 14px rgba(0,0,0,.68);
+}
+
+.battle-abandon-dialog > p {
+  max-width: 370px;
+  margin: 12px auto 18px;
+  color: rgba(238, 220, 187, .7);
+  font: 500 13px/1.55 'Poppins', sans-serif;
+}
+
+.battle-abandon-penalty {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 3px 14px;
+  padding: 13px 15px;
+  border: 1px solid rgba(219, 126, 99, .24);
+  border-radius: 9px;
+  background: rgba(69, 24, 31, .24);
+  text-align: left;
+}
+
+.battle-abandon-penalty > span {
+  color: rgba(238, 204, 163, .58);
+  font: 800 9px 'Poppins', sans-serif;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+
+.battle-abandon-penalty strong {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #ffb36d;
+  font: 800 17px 'Poppins', sans-serif;
+}
+
+.battle-abandon-penalty strong img {
+  width: 25px;
+  height: 25px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 7px rgba(224,165,71,.3));
+}
+
+.battle-abandon-penalty small {
+  color: #d58f86;
+  font: 600 10px 'Poppins', sans-serif;
+}
+
+.battle-abandon-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+  margin-top: 19px;
+}
+
+.battle-abandon-actions button {
+  min-height: 45px;
+  padding: 9px 13px;
+  border-radius: 8px;
+  font: 800 12px 'Poppins', sans-serif;
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+}
+
+.battle-abandon-actions button:hover { transform: translateY(-2px); }
+
+.battle-abandon-stay {
+  border: 1px solid rgba(230, 195, 118, .5);
+  background: linear-gradient(180deg, rgba(76, 53, 91, .95), rgba(43, 29, 55, .98));
+  color: #f6e3b3;
+  box-shadow: inset 0 1px rgba(255,255,255,.08);
+}
+
+.battle-abandon-stay:hover {
+  border-color: rgba(240, 207, 136, .82);
+  box-shadow: 0 9px 20px rgba(0,0,0,.28);
+}
+
+.battle-abandon-confirm {
+  border: 1px solid rgba(224, 116, 98, .46);
+  background: linear-gradient(180deg, #a5423e, #732b31);
+  color: #ffe0cd;
+  box-shadow: 0 8px 18px rgba(104, 28, 36, .25), inset 0 1px rgba(255,255,255,.08);
+}
+
+.battle-abandon-confirm:hover {
+  border-color: rgba(244, 143, 118, .75);
+  background: linear-gradient(180deg, #bb4a43, #842f34);
+  box-shadow: 0 11px 22px rgba(104, 28, 36, .38);
+}
+
+.battle-abandon-hint {
+  display: block;
+  margin-top: 13px;
+  color: rgba(223, 205, 174, .38);
+  font: 600 9px 'Poppins', sans-serif;
+}
+
+@keyframes battle-abandon-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes battle-abandon-dialog-in {
+  from { opacity: 0; transform: translateY(14px) scale(.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 520px) {
+  .battle-abandon-dialog { padding: 25px 20px 20px; }
+  .battle-abandon-actions { grid-template-columns: 1fr; }
 }

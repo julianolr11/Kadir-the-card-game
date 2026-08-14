@@ -1,14 +1,16 @@
 import React, { useContext, useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { AppContext } from '../context/AppContext';
 import '../styles/battle-result.css';
 import levelIcon from '../assets/img/icons/lvlicon.png';
 import CreatureCardPreview from './CreatureCardPreview.jsx';
+import { FullArtCard } from './KadirFullArtPreview.jsx';
 import swordIcon from '../assets/img/icons/sword.png';
 import coinIcon from '../assets/img/icons/head.png';
 import creaturesPool from '../assets/cards';
 
 export default function BattleResultModal({ gameResult, killFeed, playerDeck, onClose, battleStats }) {
-  const { cardCollection, updateCardInstanceXp, setBoosters, boosters, addCoins } = useContext(AppContext);
+  const { cardCollection, updateCardInstanceXp, setBoosters, boosters, addCoins, loadGuardianLoadout } = useContext(AppContext);
 
   const isPlayerWon = gameResult?.winner === 'player';
   const playerCards = Array.isArray(playerDeck) ? playerDeck : [];
@@ -72,7 +74,7 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
       const instance = instances.find(inst => inst.instanceId === cardId) || instances[0];
 
       if (instance) {
-        total += calculateCardXp(cardId, instance.level);
+        total += calculateCardXp(cardId, instance.level, baseId);
       }
     });
 
@@ -90,8 +92,30 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
     defeat: 0.1,    // +0.1x adicional por derrota
   };
 
+  // Bônus percentual de XP por abate concedido por perks de guardião (GUARDIAN_KILL_XP_BONUS, KILL_XP_BONUS_10)
+  const getGuardianKillXpBonus = (baseId) => {
+    const cardData = creaturesPool.find(c => c.id === baseId);
+    if (!cardData?.isGuardian) return 0;
+
+    const loadout = loadGuardianLoadout ? loadGuardianLoadout(baseId) : null;
+    let perkId = loadout?.selectedPerk || null;
+
+    if (!perkId) {
+      const instances = cardCollection?.[baseId] || [];
+      const maxLevel = instances.length > 0 ? Math.max(...instances.map(i => i.level || 0)) : 0;
+      const unlockedPerks = (cardData.unlockTable || []).filter(
+        u => u.type === 'perk' && typeof u.level === 'number' && u.level <= maxLevel
+      );
+      perkId = unlockedPerks[0]?.id || null;
+    }
+
+    if (perkId === 'GUARDIAN_KILL_XP_BONUS') return 0.03;
+    if (perkId === 'KILL_XP_BONUS_10') return 0.10;
+    return 0;
+  };
+
   // Calcula XP baseado nas ações da carta
-  const calculateCardXp = (cardId, cardLevel = 0) => {
+  const calculateCardXp = (cardId, cardLevel = 0, baseId = cardId) => {
     if (!battleStats?.player) return 0;
 
     const stats = battleStats.player;
@@ -107,9 +131,12 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
       k => k.attackerId === cardId && k.hadAdvantage
     ).length;
 
+    // Bônus de XP por abate concedido pelo perk ativo do guardião
+    const killXpBonus = getGuardianKillXpBonus(baseId);
+
     // Calcula XP total
-    totalXp += kills * XP_BASE * XP_MULTIPLIERS.kill;
-    totalXp += killsWithAdvantage * XP_BASE * XP_MULTIPLIERS.killAdvantage; // Bônus por vantagem
+    totalXp += kills * XP_BASE * XP_MULTIPLIERS.kill * (1 + killXpBonus);
+    totalXp += killsWithAdvantage * XP_BASE * XP_MULTIPLIERS.killAdvantage * (1 + killXpBonus); // Bônus por vantagem
     totalXp += assists * XP_BASE * XP_MULTIPLIERS.assist;
     totalXp += summons * XP_BASE * XP_MULTIPLIERS.summon;
 
@@ -165,7 +192,7 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
       const instance = instances.find(inst => inst.instanceId === cardId) || instances[0];
 
       if (instance) {
-        const xp = calculateCardXp(cardId, instance.level);
+        const xp = calculateCardXp(cardId, instance.level, baseId);
         if (xp > 0) {
           updateCardInstanceXp(baseId, instance.instanceId, xp);
         }
@@ -207,7 +234,7 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
       const instance = instances.find(inst => inst.instanceId === cardId) || instances[0];
 
       if (instance) {
-        const xpGain = calculateCardXp(cardId, instance.level);
+        const xpGain = calculateCardXp(cardId, instance.level, baseId);
         const oldLevel = instance.level;
         const oldXp = instance.xp;
 
@@ -288,6 +315,8 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
         progressData.push({
           cardId: baseId,
           instanceId: instance.instanceId,
+          isHolo: Boolean(instance.isHolo),
+          isFullArt: Boolean(instance.isFullArt),
           name: (cardData?.name && (cardData.name.pt || cardData.name.en || cardData.name)) || baseId,
           image: imagePath,
           xpGained: finalXpGain,
@@ -328,17 +357,24 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
   // Calcula o XP total ganho
   const totalXpGained = calculateTotalXp();
 
-  return (
+  return ReactDOM.createPortal(
     <div className="battle-result-overlay">
       <div className="battle-result-modal">
+        <div className="battle-result-scroll-content">
         {/* Cabeçalho com resultado */}
         <div className={`battle-result-header ${isPlayerWon ? 'victory' : 'defeat'}`}>
-          <h1 className="battle-result-title">
-            {isPlayerWon ? '🎉 VITÓRIA!' : '💀 DERROTA!'}
-          </h1>
-          <p className="battle-result-subtitle">
-            {isPlayerWon ? 'Você venceu a batalha!' : 'Você foi derrotado...'}
-          </p>
+          <div className="battle-result-emblem" aria-hidden="true">{isPlayerWon ? '♛' : '⚔'}</div>
+          <div className="battle-result-heading-copy">
+            <span className="battle-result-eyebrow">Resultado da batalha</span>
+            <h1 className="battle-result-title">{isPlayerWon ? 'Vitória' : 'Derrota'}</h1>
+            <p className="battle-result-subtitle">
+              {isPlayerWon ? 'O campo pertence a você.' : 'A batalha terminou, mas a guerra continua.'}
+            </p>
+          </div>
+        </div>
+
+        <div className="battle-result-section-heading">
+          <span>Resumo</span><i />
         </div>
 
         {/* Estatísticas */}
@@ -347,6 +383,10 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
             <div className="stat-block">
               <div className="stat-label">Inimigos Derrotados</div>
               <div className="stat-value">{killFeed?.length || 0}</div>
+            </div>
+            <div className="stat-block">
+              <div className="stat-label">Experiência total</div>
+              <div className="stat-value">+{totalXpGained}<small> XP</small></div>
             </div>
           </div>
 
@@ -364,7 +404,7 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
             {isPlayerWon && (
               <div className="battle-result-booster-panel">
                 <img src={require('../assets/img/card/booster.png')} alt="Booster adquirido" className="battle-result-booster-img" />
-                <span className="battle-result-booster-label">Booster adquirido!</span>
+                <span className="battle-result-booster-label"><small>Recompensa especial</small>1 booster</span>
               </div>
             )}
           </div>
@@ -373,7 +413,9 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
         {/* Kill Feed */}
         {killFeed && killFeed.length > 0 && (
           <div className="battle-result-kills-feed-grid">
-            <h3 className="kills-title">Eliminações</h3>
+            <div className="battle-result-section-heading">
+              <span>Eliminações</span><i /><b>{killFeed.length}</b>
+            </div>
             <div className="kills-grid">
               {killFeed.map((kill, idx) => {
                 const attackerData = creaturesPool.find(c => c.id === kill.attacker || c.id === kill.attacker.toLowerCase());
@@ -402,7 +444,9 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
 
         {/* XP por Carta */}
         <div className="battle-result-xp-cards">
-          <h3 className="xp-cards-title">Experiência Ganha</h3>
+          <div className="battle-result-section-heading">
+            <span>Progressão do esquadrão</span><i /><b>+{totalXpGained} XP</b>
+          </div>
           {cardProgressData.length > 0 ? (
             <div className="xp-cards-list">
               {cardProgressData.map((card, idx) => {
@@ -413,8 +457,15 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
                 }
                 return (
                   <div key={idx} className="xp-card-item xp-card-full" style={{ animationDelay: `${idx * 0.15}s` }}>
+                    {(card.isFullArt || card.isHolo) && (
+                      <div className={`xp-card-variant-badge ${card.isFullArt ? 'full-art' : 'holo'}`}>
+                        {card.isFullArt ? 'Full Art' : 'Holo'}
+                      </div>
+                    )}
                     <div className="xp-card-preview-full">
-                      <CreatureCardPreview creature={creatureData} allowFlip={false} />
+                      {card.isFullArt
+                        ? <FullArtCard card={creatureData} level={card.newLevel} />
+                        : <CreatureCardPreview creature={creatureData} level={card.newLevel} isHolo={card.isHolo} allowFlip={false} />}
                       <div className="xp-card-xp-panel">
                         <div className="xp-card-name-mini">{card.name}</div>
                         <div className="xp-gained-full">+{card.xpGained} XP</div>
@@ -446,12 +497,16 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
             <div style={{color:'#ffe6b0',textAlign:'center',margin:'32px 0',fontSize:'1.1rem'}}>Nenhuma carta ganhou experiência nesta batalha.<br/>Verifique se as cartas participantes pertencem à sua coleção.</div>
           )}
         </div>
+        </div>
 
         {/* Botão de Continuar */}
-        <button className="battle-result-continue-btn" onClick={handleContinue}>
-          Continuar
-        </button>
+        <div className="battle-result-footer">
+          <span>Recompensas serão adicionadas à sua coleção</span>
+          <button className="battle-result-continue-btn" onClick={handleContinue}>
+            Continuar <b aria-hidden="true">→</b>
+          </button>
+        </div>
       </div>
     </div>
-  );
+  , document.body);
 }

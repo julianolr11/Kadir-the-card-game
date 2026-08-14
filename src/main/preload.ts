@@ -2,8 +2,10 @@
 /* eslint no-unused-vars: off */
 import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
 
-export type Channels = 'ipc-example' | 'set-resolution';
-
+export type Channels =
+  | 'ipc-example'
+  | 'set-resolution'
+  | 'display-state-changed';
 
 const electronHandler = {
   ipcRenderer: {
@@ -21,12 +23,38 @@ const electronHandler = {
     once(channel: Channels, func: (...args: unknown[]) => void) {
       ipcRenderer.once(channel, (_event, ...args) => func(...args));
     },
+    applyDisplaySettings: (settings: {
+      width: number;
+      height: number;
+      fullscreen: boolean;
+    }) => ipcRenderer.invoke('apply-display-settings', settings),
+    onDisplayStateChanged: (
+      cb: (state: {
+        width: number;
+        height: number;
+        fullscreen: boolean;
+      }) => void,
+    ) => {
+      const subscription = (
+        _event: IpcRendererEvent,
+        state: {
+          width: number;
+          height: number;
+          fullscreen: boolean;
+        },
+      ) => cb(state);
+      ipcRenderer.on('display-state-changed', subscription);
+      return () =>
+        ipcRenderer.removeListener('display-state-changed', subscription);
+    },
     // --- Update helpers ---
     checkForUpdate: () => ipcRenderer.invoke('update-check'),
     downloadUpdate: () => ipcRenderer.invoke('update-download'),
     quitAndInstall: () => ipcRenderer.invoke('quit-and-install'),
     onUpdateProgress: (cb: (progress: any) => void) => {
-      ipcRenderer.on('update-download-progress', (_event, progress) => cb(progress));
+      ipcRenderer.on('update-download-progress', (_event, progress) =>
+        cb(progress),
+      );
     },
     onUpdateDownloaded: (cb: (info: any) => void) => {
       ipcRenderer.on('update-downloaded', (_event, info) => cb(info));

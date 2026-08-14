@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import coinFlipSound from '../assets/sounds/effects/coin-flip.mp3';
 import headIcon from '../assets/img/icons/head.png';
 import crownIcon from '../assets/img/icons/crown.png';
@@ -7,48 +7,35 @@ import { AppContext } from '../context/AppContext';
 
 function CoinFlip({ onResult, playerName = 'Jogador', aiName = 'Adversário' }) {
   const { effectsVolume } = useContext(AppContext);
-  const overlayRef = React.useRef(null);
-  const [phase, setPhase] = useState('intro'); // intro -> ready -> flipping -> result
+  const overlayRef = useRef(null);
+  const audioRef = useRef(null);
+  const [phase, setPhase] = useState('intro');
   const [isFlipping, setIsFlipping] = useState(false);
   const [result, setResult] = useState(null);
   const [winner, setWinner] = useState(null);
-  const audioRef = React.useRef(null);
 
   useEffect(() => {
-    // Mostra "Início de partida" por 3s
-    const introTimer = setTimeout(() => {
-      setPhase('ready');
-    }, 3000);
+    const introTimer = setTimeout(() => setPhase('ready'), 3000);
     return () => clearTimeout(introTimer);
   }, []);
 
-  // Ensure overlay z-index matches --z-battle-backdrop (numeric fallback 10600)
   useEffect(() => {
     try {
       const el = overlayRef.current;
       if (!el) return;
       el.style.setProperty('z-index', 'var(--z-battle-backdrop)', 'important');
       const resolved = getComputedStyle(el).getPropertyValue('z-index');
-      if (!resolved || resolved === 'auto' || isNaN(parseInt(resolved, 10))) {
+      if (!resolved || resolved === 'auto' || Number.isNaN(parseInt(resolved, 10))) {
         const root = getComputedStyle(document.documentElement);
-        const vb = (root.getPropertyValue('--z-battle-backdrop') || '').trim() || '10600';
-        const num = parseInt(vb, 10) || 10600;
-        el.style.setProperty('z-index', String(num), 'important');
+        const fallback = (root.getPropertyValue('--z-battle-backdrop') || '').trim() || '10600';
+        el.style.setProperty('z-index', String(parseInt(fallback, 10) || 10600), 'important');
       }
-    } catch (e) {}
+    } catch (error) {
+      // The CSS fallback already keeps the overlay above the battle board.
+    }
   }, []);
 
-  useEffect(() => {
-    // Quando entrar na fase ready, aguarda 500ms e joga a moeda automaticamente
-    if (phase === 'ready') {
-      const flipTimer = setTimeout(() => {
-        handleFlip();
-      }, 500);
-      return () => clearTimeout(flipTimer);
-    }
-  }, [phase]);
-
-  const handleFlip = () => {
+  const handleFlip = React.useCallback(() => {
     if (isFlipping || result || phase !== 'ready') return;
 
     setPhase('flipping');
@@ -56,95 +43,85 @@ function CoinFlip({ onResult, playerName = 'Jogador', aiName = 'Adversário' }) 
     setResult(null);
     setWinner(null);
 
-    // Toca o som
     if (audioRef.current) {
       audioRef.current.currentTime = 0;
       audioRef.current.volume = (effectsVolume ?? 50) / 100;
       audioRef.current.play().catch(() => {});
     }
 
-    // Simula o tempo de giro da moeda (1.2 segundos)
     setTimeout(() => {
-      const randomValue = Math.random();
-      const flipResult = randomValue < 0.5 ? 'head' : 'crown';
-      console.log('CoinFlip random:', randomValue, '-> result:', flipResult);
+      const flipResult = Math.random() < 0.5 ? 'head' : 'crown';
       setResult(flipResult);
       setIsFlipping(false);
+      setWinner(flipResult === 'head' ? playerName : aiName);
 
-      // Determina o vencedor
-      const flipped = flipResult === 'head' ? playerName : aiName;
-      setWinner(flipped);
-
-      // Aguarda um pouco antes de mostrar o resultado
       setTimeout(() => {
         setPhase('result');
-
-        // Chama callback depois que resultado está definido
-        setTimeout(() => {
-          onResult?.(flipResult === 'head' ? 'player' : 'ai');
-        }, 3000);
+        setTimeout(() => onResult?.(flipResult === 'head' ? 'player' : 'ai'), 3000);
       }, 800);
     }, 1200);
-  };
+  }, [aiName, effectsVolume, isFlipping, onResult, phase, playerName, result]);
+
+  useEffect(() => {
+    if (phase !== 'ready') return undefined;
+    const flipTimer = setTimeout(handleFlip, 500);
+    return () => clearTimeout(flipTimer);
+  }, [handleFlip, phase]);
 
   return (
     <div className="coinflip-overlay" ref={overlayRef}>
+      <div className="coinflip-atmosphere" aria-hidden="true" />
       <div className="coinflip-container">
         <audio ref={audioRef} src={coinFlipSound} preload="auto" />
+        <span className="coinflip-corner corner-nw" aria-hidden="true" />
+        <span className="coinflip-corner corner-ne" aria-hidden="true" />
+        <span className="coinflip-corner corner-sw" aria-hidden="true" />
+        <span className="coinflip-corner corner-se" aria-hidden="true" />
 
-        {/* Fase de Introdução */}
         {phase === 'intro' && (
           <div className="intro-phase">
-            <h1 className="intro-title">Início de Partida</h1>
-            <div className="intro-subtitle">Preparando o campo de batalha...</div>
+            <div className="coinflip-eyebrow">Ritual de abertura</div>
+            <div className="intro-sigil" aria-hidden="true"><span /></div>
+            <h1 className="intro-title">Início da Batalha</h1>
+            <div className="intro-divider"><i /><b>◆</b><i /></div>
+            <div className="intro-subtitle">As forças tomam posição no campo</div>
+            <div className="coinflip-progress" aria-hidden="true"><span /></div>
           </div>
         )}
 
-        {/* Fase de Jogar a Moeda */}
         {(phase === 'ready' || phase === 'flipping') && (
-          <>
-            <h1 className="coinflip-title">Quem Começa?</h1>
-
+          <div className="flip-phase">
+            <div className="coinflip-eyebrow">A sorte decidirá</div>
+            <h1 className="coinflip-title">Quem começa?</h1>
             <div className="coinflip-players">
-              <div className="player-info">
-                <span className="player-name">{playerName}</span>
-              </div>
-              <span className="vs-text">VS</span>
-              <div className="player-info">
-                <span className="player-name">{aiName}</span>
+              <div className="player-info player-info-user"><small>Desafiante</small><span className="player-name">{playerName}</span></div>
+              <span className="vs-text">contra</span>
+              <div className="player-info player-info-ai"><small>Oponente</small><span className="player-name">{aiName}</span></div>
+            </div>
+            <div className="coin-stage">
+              <div className="coin-orbit" aria-hidden="true" />
+              <div className={`coin ${isFlipping ? 'flipping' : ''} ${result ? `result-${result}` : ''}`}>
+                <div className="coin-side coin-front"><img src={headIcon} alt="Cara" className="coin-icon" /></div>
+                <div className="coin-side coin-back"><img src={crownIcon} alt="Coroa" className="coin-icon" /></div>
               </div>
             </div>
-
-            {/* Moeda */}
-            <div className={`coin ${isFlipping ? 'flipping' : ''} ${result ? `result-${result}` : ''}`}>
-              <div className="coin-side coin-front">
-                <img src={headIcon} alt="Cara" className="coin-icon" />
-              </div>
-              <div className="coin-side coin-back">
-                <img src={crownIcon} alt="Coroa" className="coin-icon" />
-              </div>
-            </div>
-          </>
+            <p className="flip-status">{isFlipping ? 'Consultando o destino…' : 'Preparando o lançamento…'}</p>
+          </div>
         )}
 
-        {/* Fase de Resultado */}
         {phase === 'result' && result && (
-          <>
+          <div className="result-phase">
+            <div className="coinflip-eyebrow">O destino respondeu</div>
+            <div className={`result-emblem ${result}`}><img src={result === 'head' ? headIcon : crownIcon} alt="" /></div>
             <div className={`result-container ${result}`}>
-              <p className="result-label">
-                {result === 'head' ? '🎯 Cara' : '👑 Coroa'}
-              </p>
+              <p className="result-label">{result === 'head' ? 'Cara' : 'Coroa'}</p>
               <p className="result-winner">
-                {winner === playerName ? (
-                  <><strong>Você joga primeiro!</strong></>
-                ) : (
-                  <><strong>Você joga em seguida</strong></>
-                )}
+                <strong>{winner === playerName ? 'Você abre a batalha' : 'O adversário começa'}</strong>
+                <span>{winner === playerName ? 'O primeiro movimento é seu.' : 'Prepare sua resposta.'}</span>
               </p>
             </div>
-
-            <p className="continue-text">A partida começará em breve...</p>
-          </>
+            <div className="continue-text"><i /><span>Entrando no campo</span><i /></div>
+          </div>
         )}
       </div>
     </div>

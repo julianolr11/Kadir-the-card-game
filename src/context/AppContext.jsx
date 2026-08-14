@@ -1,4 +1,6 @@
 import React, { createContext, useState, useMemo } from 'react';
+import cardsPool from '../assets/cards';
+import { getCardValue } from '../assets/rarityData.js';
 
 export const AppContext = createContext();
 
@@ -131,11 +133,17 @@ export function AppProvider({ children }) {
         Object.keys(collection).forEach(key => {
           // Apenas manter IDs que são strings não-numéricas
           if (isNaN(key)) {
-            cleaned[key] = collection[key];
+            cleaned[key] = Array.isArray(collection[key])
+              ? collection[key].map((instance) => ({
+                  ...instance,
+                  cardId: instance?.cardId || key,
+                  instanceId: instance?.instanceId || `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
+                }))
+              : [];
           }
         });
         // Salvar versão limpa
-        if (Object.keys(cleaned).length !== Object.keys(collection).length) {
+        if (JSON.stringify(cleaned) !== JSON.stringify(collection)) {
           localStorage.setItem('cardCollection', JSON.stringify(cleaned));
         }
         return cleaned;
@@ -157,13 +165,15 @@ export function AppProvider({ children }) {
   };
 
   // Criar nova instância de carta
-  const createCardInstance = (cardId, isHolo = false) => {
+  const createCardInstance = (cardId, isHolo = false, isFullArt = false) => {
     return {
       instanceId: generateInstanceId(),
       cardId,
       xp: 0,
       level: 0,
       isHolo,
+      isFullArt,
+      fullArtAt: isFullArt ? new Date().toISOString() : null,
       acquiredAt: new Date().toISOString(),
     };
   };
@@ -175,7 +185,8 @@ export function AppProvider({ children }) {
     cards.forEach((card) => {
       const cardId = typeof card === 'string' ? card : card.id;
       const isHolo = typeof card === 'string' ? (Math.random() < 0.02) : (card.isHolo || false);
-      const instance = createCardInstance(cardId, isHolo);
+      const isFullArt = typeof card === 'object' && Boolean(card.isFullArt);
+      const instance = createCardInstance(cardId, isHolo || isFullArt, isFullArt);
 
       if (!newCollection[cardId]) {
         newCollection[cardId] = [];
@@ -267,6 +278,62 @@ export function AppProvider({ children }) {
     if (typeof window !== 'undefined') {
       localStorage.setItem('decks', JSON.stringify(newDecks));
     }
+  };
+
+  // Remove um lote de instâncias a partir de uma única fotografia da coleção.
+  // Cartas em decks ou selecionadas como guardião ativo ficam protegidas.
+  const recycleCardInstances = (requests = []) => {
+    const uniqueRequests = new Map();
+    requests.forEach((request) => {
+      if (request?.cardId && request?.instanceId) {
+        uniqueRequests.set(request.instanceId, request);
+      }
+    });
+
+    const protectedInstanceIds = new Set();
+    Object.values(decks || {}).forEach((deck) => {
+      (deck?.cards || []).filter(Boolean).forEach((instanceId) => protectedInstanceIds.add(instanceId));
+    });
+    if (activeGuardian?.selectedInstanceId) {
+      protectedInstanceIds.add(activeGuardian.selectedInstanceId);
+    }
+
+    const nextCollection = { ...cardCollection };
+    const removed = [];
+    const skipped = [];
+
+    uniqueRequests.forEach((request, instanceId) => {
+      if (protectedInstanceIds.has(instanceId)) {
+        skipped.push({ ...request, reason: 'in-use' });
+        return;
+      }
+
+      const instances = nextCollection[request.cardId];
+      const instance = Array.isArray(instances)
+        ? instances.find((item) => item?.instanceId === instanceId)
+        : null;
+      if (!instance) {
+        skipped.push({ ...request, reason: 'not-found' });
+        return;
+      }
+
+      const cardMeta = cardsPool.find((card) => card.id === request.cardId);
+      removed.push({
+        cardId: request.cardId,
+        instanceId,
+        value: getCardValue(request.cardId, instance, cardMeta),
+      });
+      nextCollection[request.cardId] = instances.filter((item) => item?.instanceId !== instanceId);
+      if (nextCollection[request.cardId].length === 0) delete nextCollection[request.cardId];
+    });
+
+    const earnedCoins = removed.reduce((total, item) => total + item.value, 0);
+    if (removed.length > 0) {
+      updateCardCollection(nextCollection);
+      updateCoins(coins + earnedCoins);
+    }
+
+    return { removed, skipped, earnedCoins };
   };
 
   // Salvar ou atualizar um deck
@@ -368,6 +435,7 @@ export function AppProvider({ children }) {
       getCardInstances,
       updateCardInstanceXp,
       removeCardInstance,
+      recycleCardInstances,
       createCardInstance,
       // Deck System
       decks,

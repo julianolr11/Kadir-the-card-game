@@ -17,6 +17,7 @@ import puro from '../assets/img/elements/puro.png';
 import ar from '../assets/img/elements/ar.png';
 import '../styles/cardpreview.css';
 import { getCreatureRarity, RARITY_CONFIG } from '../assets/rarityData.js';
+import StatusText from './StatusText.jsx';
 
 import swipeSound from '../assets/sounds/effects/swipe.MP3';
 
@@ -176,6 +177,18 @@ const EFFECT_TYPE_LABELS = {
   essenceSacrifice: 'Ritual',
 };
 
+const EFFECT_TARGET_LABELS = {
+  self: { pt: 'Você', en: 'You' },
+  dual: { pt: 'Dois campos', en: 'Both fields' },
+  allyMonster: { pt: '1 aliado', en: '1 ally' },
+  enemyMonster: { pt: '1 inimigo', en: '1 enemy' },
+  allAllies: { pt: 'Todos aliados', en: 'All allies' },
+  allEnemies: { pt: 'Todos inimigos', en: 'All enemies' },
+  opponent: { pt: 'Adversário', en: 'Opponent' },
+  graveyardCreature: { pt: 'Cemitério', en: 'Graveyard' },
+  handSacrifice: { pt: 'Sua mão', en: 'Your hand' },
+};
+
 function CreatureCardPreview({
   creature,
   onClose,
@@ -270,8 +283,18 @@ function CreatureCardPreview({
   const creatureRarityData = !isFieldCard && !isEffectCard ? getCreatureRarity(creature.id) : null;
   const rarityClass = creatureRarityData ? `rarity-${creatureRarityData.rarity}` : '';
   const rarityConfig = creatureRarityData?.config;
-  const effectDescription = typeof creature.description === 'object' ? creature.description.pt || creature.description.en : creature.description;
+  const effectDescription = typeof creature.description === 'object'
+    ? creature.description[langKey] || creature.description.pt || creature.description.en
+    : creature.description;
   const effectLabel = EFFECT_TYPE_LABELS[creature.effectType] || 'Arcano';
+  const effectTarget = EFFECT_TARGET_LABELS[creature.targetType]?.[langKey]
+    || (langKey === 'en' ? 'No target' : 'Sem alvo');
+  const effectDuration = creature.duration > 0
+    ? `${creature.duration} ${langKey === 'en' ? (creature.duration > 1 ? 'turns' : 'turn') : (creature.duration > 1 ? 'turnos' : 'turno')}`
+    : (langKey === 'en' ? 'Immediate' : 'Imediato');
+  const effectPower = creature.effectValue !== undefined
+    ? `+${creature.effectValue}`
+    : (langKey === 'en' ? 'Special' : 'Especial');
 
   return (
     <div style={{ position: 'relative', display: 'flex', perspective: '1000px' }}>
@@ -425,11 +448,32 @@ function CreatureCardPreview({
                   <span className="effect-card-label">Categoria</span>
                   <span className="effect-card-chip">{effectLabel}</span>
                 </div>
-                <strong>Efeito:</strong>
-                <div
-                  className="effect-card-effect-text"
-                  dangerouslySetInnerHTML={{ __html: processDescription(effectDescription) }}
-                />
+                <div className="effect-card-quick-stats">
+                  <div>
+                    <span>Alvo</span>
+                    <strong>{effectTarget}</strong>
+                  </div>
+                  <div>
+                    <span>Duração</span>
+                    <strong>{effectDuration}</strong>
+                  </div>
+                  <div>
+                    <span>Potência</span>
+                    <strong>{effectPower}</strong>
+                  </div>
+                </div>
+                <div className="effect-card-rule">
+                  <span className="effect-card-label">Efeito em jogo</span>
+                  <div className="effect-card-effect-text">
+                    <StatusText text={effectDescription} />
+                  </div>
+                </div>
+                <div className="effect-card-footer-note">
+                  <span aria-hidden="true">✦</span>
+                  {creature.cost === 0
+                    ? (langKey === 'en' ? 'No essence cost' : 'Sem custo de essência')
+                    : `${creature.cost} ${langKey === 'en' ? 'essence' : 'de essência'}`}
+                </div>
               </div>
             ) : (
               <div className="card-preview-abilities">
@@ -459,7 +503,9 @@ function CreatureCardPreview({
                         </span>
                         <div>
                           <strong>{typeof ab.name === 'object' ? ab.name[langKey] : ab.name}</strong>
-                          <div className="desc" dangerouslySetInnerHTML={{ __html: processDescription(typeof ab.desc === 'object' ? ab.desc[langKey] : ab.desc) }} />
+                          <div className="desc">
+                            <StatusText text={typeof ab.desc === 'object' ? ab.desc[langKey] : ab.desc} />
+                          </div>
                         </div>
                       </div>
                     );

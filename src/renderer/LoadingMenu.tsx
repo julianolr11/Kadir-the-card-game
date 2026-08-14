@@ -6,6 +6,7 @@ import '../styles/animations.css';
 import '../styles/vinheta.css';
 import wallpaper from '../assets/img/wallpaper/wallpaper.png';
 import keyClickSound from '../assets/sounds/effects/key_click.MP3';
+import rastroLogo from '../assets/img/rastro-logo-cropped.png';
 
 interface LoadingMenuProps {
   onNavigate: (route: string, params?: any) => void;
@@ -201,6 +202,7 @@ function LoadingMenu({ onNavigate, menuMusicRef, introMusicRef }: LoadingMenuPro
       )}
 
       <div className="vinheta" />
+      <img className="opening-developer-logo" src={rastroLogo} alt="Rastro" />
       <div
         style={{
           position: 'absolute',
@@ -212,15 +214,15 @@ function LoadingMenu({ onNavigate, menuMusicRef, introMusicRef }: LoadingMenuPro
           alignItems: 'center',
           gap: 30,
         }}
-        className="fade-in"
+        className="fade-in opening-menu-actions"
       >
-        <button className="home-btn" onClick={handlePrimaryAction}>
+        <button className="opening-menu-btn opening-menu-btn-primary" onClick={handlePrimaryAction}>
           {hasStartedJourney ? 'Continuar' : 'Iniciar'}
         </button>
-        <button className="home-btn" onClick={() => { playClickSound(); setShowOptions(true); }}>
+        <button className="opening-menu-btn" onClick={() => { playClickSound(); setShowOptions(true); }}>
           Opções
         </button>
-        <button className="home-btn" onClick={() => { playClickSound(); setShowExit(true); }}>
+        <button className="opening-menu-btn opening-menu-btn-exit" onClick={() => { playClickSound(); setShowExit(true); }}>
           Sair
         </button>
       </div>

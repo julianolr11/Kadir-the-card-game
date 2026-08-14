@@ -5,6 +5,7 @@ import { AppContext } from '../context/AppContext';
 import '../styles/animations.css';
 import '../styles/vinheta.css';
 import wallpaperStatic from '../assets/img/wallpaper/wallpaper.png';
+import rastroLogo from '../assets/img/rastro-logo-cropped.png';
 import OptionsModal from './OptionsModal';
 import ExitModal from './ExitModal';
 import StartFlow from './StartFlow';
@@ -175,6 +176,7 @@ function LoadingScreen({ onFinish, menuMusicRef }) {
         />
       )}
       <div className="vinheta" />
+      <img className="opening-developer-logo" src={rastroLogo} alt="Rastro" />
       {showMenu && (
         <>
           <div

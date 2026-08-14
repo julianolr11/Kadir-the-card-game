@@ -1398,6 +1398,8 @@
 }
 
 .deck-library-card {
+  content-visibility: auto;
+  contain-intrinsic-size: 128px 188px;
   position: relative;
    border-radius: 8px;
   border: 2px solid rgba(255, 255, 255, 0.15);
@@ -1804,4 +1806,315 @@
     animation: none !important;
     transition: none !important;
   }
+}
+
+/* ===== MEUS DECKS — SALA DE ESTRATÉGIA ===== */
+.deckbuilder-screen {
+  --deck-gold: #d6ab55;
+  --deck-cream: #f7e7bd;
+  position: relative;
+  isolation: isolate;
+  box-sizing: border-box;
+  padding: 32px 48px 38px;
+  gap: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(91, 63, 124, .28), transparent 30%),
+    radial-gradient(circle at 82% 82%, rgba(34, 104, 99, .12), transparent 32%),
+    linear-gradient(135deg, #191323, #0d0a14 68%);
+}
+
+.deckbuilder-screen::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  opacity: .32;
+  pointer-events: none;
+  background:
+    linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: linear-gradient(to bottom, #000, transparent 76%);
+}
+
+.deckbuilder-header {
+  position: relative;
+  z-index: 5;
+  min-height: 92px;
+  padding: 0 0 22px;
+  gap: 22px;
+  border-bottom: 1px solid rgba(214, 171, 85, .22);
+}
+
+.deckbuilder-titles { flex: 1; }
+.deckbuilder-kicker {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--deck-gold);
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+}
+.deckbuilder-titles h1 {
+  color: var(--deck-cream);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 2.2rem;
+  letter-spacing: .02em;
+}
+.deckbuilder-titles p { color: #9488a1; font-size: .82rem; }
+
+.deckbuilder-back,
+.recycler-toggle-btn {
+  min-width: 118px;
+  min-height: 46px;
+  border: 1px solid rgba(214,171,85,.45);
+  border-radius: 7px;
+  background: rgba(15, 11, 21, .65);
+  color: var(--deck-cream);
+  box-shadow: inset 0 1px rgba(255,255,255,.05), 0 8px 24px rgba(0,0,0,.18);
+  font-family: Georgia, serif;
+  font-size: .88rem;
+  letter-spacing: .04em;
+  text-transform: none;
+}
+.deckbuilder-back:hover,
+.recycler-toggle-btn:hover {
+  border-color: var(--deck-gold);
+  background: rgba(214,171,85,.12);
+  box-shadow: 0 10px 28px rgba(0,0,0,.3);
+}
+.recycler-toggle-btn { color: #e4b654; }
+
+.deckbuilder-capacity {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  min-width: 112px;
+  padding: 10px 14px;
+  border-left: 1px solid rgba(214,171,85,.28);
+  color: #857a90;
+  font-size: .72rem;
+  text-transform: uppercase;
+}
+.deckbuilder-capacity strong { color: var(--deck-cream); font: 700 1.5rem/1 Georgia, serif; }
+
+.deckbuilder-body {
+  width: 100%;
+  max-width: 1560px;
+  padding: 38px 0 24px;
+  justify-content: center;
+}
+.deckbuilder-slots { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
+
+.deck-overview-slot {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  min-width: 0;
+  height: 570px;
+  padding: 22px;
+  overflow: hidden;
+  border: 1px solid rgba(247, 231, 189, .13);
+  border-radius: 16px;
+  background-color: #15101e;
+  background-size: cover;
+  background-position: center;
+  box-shadow: 0 24px 60px rgba(0,0,0,.34), inset 0 1px rgba(255,255,255,.035);
+  transition: transform .24s ease, border-color .24s ease, box-shadow .24s ease;
+  animation: deck-overview-arrive .5s ease both;
+}
+.deck-overview-slot:nth-child(2) { animation-delay: .06s; }
+.deck-overview-slot:nth-child(3) { animation-delay: .12s; }
+.deck-overview-slot:nth-child(4) { animation-delay: .18s; }
+.deck-overview-slot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(135deg, rgba(255,255,255,.08), transparent 27%, transparent 72%, rgba(214,171,85,.06));
+}
+.deck-overview-slot:hover {
+  z-index: 2;
+  transform: translateY(-7px);
+  border-color: rgba(214,171,85,.58);
+  box-shadow: 0 32px 72px rgba(0,0,0,.48), 0 0 30px rgba(214,171,85,.08);
+}
+.deck-overview-slot-filled { border-color: rgba(86, 189, 160, .38); }
+.deck-overview-slot-empty {
+  border-style: dashed;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(110, 77, 154, .13), transparent 30%),
+    rgba(13, 10, 19, .68);
+}
+
+.deck-overview-slot .deck-slot-top {
+  align-items: flex-start;
+  z-index: 3;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255,255,255,.09);
+}
+.deck-slot-index {
+  display: block;
+  margin-bottom: 6px;
+  color: #81758c;
+  font-size: .62rem;
+  font-weight: 800;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+.deck-overview-slot .deck-slot-title {
+  color: var(--deck-cream);
+  font-family: Georgia, serif;
+  font-size: 1.2rem;
+}
+.deck-overview-slot .deck-slot-status {
+  padding: 5px 8px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 999px;
+  color: #8d8297;
+  font-size: .6rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.deck-overview-slot-filled .deck-slot-status { border-color: rgba(68,190,151,.34); color: #75d5b9; background: rgba(31,113,88,.16); }
+
+.deck-overview-slot .deck-slot-cta {
+  z-index: 3;
+  flex-direction: column;
+  width: calc(100% - 24px);
+  max-width: none;
+  min-height: 178px;
+  margin: auto 12px;
+  padding: 22px;
+  border: 1px dashed rgba(214,171,85,.35);
+  border-radius: 12px;
+  background: rgba(255,255,255,.025);
+  color: var(--deck-cream);
+  box-shadow: none;
+  text-align: center;
+}
+.deck-overview-slot .deck-slot-cta:hover { border-color: var(--deck-gold); background: rgba(214,171,85,.07); box-shadow: 0 14px 36px rgba(0,0,0,.22); }
+.deck-overview-slot .deck-slot-plus {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 1px solid rgba(214,171,85,.38);
+  border-radius: 50%;
+  color: var(--deck-gold);
+  font: 300 2rem/1 Georgia, serif;
+}
+.deck-slot-cta > span:last-child { display: flex; flex-direction: column; gap: 7px; }
+.deck-slot-cta strong { font-family: Georgia, serif; font-size: 1rem; }
+.deck-slot-cta small { max-width: 210px; color: #796f83; font-size: .68rem; font-weight: 500; line-height: 1.45; }
+
+.deck-slot-filled-content {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  flex: 1;
+}
+.deck-slot-summary {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 -8px 12px;
+  padding: 16px;
+  border: 1px solid rgba(247,231,189,.16);
+  border-radius: 10px;
+  background: rgba(10,8,14,.78);
+  backdrop-filter: blur(8px);
+}
+.deck-slot-summary > div { display: flex; flex-direction: column; gap: 4px; }
+.deck-slot-summary small { color: #8b8095; font-size: .6rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.deck-slot-summary strong { color: var(--deck-cream); font-family: Georgia, serif; font-size: 1.02rem; }
+.deck-slot-card-count { align-items: flex-end; }
+.deck-slot-card-count strong { color: var(--deck-gold); font-size: 1.45rem; }
+
+.deck-overview-slot .deck-slot-actions {
+  position: static;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  margin: 0;
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+.deck-overview-slot .deck-slot-btn.training {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 10px;
+  align-items: center;
+  text-align: left;
+  overflow: hidden;
+  border-color: rgba(91, 211, 195, .55);
+  background: linear-gradient(90deg, rgba(37, 137, 125, .96), rgba(49, 174, 148, .9));
+  color: #071b19;
+  box-shadow: 0 8px 24px rgba(15, 109, 97, .22);
+}
+.deck-overview-slot .deck-slot-btn.training:hover {
+  background: linear-gradient(90deg, #39a998, #63d6b9);
+  box-shadow: 0 10px 30px rgba(35, 183, 158, .3);
+}
+.deck-overview-slot .deck-slot-btn.training:disabled {
+  cursor: not-allowed;
+  filter: grayscale(.7);
+  opacity: .46;
+  box-shadow: none;
+}
+.deck-overview-slot .deck-slot-btn.training small {
+  grid-column: 2;
+  color: rgba(5, 29, 25, .72);
+  font-family: inherit;
+  font-size: .6rem;
+  font-weight: 800;
+  letter-spacing: .04em;
+}
+.deck-training-icon {
+  grid-row: 1 / 3;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(5, 37, 32, .3);
+  border-radius: 50%;
+  background: rgba(225, 255, 245, .18);
+}
+.deck-overview-slot .deck-slot-btn {
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid rgba(214,171,85,.4);
+  border-radius: 7px;
+  background: linear-gradient(180deg, #d9b35e, #a77a2b);
+  color: #17111e;
+  font-family: Georgia, serif;
+  font-size: .85rem;
+}
+.deck-overview-slot .deck-slot-btn span { float: right; margin-left: 12px; }
+.deck-overview-slot .deck-slot-btn:hover { background: linear-gradient(180deg, #efd17f, #bd8c36); }
+.deck-overview-slot .deck-slot-btn.danger { flex: none; color: #d58b8f; border-color: rgba(193,84,92,.34); background: rgba(61,24,31,.7); font-family: inherit; font-size: .7rem; }
+.deck-overview-slot .deck-slot-btn.danger:hover { color: #ffb0b3; background: rgba(105,34,44,.75); }
+
+@keyframes deck-overview-arrive {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 1200px) {
+  .deckbuilder-slots { grid-template-columns: repeat(2, minmax(0, 1fr)); overflow-y: auto; }
+  .deck-overview-slot { height: 460px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .deck-overview-slot { animation: none; transition: none; }
 }

@@ -1,9 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import { getCreatureRarity } from '../assets/rarityData.js';
+import { getCardValue } from '../assets/rarityData.js';
 import '../styles/card-instance-selector.css';
 import lvlIcon from '../assets/img/icons/lvlicon.png';
 import heartIcon from '../assets/img/icons/hearticon.png';
 import CreatureCardPreview from './CreatureCardPreview';
+import { FullArtCard } from './KadirFullArtPreview';
 
 /**
  * CardInstanceSelector - Modal para selecionar qual instância de uma carta usar
@@ -29,6 +30,8 @@ function CardInstanceSelector({
   onEdit,
   onAdorn,
   adornTotalCount,
+  onFullArt,
+  fullArtTotalCount,
   title = 'Selecione uma cópia',
   lang = 'ptbr',
 }) {
@@ -41,25 +44,15 @@ function CardInstanceSelector({
 
   // Calcula valor da carta baseado em raridade, nível e holo
   const calculateCardValue = (instance) => {
-    const rarity = getCreatureRarity(cardId);
-    let baseValue = rarity.value || 10;
-
-    // Bônus por nível (10% por nível, começando do 0)
-    const levelBonus = instance.level > 0 ? baseValue * instance.level * 0.1 : 0;
-    let totalValue = baseValue + levelBonus;
-
-    // Bônus holo: +50 moedas
-    if (instance.isHolo) {
-      totalValue += 50;
-    }
-
-    return Math.floor(totalValue);
+    return getCardValue(cardId, instance, cardData);
   };
 
   const sortedInstances = useMemo(() => {
     if (!instances) return [];
     // Ordena por level descendente, depois por XP descendente
     return [...instances].sort((a, b) => {
+      if (Boolean(b.isFullArt) !== Boolean(a.isFullArt)) return Number(Boolean(b.isFullArt)) - Number(Boolean(a.isFullArt));
+      if (Boolean(b.isHolo) !== Boolean(a.isHolo)) return Number(Boolean(b.isHolo)) - Number(Boolean(a.isHolo));
       if (b.level !== a.level) return b.level - a.level;
       return b.xp - a.xp;
     });
@@ -70,6 +63,7 @@ function CardInstanceSelector({
   );
   const selectedInstanceValue = selectedInstance ? calculateCardValue(selectedInstance) : 0;
   const nonHoloInstances = sortedInstances.filter((inst) => !inst.isHolo);
+  const holoInstances = sortedInstances.filter((inst) => inst.isHolo && !inst.isFullArt);
   const adornCount = adornTotalCount ?? nonHoloInstances.length;
   const canAdornSelected = Boolean(
     onAdorn &&
@@ -77,6 +71,8 @@ function CardInstanceSelector({
     !selectedInstance.isHolo &&
     adornCount >= 10
   );
+  const fullArtCount = fullArtTotalCount ?? holoInstances.length;
+  const canCreateFullArt = Boolean(onFullArt && selectedInstance?.isHolo && !selectedInstance?.isFullArt && fullArtCount >= 10);
 
   const handleSelectInstance = (instanceId) => {
     setSelectedInstanceId(instanceId);
@@ -129,6 +125,26 @@ function CardInstanceSelector({
         setAdorningInstanceId(null);
         setAdornRemovingIds([]);
       }, 900);
+    }, 980);
+  };
+
+  const handleFullArt = (instanceId, e) => {
+    e.stopPropagation();
+    if (!canCreateFullArt || adorningInstanceId) return;
+    const sacrificeIds = holoInstances.filter((inst) => inst.instanceId !== instanceId).slice(0, 9).map((inst) => inst.instanceId);
+    setAdornRemovingIds(sacrificeIds);
+    setAdorningInstanceId(instanceId);
+    setTimeout(() => {
+      const upgraded = onFullArt(cardId, instanceId, sacrificeIds);
+      if (!upgraded) {
+        setAdorningInstanceId(null);
+        setAdornRemovingIds([]);
+        return;
+      }
+      setTimeout(() => {
+        setAdorningInstanceId(null);
+        setAdornRemovingIds([]);
+      }, 1100);
     }, 980);
   };
 
@@ -191,7 +207,9 @@ function CardInstanceSelector({
                   {/* Número da cópia e holo status */}
                   <div className="instance-header">
                     <span className="instance-number">Cópia #{index + 1}</span>
-                    {instance.isHolo && <span className="holo-badge">✨ Holo</span>}
+                    {instance.isFullArt
+                      ? <span className="holo-badge full-art-badge">◆ Full Art</span>
+                      : instance.isHolo && <span className="holo-badge">✨ Holo</span>}
                   </div>
 
                   {/* Stats */}
@@ -248,18 +266,18 @@ function CardInstanceSelector({
         <aside className="instance-card-preview-panel">
           <div className="instance-card-preview-title">
             <span>{lang === 'en' ? 'Selected Card' : 'Carta selecionada'}</span>
-            {selectedInstance?.isHolo && <strong>Holo</strong>}
+            {selectedInstance?.isFullArt ? <strong>Full Art</strong> : selectedInstance?.isHolo && <strong>Holo</strong>}
           </div>
           {selectedInstance && cardData ? (
             <>
-              <div className={`instance-card-preview-scale ${adorningInstanceId === selectedInstance.instanceId ? 'adorning' : ''}`}>
-                <CreatureCardPreview
+              <div className={`instance-card-preview-scale ${selectedInstance.isFullArt ? 'full-art-preview' : ''} ${adorningInstanceId === selectedInstance.instanceId ? 'adorning' : ''}`}>
+                {selectedInstance.isFullArt ? <FullArtCard card={cardData} lang={lang} /> : <CreatureCardPreview
                   creature={cardData}
                   onClose={null}
                   level={selectedInstance.level || 0}
                   isHolo={!!selectedInstance.isHolo}
                   allowFlip={false}
-                />
+                />}
               </div>
               <div className="instance-preview-recycle">
                 <div className="instance-preview-value">
@@ -288,6 +306,22 @@ function CardInstanceSelector({
                         : adornCount >= 10
                           ? 'Adornar carta'
                           : `Adornar (${adornCount}/10)`}
+                  </button>
+                )}
+                {onFullArt && selectedInstance?.isHolo && (
+                  <button
+                    type="button"
+                    className="instance-preview-fullart-btn"
+                    onClick={(e) => handleFullArt(selectedInstance.instanceId, e)}
+                    disabled={!canCreateFullArt || adorningInstanceId === selectedInstance.instanceId}
+                  >
+                    {adorningInstanceId === selectedInstance.instanceId
+                      ? 'Criando Full Art...'
+                      : selectedInstance.isFullArt
+                        ? 'Carta Full Art'
+                        : fullArtCount >= 10
+                          ? 'Criar Full Art'
+                          : `Full Art (${fullArtCount}/10)`}
                   </button>
                 )}
               </div>

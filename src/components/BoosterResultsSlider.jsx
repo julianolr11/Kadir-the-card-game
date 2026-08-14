@@ -8,6 +8,7 @@ import flipCardSound from '../assets/sounds/effects/flipcard.MP3';
 import holoEffectSound from '../assets/sounds/effects/holo-effect.mp3';
 import { AppContext } from '../context/AppContext';
 import CreatureCardPreview from './CreatureCardPreview';
+import StatusText from './StatusText';
 
 const getElementImage = (element) => {
   try {
@@ -392,7 +393,7 @@ function BoosterResultsSlider({ cards, lang, onClose }) {
                                   {getLocalizedText(ability.name, lang)}
                                 </strong>
                                 <div className="desc">
-                                  {getLocalizedText(ability.desc, lang)}
+                                  <StatusText text={getLocalizedText(ability.desc, lang)} />
                                 </div>
                               </div>
                             </div>

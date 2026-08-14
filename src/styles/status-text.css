@@ -1,0 +1,13 @@
+.status-word {
+  font-weight: 800;
+  text-shadow: 0 1px 2px #000, 0 0 8px currentColor;
+}
+
+.status-word--freeze { color: #63d9ff; }
+.status-word--burn { color: #ff5148; }
+.status-word--paralyze { color: #ffe45c; }
+.status-word--poison { color: #62e87d; }
+.status-word--bleed { color: #ff6b86; }
+.status-word--sleep { color: #c896ff; }
+.status-word--shield { color: #69aaff; }
+.status-word--heal { color: #75efad; }

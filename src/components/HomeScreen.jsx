@@ -17,6 +17,7 @@ import DeckSelectModal from './DeckSelectModal';
 import Bestiary from './Bestiary';
 import Shop from './Shop';
 import AchievementsRoom from './AchievementsRoom';
+import HelpCenter from './HelpCenter';
 import { getRollRarity, RARITY_TIERS, getCreaturesByRarity } from '../assets/rarityData.js';
 
 // Função para carregar dados da carta do guardião
@@ -65,7 +66,7 @@ function BoosterZone({ boosters, onOpenBooster, isOpeningBooster, effectsVolume 
 
   return (
     <div
-      className="booster-zone"
+      className={`booster-zone${boosters <= 0 ? ' booster-zone-empty' : ' booster-zone-ready'}`}
       style={{
         position: 'fixed',
         bottom: 32,
@@ -133,7 +134,11 @@ function BoosterZone({ boosters, onOpenBooster, isOpeningBooster, effectsVolume 
         </>
       )}
       {boosters <= 0 && (
-        <span className="booster-empty-label">Sem<br />Boosters</span>
+        <div className="booster-empty-state">
+          <span className="booster-empty-seal" aria-hidden>✦</span>
+          <span className="booster-empty-label">Nenhum booster</span>
+          <span className="booster-empty-hint">Conquiste em batalhas</span>
+        </div>
       )}
     </div>
   );
@@ -239,6 +244,7 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const [isOpeningBooster, setIsOpeningBooster] = useState(false);
   const [showBoosterVideo, setShowBoosterVideo] = useState(false);
   const [showBoosterResults, setShowBoosterResults] = useState(false);
@@ -505,7 +511,10 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
           alt="Moedas"
           className="home-coin-icon"
         />
-        <span className="home-coin-amount">{coins?.toLocaleString() || 0}</span>
+        <span className="home-coin-copy">
+          <small>Saldo</small>
+          <strong className="home-coin-amount">{coins?.toLocaleString() || 0}</strong>
+        </span>
       </div>
 
       {/* Efeitos de vela animada dentro de container responsivo */}
@@ -520,7 +529,7 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
         <div className="candle-flame candle-flame-7" />
       </div>
       {/* Ícone de engrenagem no canto superior direito */}
-      <div style={{ position: 'absolute', top: 24, right: 32, zIndex: 100 }}>
+      <div className="home-settings-anchor" style={{ position: 'absolute', top: 24, right: 32, zIndex: 100 }}>
         <audio ref={cogAudioRef} src={cogSound} preload="auto" />
         <button
           className="home-cog-btn"
@@ -556,7 +565,12 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
               zIndex: 200,
             }}
           >
+            <div className="home-cog-dropdown-header">
+              <small>SISTEMA</small>
+              <strong>Menu do jogo</strong>
+            </div>
             <button
+              className="home-cog-menu-item"
               style={{
                 background: 'none',
                 border: 'none',
@@ -575,9 +589,34 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
                 setShowOptions(true);
               }}
             >
-              {t.settings}
+              <span className="home-cog-menu-icon" aria-hidden>◇</span>
+              <span>{t.settings}</span>
             </button>
             <button
+              className="home-cog-menu-item"
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#ffe6b0',
+                fontSize: 18,
+                fontWeight: 500,
+                padding: '12px 24px',
+                textAlign: 'left',
+                cursor: 'pointer',
+                borderRadius: 0,
+                width: '100%',
+                transition: 'background 0.2s',
+              }}
+              onClick={() => {
+                setDropdownOpen(false);
+                setShowHelp(true);
+              }}
+            >
+              <span className="home-cog-menu-icon" aria-hidden>?</span>
+              <span>Ajuda</span>
+            </button>
+            <button
+              className="home-cog-menu-item home-cog-menu-exit"
               style={{
                 background: 'none',
                 border: 'none',
@@ -596,7 +635,8 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
                 onNavigate('sair');
               }}
             >
-              {t.exit}
+              <span className="home-cog-menu-icon" aria-hidden>×</span>
+              <span>{t.exit}</span>
             </button>
           </div>
         )}
@@ -670,6 +710,7 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
             }
           }}
         >
+          <span className="achievements-nav-seal" aria-hidden>✦</span>
           <span className="achievements-nav-text">Conquistas</span>
           <span className="achievements-nav-arrow">↑</span>
         </button>
@@ -688,7 +729,10 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
           }}
         >
           <span className="shop-nav-arrow">←</span>
-          <span className="shop-nav-text">Shop</span>
+          <span className="home-side-nav-copy">
+            <small>Mercado</small>
+            <strong className="shop-nav-text">Shop</strong>
+          </span>
         </button>
 
         {/* Botão do Bestiário (Lado Direito) */}
@@ -704,7 +748,10 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
             }
           }}
         >
-          <span className="bestiary-nav-text">Bestiário</span>
+          <span className="home-side-nav-copy">
+            <small>Arquivo</small>
+            <strong className="bestiary-nav-text">Bestiário</strong>
+          </span>
           <span className="bestiary-nav-arrow">→</span>
         </button>
       </main>
@@ -716,30 +763,38 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
             <h2 className="battle-menu-title">Batalhar</h2>
             <div className="battle-menu-options">
               <button
-                className="battle-menu-option"
+                className="battle-menu-option battle-menu-option-campaign"
                 onClick={() => {
                   setShowBattleMenu(false);
                   onNavigate('campaign');
                 }}
               >
-                <span>Campanha</span>
-              </button>
-              <button
-                className="battle-menu-option"
-                onClick={() => {
-                  setShowBattleMenu(false);
-                  setShowDeckModal(true);
-                }}
-              >
-                <span>Batalha Individual</span>
+                <span className="battle-menu-option-seal" aria-hidden>Ⅰ</span>
+                <span className="battle-menu-option-copy">
+                  <strong>Campanha</strong>
+                  <small>Enfrente as torres e conquiste novas insígnias</small>
+                </span>
+                <span className="battle-menu-option-arrow" aria-hidden>→</span>
               </button>
               <button className="battle-menu-option battle-menu-option-muted" disabled>
-                <span>Rankeada</span>
-                <small>Em breve</small>
+                <span className="battle-menu-option-seal" aria-hidden>Ⅱ</span>
+                <span className="battle-menu-option-copy">
+                  <strong>PvP Casual</strong>
+                  <small>Encontre adversários ou convide amigos pela Steam</small>
+                </span>
+                <span className="battle-menu-coming-soon">Em breve</span>
+              </button>
+              <button className="battle-menu-option battle-menu-option-muted" disabled>
+                <span className="battle-menu-option-seal" aria-hidden>Ⅲ</span>
+                <span className="battle-menu-option-copy">
+                  <strong>Rankeada</strong>
+                  <small>Modo competitivo em desenvolvimento</small>
+                </span>
+                <span className="battle-menu-coming-soon">Em breve</span>
               </button>
             </div>
             <button className="battle-menu-close" onClick={() => setShowBattleMenu(false)}>
-              Fechar
+              Voltar
             </button>
           </div>
         </div>
@@ -750,6 +805,7 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
           onClose={() => setShowOptions(false)}
         />
       )}
+      {showHelp && <HelpCenter onClose={() => setShowHelp(false)} />}
       {showDeckModal && (
         <DeckSelectModal
           visible={showDeckModal}
@@ -775,14 +831,20 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
           className="booster-animation-overlay"
           onClick={handleCloseBoosterAnimation}
         >
-          <video
-            ref={boosterVideoRef}
-            className="booster-animation-video"
-            src={boosterAnimationVideo}
-            autoPlay
-            playsInline
-            onEnded={handleCloseBoosterAnimation}
-          />
+          <div className="booster-animation-stage" onClick={(e) => e.stopPropagation()}>
+            <div className="booster-animation-heading" aria-hidden>
+              <span>ABERTURA DE RECOMPENSA</span>
+              <strong>Revelando booster</strong>
+            </div>
+            <video
+              ref={boosterVideoRef}
+              className="booster-animation-video"
+              src={boosterAnimationVideo}
+              autoPlay
+              playsInline
+              onEnded={handleCloseBoosterAnimation}
+            />
+          </div>
           <button
             className="booster-animation-skip"
             type="button"
@@ -791,7 +853,8 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
               handleCloseBoosterAnimation();
             }}
           >
-            Pular animação
+            <span>Pular animação</span>
+            <b aria-hidden>»</b>
           </button>
         </div>
       )}

@@ -18,6 +18,34 @@
   padding: 22px;
 }
 
+.kadir-full-art-obtained {
+  background:
+    radial-gradient(circle at 50% 44%, rgba(255, 208, 91, 0.22), transparent 26%),
+    radial-gradient(circle at 50% 42%, rgba(100, 48, 158, 0.3), transparent 52%),
+    rgba(0, 0, 0, 0.9);
+}
+
+.kadir-full-art-obtained-copy {
+  position: absolute;
+  left: 50%;
+  top: -92px;
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 520px;
+  transform: translateX(-50%);
+  text-align: center;
+  text-transform: uppercase;
+  pointer-events: none;
+  animation: fullArtCopyReveal 850ms 220ms cubic-bezier(.2,.85,.22,1) both;
+}
+.kadir-full-art-obtained-copy span { color: #c3a974; font: 800 12px/1.2 'Cinzel', serif; letter-spacing: .32em; }
+.kadir-full-art-obtained-copy strong { margin-top: 7px; color: #fff2c5; font: 800 38px/1 'Cinzel', serif; letter-spacing: .08em; text-shadow: 0 0 30px rgba(255,205,104,.42); }
+.kadir-full-art-obtained-copy b { margin-top: 7px; color: #e8bb53; font: 900 15px/1 'Cinzel', serif; letter-spacing: .38em; }
+.kadir-full-art-card.is-obtained { animation: fullArtObtained 1.15s cubic-bezier(.16,.9,.18,1.08) both; }
+.kadir-full-art-card.is-obtained::after { animation: fullArtRelicFlash 1.6s 350ms ease both; }
+
 .kadir-full-art-close {
   position: absolute;
   top: 6px;
@@ -280,6 +308,18 @@
     rgba(255, 255, 255, 0.026);
 }
 
+.kadir-full-art-skills.is-clickable > div {
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.kadir-full-art-skills.is-clickable > div:hover {
+  z-index: 2;
+  background: linear-gradient(120deg, rgba(72, 194, 255, 0.2), rgba(118, 75, 184, 0.2));
+  box-shadow: inset 0 0 0 1px rgba(102, 224, 255, 0.62), 0 0 22px rgba(58, 190, 255, 0.22);
+  transform: translateY(-1px);
+}
+
 .kadir-full-art-skills header {
   display: flex;
   align-items: flex-start;
@@ -406,6 +446,22 @@
     opacity: 1;
     transform: translateY(0) scale(1);
   }
+}
+
+@keyframes fullArtObtained {
+  0% { opacity: 0; transform: translateY(90px) rotateY(-35deg) scale(.62); filter: brightness(2.4) blur(8px); }
+  45% { opacity: 1; transform: translateY(-12px) rotateY(5deg) scale(1.06); filter: brightness(1.35) blur(0); }
+  72% { transform: translateY(4px) rotateY(-2deg) scale(.985); }
+  100% { transform: translateY(0) rotateY(0) scale(1); filter: brightness(1); }
+}
+@keyframes fullArtCopyReveal {
+  from { opacity: 0; transform: translate(-50%, 18px); letter-spacing: .18em; }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+@keyframes fullArtRelicFlash {
+  0% { opacity: 0; background-color: rgba(255,255,255,.9); }
+  25% { opacity: 1; }
+  100% { opacity: .76; }
 }
 
 @keyframes kadirFullArtSweep {

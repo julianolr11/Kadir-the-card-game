@@ -72,7 +72,7 @@ export function applyModifiers(baseValue, modifiers = []) {
  * @returns {object} - { newState, log, damageDealt, hasAdvantage, hasDisadvantage }
  */
 export function applyDamage(state, params) {
-  const { attackerId, targetId, baseDamage, attackerElement, ignoreShield = false } = params;
+  const { attackerId, targetId, baseDamage, attackerElement, ignoreShield = false, applyCombatPerks = false } = params;
 
   const attacker = findCreatureById(state, attackerId);
   const target = findCreatureById(state, targetId);
@@ -95,6 +95,28 @@ export function applyDamage(state, params) {
     };
   }
 
+  // Perks de esquiva total (só se aplicam a ataques reais, não a ticks de status)
+  if (applyCombatPerks) {
+    const dodgeFromPerk = target.perkEffects?.dodgeChance || 0;
+    const dodgeFromBuffs = (target.buffs || [])
+      .filter(b => b.stat === 'dodge')
+      .reduce((sum, b) => sum + (b.value || 0), 0);
+    const totalDodgeChance = dodgeFromPerk + dodgeFromBuffs;
+    if (totalDodgeChance > 0 && Math.random() < totalDodgeChance) {
+      return {
+        newState: state,
+        log: [`${target.name || 'Alvo'} esquivou do ataque!`],
+        damageDealt: 0,
+        hasAdvantage: false,
+        hasDisadvantage: false,
+        shieldHit: false,
+        shieldBroken: false,
+        died: false,
+        dodged: true,
+      };
+    }
+  }
+
   // Calcula modificador de elemento
   const { modifier: elementMod, hasAdvantage, hasDisadvantage } = getElementModifier(attackerElement, target.element);
 
@@ -115,6 +137,23 @@ export function applyDamage(state, params) {
     }
   } catch (e) {
     // ignore
+  }
+
+  // Perk de dano crítico (chance de golpe extra)
+  let wasCrit = false;
+  if (applyCombatPerks && attacker?.perkEffects?.critChance) {
+    if (Math.random() < attacker.perkEffects.critChance) {
+      wasCrit = true;
+      damage += (attacker.perkEffects.critBonus || 0);
+    }
+  }
+
+  // Redução de dano fixa (armadura / pele resistente) e resistência mágica (contra vantagem elemental)
+  if (applyCombatPerks) {
+    damage -= (target.perkEffects?.flatDamageReduction || 0);
+    if (hasAdvantage) {
+      damage -= (target.perkEffects?.magicResistance || 0);
+    }
   }
 
   damage = Math.max(1, Math.round(damage)); // Dano mínimo de 1
@@ -140,17 +179,63 @@ export function applyDamage(state, params) {
   const newHp = Math.max(0, target.hp - finalDamage);
   const died = newHp === 0;
 
-  const newState = updateCreature(state, targetId, {
+  let newState = updateCreature(state, targetId, {
     hp: newHp,
     shield: Math.max(0, newShield),
   });
 
   const log = [
-    `${attacker?.name || 'Atacante'} causou ${finalDamage} de dano a ${target.name || 'Alvo'}${hasAdvantage ? ' (VANTAGEM!)' : ''}${hasDisadvantage ? ' (RESISTÊNCIA!)' : ''}${shieldBroken ? ' (escudo quebrado!)' : ''}`,
+    `${attacker?.name || 'Atacante'} causou ${finalDamage} de dano a ${target.name || 'Alvo'}${wasCrit ? ' (CRÍTICO!)' : ''}${hasAdvantage ? ' (VANTAGEM!)' : ''}${hasDisadvantage ? ' (RESISTÊNCIA!)' : ''}${shieldBroken ? ' (escudo quebrado!)' : ''}`,
     ...(died ? [`${target.name} foi derrotado!`] : [])
   ];
 
-  return { newState, log, damageDealt: finalDamage, hasAdvantage, hasDisadvantage, shieldHit: hadShield, shieldBroken, died };
+  if (applyCombatPerks && attacker) {
+    // Roubo de vida: cura o atacante com base no dano causado
+    if (finalDamage > 0 && attacker.perkEffects?.lifestealOnDamage) {
+      const freshAttacker = findCreatureById(newState, attackerId);
+      if (freshAttacker && freshAttacker.hp > 0) {
+        const healResult = applyHeal(newState, { targetId: attackerId, healAmount: attacker.perkEffects.lifestealOnDamage });
+        newState = healResult.newState;
+        log.push(...healResult.log.map(l => `${l} (roubo de vida)`));
+      }
+    }
+
+    // Recupera vida ao abater o alvo
+    if (died && attacker.perkEffects?.healOnKill) {
+      const freshAttacker = findCreatureById(newState, attackerId);
+      if (freshAttacker && freshAttacker.hp > 0) {
+        const healResult = applyHeal(newState, { targetId: attackerId, healAmount: attacker.perkEffects.healOnKill });
+        newState = healResult.newState;
+        log.push(...healResult.log);
+      }
+    }
+
+    // Reduz defesa do alvo ao ser atingido por este atacante
+    if (!died && attacker.perkEffects?.defenseDebuffOnAttack) {
+      const { value, duration } = attacker.perkEffects.defenseDebuffOnAttack;
+      const debuffResult = applyDebuff(newState, { targetId, stat: 'defense', value, duration, name: 'Defesa Reduzida' });
+      newState = debuffResult.newState;
+      log.push(...debuffResult.log);
+    }
+
+    // Chance de paralisar o alvo ao atacar
+    if (!died && attacker.perkEffects?.paralyzeChanceOnAttack && Math.random() < attacker.perkEffects.paralyzeChanceOnAttack) {
+      const statusResult = applyStatusEffect(newState, { targetId, effectType: 'paralyze', duration: 1, attackerId });
+      newState = statusResult.newState;
+      log.push(...statusResult.log);
+    }
+  }
+
+  // Ganha ataque ao receber dano (independe de quem ataca, dispara sempre que o dano é real)
+  if (applyCombatPerks && finalDamage > 0 && target.perkEffects?.attackOnDamageTaken) {
+    const freshTarget = findCreatureById(newState, targetId);
+    if (freshTarget && freshTarget.hp > 0) {
+      newState = updateCreature(newState, targetId, { atk: (freshTarget.atk || 0) + target.perkEffects.attackOnDamageTaken });
+      log.push(`${target.name} ganhou +${target.perkEffects.attackOnDamageTaken} de ataque ao receber dano.`);
+    }
+  }
+
+  return { newState, log, damageDealt: finalDamage, hasAdvantage, hasDisadvantage, shieldHit: hadShield, shieldBroken, died, wasCrit };
 }
 
 /**
@@ -237,11 +322,24 @@ export function applyStatusEffect(state, params) {
     return { newState: state, log: [] };
   }
 
+  // Perks que fortalecem a queimadura causada pelo próprio atacante
+  let finalDuration = duration;
+  let finalValue = value;
+  if (effectType === 'burn' && attackerId) {
+    const attacker = findCreatureById(state, attackerId);
+    if (attacker?.perkEffects?.burnDamageBonus) {
+      finalValue = (Number.isFinite(finalValue) ? finalValue : 1) + attacker.perkEffects.burnDamageBonus;
+    }
+    if (attacker?.perkEffects?.burnDurationBonus) {
+      finalDuration = (Number.isFinite(finalDuration) ? finalDuration : 0) + attacker.perkEffects.burnDurationBonus;
+    }
+  }
+
   const effect = {
     id: `status_${Date.now()}`,
     type: effectType,
-    duration,
-    value,
+    duration: finalDuration,
+    value: finalValue,
     attackerId: attackerId || null,
   };
 
@@ -275,6 +373,17 @@ export function processStatusEffects(state, creatureId) {
 
   let newState = state;
   let log = [];
+
+  // Perk: ganha escudo no início do turno se um status específico estiver ativo
+  const shieldTrigger = creature.perkEffects?.shieldIfStatusActiveOnTurnStart;
+  if (shieldTrigger) {
+    const hasActiveStatus = (creature.statusEffects || []).some(e => e.type === shieldTrigger.status && e.duration > 0);
+    if (hasActiveStatus) {
+      const shieldResult = applyShield(newState, { targetId: creatureId, shieldAmount: shieldTrigger.amount });
+      newState = shieldResult.newState;
+      log = [...log, ...shieldResult.log];
+    }
+  }
 
   const statusEffects = [...(creature.statusEffects || [])];
   const updatedEffects = [];

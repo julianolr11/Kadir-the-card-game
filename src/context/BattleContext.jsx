@@ -688,6 +688,18 @@ export function BattleProvider({ children }) {
         combatPerkEffects.teamHealOnTurnStart = 1;
         break;
 
+      // Ar — Landor
+      // (AGILE_FLIGHT não é implementado: "velocidade" não tem mecânica correspondente no motor)
+      case 'NATURAL_HEAL':
+        combatPerkEffects.healIfBelowHalfHpOnTurnStart = 1;
+        break;
+      case 'VERDANT_INSPIRATION':
+        combatPerkEffects.airAllyAttackBuffOnAllySummon = { value: 1, duration: 1 };
+        break;
+      case 'PROTECTIVE_BARK':
+        combatPerkEffects.flatDamageReduction = 1;
+        break;
+
       default:
         break;
     }
@@ -1818,6 +1830,21 @@ export function BattleProvider({ children }) {
           }, 1200);
         }, 1000);
         console.log('Elderox animation scheduled (player) for', animId, 'slotIndex', slotIndex, 'will run in ~1s');
+      }
+
+      // Perk de um aliado JÁ em campo: buffa criaturas de ar recém-invocadas (ex: VERDANT_INSPIRATION)
+      if (creature.element === 'ar') {
+        const inspirer = newState.player.field.slots.find(
+          (slot) => slot && slot.id !== creature.id && slot.hp > 0 && slot.perkEffects?.airAllyAttackBuffOnAllySummon
+        );
+        if (inspirer) {
+          const { value, duration } = inspirer.perkEffects.airAllyAttackBuffOnAllySummon;
+          const buffedSlots = newState.player.field.slots.map((slot) => (slot && slot.id === creature.id
+            ? { ...slot, buffs: [...(slot.buffs || []), { id: `buff_air_${Date.now()}`, name: inspirer.name, stat: 'attack', value, duration, type: 'flat' }] }
+            : slot));
+          newState.player = { ...newState.player, field: { ...newState.player.field, slots: buffedSlots } };
+          newState.log = [...newState.log, `${inspirer.name} inspirou ${creature.name}!`];
+        }
       }
 
       // Perk de time: concede um bônus a todos os aliados ao entrar em campo (ex: LUNAR_AURA)
@@ -4458,6 +4485,23 @@ export function BattleProvider({ children }) {
           by: 'Ashfang',
         }));
         nextLog = s.log;
+      }
+    }
+
+    // Perk de um aliado da IA JÁ em campo: buffa criaturas de ar recém-invocadas (ex: VERDANT_INSPIRATION)
+    if (creatureData.element === 'ar') {
+      const summoned = (aiSlots || [])[summonSlotIndex];
+      const inspirer = (aiSlots || []).find(
+        (slot) => slot && slot !== summoned && slot.hp > 0 && slot.perkEffects?.airAllyAttackBuffOnAllySummon
+      );
+      if (summoned && inspirer) {
+        const { value, duration } = inspirer.perkEffects.airAllyAttackBuffOnAllySummon;
+        aiSlots[summonSlotIndex] = {
+          ...summoned,
+          buffs: [...(summoned.buffs || []), { id: `buff_air_${Date.now()}`, name: inspirer.name, stat: 'attack', value, duration, type: 'flat' }],
+        };
+        s.ai = { ...s.ai, field: { ...s.ai.field, slots: aiSlots } };
+        nextLog = [...nextLog, `${inspirer.name} inspirou ${creatureName}!`];
       }
     }
 

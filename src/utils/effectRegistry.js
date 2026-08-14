@@ -655,6 +655,13 @@ export function processStatusEffects(state, creatureId) {
     newState = updateCreature(newState, creatureId, { firstHitUsedThisTurn: false });
   }
 
+  // Perk: cura no início do turno se estiver com menos de metade do HP (ex: NATURAL_HEAL)
+  if (creature.perkEffects?.healIfBelowHalfHpOnTurnStart && creature.hp < (creature.maxHp || creature.hp) / 2) {
+    const healResult = applyHeal(newState, { targetId: creatureId, healAmount: creature.perkEffects.healIfBelowHalfHpOnTurnStart });
+    newState = healResult.newState;
+    log = [...log, ...healResult.log];
+  }
+
   // Perk: acumula armadura no início do turno enquanto estiver acima de metade do HP (ex: GROUNDING_FORCE)
   if (creature.perkEffects?.armorGrowthIfAboveHalfHp && creature.hp > (creature.maxHp || creature.hp) / 2) {
     const buffResult = applyBuff(newState, {

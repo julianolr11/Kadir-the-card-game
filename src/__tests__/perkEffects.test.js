@@ -751,3 +751,15 @@ describe('regression: applyBuff/applyDebuff must apply flat perk values as flat,
     expect(second.damageDealt).toBe(4);
   });
 });
+
+describe('ar — Landor (NATURAL_HEAL)', () => {
+  test('heals at turn start only while below half HP', () => {
+    const belowHalf = makeCreature({ id: 'c1', hp: 3, maxHp: 10, perkEffects: { healIfBelowHalfHpOnTurnStart: 1 } });
+    const stateBelow = makeState({ attacker: belowHalf, target: null });
+    expect(processStatusEffects(stateBelow, 'c1').newState.player.field.slots[0].hp).toBe(4);
+
+    const aboveHalf = makeCreature({ id: 'c1', hp: 7, maxHp: 10, perkEffects: { healIfBelowHalfHpOnTurnStart: 1 } });
+    const stateAbove = makeState({ attacker: aboveHalf, target: null });
+    expect(processStatusEffects(stateAbove, 'c1').newState.player.field.slots[0].hp).toBe(7);
+  });
+});

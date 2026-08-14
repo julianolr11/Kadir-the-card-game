@@ -9,11 +9,27 @@ const numberAfter = (text, pattern) => {
   return match ? Number(match[1]) : null;
 };
 
+// Tenta cada padrão em ordem e retorna o primeiro número encontrado.
+// Usado para textos onde a quantidade pode vir antes OU depois da palavra-chave
+// (ex: "Concede 1 de escudo" vs "escudo que absorve até 3 de dano").
+const numberNear = (text, patterns) => {
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match) return Number(match[1]);
+  }
+  return null;
+};
+
 export const resolveAbility = (ability = {}) => {
   const text = normalize(ability.desc?.pt || ability.desc?.en || '');
   const writtenDamage = numberAfter(text, /(?:causa|deals?)\s+(\d+)\s+(?:de\s+)?dano/);
   const heal = numberAfter(text, /(?:recupera|restaura|cura|recovers?|restores?|heals?)\s+(\d+)/);
-  const shield = numberAfter(text, /(?:escudo[^0-9]{0,24}(?:absorve|de)|shield[^0-9]{0,24}(?:absorbs?|of))\s+(\d+)/);
+  const shield = numberNear(text, [
+    /(\d+)\s*(?:de\s+)?escudo/,
+    /escudo[^0-9]{0,40}?(?:absorve|\bde\b)[^0-9]{0,10}(\d+)/,
+    /(\d+)\s*shield/,
+    /shield[^0-9]{0,40}?(?:absorbs?|\bof\b)[^0-9]{0,10}(\d+)/,
+  ]);
   const writtenDuration = numberAfter(text, /(?:por|for)\s+(\d+)\s+(?:turnos?|rodadas?|turns?|rounds?)/);
   const statuses = [];
 

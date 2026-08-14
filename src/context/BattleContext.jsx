@@ -274,18 +274,58 @@ const isDragonCreature = (creature) => {
   return typeText.includes('drac') || typeText.includes('dragon') || typeText.includes('dragão') || typeText.includes('dragao');
 };
 
-// Monta os buffs iniciais de uma criatura recém-invocada (ex: esquiva temporária de perks como AGILE_SPIRIT)
+// Monta os buffs iniciais de uma criatura recém-invocada (esquiva/defesa/resistências temporárias de perks de summon)
 const buildInitialBuffs = (build) => {
-  const evasion = build?.perkEffects?.evasionOnSummon;
-  if (!evasion) return [];
-  return [{
-    id: `buff_evasion_summon_${Date.now()}`,
-    name: 'Esquiva ao Invocar',
-    stat: 'dodge',
-    value: evasion.value,
-    duration: evasion.duration,
-    type: 'flat',
-  }];
+  const buffs = [];
+  const perks = build?.perkEffects || {};
+
+  if (perks.evasionOnSummon) {
+    buffs.push({
+      id: `buff_evasion_summon_${Date.now()}`,
+      name: 'Esquiva ao Invocar',
+      stat: 'dodge',
+      value: perks.evasionOnSummon.value,
+      duration: perks.evasionOnSummon.duration,
+      type: 'flat',
+    });
+  }
+
+  if (perks.defenseBuffOnSummon) {
+    buffs.push({
+      id: `buff_defense_summon_${Date.now()}`,
+      name: 'Defesa ao Invocar',
+      stat: 'defense',
+      value: perks.defenseBuffOnSummon.value,
+      duration: perks.defenseBuffOnSummon.duration,
+      type: 'flat',
+    });
+  }
+
+  if (perks.elementResistOnSummon) {
+    buffs.push({
+      id: `buff_element_resist_summon_${Date.now()}`,
+      name: 'Resistência Elemental ao Invocar',
+      stat: 'elementResist',
+      element: perks.elementResistOnSummon.element,
+      value: perks.elementResistOnSummon.value,
+      duration: perks.elementResistOnSummon.duration,
+      type: 'flat',
+    });
+  }
+
+  if (perks.dotResistOnSummon) {
+    buffs.push({
+      id: `buff_dot_resist_summon_${Date.now()}`,
+      name: 'Resistência a Efeitos ao Invocar',
+      stat: 'dotResist',
+      dotTypes: perks.dotResistOnSummon.types,
+      value: perks.dotResistOnSummon.value,
+      duration: perks.dotResistOnSummon.duration,
+      type: 'flat',
+    });
+  }
+
+  return buffs;
 };
 
 export function BattleProvider({ children }) {
@@ -405,6 +445,152 @@ export function BattleProvider({ children }) {
       case 'PARALYZE_CHANCE_10':
         combatPerkEffects.paralyzeChanceOnAttack = 0.1;
         break;
+
+      // Água — Arguilia
+      case 'ANCIENT_FLUIDITY':
+        combatPerkEffects.evasionOnSummon = { value: 0.15, duration: 2 };
+        break;
+      case 'TOXIC_IMMUNITY':
+        combatPerkEffects.dotDamageReduction = { value: 1, types: null };
+        break;
+      case 'HEALING_RIVER':
+        combatPerkEffects.healOnKill = 1;
+        break;
+      case 'PERSISTENT_POISON':
+        combatPerkEffects.statusDurationBonus = { ...(combatPerkEffects.statusDurationBonus || {}), slow: 1 };
+        break;
+
+      // Água — Alatoy
+      case 'ABYSSAL_SKIN':
+        combatPerkEffects.defenseBuffOnSummon = { value: 1, duration: 2 };
+        break;
+      case 'DEEP_DEFENSE':
+        combatPerkEffects.defenseWhileShielded = 1;
+        break;
+      case 'ABYSSAL_REFLEX':
+        combatPerkEffects.reflectDamage = { element: 'agua', value: 1 };
+        break;
+      case 'INSTINCTIVE_FROST':
+        combatPerkEffects.freezeAttackerChance = 0.5;
+        break;
+
+      // Água — Arigus
+      case 'FROST_RESOLVE':
+        combatPerkEffects.flatDamageReduction = 1;
+        break;
+      case 'ICEHORN_GUARD':
+        shieldOnSummon = { amount: 1, duration: 1 };
+        break;
+      case 'SNOWBOUND_HIDE':
+        combatPerkEffects.shieldOnDamageIfNone = 1;
+        break;
+
+      // Água — Ekernoth
+      case 'ABYSSAL_CARAPACE':
+        combatPerkEffects.defenseBuffOnSummon = { value: 2, duration: 2 };
+        break;
+      case 'SALINE_SHIELD':
+        combatPerkEffects.shieldEveryTurnStart = 2;
+        break;
+      case 'ABYSSAL_FURY':
+        combatPerkEffects.healOnKill = 2;
+        break;
+      case 'CONSTANT_PRESSURE':
+        combatPerkEffects.enemyDefenseAura = 1;
+        break;
+
+      // Água — Kael
+      case 'FROST_SKIN':
+        combatPerkEffects.defenseBuffOnSummon = { value: 1, duration: 2 };
+        break;
+      case 'FROST_REFLECT':
+        combatPerkEffects.reflectDamage = { element: 'agua', value: 1 };
+        break;
+      case 'DEEP_RESISTANCE':
+        combatPerkEffects.elementDamageReduction = { element: 'agua', value: 1 };
+        break;
+      case 'ARCTIC_BREATH':
+        combatPerkEffects.healOnKill = 1;
+        break;
+
+      // Água — Lunethal
+      case 'LUNAR_AURA':
+        combatPerkEffects.teamBuffOnSummon = { stat: 'defense', value: 1, duration: 2 };
+        break;
+      case 'MOON_REFLECT':
+        combatPerkEffects.reflectDamage = { element: 'puro', value: 1 };
+        break;
+      case 'RISING_LIGHT':
+        combatPerkEffects.nightAllyAttackAura = 1;
+        break;
+
+      // Água — Mawthorn
+      case 'ABYSSAL_THORNS':
+        combatPerkEffects.teamDebuffOnSummon = { status: 'bleed', duration: 2, value: 1 };
+        break;
+      case 'DEEP_REGEN':
+        combatPerkEffects.healIfStatusActiveOnTurnStart = { status: 'bleed', amount: 1 };
+        break;
+      case 'TOXIC_SKIN':
+        combatPerkEffects.dotDamageReduction = { value: 1, types: ['poison', 'bleed'] };
+        break;
+      case 'HEALING_SPORES':
+        combatPerkEffects.healOnApplyDot = 1;
+        break;
+
+      // Água — Seract
+      case 'FROZEN_ABYSS':
+        combatPerkEffects.bonusDamageVsFrozen = { element: 'agua', value: 1 };
+        break;
+      case 'SHADOW_ICE_CORE':
+        combatPerkEffects.shieldChanceOnDamageTaken = { chance: 0.5, amount: 1 };
+        break;
+      case 'COLD_GRAVE':
+        combatPerkEffects.essenceOnKill = 1;
+        break;
+
+      // Água — Sunburst
+      case 'NIGHT_GLEAM':
+        combatPerkEffects.nightSelfBuff = { atk: 1, dodge: 0.15 };
+        break;
+      case 'SOLAR_RADIANCE':
+        combatPerkEffects.dayAllyAttackAura = 1;
+        break;
+      case 'PROTECTIVE_LIGHT':
+        combatPerkEffects.shadowResistAura = 1;
+        break;
+      case 'PERSISTENT_LIGHT':
+        combatPerkEffects.healOnKill = 1;
+        break;
+
+      // Água — Viborom
+      case 'VENOM_SKIN':
+        combatPerkEffects.dotResistOnSummon = { types: ['poison'], value: 1, duration: 2 };
+        break;
+      case 'TOXIC_RESISTANCE':
+        combatPerkEffects.dotDamageReduction = { value: 1, types: ['poison'] };
+        break;
+      case 'PERSISTENT_VENOM':
+        combatPerkEffects.statusDurationBonus = { ...(combatPerkEffects.statusDurationBonus || {}), poison: 1 };
+        break;
+      case 'TOXIC_HEAL':
+        combatPerkEffects.healOnKillIfStatus = { status: 'poison', value: 2 };
+        break;
+
+      // Água — Whalar
+      case 'NIGHT_HUNTER':
+        combatPerkEffects.nightSelfBuff = { atk: 1, dodge: 0.15 };
+        break;
+      case 'ABYSSAL_RESISTANCE':
+        combatPerkEffects.elementResistOnSummon = { element: 'agua', value: 1, duration: 2 };
+        break;
+      case 'DEEP_BREATH':
+        combatPerkEffects.healOnKill = 1;
+        break;
+      case 'PROTECTIVE_TIDE':
+        combatPerkEffects.allyDefenseAura = 1;
+        break;
+
       default:
         break;
     }
@@ -1535,6 +1721,33 @@ export function BattleProvider({ children }) {
           }, 1200);
         }, 1000);
         console.log('Elderox animation scheduled (player) for', animId, 'slotIndex', slotIndex, 'will run in ~1s');
+      }
+
+      // Perk de time: concede um bônus a todos os aliados ao entrar em campo (ex: LUNAR_AURA)
+      if (build.perkEffects?.teamBuffOnSummon) {
+        const { stat, value, duration } = build.perkEffects.teamBuffOnSummon;
+        const buffedSlots = newState.player.field.slots.map((slot) => {
+          if (!slot || slot.hp <= 0) return slot;
+          const buff = { id: `buff_team_${Date.now()}_${slot.id}`, name: creature.name, stat, value, duration, type: 'flat' };
+          return { ...slot, buffs: [...(slot.buffs || []), buff] };
+        });
+        newState.player = { ...newState.player, field: { ...newState.player.field, slots: buffedSlots } };
+        newState.log = [...newState.log, `${creature.name} concedeu um bônus a todos os aliados!`];
+      }
+
+      // Perk de time: aplica um status a todos os inimigos ao entrar em campo (ex: ABYSSAL_THORNS)
+      if (build.perkEffects?.teamDebuffOnSummon) {
+        const { status, duration, value } = build.perkEffects.teamDebuffOnSummon;
+        let tsAfterDebuff = newState;
+        (tsAfterDebuff.ai.field.slots || []).forEach((slot) => {
+          if (!slot || slot.hp <= 0) return;
+          const statusResult = effectRegistry.applyStatusEffect(tsAfterDebuff, {
+            targetId: slot.id, effectType: status, duration, value, attackerId: creature.id,
+          });
+          tsAfterDebuff = statusResult.newState;
+        });
+        newState.ai = tsAfterDebuff.ai;
+        newState.log = [...newState.log, `${creature.name} afetou todos os inimigos!`];
       }
 
       // Se for Ignis, ativa o efeito de ressurreição
@@ -4120,6 +4333,30 @@ export function BattleProvider({ children }) {
         }));
         nextLog = s.log;
       }
+    }
+
+    // Perk de time: concede um bônus a todos os aliados da IA ao entrar em campo (ex: LUNAR_AURA)
+    if (build.perkEffects?.teamBuffOnSummon) {
+      const { stat, value, duration } = build.perkEffects.teamBuffOnSummon;
+      const buffedSlots = (aiSlots || []).map((slot) => {
+        if (!slot || slot.hp <= 0) return slot;
+        const buff = { id: `buff_team_${Date.now()}_${slot.id}`, name: creatureName, stat, value, duration, type: 'flat' };
+        return { ...slot, buffs: [...(slot.buffs || []), buff] };
+      });
+      s.ai = { ...s.ai, field: { ...s.ai.field, slots: buffedSlots } };
+      nextLog = [...nextLog, `${creatureName} concedeu um bônus a todos os aliados!`];
+    }
+
+    // Perk de time: aplica um status a todos os inimigos (jogador) ao entrar em campo (ex: ABYSSAL_THORNS)
+    if (build.perkEffects?.teamDebuffOnSummon) {
+      const { status, duration } = build.perkEffects.teamDebuffOnSummon;
+      const playerSlots = [...(s.player?.field?.slots || [])];
+      const updated = playerSlots.map((slot) => {
+        if (!slot || slot.hp <= 0) return slot;
+        return applyStatusEffect(slot, status, duration, creatureName);
+      });
+      s.player = { ...s.player, field: { ...s.player.field, slots: updated } };
+      nextLog = [...nextLog, `${creatureName} afetou todos os inimigos!`];
     }
 
     return { logEntries: nextLog };

@@ -152,7 +152,7 @@ module.exports = {
     {
       level: 8,
       type: 'perk',
-      id: 'PROTECTIVE_CLAWS',
+      id: 'PROTECTIVE_CLAWS_EVASION',
       name: { pt: 'Garras Protetoras', en: 'Protective Claws' },
       desc: {
         pt: 'No início do turno, ganha 1 de escudo se estiver com esquiva ativa.',

@@ -3,6 +3,7 @@ import {
   applyStatusEffect,
   processStatusEffects,
   isNightTurn,
+  removeCreatureDebuffs,
 } from '../utils/effectRegistry';
 
 function makeState({ attacker, target, turn = 1, playerExtras = [], aiExtras = [] } = {}) {
@@ -518,5 +519,107 @@ describe('applyStatusEffect generic per-type bonuses and healOnApplyDot', () => 
     });
 
     expect(result.newState.player.field.slots[0].hp).toBe(6);
+  });
+});
+
+describe('puro — conditional defense, first-hit, and cleanse perks', () => {
+  test('defenseWhileAboveHalfHp only reduces damage above 50% HP (AURORA_WARD)', () => {
+    const attacker = makeCreature({ id: 'atk' });
+    const aboveHalf = makeCreature({ id: 'tgt', hp: 6, maxHp: 10, perkEffects: { defenseWhileAboveHalfHp: 1 } });
+    const stateAbove = makeState({ attacker, target: aboveHalf });
+    const resultAbove = applyDamage(stateAbove, {
+      attackerId: 'atk', targetId: 'tgt', baseDamage: 3, applyCombatPerks: true,
+    });
+    expect(resultAbove.damageDealt).toBe(2);
+
+    const belowHalf = makeCreature({ id: 'tgt', hp: 4, maxHp: 10, perkEffects: { defenseWhileAboveHalfHp: 1 } });
+    const stateBelow = makeState({ attacker, target: belowHalf });
+    const resultBelow = applyDamage(stateBelow, {
+      attackerId: 'atk', targetId: 'tgt', baseDamage: 3, applyCombatPerks: true,
+    });
+    expect(resultBelow.damageDealt).toBe(3);
+  });
+
+  test('firstHitDamageReduction only applies to the first hit taken this turn (PROTECTIVE_WISDOM)', () => {
+    const attacker = makeCreature({ id: 'atk' });
+    const target = makeCreature({ id: 'tgt', hp: 10, perkEffects: { firstHitDamageReduction: 1 } });
+    const state = makeState({ attacker, target });
+
+    const firstHit = applyDamage(state, {
+      attackerId: 'atk', targetId: 'tgt', baseDamage: 3, applyCombatPerks: true,
+    });
+    expect(firstHit.damageDealt).toBe(2);
+
+    const secondHit = applyDamage(firstHit.newState, {
+      attackerId: 'atk', targetId: 'tgt', baseDamage: 3, applyCombatPerks: true,
+    });
+    expect(secondHit.damageDealt).toBe(3);
+  });
+
+  test('processStatusEffects resets firstHitUsedThisTurn at the start of the turn', () => {
+    const creature = makeCreature({
+      id: 'c1', firstHitUsedThisTurn: true, perkEffects: { firstHitDamageReduction: 1 },
+    });
+    const state = makeState({ attacker: creature, target: null });
+
+    const result = processStatusEffects(state, 'c1');
+
+    expect(result.newState.player.field.slots[0].firstHitUsedThisTurn).toBe(false);
+  });
+
+  test('shieldIfBuffActiveOnTurnStart grants a shield only while the matching buff is active', () => {
+    const withBuff = makeCreature({
+      id: 'c1',
+      buffs: [{ id: 'b1', stat: 'attack', value: 1, duration: 2 }],
+      perkEffects: { shieldIfBuffActiveOnTurnStart: { stat: 'attack', amount: 1 } },
+    });
+    const stateWith = makeState({ attacker: withBuff, target: null });
+    expect(processStatusEffects(stateWith, 'c1').newState.player.field.slots[0].shield).toBe(1);
+
+    const withoutBuff = makeCreature({
+      id: 'c1', buffs: [], perkEffects: { shieldIfBuffActiveOnTurnStart: { stat: 'attack', amount: 1 } },
+    });
+    const stateWithout = makeState({ attacker: withoutBuff, target: null });
+    expect(processStatusEffects(stateWithout, 'c1').newState.player.field.slots[0].shield).toBe(0);
+  });
+
+  test('removeCreatureDebuffs strips only negative-value buffs, up to the requested count', () => {
+    const creature = makeCreature({
+      buffs: [
+        { id: 'b1', stat: 'attack', value: 2 },
+        { id: 'b2', stat: 'defense', value: -1 },
+        { id: 'b3', stat: 'attack', value: -1 },
+      ],
+    });
+
+    const { buffs, removedCount } = removeCreatureDebuffs(creature, 1);
+
+    expect(removedCount).toBe(1);
+    expect(buffs).toHaveLength(2);
+    expect(buffs.some(b => b.value < 0)).toBe(true); // só 1 dos 2 debuffs foi removido
+  });
+
+  test('cleanseAndShieldIfLowHp removes a debuff and grants a shield only below the HP threshold', () => {
+    const lowHp = makeCreature({
+      id: 'c1',
+      hp: 2,
+      buffs: [{ id: 'b1', stat: 'defense', value: -1 }],
+      perkEffects: { cleanseAndShieldIfLowHp: { hpThreshold: 3, shieldAmount: 1 } },
+    });
+    const stateLow = makeState({ attacker: lowHp, target: null });
+    const resultLow = processStatusEffects(stateLow, 'c1');
+    expect(resultLow.newState.player.field.slots[0].shield).toBe(1);
+    expect(resultLow.newState.player.field.slots[0].buffs).toHaveLength(0);
+
+    const highHp = makeCreature({
+      id: 'c1',
+      hp: 8,
+      buffs: [{ id: 'b1', stat: 'defense', value: -1 }],
+      perkEffects: { cleanseAndShieldIfLowHp: { hpThreshold: 3, shieldAmount: 1 } },
+    });
+    const stateHigh = makeState({ attacker: highHp, target: null });
+    const resultHigh = processStatusEffects(stateHigh, 'c1');
+    expect(resultHigh.newState.player.field.slots[0].shield).toBe(0);
+    expect(resultHigh.newState.player.field.slots[0].buffs).toHaveLength(1);
   });
 });

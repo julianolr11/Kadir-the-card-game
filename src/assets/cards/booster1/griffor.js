@@ -83,7 +83,7 @@ module.exports = {
     {
       level: 2,
       type: 'perk',
-      id: 'WILD_INSTINCT',
+      id: 'SUMMON_FEROCITY',
       name: { pt: 'Instinto Selvagem', en: 'Wild Instinct' },
       desc: {
         pt: 'Ganha +1 ataque ao entrar em campo.',
@@ -155,7 +155,7 @@ module.exports = {
     {
       level: 8,
       type: 'perk',
-      id: 'PROTECTIVE_CLAWS',
+      id: 'PROTECTIVE_CLAWS_RALLY',
       name: { pt: 'Garras Protetoras', en: 'Protective Claws' },
       desc: {
         pt: 'No início do turno, ganha 1 de escudo se estiver com ataque ativo.',

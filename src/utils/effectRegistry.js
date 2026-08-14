@@ -192,6 +192,9 @@ export function applyDamage(state, params) {
     if (target.perkEffects?.defenseWhileShielded && target.shield > 0) {
       damage -= target.perkEffects.defenseWhileShielded;
     }
+    if (target.perkEffects?.defenseWhileAboveHalfHp && target.hp > (target.maxHp || target.hp) / 2) {
+      damage -= target.perkEffects.defenseWhileAboveHalfHp;
+    }
 
     // Auras do lado do alvo: reduzem o dano recebido por todos os aliados
     if (targetSide) {
@@ -203,6 +206,13 @@ export function applyDamage(state, params) {
         damage -= targetAllySlots.reduce((sum, c) => sum + (c.perkEffects?.shadowResistAura || 0), 0);
       }
     }
+  }
+
+  // Reduz o dano do primeiro ataque recebido a cada turno (consome o "uso" deste turno)
+  let firstHitReducedNow = false;
+  if (applyCombatPerks && target.perkEffects?.firstHitDamageReduction && !target.firstHitUsedThisTurn) {
+    damage -= target.perkEffects.firstHitDamageReduction;
+    firstHitReducedNow = true;
   }
 
   damage = Math.max(1, Math.round(damage)); // Dano mínimo de 1
@@ -231,6 +241,7 @@ export function applyDamage(state, params) {
   let newState = updateCreature(state, targetId, {
     hp: newHp,
     shield: Math.max(0, newShield),
+    ...(firstHitReducedNow ? { firstHitUsedThisTurn: true } : {}),
   });
 
   const log = [
@@ -422,6 +433,24 @@ export function applyDebuff(state, params) {
 }
 
 /**
+ * Remove até `count` debuffs (buffs com valor negativo) de uma criatura.
+ * @returns {{ buffs: array, removedCount: number }}
+ */
+export function removeCreatureDebuffs(creature, count = 1) {
+  const buffs = [...(creature.buffs || [])];
+  let removed = 0;
+  const kept = [];
+  buffs.forEach((b) => {
+    if (removed < count && b.value < 0) {
+      removed += 1;
+      return;
+    }
+    kept.push(b);
+  });
+  return { buffs: kept, removedCount: removed };
+}
+
+/**
  * Aplica escudo (absorve dano)
  */
 export function applyShield(state, params) {
@@ -542,6 +571,32 @@ export function processStatusEffects(state, creatureId) {
       newState = healResult.newState;
       log = [...log, ...healResult.log];
     }
+  }
+
+  // Perk: ganha escudo no início do turno se um buff específico estiver ativo (ex: ataque, defesa, esquiva)
+  const buffShieldTrigger = creature.perkEffects?.shieldIfBuffActiveOnTurnStart;
+  if (buffShieldTrigger) {
+    const hasActiveBuff = (creature.buffs || []).some(b => b.stat === buffShieldTrigger.stat && b.duration > 0);
+    if (hasActiveBuff) {
+      const shieldResult = applyShield(newState, { targetId: creatureId, shieldAmount: buffShieldTrigger.amount });
+      newState = shieldResult.newState;
+      log = [...log, ...shieldResult.log];
+    }
+  }
+
+  // Perk: remove 1 debuff e ganha escudo no início do turno se o HP estiver baixo
+  const lowHpTrigger = creature.perkEffects?.cleanseAndShieldIfLowHp;
+  if (lowHpTrigger && creature.hp <= lowHpTrigger.hpThreshold) {
+    const { buffs, removedCount } = removeCreatureDebuffs(creature, 1);
+    newState = updateCreature(newState, creatureId, { buffs });
+    const shieldResult = applyShield(newState, { targetId: creatureId, shieldAmount: lowHpTrigger.shieldAmount });
+    newState = shieldResult.newState;
+    log = [...log, ...(removedCount > 0 ? [`${creature.name} removeu um efeito negativo.`] : []), ...shieldResult.log];
+  }
+
+  // Reseta o consumo do "primeiro golpe do turno" (perks como PROTECTIVE_WISDOM)
+  if (creature.perkEffects?.firstHitDamageReduction) {
+    newState = updateCreature(newState, creatureId, { firstHitUsedThisTurn: false });
   }
 
   // Redução de dano contínuo (DoT): perk permanente + buffs temporários (ex: ao entrar em campo)

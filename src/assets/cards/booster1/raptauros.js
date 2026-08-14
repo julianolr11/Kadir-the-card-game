@@ -176,7 +176,7 @@ module.exports = {
     {
       level: 8,
       type: 'perk',
-      id: 'WILD_INSTINCT',
+      id: 'EVASIVE_INSTINCT',
       name: { pt: 'Instinto Selvagem', en: 'Wild Instinct' },
       desc: {
         pt: 'Ganha +1 de esquiva ao receber dano.',

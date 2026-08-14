@@ -591,6 +591,67 @@ export function BattleProvider({ children }) {
         combatPerkEffects.allyDefenseAura = 1;
         break;
 
+      // Puro — Griffor
+      case 'SUMMON_FEROCITY':
+        atk += 1;
+        break;
+      case 'PROTECTIVE_CLAWS':
+        combatPerkEffects.flatDamageReduction = 1;
+        break;
+      case 'PROTECTIVE_CLAWS_RALLY':
+        combatPerkEffects.shieldIfBuffActiveOnTurnStart = { stat: 'attack', amount: 1 };
+        break;
+
+      // Puro — Moar
+      case 'AURORA_WARD':
+        combatPerkEffects.defenseWhileAboveHalfHp = 1;
+        break;
+      case 'PURE_HORIZON':
+        combatPerkEffects.teamCleanseOnSummon = { count: 1 };
+        break;
+      case 'WHITE_VIGIL':
+        combatPerkEffects.cleanseAndShieldIfLowHp = { hpThreshold: 3, shieldAmount: 1 };
+        break;
+
+      // Puro — Nihil
+      case 'VOID_ESSENCE':
+        def += 1;
+        break;
+      case 'PROTECTIVE_VOID':
+        combatPerkEffects.elementDamageReduction = { element: 'puro', value: 1 };
+        break;
+      case 'VOID_BREATH':
+        combatPerkEffects.healOnKill = 1;
+        break;
+      case 'PROTECTIVE_ESSENCE':
+        combatPerkEffects.shieldIfBuffActiveOnTurnStart = { stat: 'defense', amount: 1 };
+        break;
+
+      // Puro — Owlberoth
+      case 'PIERCING_GAZE':
+        combatPerkEffects.singleEnemyDebuffOnSummon = { stat: 'attack', value: 1, duration: 1 };
+        break;
+      case 'PROTECTIVE_WISDOM':
+        combatPerkEffects.firstHitDamageReduction = 1;
+        break;
+      case 'NIGHT_BREATH':
+        combatPerkEffects.healOnKill = 1;
+        break;
+
+      // Puro — Pawferion
+      case 'FELINE_INSTINCT':
+        combatPerkEffects.dodgeChance = 0.15;
+        break;
+      case 'AGILE_REFLEXES':
+        combatPerkEffects.flatDamageReduction = 1;
+        break;
+      case 'WILD_BREATH':
+        combatPerkEffects.healOnKill = 1;
+        break;
+      case 'PROTECTIVE_CLAWS_EVASION':
+        combatPerkEffects.shieldIfBuffActiveOnTurnStart = { stat: 'dodge', amount: 1 };
+        break;
+
       default:
         break;
     }
@@ -1748,6 +1809,35 @@ export function BattleProvider({ children }) {
         });
         newState.ai = tsAfterDebuff.ai;
         newState.log = [...newState.log, `${creature.name} afetou todos os inimigos!`];
+      }
+
+      // Perk de time: remove debuffs de todos os aliados ao entrar em campo (ex: PURE_HORIZON)
+      if (build.perkEffects?.teamCleanseOnSummon) {
+        const { count } = build.perkEffects.teamCleanseOnSummon;
+        const cleansedSlots = newState.player.field.slots.map((slot) => {
+          if (!slot || slot.hp <= 0) return slot;
+          const { buffs } = effectRegistry.removeCreatureDebuffs(slot, count);
+          return { ...slot, buffs };
+        });
+        newState.player = { ...newState.player, field: { ...newState.player.field, slots: cleansedSlots } };
+        newState.log = [...newState.log, `${creature.name} purificou os aliados!`];
+      }
+
+      // Perk: aplica um debuff a 1 inimigo aleatório ao entrar em campo (ex: PIERCING_GAZE)
+      if (build.perkEffects?.singleEnemyDebuffOnSummon) {
+        const { stat, value, duration } = build.perkEffects.singleEnemyDebuffOnSummon;
+        const enemyIndices = newState.ai.field.slots
+          .map((slot, idx) => (slot && slot.hp > 0 ? idx : null))
+          .filter((idx) => idx !== null);
+        if (enemyIndices.length > 0) {
+          const targetIdx = enemyIndices[Math.floor(Math.random() * enemyIndices.length)];
+          const targetSlot = newState.ai.field.slots[targetIdx];
+          const debuffResult = effectRegistry.applyDebuff(newState, {
+            targetId: targetSlot.id, stat, value, duration, name: 'Enfraquecido',
+          });
+          newState.ai = debuffResult.newState.ai;
+          newState.log = [...newState.log, `${creature.name} enfraqueceu ${targetSlot.name}!`];
+        }
       }
 
       // Se for Ignis, ativa o efeito de ressurreição
@@ -4357,6 +4447,33 @@ export function BattleProvider({ children }) {
       });
       s.player = { ...s.player, field: { ...s.player.field, slots: updated } };
       nextLog = [...nextLog, `${creatureName} afetou todos os inimigos!`];
+    }
+
+    // Perk de time: remove debuffs de todos os aliados da IA ao entrar em campo (ex: PURE_HORIZON)
+    if (build.perkEffects?.teamCleanseOnSummon) {
+      const { count } = build.perkEffects.teamCleanseOnSummon;
+      const cleansedSlots = (aiSlots || []).map((slot) => {
+        if (!slot || slot.hp <= 0) return slot;
+        const { buffs } = effectRegistry.removeCreatureDebuffs(slot, count);
+        return { ...slot, buffs };
+      });
+      s.ai = { ...s.ai, field: { ...s.ai.field, slots: cleansedSlots } };
+      nextLog = [...nextLog, `${creatureName} purificou os aliados!`];
+    }
+
+    // Perk: aplica um debuff a 1 inimigo (jogador) aleatório ao entrar em campo (ex: PIERCING_GAZE)
+    if (build.perkEffects?.singleEnemyDebuffOnSummon) {
+      const { stat, value, duration } = build.perkEffects.singleEnemyDebuffOnSummon;
+      const playerSlots = [...(s.player?.field?.slots || [])];
+      const indices = playerSlots.map((slot, idx) => (slot && slot.hp > 0 ? idx : null)).filter((idx) => idx !== null);
+      if (indices.length > 0) {
+        const idx = getRandomIndex(indices);
+        const debuffResult = effectRegistry.applyDebuff(s, {
+          targetId: playerSlots[idx].id, stat, value, duration, name: 'Enfraquecido',
+        });
+        s.player = debuffResult.newState.player;
+        nextLog = [...nextLog, `${creatureName} enfraqueceu ${playerSlots[idx].name}!`];
+      }
     }
 
     return { logEntries: nextLog };

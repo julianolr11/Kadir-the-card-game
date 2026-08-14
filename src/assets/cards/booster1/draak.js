@@ -14,7 +14,7 @@ module.exports = {
   abilities: [
     {
       name: { pt: 'Rugido Dracônico', en: 'Draconic Roar' },
-      cost: 1,
+      cost: 2,
       desc: {
         pt: 'Causa 2 de dano e paralisa o inimigo por 1 rodada.',
         en: 'Deals 2 damage and paralyzes the enemy for 1 round.',
@@ -25,7 +25,7 @@ module.exports = {
     },
     {
       name: { pt: 'Alcance Esmeralda', en: 'Emerald Reach' },
-      cost: 1,
+      cost: 2,
       desc: {
         pt: 'Causa 3 de dano e retira qualquer escudo ativo do alvo inimigo.',
         en: 'Deals 3 damage and removes any active shield from the enemy target.',
@@ -57,7 +57,7 @@ module.exports = {
         pt: 'Causa 2 de dano e paralisa o inimigo por 1 rodada.',
         en: 'Deals 2 damage and paralyzes the enemy for 1 round.',
       },
-      cost: 1,
+      cost: 2,
       type: 'damage_paralyze',
       damage: 2,
       statusEffect: 'paralyze',
@@ -70,7 +70,7 @@ module.exports = {
         pt: 'Causa 3 de dano e retira qualquer escudo ativo do alvo inimigo.',
         en: 'Deals 3 damage and removes any active shield from the enemy target.',
       },
-      cost: 1,
+      cost: 2,
       type: 'damage_remove_shield',
       damage: 3,
       removeShield: true,

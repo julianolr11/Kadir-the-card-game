@@ -14,7 +14,7 @@ module.exports = {
   abilities: [
     {
       name: { pt: 'Golpe de Ciclone', en: 'Cyclone Strike' },
-      cost: 1,
+      cost: 2,
       desc: {
         pt: 'Causa 3 de dano e empurra o alvo, reduzindo sua próxima ação.',
         en: 'Deals 3 damage and pushes the target, reducing its next action.',

@@ -14,7 +14,7 @@ module.exports = {
   abilities: [
     {
       name: { pt: 'Olho Imutável', en: 'Immutable Eye' },
-      cost: 1,
+      cost: 2,
       desc: {
         pt: 'Revela inimigos furtivos e causa 3 de dano puro.',
         en: 'Reveals stealth enemies and deals 3 pure damage.',
@@ -22,7 +22,7 @@ module.exports = {
     },
     {
       name: { pt: 'Asa Prismática', en: 'Prismatic Wing' },
-      cost: 1,
+      cost: 2,
       desc: {
         pt: 'Ganha um escudo que nega o próximo ataque recebido por 1 rodada.',
         en: 'Gains a shield that negates the next attack taken for 1 round.',

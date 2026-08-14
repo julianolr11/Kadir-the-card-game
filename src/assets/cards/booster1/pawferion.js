@@ -14,7 +14,7 @@ module.exports = {
   abilities: [
     {
       name: { pt: 'Corrupção Elemental', en: 'Elemental Corruption' },
-      cost: 1,
+      cost: 2,
       desc: {
         pt: 'Rouba 1 ponto de ataque de todos os inimigos por 2 turnos.',
         en: 'Steals 1 attack point from all enemies for 2 turns.',

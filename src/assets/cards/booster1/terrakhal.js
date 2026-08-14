@@ -14,7 +14,7 @@ module.exports = {
   abilities: [
     {
       name: { pt: 'Garras de Areia', en: 'Sand Claws' },
-      cost: 1,
+      cost: 2,
       desc: {
         pt: 'Causa 3 de dano e aplica lentidão por 1 turno.',
         en: 'Deals 3 damage and applies slow for 1 turn.',
@@ -22,7 +22,7 @@ module.exports = {
     },
     {
       name: { pt: 'Tempestade de Pó', en: 'Dust Storm' },
-      cost: 1,
+      cost: 2,
       desc: {
         pt: 'Causa 2 de dano em área e reduz precisão de todos os inimigos em 1.',
         en: 'Deals 2 area damage and applies imprecision.',

@@ -14,7 +14,7 @@ module.exports = {
   abilities: [
     {
       name: { pt: 'Dreno Etéreo', en: 'Ethereal Drain' },
-      cost: 1,
+      cost: 2,
       desc: {
         pt: 'Causa 3 de dano puro e rouba 1 de essência, curando 1 de HP.',
         en: 'Deals 3 pure damage and steals 1 essence, healing 1 HP.',

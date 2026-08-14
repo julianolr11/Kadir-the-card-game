@@ -13,7 +13,7 @@ module.exports = {
   abilities: [
     {
       name: { pt: 'Garras Abissais', en: 'Abyssal Claws' },
-      cost: 1,
+      cost: 2,
       desc: {
         pt: 'Causa 3 de dano e aplica sangramento por 2 turnos.',
         en: 'Deals 3 damage and applies bleed for 2 turns.',
@@ -21,7 +21,7 @@ module.exports = {
     },
     {
       name: { pt: 'Regeneração', en: 'Regeneration' },
-      cost: 1,
+      cost: 3,
       desc: {
         pt: 'Recupera 3 de vida e concede +1 resistência a veneno por 2 turnos.',
         en: 'Restores 3 HP and reduces poison damage by 1 for 2 turns.',

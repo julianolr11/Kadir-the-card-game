@@ -14,7 +14,7 @@ module.exports = {
   abilities: [
     {
       name: { pt: 'Investida Glacial', en: 'Glacial Charge' },
-      cost: 1,
+      cost: 2,
       desc: {
         pt: 'Causa 3 de dano e aplica lentidão por 1 turno.',
         en: 'Deals 3 damage and applies slow for 1 turn.',
@@ -22,7 +22,7 @@ module.exports = {
     },
     {
       name: { pt: 'Bruma Alpina', en: 'Alpine Mist' },
-      cost: 1,
+      cost: 2,
       desc: {
         pt: 'Concede 1 de escudo e ganha +1 esquiva por 2 turnos.',
         en: 'Grants 1 shield and gains +1 evasion for 2 turns.',
@@ -56,7 +56,7 @@ module.exports = {
         pt: 'Causa 3 de dano e aplica lentidão por 1 turno.',
         en: 'Deals 3 damage and applies slow for 1 turn.',
       },
-      cost: 1,
+      cost: 2,
       type: 'damage_slow',
       damage: 3,
       statusEffect: 'slow',
@@ -69,7 +69,7 @@ module.exports = {
         pt: 'Concede 2 de escudo e +1 esquiva por 2 turnos.',
         en: 'Grants 2 shield and +1 evasion for 2 turns.',
       },
-      cost: 1,
+      cost: 2,
       type: 'shield_evasion',
       shield: 2,
       buff: { stat: 'evasion', value: 1, duration: 2 },

@@ -14,7 +14,7 @@ module.exports = {
   abilities: [
     {
       name: { pt: 'Cauda Tridente', en: 'Trident Tail' },
-      cost: 1,
+      cost: 2,
       desc: {
         pt: 'Causa 3 de dano e marca o alvo para receber +1 de dano de ar no próximo golpe.',
         en: 'Deals 3 damage and marks the target to take +1 air damage on the next hit.',

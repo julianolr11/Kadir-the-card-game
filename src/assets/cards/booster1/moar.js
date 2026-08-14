@@ -22,7 +22,7 @@ module.exports = {
     },
     {
       name: { pt: 'Manto Cristalino', en: 'Crystal Mantle' },
-      cost: 1,
+      cost: 2,
       desc: {
         pt: 'Concede 2 de escudo e +1 resistência por 2 turnos.',
         en: 'Grants 2 shield and +1 resistance for 2 turns.',
@@ -68,7 +68,7 @@ module.exports = {
         pt: 'Concede 2 de escudo e +1 resistência por 2 turnos.',
         en: 'Grants 2 shield and +1 resistance for 2 turns.',
       },
-      cost: 1,
+      cost: 2,
       type: 'shield_resist',
       shield: 2,
       buff: { stat: 'resistance', value: 1, duration: 2 },

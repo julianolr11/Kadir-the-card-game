@@ -14,7 +14,7 @@ module.exports = {
   abilities: [
     {
       name: { pt: 'Garra Marinada', en: 'Brine Claw' },
-      cost: 1,
+      cost: 2,
       desc: {
         pt: 'Causa 4 de dano água e reduz defesa em 1 por 1 turno.',
         en: 'Deals 4 water damage and lowers target defense by 1 for 1 turn.',

@@ -14,7 +14,7 @@ module.exports = {
   abilities: [
     {
       name: { pt: 'Chicote Incandescente', en: 'Incandescent Lash' },
-      cost: 1,
+      cost: 2,
       desc: {
         pt: 'Causa 3 de dano e queima o alvo (1 de dano por 2 turnos).',
         en: 'Deals 3 damage and burns the target (1 damage for 2 turns).',
@@ -22,7 +22,7 @@ module.exports = {
     },
     {
       name: { pt: 'Escamas de Brasa', en: 'Ember Scales' },
-      cost: 1,
+      cost: 2,
       desc: {
         pt: 'Ganha um escudo que nega o próximo ataque recebido por 1 rodada.',
         en: 'Gains a shield that negates the next attack taken for 1 round.',

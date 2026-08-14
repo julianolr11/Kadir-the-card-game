@@ -14,7 +14,7 @@ module.exports = {
   abilities: [
     {
       name: { pt: 'Rugido Sísmico', en: 'Seismic Roar' },
-      cost: 1,
+      cost: 2,
       desc: {
         pt: 'Causa dano em área e reduz a velocidade dos inimigos por 1 turno.',
         en: "Deals area damage and reduces enemies' speed for 1 turn.",

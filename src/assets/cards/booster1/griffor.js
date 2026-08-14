@@ -21,7 +21,7 @@ module.exports = {
     },
     {
       name: { pt: 'Proteção Celestial', en: 'Celestial Protection' },
-      cost: 1,
+      cost: 2,
       desc: {
         pt: 'Aliados recebem escudo de luz.',
         en: 'Allies receive a light shield.',

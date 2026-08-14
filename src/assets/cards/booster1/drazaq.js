@@ -13,7 +13,7 @@ module.exports = {
   abilities: [
     {
       name: { pt: 'Impacto Bestial', en: 'Beast Strike' },
-      cost: 1,
+      cost: 3,
       desc: {
         pt: 'Causa 4 de dano, aplica sangramento leve e derruba (knockdown) 1 turno.',
         en: 'Deals 4 damage, applies light bleed and knocks down 1 turn.',
@@ -21,7 +21,7 @@ module.exports = {
     },
     {
       name: { pt: 'Fúria Vulcânica', en: 'Volcanic Rage' },
-      cost: 1,
+      cost: 2,
       desc: {
         pt: 'Ganha +1 ataque por 2 turnos e jogue a moeda 1 vez; se der cara, paralisa ao atacar.',
         en: 'Gain +1 attack for 2 turns and flips a coin once; on heads, paralyzes on hit.',

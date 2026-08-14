@@ -14,7 +14,7 @@ module.exports = {
   abilities: [
     {
       name: { pt: 'Galope Celeste', en: 'Celestial Gallop' },
-      cost: 1,
+      cost: 2,
       desc: {
         pt: 'Causa 3 de dano e concede +1 velocidade a aliados de ar por 2 turnos.',
         en: 'Deals 3 damage and grants +1 speed to air allies for 2 turns.',

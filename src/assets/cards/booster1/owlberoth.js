@@ -13,7 +13,7 @@ module.exports = {
   abilities: [
     {
       name: { pt: 'Olhar Místico', en: 'Mystic Gaze' },
-      cost: 1,
+      cost: 2,
       desc: {
         pt: 'Causa 3 de dano e revela 1 carta da mão do oponente.',
         en: 'Deals 3 damage and reveals 1 card from the opponent hand.',
@@ -21,7 +21,7 @@ module.exports = {
     },
     {
       name: { pt: 'Voo Noturno', en: 'Night Flight' },
-      cost: 1,
+      cost: 2,
       desc: {
         pt: 'Concede 1 de escudo a todos os aliados por 1 turno.',
         en: 'Grants 1 shield to all allies for 1 turn.',
@@ -63,7 +63,7 @@ module.exports = {
         pt: 'Causa 3 de dano e revela 1 carta da mão do oponente.',
         en: 'Deals 3 damage and reveals 1 card from the opponent hand.',
       },
-      cost: 1,
+      cost: 2,
       type: 'damage_reveal',
       damage: 3,
       reveal: 1,
@@ -75,7 +75,7 @@ module.exports = {
         pt: 'Concede 1 de escudo a todos os aliados por 1 turno.',
         en: 'Grants 1 shield to all allies for 1 turn.',
       },
-      cost: 1,
+      cost: 2,
       type: 'team_shield',
       shield: 1,
       duration: 1,

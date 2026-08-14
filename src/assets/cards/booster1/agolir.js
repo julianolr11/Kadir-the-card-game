@@ -22,7 +22,7 @@ module.exports = {
     },
     {
       name: { pt: 'Absorção Elemental', en: 'Elemental Siphon' },
-      cost: 1,
+      cost: 2,
       desc: {
         pt: 'Rouba +1 ataque e +1 defesa de inimigos ao redor por 2 turnos.',
         en: 'Steals +1 attack and +1 defense from nearby foes for 2 turns.',

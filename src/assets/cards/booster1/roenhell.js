@@ -14,7 +14,7 @@ module.exports = {
   abilities: [
     {
       name: { pt: 'Investida Rochosa', en: 'Rock Charge' },
-      cost: 1,
+      cost: 2,
       desc: {
         pt: 'Causa 3 de dano e aplica atordoamento leve por 1 turno.',
         en: 'Deals 3 damage and applies a light stun for 1 turn.',
@@ -56,7 +56,7 @@ module.exports = {
         pt: 'Causa 3 de dano e aplica atordoamento por 1 turno.',
         en: 'Deals 3 damage and applies stun for 1 turn.',
       },
-      cost: 1,
+      cost: 2,
       type: 'damage_stun',
       damage: 3,
       statusEffect: 'stun',

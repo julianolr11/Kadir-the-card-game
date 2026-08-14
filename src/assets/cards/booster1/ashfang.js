@@ -22,7 +22,7 @@ module.exports = {
     },
     {
       name: { pt: 'Fúria das Cinzas', en: 'Ashen Fury' },
-      cost: 1,
+      cost: 2,
       desc: {
         pt: 'Ganha +1 ataque por 2 turnos.',
         en: 'Gains +1 attack for 2 turns.',
@@ -69,7 +69,7 @@ module.exports = {
         pt: 'Causa 2 de dano e ganha +1 ataque por 2 turnos.',
         en: 'Deals 2 damage and gains +1 attack for 2 turns.',
       },
-      cost: 1,
+      cost: 2,
       type: 'damage_buff',
       damage: 2,
       buff: { stat: 'attack', value: 4, duration: 2 },

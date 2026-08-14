@@ -14,7 +14,7 @@ module.exports = {
   abilities: [
     {
       name: { pt: 'Asas do Fluxo', en: 'Wings of Flow' },
-      cost: 1,
+      cost: 2,
       desc: {
         pt: 'Causa 3 de dano e concede esquiva aumentada neste turno.',
         en: 'Deals 3 damage and grants increased evasion this turn.',
@@ -22,7 +22,7 @@ module.exports = {
     },
     {
       name: { pt: 'Véu das Águas', en: 'Veil of Waters' },
-      cost: 1,
+      cost: 2,
       desc: {
         pt: 'Aliados recebem redução de dano por 1 turno.',
         en: 'Allies receive damage reduction for 1 turn.',

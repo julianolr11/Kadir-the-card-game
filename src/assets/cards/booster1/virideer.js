@@ -13,7 +13,7 @@ module.exports = {
   abilities: [
     {
       name: { pt: 'Chifre Protetor', en: 'Protective Horn' },
-      cost: 1,
+      cost: 3,
       desc: {
         pt: 'Causa 3 de dano e concede escudo de 4 de vida ao aliado mais frágil.',
         en: 'Deals 3 damage and grants a 4 HP shield to the weakest ally.',

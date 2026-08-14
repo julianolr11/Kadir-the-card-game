@@ -25,7 +25,7 @@ module.exports = {
     },
     {
       name: { pt: 'Mordida Abissal', en: 'Abyssal Bite' },
-      cost: 1,
+      cost: 2,
       desc: {
         pt: 'Ignora 1 ponto de defesa do alvo ao atacar e causa <span class="debuff-sangramento">sangramento</span> por 2 turnos.',
         en: 'Ignores 1 defense point of the target when attacking and causes <span class="debuff-bleed">bleed</span> for 2 turns.',

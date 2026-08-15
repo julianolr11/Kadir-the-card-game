@@ -7,7 +7,6 @@ const effectCards = Array.isArray(effectCardsModule) ? effectCardsModule : (effe
 
 const creatures = [
   require('./booster1/draak'),
-  require('./booster1/ekerath'),
   require('./booster1/mawthorn'),
   require('./booster1/kael'),
   require('./booster1/leoracal'),
@@ -44,6 +43,7 @@ const creatures = [
   require('./booster1/arigus'),
   require('./booster1/roenhell'),
   require('./booster1/moar'),
+  require('./booster1/ekerath'),
 ];
 
 // Adiciona field cards se estiverem disponíveis

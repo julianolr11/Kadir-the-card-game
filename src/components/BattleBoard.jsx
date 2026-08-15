@@ -78,6 +78,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
     cancelVirideerBless,
   } = useBattle();
   const { cardCollection, effectsVolume, lang = 'ptbr', coins, spendCoins, unlockAchievement } = React.useContext(AppContext);
+  const isEn = lang?.startsWith('en');
   const [activeCardIndex, setActiveCardIndex] = React.useState(null);
   const [deckCardDrawn, setDeckCardDrawn] = React.useState(false);
   const [opponentDeckCardDrawn, setOpponentDeckCardDrawn] = React.useState(false);
@@ -1100,7 +1101,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                     );
                   })}
                 </div>
-                <button style={turnModalBtnStyle} onClick={cancelVirideerBless}>Cancelar</button>
+                <button style={turnModalBtnStyle} onClick={cancelVirideerBless}>{isEn ? 'Cancel' : 'Cancelar'}</button>
               </div>
             </div>
           )}
@@ -1617,7 +1618,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
       <BattleModalPortal>
       <div style={turnModalBgStyle}>
         <div style={turnModalStyle}>
-          <div style={{ fontWeight: 700, marginBottom: 12 }}>Escolha uma criatura para retornar à mão</div>
+          <div style={{ fontWeight: 700, marginBottom: 12 }}>{isEn ? 'Choose a creature to return to hand' : 'Escolha uma criatura para retornar à mão'}</div>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             {(state.ai?.field?.slots || []).map((slot, idx) => {
               if (!slot) return null;
@@ -1652,7 +1653,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
               );
             })}
           </div>
-          <button style={turnModalBtnStyle} onClick={cancelReturnCard}>Cancelar</button>
+          <button style={turnModalBtnStyle} onClick={cancelReturnCard}>{isEn ? 'Cancel' : 'Cancelar'}</button>
         </div>
       </div>
       </BattleModalPortal>
@@ -1661,7 +1662,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
       <BattleModalPortal>
       <div style={turnModalBgStyle}>
         <div style={turnModalStyle}>
-          <div style={{ fontWeight: 700, marginBottom: 12 }}>Escolha uma criatura para envenenar</div>
+          <div style={{ fontWeight: 700, marginBottom: 12 }}>{isEn ? 'Choose a creature to poison' : 'Escolha uma criatura para envenenar'}</div>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             {(state.ai?.field?.slots || []).map((slot, idx) => {
               if (!slot) return null;
@@ -1677,7 +1678,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                     cursor: 'pointer',
                     padding: 0,
                   }}
-                  aria-label={`Envenenar ${slot.name || 'criatura'}`}
+                  aria-label={isEn ? `Poison ${slot.name || 'creature'}` : `Envenenar ${slot.name || 'criatura'}`}
                 >
                   <div style={{ transform: 'scale(0.45)', transformOrigin: 'top center', height: 290 }}>
                     <CreatureCardPreview
@@ -1696,7 +1697,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
               );
             })}
           </div>
-          <button style={turnModalBtnStyle} onClick={cancelPoisonCard}>Cancelar</button>
+          <button style={turnModalBtnStyle} onClick={cancelPoisonCard}>{isEn ? 'Cancel' : 'Cancelar'}</button>
         </div>
       </div>
       </BattleModalPortal>
@@ -1704,7 +1705,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
     {state.stealCardPending && (
       <div style={turnModalBgStyle}>
         <div style={turnModalStyle}>
-          <div style={{ fontWeight: 700, marginBottom: 12 }}>Escolha uma carta da mão do oponente</div>
+          <div style={{ fontWeight: 700, marginBottom: 12 }}>{isEn ? 'Choose a card from the opponent\'s hand' : 'Escolha uma carta da mão do oponente'}</div>
           <div style={{ display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap' }}>
             {(state.ai?.hand || []).map((_, idx) => (
               <button
@@ -1829,7 +1830,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
               );
             })}
           </div>
-          <button style={turnModalBtnStyle} onClick={cancelRevealEnemy}>Fechar</button>
+          <button style={turnModalBtnStyle} onClick={cancelRevealEnemy}>{isEn ? 'Close' : 'Fechar'}</button>
         </div>
       </div>
       </BattleModalPortal>
@@ -1838,7 +1839,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
       <BattleModalPortal>
       <div style={turnModalBgStyle}>
         <div style={turnModalStyle}>
-          <div style={{ fontWeight: 700, marginBottom: 12 }}>Escolha uma criatura em campo para trocar</div>
+          <div style={{ fontWeight: 700, marginBottom: 12 }}>{isEn ? 'Choose a creature on the field to swap' : 'Escolha uma criatura em campo para trocar'}</div>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             {(state.player?.field?.slots || []).map((slot, idx) => {
               if (!slot) return null;
@@ -1854,7 +1855,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                     cursor: 'pointer',
                     padding: 0,
                   }}
-                  aria-label={`Trocar ${slot.name || 'criatura'}`}
+                  aria-label={isEn ? `Swap ${slot.name || 'creature'}` : `Trocar ${slot.name || 'criatura'}`}
                 >
                   <div style={{ transform: 'scale(0.45)', transformOrigin: 'top center', height: 290 }}>
                     <CreatureCardPreview
@@ -1873,7 +1874,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
               );
             })}
           </div>
-          <button style={turnModalBtnStyle} onClick={cancelSwap}>Cancelar</button>
+          <button style={turnModalBtnStyle} onClick={cancelSwap}>{isEn ? 'Cancel' : 'Cancelar'}</button>
         </div>
       </div>
       </BattleModalPortal>
@@ -1882,7 +1883,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
       <BattleModalPortal>
       <div style={turnModalBgStyle}>
         <div style={turnModalStyle}>
-          <div style={{ fontWeight: 700, marginBottom: 12 }}>Escolha uma criatura do cemitério para trazer</div>
+          <div style={{ fontWeight: 700, marginBottom: 12 }}>{isEn ? 'Choose a creature from the graveyard to bring back' : 'Escolha uma criatura do cemitério para trazer'}</div>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             {(state.player?.graveyard || []).map((creature, idx) => {
               const cardData = getCardData(creature.id);
@@ -1897,7 +1898,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                     cursor: 'pointer',
                     padding: 0,
                   }}
-                  aria-label={`Trazer ${creature.name || 'criatura'} do cemitério`}
+                  aria-label={isEn ? `Bring back ${creature.name || 'creature'} from the graveyard` : `Trazer ${creature.name || 'criatura'} do cemitério`}
                 >
                   <div style={{ transform: 'scale(0.45)', transformOrigin: 'top center', opacity: 0.7, height: 290 }}>
                     <CreatureCardPreview
@@ -1916,7 +1917,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
               );
             })}
           </div>
-          <button style={turnModalBtnStyle} onClick={cancelSwap}>Cancelar</button>
+          <button style={turnModalBtnStyle} onClick={cancelSwap}>{isEn ? 'Cancel' : 'Cancelar'}</button>
         </div>
       </div>
       </BattleModalPortal>
@@ -1927,8 +1928,8 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
         <div style={turnModalStyle}>
           <div style={{ fontWeight: 700, marginBottom: 12 }}>
             {state.resurrectionPending.availableSlots?.length > 0
-              ? 'Escolha uma criatura do cemitério para ressuscitar'
-              : 'Escolha uma criatura do cemitério para ressuscitar (irá para a mão)'}
+              ? (isEn ? 'Choose a creature from the graveyard to resurrect' : 'Escolha uma criatura do cemitério para ressuscitar')
+              : (isEn ? 'Choose a creature from the graveyard to resurrect (goes to hand)' : 'Escolha uma criatura do cemitério para ressuscitar (irá para a mão)')}
           </div>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             {(state.player?.graveyard || []).map((creature, idx) => {
@@ -2007,27 +2008,29 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
           >
             <span className="battle-abandon-kicker">Retirada de batalha</span>
             <div className="battle-abandon-emblem" aria-hidden="true">!</div>
-            <h2 id="battle-abandon-title">Abandonar a partida?</h2>
+            <h2 id="battle-abandon-title">{isEn ? 'Abandon the match?' : 'Abandonar a partida?'}</h2>
             <p id="battle-abandon-description">
-              Esta batalha contará como abandono e você perderá todas as recompensas conquistadas nela.
+              {isEn
+                ? 'This battle will count as an abandon and you\'ll lose all rewards earned in it.'
+                : 'Esta batalha contará como abandono e você perderá todas as recompensas conquistadas nela.'}
             </p>
             <div className="battle-abandon-penalty">
-              <span>Penalidade</span>
+              <span>{isEn ? 'Penalty' : 'Penalidade'}</span>
               <strong>
                 <img src={coinIcon} alt="" />
-                −{abandonPenalty} moedas
+                −{abandonPenalty} {isEn ? 'coins' : 'moedas'}
               </strong>
-              {coins < 50 && <small>Seu saldo atual será zerado.</small>}
+              {coins < 50 && <small>{isEn ? 'Your current balance will be reset to zero.' : 'Seu saldo atual será zerado.'}</small>}
             </div>
             <div className="battle-abandon-actions">
               <button type="button" className="battle-abandon-stay" onClick={() => setAbandonConfirmOpen(false)}>
-                Continuar lutando
+                {isEn ? 'Keep fighting' : 'Continuar lutando'}
               </button>
               <button type="button" className="battle-abandon-confirm" onClick={confirmAbandonBattle}>
-                Abandonar partida
+                {isEn ? 'Abandon match' : 'Abandonar partida'}
               </button>
             </div>
-            <small className="battle-abandon-hint">Pressione Esc para voltar à batalha</small>
+            <small className="battle-abandon-hint">{isEn ? 'Press Esc to return to the battle' : 'Pressione Esc para voltar à batalha'}</small>
           </section>
         </div>
       )}
@@ -2081,26 +2084,26 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
           className={`graveyard-toggle-btn graveyard-toggle-unified${graveyardOpen ? ' active open' : ''}`}
           onClick={() => setGraveyardOpen(o => !o)}
         >
-          <span className="graveyard-toggle-text">CEMITÉRIO</span>
+          <span className="graveyard-toggle-text">{isEn ? 'GRAVEYARD' : 'CEMITÉRIO'}</span>
           <span className="graveyard-toggle-count">{(state.ai.graveyard?.length || 0) + (state.player.graveyard?.length || 0)}</span>
         </button>
         <div className={`graveyard-drawer graveyard-drawer-unified${graveyardOpen ? ' open' : ''}`} onClick={e => e.stopPropagation()}>
           <div className="graveyard-unified-header">
             <div>
-              <span className="graveyard-unified-kicker">REGISTRO DA BATALHA</span>
-              <strong>Cemitério</strong>
+              <span className="graveyard-unified-kicker">{isEn ? 'BATTLE RECORD' : 'REGISTRO DA BATALHA'}</span>
+              <strong>{isEn ? 'Graveyard' : 'Cemitério'}</strong>
             </div>
             <button
               type="button"
               className="graveyard-unified-close"
               onClick={() => setGraveyardOpen(false)}
-              aria-label="Fechar cemitério"
+              aria-label={isEn ? 'Close graveyard' : 'Fechar cemitério'}
             >×</button>
           </div>
           <div className="graveyard-drawer-content">
             {/* Linha do cemitério do oponente */}
             <div className="graveyard-row graveyard-row-opponent">
-              <span className="graveyard-row-label">Oponente:</span>
+              <span className="graveyard-row-label">{isEn ? 'Opponent:' : 'Oponente:'}</span>
               {state.ai.graveyard && state.ai.graveyard.length > 0 ? (
                 state.ai.graveyard.map((creature, idx) => {
                   const cardData = getCardData(creature.id);
@@ -2123,14 +2126,14 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
               ) : (
                 <div className="graveyard-drawer-empty">
                   <span aria-hidden>◇</span>
-                  <strong>Área vazia</strong>
-                  <small>Nenhuma criatura adversária derrotada</small>
+                  <strong>{isEn ? 'Empty area' : 'Área vazia'}</strong>
+                  <small>{isEn ? 'No enemy creature defeated' : 'Nenhuma criatura adversária derrotada'}</small>
                 </div>
               )}
             </div>
             {/* Linha do cemitério do usuário */}
             <div className="graveyard-row graveyard-row-player">
-              <span className="graveyard-row-label">Você:</span>
+              <span className="graveyard-row-label">{isEn ? 'You:' : 'Você:'}</span>
               {state.player.graveyard && state.player.graveyard.length > 0 ? (
                 state.player.graveyard.map((creature, idx) => {
                   const cardData = getCardData(creature.id);
@@ -2153,8 +2156,8 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
               ) : (
                 <div className="graveyard-drawer-empty">
                   <span aria-hidden>◇</span>
-                  <strong>Área vazia</strong>
-                  <small>Nenhuma criatura sua foi derrotada</small>
+                  <strong>{isEn ? 'Empty area' : 'Área vazia'}</strong>
+                  <small>{isEn ? 'None of your creatures defeated' : 'Nenhuma criatura sua foi derrotada'}</small>
                 </div>
               )}
             </div>
@@ -2186,7 +2189,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
             </div>
                 {/* Essência do adversário */}
                 <div className={`opponent-essence ${essenceAnimating.ai ? 'essence-gain' : ''}`}>
-                  <img src={essenceIcon} alt="essência" />
+                  <img src={essenceIcon} alt={isEn ? 'essence' : 'essência'} />
                   <span>{state.ai.essence}</span>
                 </div>
           </div>
@@ -2195,7 +2198,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
 
         <div className="board-divider">
           <hr className="board-divider-line" />
-          <img src={require('../assets/img/icons/jewel.png')} alt="Jóia" className="board-divider-jewel" />
+          <img src={require('../assets/img/icons/jewel.png')} alt={isEn ? 'Jewel' : 'Jóia'} className="board-divider-jewel" />
         </div>
         <div className="shared-field">
           {state.sharedField.active && state.sharedField.id ? (
@@ -2214,7 +2217,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                 fieldData = getCardData(state.sharedField.id);
               }
 
-              if (!fieldData) return <div className="field-inactive">Campo não encontrado</div>;
+              if (!fieldData) return <div className="field-inactive">{isEn ? 'Field not found' : 'Campo não encontrado'}</div>;
 
               // Flag holo do campo compartilhado
               let isHolo = !!state.sharedField?.isHolo;
@@ -2277,7 +2280,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
         </div>
 
         <div className={`player-essence ${essenceAnimating.player ? 'essence-gain' : ''}`}>
-          <img src={essenceIcon} alt="essência" />
+          <img src={essenceIcon} alt={isEn ? 'essence' : 'essência'} />
           <span>{state.player.essence}</span>
         </div>
         {(() => {
@@ -2295,9 +2298,9 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                   }
                   endTurn();
                 }}
-                title={isBlocked ? 'Você deve comprar uma carta antes' : undefined}
+                title={isBlocked ? (isEn ? 'You must draw a card first' : 'Você deve comprar uma carta antes') : undefined}
               >
-                Fim do turno
+                {isEn ? 'End Turn' : 'Fim do turno'}
               </button>
               {/* mensagem inline removida em favor do modal */}
             </div>
@@ -2646,9 +2649,9 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
     {turnBlockModalOpen && (
       <div style={turnModalBgStyle}>
         <div style={turnModalStyle}>
-          <h2 style={{ color: '#ffe6b0', fontWeight: 700, fontSize: 20, marginBottom: 12 }}>Ação bloqueada</h2>
-          <div style={{ fontSize: 14 }}>Você deve comprar uma carta antes</div>
-          <button style={turnModalBtnStyle} onClick={() => setTurnBlockModalOpen(false)}>Entendi</button>
+          <h2 style={{ color: '#ffe6b0', fontWeight: 700, fontSize: 20, marginBottom: 12 }}>{isEn ? 'Action blocked' : 'Ação bloqueada'}</h2>
+          <div style={{ fontSize: 14 }}>{isEn ? 'You must draw a card first' : 'Você deve comprar uma carta antes'}</div>
+          <button style={turnModalBtnStyle} onClick={() => setTurnBlockModalOpen(false)}>{isEn ? 'Got it' : 'Entendi'}</button>
         </div>
       </div>
     )}
@@ -2785,8 +2788,8 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
     })()}
     {state.phase === 'coinflip' && (
       <CoinFlip
-        playerName="Você"
-        aiName="Adversário"
+        playerName={isEn ? 'You' : 'Você'}
+        aiName={isEn ? 'Opponent' : 'Adversário'}
         onResult={(winner) => {
           startPlaying(winner);
         }}
@@ -2807,9 +2810,17 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
           ))}
         </div>
         <div className="battle-finale-copy">
-          <span>{endSequence.winner === 'player' ? 'O último coração se partiu' : 'Sua última chama se apagou'}</span>
-          <strong>{endSequence.winner === 'player' ? 'Vitória decisiva' : 'Derrota'}</strong>
-          <small>{endSequence.winner === 'player' ? 'O campo pertence a você' : 'Toda lenda renasce de uma queda'}</small>
+          <span>
+            {endSequence.winner === 'player'
+              ? (isEn ? 'The last heart has broken' : 'O último coração se partiu')
+              : (isEn ? 'Your last flame has gone out' : 'Sua última chama se apagou')}
+          </span>
+          <strong>{endSequence.winner === 'player' ? (isEn ? 'Decisive victory' : 'Vitória decisiva') : (isEn ? 'Defeat' : 'Derrota')}</strong>
+          <small>
+            {endSequence.winner === 'player'
+              ? (isEn ? 'The field belongs to you' : 'O campo pertence a você')
+              : (isEn ? 'Every legend rises again from a fall' : 'Toda lenda renasce de uma queda')}
+          </small>
         </div>
       </div>
     )}
@@ -2830,7 +2841,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
       <BattleModalPortal>
       <div className="effect-target-modal" onClick={cancelEffectCard}>
         <div className="effect-target-container" onClick={(e) => e.stopPropagation()}>
-          <div className="effect-target-title">Selecione um alvo</div>
+          <div className="effect-target-title">{isEn ? 'Select a target' : 'Selecione um alvo'}</div>
 
           {state.effectCardPending.targetType === 'allyMonster' && (
             <div className="effect-target-options">
@@ -2842,7 +2853,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                   fontSize: '14px',
                   fontStyle: 'italic'
                 }}>
-                  Você não tem monstros em campo
+                  {isEn ? 'You have no monsters on the field' : 'Você não tem monstros em campo'}
                 </div>
               ) : (
                 (state.player?.field?.slots || []).map((creature, idx) => {
@@ -2872,7 +2883,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                   fontSize: '14px',
                   fontStyle: 'italic'
                 }}>
-                  O adversário não tem monstros em campo
+                  {isEn ? 'The opponent has no monsters on the field' : 'O adversário não tem monstros em campo'}
                 </div>
               ) : (
                 (state.ai?.field?.slots || []).map((creature, idx) => {
@@ -2902,7 +2913,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                   fontSize: '14px',
                   fontStyle: 'italic'
                 }}>
-                  Não há criaturas no cemitério
+                  {isEn ? 'There are no creatures in the graveyard' : 'Não há criaturas no cemitério'}
                 </div>
               ) : (
                 (state.player?.graveyard || []).map((creature, idx) => (
@@ -2929,7 +2940,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                   fontSize: '14px',
                   fontStyle: 'italic'
                 }}>
-                  Voce nao tem outras cartas na mao
+                  {isEn ? 'You have no other cards in hand' : 'Voce nao tem outras cartas na mao'}
                 </div>
               ) : (
                 (state.player?.hand || []).map((cardId, idx) => {
@@ -2956,7 +2967,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
 
           {state.effectCardPending.targetType === 'dual' && (
             <div style={{ padding: '16px' }}>
-              <div style={{ marginBottom: '12px', color: '#c896ff' }}>Seus monstros:</div>
+              <div style={{ marginBottom: '12px', color: '#c896ff' }}>{isEn ? 'Your monsters:' : 'Seus monstros:'}</div>
               <div className="effect-target-options">
                 {(state.player?.field?.slots || []).filter(slot => slot !== null).length === 0 ? (
                   <div style={{
@@ -2966,7 +2977,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                     fontSize: '14px',
                     fontStyle: 'italic'
                   }}>
-                    Você não tem monstros em campo para trocar
+                    {isEn ? 'You have no monsters on the field to swap' : 'Você não tem monstros em campo para trocar'}
                   </div>
                 ) : (
                   (state.player?.field?.slots || []).map((creature, idx) => {
@@ -2987,7 +2998,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
 
               {state.effectCardPending.selectedAllyIndex !== undefined && (
                 <>
-                  <div style={{ marginTop: '16px', marginBottom: '12px', color: '#c896ff' }}>Monstros do adversário:</div>
+                  <div style={{ marginTop: '16px', marginBottom: '12px', color: '#c896ff' }}>{isEn ? 'Opponent\'s monsters:' : 'Monstros do adversário:'}</div>
                   <div className="effect-target-options">
                     {(state.ai?.field?.slots || []).filter(slot => slot !== null).length === 0 ? (
                       <div style={{
@@ -2997,7 +3008,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                         fontSize: '14px',
                         fontStyle: 'italic'
                       }}>
-                        O adversário não tem monstros em campo para trocar
+                        {isEn ? 'The opponent has no monsters on the field to swap' : 'O adversário não tem monstros em campo para trocar'}
                       </div>
                     ) : (
                       (state.ai?.field?.slots || []).map((creature, idx) => {
@@ -3025,7 +3036,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
 
           <div className="effect-target-buttons">
             <button className="effect-target-btn effect-target-btn-cancel" onClick={cancelEffectCard}>
-              Cancelar
+              {isEn ? 'Cancel' : 'Cancelar'}
             </button>
           </div>
         </div>

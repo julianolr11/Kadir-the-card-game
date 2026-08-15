@@ -6,7 +6,8 @@ import '../styles/coinflip.css';
 import { AppContext } from '../context/AppContext';
 
 function CoinFlip({ onResult, playerName = 'Jogador', aiName = 'Adversário' }) {
-  const { effectsVolume } = useContext(AppContext);
+  const { effectsVolume, lang } = useContext(AppContext);
+  const isEn = lang?.startsWith('en');
   const overlayRef = useRef(null);
   const audioRef = useRef(null);
   const [phase, setPhase] = useState('intro');
@@ -80,47 +81,47 @@ function CoinFlip({ onResult, playerName = 'Jogador', aiName = 'Adversário' }) 
 
         {phase === 'intro' && (
           <div className="intro-phase">
-            <div className="coinflip-eyebrow">Ritual de abertura</div>
+            <div className="coinflip-eyebrow">{isEn ? 'Opening ritual' : 'Ritual de abertura'}</div>
             <div className="intro-sigil" aria-hidden="true"><span /></div>
-            <h1 className="intro-title">Início da Batalha</h1>
+            <h1 className="intro-title">{isEn ? 'Battle Start' : 'Início da Batalha'}</h1>
             <div className="intro-divider"><i /><b>◆</b><i /></div>
-            <div className="intro-subtitle">As forças tomam posição no campo</div>
+            <div className="intro-subtitle">{isEn ? 'The forces take their positions on the field' : 'As forças tomam posição no campo'}</div>
             <div className="coinflip-progress" aria-hidden="true"><span /></div>
           </div>
         )}
 
         {(phase === 'ready' || phase === 'flipping') && (
           <div className="flip-phase">
-            <div className="coinflip-eyebrow">A sorte decidirá</div>
-            <h1 className="coinflip-title">Quem começa?</h1>
+            <div className="coinflip-eyebrow">{isEn ? 'Fate will decide' : 'A sorte decidirá'}</div>
+            <h1 className="coinflip-title">{isEn ? 'Who goes first?' : 'Quem começa?'}</h1>
             <div className="coinflip-players">
-              <div className="player-info player-info-user"><small>Desafiante</small><span className="player-name">{playerName}</span></div>
-              <span className="vs-text">contra</span>
-              <div className="player-info player-info-ai"><small>Oponente</small><span className="player-name">{aiName}</span></div>
+              <div className="player-info player-info-user"><small>{isEn ? 'Challenger' : 'Desafiante'}</small><span className="player-name">{playerName}</span></div>
+              <span className="vs-text">{isEn ? 'versus' : 'contra'}</span>
+              <div className="player-info player-info-ai"><small>{isEn ? 'Opponent' : 'Oponente'}</small><span className="player-name">{aiName}</span></div>
             </div>
             <div className="coin-stage">
               <div className="coin-orbit" aria-hidden="true" />
               <div className={`coin ${isFlipping ? 'flipping' : ''} ${result ? `result-${result}` : ''}`}>
-                <div className="coin-side coin-front"><img src={headIcon} alt="Cara" className="coin-icon" /></div>
-                <div className="coin-side coin-back"><img src={crownIcon} alt="Coroa" className="coin-icon" /></div>
+                <div className="coin-side coin-front"><img src={headIcon} alt={isEn ? 'Heads' : 'Cara'} className="coin-icon" /></div>
+                <div className="coin-side coin-back"><img src={crownIcon} alt={isEn ? 'Tails' : 'Coroa'} className="coin-icon" /></div>
               </div>
             </div>
-            <p className="flip-status">{isFlipping ? 'Consultando o destino…' : 'Preparando o lançamento…'}</p>
+            <p className="flip-status">{isFlipping ? (isEn ? 'Consulting fate…' : 'Consultando o destino…') : (isEn ? 'Preparing the toss…' : 'Preparando o lançamento…')}</p>
           </div>
         )}
 
         {phase === 'result' && result && (
           <div className="result-phase">
-            <div className="coinflip-eyebrow">O destino respondeu</div>
+            <div className="coinflip-eyebrow">{isEn ? 'Fate has answered' : 'O destino respondeu'}</div>
             <div className={`result-emblem ${result}`}><img src={result === 'head' ? headIcon : crownIcon} alt="" /></div>
             <div className={`result-container ${result}`}>
-              <p className="result-label">{result === 'head' ? 'Cara' : 'Coroa'}</p>
+              <p className="result-label">{isEn ? (result === 'head' ? 'Heads' : 'Tails') : (result === 'head' ? 'Cara' : 'Coroa')}</p>
               <p className="result-winner">
-                <strong>{winner === playerName ? 'Você abre a batalha' : 'O adversário começa'}</strong>
-                <span>{winner === playerName ? 'O primeiro movimento é seu.' : 'Prepare sua resposta.'}</span>
+                <strong>{winner === playerName ? (isEn ? 'You open the battle' : 'Você abre a batalha') : (isEn ? 'The opponent starts' : 'O adversário começa')}</strong>
+                <span>{winner === playerName ? (isEn ? 'The first move is yours.' : 'O primeiro movimento é seu.') : (isEn ? 'Prepare your response.' : 'Prepare sua resposta.')}</span>
               </p>
             </div>
-            <div className="continue-text"><i /><span>Entrando no campo</span><i /></div>
+            <div className="continue-text"><i /><span>{isEn ? 'Entering the field' : 'Entrando no campo'}</span><i /></div>
           </div>
         )}
       </div>

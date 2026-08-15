@@ -29,15 +29,20 @@ const SWIPE_MAX_X = SWIPE_TRACK_WIDTH - SWIPE_KNOB_SIZE - 4;
 const SWIPE_LOCK_THRESHOLD = 0.82;
 
 // Controle "arraste pra travar": o usuário precisa arrastar o botão até o fim da trilha pra
-// confirmar o baralho escolhido. Solta antes do fim, volta pro início sem travar.
+// confirmar o baralho escolhido. Solta antes do fim, volta pro início sem travar (com uma
+// mola/bounce). O preenchimento e as setinhas dão feedback contínuo de progresso; ao travar,
+// a trilha dá um "pop" e o cadeado aparece com uma pequena animação de entrada.
 function SwipeToLockToggle({ locked, onLock, label }) {
   const trackRef = useRef(null);
   const [dragX, setDragX] = useState(locked ? SWIPE_MAX_X : 0);
   const [dragging, setDragging] = useState(false);
+  const [justLocked, setJustLocked] = useState(false);
 
   useEffect(() => {
     if (locked) setDragX(SWIPE_MAX_X);
   }, [locked]);
+
+  const progress = SWIPE_MAX_X > 0 ? dragX / SWIPE_MAX_X : 0;
 
   const handlePointerDown = (e) => {
     if (locked) return;
@@ -57,6 +62,7 @@ function SwipeToLockToggle({ locked, onLock, label }) {
     setDragging(false);
     if (dragX >= SWIPE_MAX_X * SWIPE_LOCK_THRESHOLD) {
       setDragX(SWIPE_MAX_X);
+      setJustLocked(true);
       onLock();
     } else {
       setDragX(0);
@@ -64,13 +70,33 @@ function SwipeToLockToggle({ locked, onLock, label }) {
   };
 
   return (
-    <div className={`pvp-lobby-swipe-track ${locked ? 'pvp-lobby-swipe-track-locked' : ''}`} ref={trackRef}>
-      <span className="pvp-lobby-swipe-label">{locked ? '🔒' : label}</span>
+    <div
+      className={[
+        'pvp-lobby-swipe-track',
+        locked && 'pvp-lobby-swipe-track-locked',
+        justLocked && 'pvp-lobby-swipe-track-pop',
+      ].filter(Boolean).join(' ')}
+      ref={trackRef}
+      onAnimationEnd={() => setJustLocked(false)}
+    >
+      <div
+        className="pvp-lobby-swipe-fill"
+        style={{ width: `${SWIPE_KNOB_SIZE / 2 + dragX}px`, opacity: locked || dragging ? 1 : 0 }}
+      />
+      <span className="pvp-lobby-swipe-chevrons" style={{ opacity: locked ? 0 : Math.max(0, 1 - progress * 1.8) }}>
+        <span>›</span><span>›</span><span>›</span>
+      </span>
+      <span className="pvp-lobby-swipe-label" style={{ opacity: locked ? 0 : Math.max(0, 1 - progress * 2.2) }}>
+        {label}
+      </span>
+      <span className={`pvp-lobby-swipe-lock-icon ${locked ? 'pvp-lobby-swipe-lock-icon-in' : ''}`}>🔒</span>
       <div
         className="pvp-lobby-swipe-knob"
         style={{
-          transform: `translateX(${dragX}px)`,
-          transition: dragging ? 'none' : 'transform 260ms cubic-bezier(0.34, 1.56, 0.64, 1)',
+          transform: `translateX(${dragX}px) scale(${dragging ? 1.14 : 1})`,
+          transition: dragging
+            ? 'transform 90ms ease'
+            : 'transform 420ms cubic-bezier(0.34, 1.56, 0.64, 1)',
         }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}

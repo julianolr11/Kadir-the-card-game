@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
+import { AppContext } from '../context/AppContext';
 
 const FeedbackModal = ({ visible, onClose, onSend }) => {
+  const { lang } = useContext(AppContext);
+  const isEn = lang?.startsWith('en');
   const [message, setMessage] = useState('');
   const [status, setStatus] = useState('idle'); // idle | sending | sent | error
 
@@ -46,12 +49,12 @@ const FeedbackModal = ({ visible, onClose, onSend }) => {
             letterSpacing: 0.5,
           }}
         >
-          Enviar feedback
+          {isEn ? 'Send feedback' : 'Enviar feedback'}
         </h2>
         <textarea
           style={textareaStyle}
           rows={6}
-          placeholder="Digite sua sugestão, bug ou comentário..."
+          placeholder={isEn ? 'Type your suggestion, bug report or comment...' : 'Digite sua sugestão, bug ou comentário...'}
           value={message}
           onChange={e => setMessage(e.target.value)}
           disabled={status === 'sending' || status === 'sent'}
@@ -62,20 +65,20 @@ const FeedbackModal = ({ visible, onClose, onSend }) => {
             style={btnStyle}
             disabled={!message.trim() || status === 'sending' || status === 'sent'}
           >
-            {status === 'sending' ? 'Enviando...' : status === 'sent' ? 'Enviado!' : 'Enviar'}
+            {status === 'sending' ? (isEn ? 'Sending...' : 'Enviando...') : status === 'sent' ? (isEn ? 'Sent!' : 'Enviado!') : (isEn ? 'Send' : 'Enviar')}
           </button>
           <button onClick={onClose} style={btnStyle} disabled={status === 'sending'}>
-            Fechar
+            {isEn ? 'Close' : 'Fechar'}
           </button>
         </div>
         {status === 'error' && (
           <div style={{ color: '#ff4d4f', marginTop: 12, textAlign: 'center' }}>
-            Erro ao enviar. Tente novamente.
+            {isEn ? 'Error sending. Please try again.' : 'Erro ao enviar. Tente novamente.'}
           </div>
         )}
         {status === 'sent' && (
           <div style={{ color: '#4caf50', marginTop: 12, textAlign: 'center' }}>
-            Feedback enviado com sucesso!
+            {isEn ? 'Feedback sent successfully!' : 'Feedback enviado com sucesso!'}
           </div>
         )}
       </div>

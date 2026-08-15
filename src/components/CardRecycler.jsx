@@ -37,6 +37,19 @@ const elementColors = {
   pure: '#e8d4b0',
 };
 
+const elementNames = {
+  agua: { pt: 'Água', en: 'Water' },
+  water: { pt: 'Água', en: 'Water' },
+  fogo: { pt: 'Fogo', en: 'Fire' },
+  fire: { pt: 'Fogo', en: 'Fire' },
+  terra: { pt: 'Terra', en: 'Earth' },
+  earth: { pt: 'Terra', en: 'Earth' },
+  ar: { pt: 'Ar', en: 'Air' },
+  air: { pt: 'Ar', en: 'Air' },
+  puro: { pt: 'Puro', en: 'Pure' },
+  pure: { pt: 'Puro', en: 'Pure' },
+};
+
 function getLocalizedName(value, langKey, fallback) {
   if (!value) return fallback;
   if (typeof value === 'object') return value[langKey] || value.pt || value.en || fallback;
@@ -70,6 +83,7 @@ function CardRecycler({ lang = 'ptbr' }) {
   const [recyclingInProgress, setRecyclingInProgress] = useState(false);
 
   const langKey = lang === 'ptbr' ? 'pt' : lang;
+  const isEn = langKey === 'en';
 
   const protectedInstanceIds = useMemo(() => {
     const ids = new Set();
@@ -277,21 +291,21 @@ function CardRecycler({ lang = 'ptbr' }) {
     <div className="recycler-layout recycler-workbench">
       <div className="recycler-hero">
         <div>
-          <span className="recycler-eyebrow">Reciclar cartas</span>
-          <h2>Escolha, envie para a fila e recicle</h2>
-          <p>Veja todas as cartas como no editar, confira quantidade, raridade e valor antes de enviar para reciclagem.</p>
+          <span className="recycler-eyebrow">{isEn ? 'Recycle cards' : 'Reciclar cartas'}</span>
+          <h2>{isEn ? 'Choose, queue up and recycle' : 'Escolha, envie para a fila e recicle'}</h2>
+          <p>{isEn ? 'See every card like in the editor, check quantity, rarity and value before sending to recycling.' : 'Veja todas as cartas como no editar, confira quantidade, raridade e valor antes de enviar para reciclagem.'}</p>
         </div>
         <div className="recycler-metrics">
           <div className="recycler-metric">
-            <span>Disponiveis</span>
+            <span>{isEn ? 'Available' : 'Disponiveis'}</span>
             <strong>{availableCardsCount}</strong>
           </div>
           <div className="recycler-metric">
-            <span>Na fila</span>
+            <span>{isEn ? 'Queued' : 'Na fila'}</span>
             <strong>{selectedCards.size}</strong>
           </div>
           <div className="recycler-metric recycler-metric-gold">
-            <span>Total</span>
+            <span>{isEn ? 'Total' : 'Total'}</span>
             <strong>{totalCoinsCalculated}</strong>
           </div>
         </div>
@@ -302,17 +316,17 @@ function CardRecycler({ lang = 'ptbr' }) {
           <div className="recycler-grid-panel">
             <div className="recycler-section-header">
               <div>
-                <span className="section-kicker">Colecao</span>
-                <h3>Todas as cartas</h3>
+                <span className="section-kicker">{isEn ? 'Collection' : 'Colecao'}</span>
+                <h3>{isEn ? 'All cards' : 'Todas as cartas'}</h3>
               </div>
               <div className="recycler-collection-actions">
-                <span className="recycler-small-total">{filteredCards.length}/{availableCards.length} cartas</span>
+                <span className="recycler-small-total">{filteredCards.length}/{availableCards.length} {isEn ? 'cards' : 'cartas'}</span>
                 <button
                   type="button"
                   className={`recycler-filter-toggle ${filtersOpen ? 'active' : ''}`}
                   onClick={() => setFiltersOpen((open) => !open)}
                 >
-                  Filtros
+                  {isEn ? 'Filters' : 'Filtros'}
                 </button>
               </div>
             </div>
@@ -320,42 +334,42 @@ function CardRecycler({ lang = 'ptbr' }) {
             {filtersOpen && (
               <div className="recycler-filter-bar">
                 <label>
-                  <span>Raridade</span>
+                  <span>{isEn ? 'Rarity' : 'Raridade'}</span>
                   <select value={rarityFilter} onChange={(event) => setRarityFilter(event.target.value)}>
-                    <option value="all">Todas</option>
-                    <option value="essence">Essencia</option>
-                    <option value="field">Campo</option>
-                    <option value="common">Comum</option>
-                    <option value="uncommon">Incomum</option>
-                    <option value="rare">Rara</option>
-                    <option value="epic">Epica</option>
-                    <option value="legendary">Lendaria</option>
+                    <option value="all">{isEn ? 'All' : 'Todas'}</option>
+                    <option value="essence">{isEn ? 'Essence' : 'Essencia'}</option>
+                    <option value="field">{isEn ? 'Field' : 'Campo'}</option>
+                    <option value="common">{isEn ? 'Common' : 'Comum'}</option>
+                    <option value="uncommon">{isEn ? 'Uncommon' : 'Incomum'}</option>
+                    <option value="rare">{isEn ? 'Rare' : 'Rara'}</option>
+                    <option value="epic">{isEn ? 'Epic' : 'Epica'}</option>
+                    <option value="legendary">{isEn ? 'Legendary' : 'Lendaria'}</option>
                   </select>
                 </label>
                 <label>
-                  <span>Tipo</span>
+                  <span>{isEn ? 'Type' : 'Tipo'}</span>
                   <select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)}>
-                    <option value="all">Todos</option>
-                    <option value="creature">Criatura</option>
-                    <option value="effect">Efeito</option>
-                    <option value="field">Campo</option>
+                    <option value="all">{isEn ? 'All' : 'Todos'}</option>
+                    <option value="creature">{isEn ? 'Creature' : 'Criatura'}</option>
+                    <option value="effect">{isEn ? 'Effect' : 'Efeito'}</option>
+                    <option value="field">{isEn ? 'Field' : 'Campo'}</option>
                   </select>
                 </label>
                 <label>
-                  <span>Valor</span>
+                  <span>{isEn ? 'Value' : 'Valor'}</span>
                   <select value={valueFilter} onChange={(event) => setValueFilter(event.target.value)}>
-                    <option value="all">Todos</option>
-                    <option value="low">Ate 50</option>
-                    <option value="mid">51 a 150</option>
+                    <option value="all">{isEn ? 'All' : 'Todos'}</option>
+                    <option value="low">{isEn ? 'Up to 50' : 'Ate 50'}</option>
+                    <option value="mid">{isEn ? '51 to 150' : '51 a 150'}</option>
                     <option value="high">151+</option>
                   </select>
                 </label>
                 <label>
-                  <span>Quantidade</span>
+                  <span>{isEn ? 'Quantity' : 'Quantidade'}</span>
                   <select value={quantityFilter} onChange={(event) => setQuantityFilter(event.target.value)}>
-                    <option value="all">Todas</option>
+                    <option value="all">{isEn ? 'All' : 'Todas'}</option>
                     <option value="one">1x</option>
-                    <option value="few">2x a 4x</option>
+                    <option value="few">{isEn ? '2x to 4x' : '2x a 4x'}</option>
                     <option value="many">5x+</option>
                   </select>
                 </label>
@@ -387,7 +401,7 @@ function CardRecycler({ lang = 'ptbr' }) {
                   );
                 })
               ) : (
-                <div className="recycler-empty-grid">Nenhuma carta encontrada com esses filtros.</div>
+                <div className="recycler-empty-grid">{isEn ? 'No cards found with these filters.' : 'Nenhuma carta encontrada com esses filtros.'}</div>
               )}
             </div>
           </div>
@@ -415,14 +429,14 @@ function CardRecycler({ lang = 'ptbr' }) {
                 </div>
 
                 <div className="recycler-detail-copy">
-                  <span className="recycler-eyebrow">Carta selecionada</span>
+                  <span className="recycler-eyebrow">{isEn ? 'Selected card' : 'Carta selecionada'}</span>
                   <h3>{focusedCard.name}</h3>
                   <div className="recycler-detail-tags">
                     <span style={{ borderColor: focusedCard.rarityColor }}>{focusedCard.rarityName}</span>
                     {elementIcons[focusedCard.element] && (
                       <span>
                         <img src={elementIcons[focusedCard.element]} alt={focusedCard.element} />
-                        {focusedCard.element}
+                        {elementNames[focusedCard.element]?.[langKey] || focusedCard.element}
                       </span>
                     )}
                   </div>
@@ -430,17 +444,17 @@ function CardRecycler({ lang = 'ptbr' }) {
 
                 <div className="recycler-detail-stats">
                   <div>
-                    <span>Valor cada</span>
+                    <span>{isEn ? 'Value each' : 'Valor cada'}</span>
                     <strong>{focusedCard.valueEach}</strong>
                   </div>
                   <div>
-                    <span>Valor envio</span>
+                    <span>{isEn ? 'Send value' : 'Valor envio'}</span>
                     <strong>{focusedCard.valueEach * sendQuantity}</strong>
                   </div>
                 </div>
 
                 <div className="recycler-send-row">
-                  <label htmlFor="recycle-quantity">Enviar quantidade</label>
+                  <label htmlFor="recycle-quantity">{isEn ? 'Send quantity' : 'Enviar quantidade'}</label>
                   <div className="recycler-stepper">
                     <button
                       type="button"
@@ -471,13 +485,13 @@ function CardRecycler({ lang = 'ptbr' }) {
                 </div>
 
                 <button type="button" className="send-to-recycle-btn" onClick={sendFocusedToQueue}>
-                  Enviar
+                  {isEn ? 'Send' : 'Enviar'}
                 </button>
               </>
             ) : (
               <div className="selected-empty">
                 <div className="selected-empty-icon">+</div>
-                <p>Nenhuma carta disponivel</p>
+                <p>{isEn ? 'No card available' : 'Nenhuma carta disponivel'}</p>
               </div>
             )}
           </aside>
@@ -488,13 +502,13 @@ function CardRecycler({ lang = 'ptbr' }) {
         <div className="recycler-right">
           <div className="recycler-section-header">
             <div>
-              <span className="section-kicker">Fila</span>
-              <h3>Cartas para reciclar</h3>
+              <span className="section-kicker">{isEn ? 'Queue' : 'Fila'}</span>
+              <h3>{isEn ? 'Cards to recycle' : 'Cartas para reciclar'}</h3>
             </div>
             <div className="selected-header-actions">
               {selectedCards.size > 0 && (
                 <button type="button" className="clear-selection-btn" onClick={clearSelection}>
-                  Limpar
+                  {isEn ? 'Clear' : 'Limpar'}
                 </button>
               )}
               <span className="selected-badge">{selectedCards.size}</span>
@@ -522,7 +536,7 @@ function CardRecycler({ lang = 'ptbr' }) {
                     <div className="card-item-details">
                       <span className="card-detail-item">{card.rarityName}</span>
                       <span className="card-detail-separator">/</span>
-                      <span className="card-detail-item">{card.valueEach} cada</span>
+                      <span className="card-detail-item">{card.valueEach} {isEn ? 'each' : 'cada'}</span>
                     </div>
                   </div>
                   <div className="card-item-value">+{card.totalValue}</div>
@@ -530,8 +544,8 @@ function CardRecycler({ lang = 'ptbr' }) {
                     <button
                       className="remove-card-btn"
                       onClick={() => removeOneFromQueue(card)}
-                      title="Diminuir quantidade"
-                      aria-label={`Remover uma cópia de ${card.name}`}
+                      title={isEn ? 'Decrease quantity' : 'Diminuir quantidade'}
+                      aria-label={isEn ? `Remove one copy of ${card.name}` : `Remover uma cópia de ${card.name}`}
                       type="button"
                     >
                       −
@@ -539,8 +553,8 @@ function CardRecycler({ lang = 'ptbr' }) {
                     <button
                       className="remove-all-card-btn"
                       onClick={() => removeAllFromQueue(card)}
-                      title="Remover da fila"
-                      aria-label={`Remover todas as cópias de ${card.name}`}
+                      title={isEn ? 'Remove from queue' : 'Remover da fila'}
+                      aria-label={isEn ? `Remove all copies of ${card.name}` : `Remover todas as cópias de ${card.name}`}
                       type="button"
                     >
                       ×
@@ -551,17 +565,17 @@ function CardRecycler({ lang = 'ptbr' }) {
             ) : (
               <div className="selected-empty">
                 <div className="selected-empty-icon">+</div>
-                <p>Nenhuma carta na fila</p>
-                <p className="selected-empty-hint">Clique em uma carta da esquerda e use Enviar para adicionar aqui.</p>
+                <p>{isEn ? 'No card in the queue' : 'Nenhuma carta na fila'}</p>
+                <p className="selected-empty-hint">{isEn ? 'Click a card on the left and use Send to add it here.' : 'Clique em uma carta da esquerda e use Enviar para adicionar aqui.'}</p>
               </div>
             )}
           </div>
 
           <div className="recycler-footer">
             <div className="recycler-summary">
-              <span className="total-coins-label">Valor total</span>
+              <span className="total-coins-label">{isEn ? 'Total value' : 'Valor total'}</span>
               <span className="total-coins-value">
-                <strong>{totalCoinsCalculated}</strong> moedas
+                <strong>{totalCoinsCalculated}</strong> {isEn ? 'coins' : 'moedas'}
               </span>
             </div>
 
@@ -571,7 +585,7 @@ function CardRecycler({ lang = 'ptbr' }) {
               disabled={selectedCards.size === 0 || recyclingInProgress}
               type="button"
             >
-              {recyclingInProgress ? 'Reciclando...' : 'Reciclar'}
+              {recyclingInProgress ? (isEn ? 'Recycling...' : 'Reciclando...') : (isEn ? 'Recycle' : 'Reciclar')}
             </button>
           </div>
         </div>

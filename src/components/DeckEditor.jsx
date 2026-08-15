@@ -57,6 +57,7 @@ function DeckLibraryGrid({
   handleDragEnd = () => {},
   openCardLoadout = () => {},
   addCardToDeck = () => {},
+  isEn = false,
 }) {
   // Parâmetros do grid
   // Garante que cards é sempre array
@@ -129,21 +130,25 @@ function DeckLibraryGrid({
           <div className="slider-card-wrapper active" style={{ transform: 'scale(0.319)', transformOrigin: 'top left', pointerEvents: 'none' }}>
             <div className="card-preview card-preview-field">
               <div className="card-preview-header">
-                <span className="card-preview-name">Campo em Reuínas</span>
+                <span className="card-preview-name">{isEn ? 'Field in Ruins' : 'Campo em Reuínas'}</span>
                 <span className="card-preview-id">#f001</span>
               </div>
               <div className="card-preview-art-wrapper">
-                <img alt="Campo em Reuínas" className="card-preview-art" src={require(`../assets/${card.data.image}`)} />
+                <img alt={isEn ? 'Field in Ruins' : 'Campo em Reuínas'} className="card-preview-art" src={require(`../assets/${card.data.image}`)} />
               </div>
               <div className="card-preview-field-desc">
-                <strong>Descrição:</strong>
-                <div style={{whiteSpace: 'pre-line'}}>Energias ancestrais despertam e fortalecem monstros e seres puros. Apenas os dignos sentirão o poder fluir sob seus pés.</div>
+                <strong>{isEn ? 'Description:' : 'Descrição:'}</strong>
+                <div style={{whiteSpace: 'pre-line'}}>
+                  {isEn
+                    ? 'Ancestral energies awaken and strengthen monsters and pure beings. A perfect place for creatures that thrive in primal nature.'
+                    : 'Energias ancestrais despertam e fortalecem monstros e seres puros. Apenas os dignos sentirão o poder fluir sob seus pés.'}
+                </div>
                 <div className="card-preview-field-effects">
-                  <strong>Efeitos:</strong>
+                  <strong>{isEn ? 'Effects:' : 'Efeitos:'}</strong>
                   <ul>
-                    <li>Criaturas do elemento <b>puro</b>: +1 Dano / +1 HP</li>
-                    <li>Criaturas do tipo <b>monstro</b>: +1 Dano / +1 HP</li>
-                    <li><b>Puras e Monstros</b>: +2 Dano / +2 HP</li>
+                    <li>{isEn ? <>Creatures of the <b>pure</b> element: +1 Damage / +1 HP</> : <>Criaturas do elemento <b>puro</b>: +1 Dano / +1 HP</>}</li>
+                    <li>{isEn ? <>Creatures of the <b>monster</b> type: +1 Damage / +1 HP</> : <>Criaturas do tipo <b>monstro</b>: +1 Dano / +1 HP</>}</li>
+                    <li>{isEn ? <><b>Pure and Monster</b>: +2 Damage / +2 HP</> : <><b>Puras e Monstros</b>: +2 Dano / +2 HP</>}</li>
                   </ul>
                 </div>
               </div>
@@ -155,24 +160,24 @@ function DeckLibraryGrid({
           </div>
         )}
         <div className="deck-library-card-count">{countInDeck}/{availableCount + countInDeck}</div>
-        {hasMultipleInstances && availableCount > 0 && (<div className="multiple-instances-indicator" title="Múltiplas cópias disponíveis">{availableCount}x</div>)}
+        {hasMultipleInstances && availableCount > 0 && (<div className="multiple-instances-indicator" title={isEn ? 'Multiple copies available' : 'Múltiplas cópias disponíveis'}>{availableCount}x</div>)}
         <div className="deck-library-actions">
           <button
             className="deck-action-btn deck-action-add"
             disabled={isDisabled || unavailable}
             onClick={(e) => { e.stopPropagation(); if (!isDisabled && !unavailable) addCardToDeck(card.id); }}
-            title={unavailable ? 'Nenhuma cópia disponível' : 'Adicionar ao deck'}
+            title={unavailable ? (isEn ? 'No copies available' : 'Nenhuma cópia disponível') : (isEn ? 'Add to deck' : 'Adicionar ao deck')}
           >
             +
           </button>
         </div>
-        {unavailable && <div style={{position:'absolute',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.35)',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700,fontSize:16,pointerEvents:'none'}}>Indisponível</div>}
+        {unavailable && <div style={{position:'absolute',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.35)',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700,fontSize:16,pointerEvents:'none'}}>{isEn ? 'Unavailable' : 'Indisponível'}</div>}
       </div>
     );
   };
 
   if (!Array.isArray(cards) || safeCards.length === 0) {
-    return <div className="deck-library-grid deck-library-grid-css" style={{ minHeight: cardHeight + 16 }}>Nenhuma carta encontrada ou dados inválidos.</div>;
+    return <div className="deck-library-grid deck-library-grid-css" style={{ minHeight: cardHeight + 16 }}>{isEn ? 'No cards found or invalid data.' : 'Nenhuma carta encontrada ou dados inválidos.'}</div>;
   }
   // Grid puro CSS: renderiza todas as cartas em um container flex/grid
   return (
@@ -264,36 +269,47 @@ const renderDisplayText = (displayText, langKey = 'pt') => {
           if (/\[habilidade\]|\[ability\]|\[perk\]/i.test(line)) return null;
           if (/^(nv|lv)\s+\d+\s*-/i.test(line.trim())) return null;
 
+          const isEnText = langKey === 'en';
+          const statusWord = {
+            burn: isEnText ? 'burn' : 'queimadura',
+            freeze: isEnText ? 'freeze' : 'congelamento',
+            paralyze: isEnText ? 'paralyze' : 'paralisia',
+            poison: isEnText ? 'poison' : 'veneno',
+            sleep: isEnText ? 'sleep' : 'sono',
+            bleed: isEnText ? 'bleed' : 'sangramento',
+            armor: isEnText ? 'armor' : 'armadura',
+          };
+
           let rendered = line;
-          rendered = rendered.replace(/🔥/g, `<img src="${burnIcon}" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ${STATUS_COLORS.burn}; font-weight: 600;">queimadura</span>`);
-          rendered = rendered.replace(/❄️/g, `<img src="${freezeIcon}" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ${STATUS_COLORS.freeze}; font-weight: 600;">congelamento</span>`);
-          rendered = rendered.replace(/⚡/g, `<img src="${paralyzeIcon}" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ${STATUS_COLORS.paralyze}; font-weight: 600;">paralisia</span>`);
-          rendered = rendered.replace(/☠️/g, `<img src="${poisonIcon}" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ${STATUS_COLORS.poison}; font-weight: 600;">veneno</span>`);
-          rendered = rendered.replace(/😴/g, `<img src="${sleepIcon}" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ${STATUS_COLORS.sleep}; font-weight: 600;">sono</span>`);
-          rendered = rendered.replace(/🩸/g, `<img src="${bleedIcon}" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ${STATUS_COLORS.bleed}; font-weight: 600;">sangramento</span>`);
-          rendered = rendered.replace(/🛡️/g, `<img src="${shieldIcon}" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ${STATUS_COLORS.armor}; font-weight: 600;">armadura</span>`);
+          rendered = rendered.replace(/🔥/g, `<img src="${burnIcon}" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ${STATUS_COLORS.burn}; font-weight: 600;">${statusWord.burn}</span>`);
+          rendered = rendered.replace(/❄️/g, `<img src="${freezeIcon}" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ${STATUS_COLORS.freeze}; font-weight: 600;">${statusWord.freeze}</span>`);
+          rendered = rendered.replace(/⚡/g, `<img src="${paralyzeIcon}" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ${STATUS_COLORS.paralyze}; font-weight: 600;">${statusWord.paralyze}</span>`);
+          rendered = rendered.replace(/☠️/g, `<img src="${poisonIcon}" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ${STATUS_COLORS.poison}; font-weight: 600;">${statusWord.poison}</span>`);
+          rendered = rendered.replace(/😴/g, `<img src="${sleepIcon}" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ${STATUS_COLORS.sleep}; font-weight: 600;">${statusWord.sleep}</span>`);
+          rendered = rendered.replace(/🩸/g, `<img src="${bleedIcon}" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ${STATUS_COLORS.bleed}; font-weight: 600;">${statusWord.bleed}</span>`);
+          rendered = rendered.replace(/🛡️/g, `<img src="${shieldIcon}" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ${STATUS_COLORS.armor}; font-weight: 600;">${statusWord.armor}</span>`);
 
           let colored = rendered;
-          if (!rendered.includes('queimadura</span>')) {
-            colored = colored.replace(/queimadura/gi, `<span style="color: ${STATUS_COLORS.burn}; font-weight: 600;">queimadura</span>`);
+          if (!rendered.includes(`${statusWord.burn}</span>`)) {
+            colored = colored.replace(new RegExp(statusWord.burn, 'gi'), `<span style="color: ${STATUS_COLORS.burn}; font-weight: 600;">${statusWord.burn}</span>`);
           }
-          if (!rendered.includes('congelamento</span>')) {
-            colored = colored.replace(/congelamento/gi, `<span style="color: ${STATUS_COLORS.freeze}; font-weight: 600;">congelamento</span>`);
+          if (!rendered.includes(`${statusWord.freeze}</span>`)) {
+            colored = colored.replace(new RegExp(statusWord.freeze, 'gi'), `<span style="color: ${STATUS_COLORS.freeze}; font-weight: 600;">${statusWord.freeze}</span>`);
           }
-          if (!rendered.includes('paralisia</span>')) {
-            colored = colored.replace(/paralisia/gi, `<span style="color: ${STATUS_COLORS.paralyze}; font-weight: 600;">paralisia</span>`);
+          if (!rendered.includes(`${statusWord.paralyze}</span>`)) {
+            colored = colored.replace(new RegExp(statusWord.paralyze, 'gi'), `<span style="color: ${STATUS_COLORS.paralyze}; font-weight: 600;">${statusWord.paralyze}</span>`);
           }
-          if (!rendered.includes('veneno</span>')) {
-            colored = colored.replace(/veneno/gi, `<span style="color: ${STATUS_COLORS.poison}; font-weight: 600;">veneno</span>`);
+          if (!rendered.includes(`${statusWord.poison}</span>`)) {
+            colored = colored.replace(new RegExp(statusWord.poison, 'gi'), `<span style="color: ${STATUS_COLORS.poison}; font-weight: 600;">${statusWord.poison}</span>`);
           }
-          if (!rendered.includes('sono</span>')) {
-            colored = colored.replace(/sono/gi, `<span style="color: ${STATUS_COLORS.sleep}; font-weight: 600;">sono</span>`);
+          if (!rendered.includes(`${statusWord.sleep}</span>`)) {
+            colored = colored.replace(new RegExp(statusWord.sleep, 'gi'), `<span style="color: ${STATUS_COLORS.sleep}; font-weight: 600;">${statusWord.sleep}</span>`);
           }
-          if (!rendered.includes('sangramento</span>')) {
-            colored = colored.replace(/sangramento/gi, `<span style="color: ${STATUS_COLORS.bleed}; font-weight: 600;">sangramento</span>`);
+          if (!rendered.includes(`${statusWord.bleed}</span>`)) {
+            colored = colored.replace(new RegExp(statusWord.bleed, 'gi'), `<span style="color: ${STATUS_COLORS.bleed}; font-weight: 600;">${statusWord.bleed}</span>`);
           }
-          if (!rendered.includes('armadura</span>')) {
-            colored = colored.replace(/armadura/gi, `<span style="color: ${STATUS_COLORS.armor}; font-weight: 600;">armadura</span>`);
+          if (!rendered.includes(`${statusWord.armor}</span>`)) {
+            colored = colored.replace(new RegExp(statusWord.armor, 'gi'), `<span style="color: ${STATUS_COLORS.armor}; font-weight: 600;">${statusWord.armor}</span>`);
           }
 
           if (!colored.trim()) return null;
@@ -315,6 +331,7 @@ const getName = (nameObj, lang = 'ptbr') => {
 function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCards = [], onClose, onSave }) {
   const { lang = 'ptbr', getCardInstances, cardCollection, setCardCollection, saveGuardianLoadout, loadGuardianLoadout, addCoins, removeCardInstance } = React.useContext(AppContext) || {};
   const langKey = lang === 'en' ? 'en' : 'pt';
+  const isEn = langKey === 'en';
   const [deckName, setDeckName] = useState(initialDeckName || `Deck ${deckId}`);
   const [editingName, setEditingName] = useState(false);
   const nameInputRef = useRef(null);
@@ -579,7 +596,7 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
   const normalizeType = (value) => {
     if (!value) return '';
     // Remove acentos corretamente
-    return value.toString().normalize('NFD').replace(/[ -\u000f]/g, '').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+    return value.toString().normalize('NFD').replace(/[\u0000-\u000f]/g, '').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
   };
 
   const resolveType = (data) => {
@@ -786,16 +803,16 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
               value={deckName}
               onChange={e => setDeckName(e.target.value)}
               onKeyDown={(e) => { if (editingName && e.key === 'Enter') handleSaveName(); }}
-              placeholder="Nome do Deck"
+              placeholder={isEn ? 'Deck Name' : 'Nome do Deck'}
               readOnly={!editingName}
             />
             {!editingName ? (
-              <button className="deck-editor-append-btn deck-editor-edit" onClick={() => setEditingName(true)}>Editar</button>
+              <button className="deck-editor-append-btn deck-editor-edit" onClick={() => setEditingName(true)}>{isEn ? 'Edit' : 'Editar'}</button>
             ) : (
-              <button className="deck-editor-append-btn deck-editor-save" onClick={handleSaveName}>Salvar</button>
+              <button className="deck-editor-append-btn deck-editor-save" onClick={handleSaveName}>{isEn ? 'Save' : 'Salvar'}</button>
             )}
           </div>
-          <div className="deck-editor-counter">{cardCount}/20 cartas</div>
+          <div className="deck-editor-counter">{cardCount}/20 {isEn ? 'cards' : 'cartas'}</div>
           <button className="deck-editor-close" onClick={() => {
             if (cardCount < 20) {
               setShowDeckIncompleteWarning(true);
@@ -821,21 +838,25 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
                         <div className="slider-card-wrapper active" style={{ transform: 'scale(0.33)', transformOrigin: 'center', pointerEvents: 'none' }}>
                           <div className="card-preview card-preview-field">
                             <div className="card-preview-header">
-                              <span className="card-preview-name">Campo em Reuínas</span>
+                              <span className="card-preview-name">{isEn ? 'Field in Ruins' : 'Campo em Reuínas'}</span>
                               <span className="card-preview-id">#f001</span>
                             </div>
                             <div className="card-preview-art-wrapper">
-                              <img alt="Campo em Reuínas" className="card-preview-art" src={require(`../assets/${cardData.image}`)} />
+                              <img alt={isEn ? 'Field in Ruins' : 'Campo em Reuínas'} className="card-preview-art" src={require(`../assets/${cardData.image}`)} />
                             </div>
                             <div className="card-preview-field-desc">
-                              <strong>Descrição:</strong>
-                              <div style={{whiteSpace: 'pre-line'}}>Energias ancestrais despertam e fortalecem monstros e seres puros. Apenas os dignos sentirão o poder fluir sob seus pés.</div>
+                              <strong>{isEn ? 'Description:' : 'Descrição:'}</strong>
+                              <div style={{whiteSpace: 'pre-line'}}>
+                                {isEn
+                                  ? 'Ancestral energies awaken and strengthen monsters and pure beings. A perfect place for creatures that thrive in primal nature.'
+                                  : 'Energias ancestrais despertam e fortalecem monstros e seres puros. Apenas os dignos sentirão o poder fluir sob seus pés.'}
+                              </div>
                               <div className="card-preview-field-effects">
-                                <strong>Efeitos:</strong>
+                                <strong>{isEn ? 'Effects:' : 'Efeitos:'}</strong>
                                 <ul>
-                                  <li>Criaturas do elemento <b>puro</b>: +1 Dano / +1 HP</li>
-                                  <li>Criaturas do tipo <b>monstro</b>: +1 Dano / +1 HP</li>
-                                  <li><b>Puras e Monstros</b>: +2 Dano / +2 HP</li>
+                                  <li>{isEn ? <>Creatures of the <b>pure</b> element: +1 Damage / +1 HP</> : <>Criaturas do elemento <b>puro</b>: +1 Dano / +1 HP</>}</li>
+                                  <li>{isEn ? <>Creatures of the <b>monster</b> type: +1 Damage / +1 HP</> : <>Criaturas do tipo <b>monstro</b>: +1 Dano / +1 HP</>}</li>
+                                  <li>{isEn ? <><b>Pure and Monster</b>: +2 Damage / +2 HP</> : <><b>Puras e Monstros</b>: +2 Dano / +2 HP</>}</li>
                                 </ul>
                               </div>
                             </div>
@@ -884,7 +905,7 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
                       <button
                         className="deck-action-btn deck-action-remove"
                         onClick={(e) => { e.stopPropagation(); removeCardFromDeck(idx); }}
-                        title="Remover do deck"
+                        title={isEn ? 'Remove from deck' : 'Remover do deck'}
                       >
                         −
                       </button>
@@ -899,33 +920,33 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
           </div>
         </div>
         <div className="deck-library-filters">
-          <input type="text" className="deck-library-search" placeholder="Buscar carta..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+          <input type="text" className="deck-library-search" placeholder={isEn ? 'Search card...' : 'Buscar carta...'} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           <div className="deck-library-element-filters">
-            <button className={`element-filter-btn ${elementFilter === 'all' ? 'active' : ''}`} onClick={() => setElementFilter('all')}>Todos</button>
-            <button className={`element-filter-btn ${elementFilter === 'fogo' ? 'active' : ''}`} onClick={() => setElementFilter('fogo')}><img src={fogoIcon} alt="Fogo" /></button>
-            <button className={`element-filter-btn ${elementFilter === 'agua' ? 'active' : ''}`} onClick={() => setElementFilter('agua')}><img src={aguaIcon} alt="Água" /></button>
-            <button className={`element-filter-btn ${elementFilter === 'terra' ? 'active' : ''}`} onClick={() => setElementFilter('terra')}><img src={terraIcon} alt="Terra" /></button>
-            <button className={`element-filter-btn ${elementFilter === 'ar' ? 'active' : ''}`} onClick={() => setElementFilter('ar')}><img src={arIcon} alt="Ar" /></button>
-            <button className={`element-filter-btn ${elementFilter === 'puro' ? 'active' : ''}`} onClick={() => setElementFilter('puro')}><img src={puroIcon} alt="Puro" /></button>
+            <button className={`element-filter-btn ${elementFilter === 'all' ? 'active' : ''}`} onClick={() => setElementFilter('all')}>{isEn ? 'All' : 'Todos'}</button>
+            <button className={`element-filter-btn ${elementFilter === 'fogo' ? 'active' : ''}`} onClick={() => setElementFilter('fogo')}><img src={fogoIcon} alt={isEn ? 'Fire' : 'Fogo'} /></button>
+            <button className={`element-filter-btn ${elementFilter === 'agua' ? 'active' : ''}`} onClick={() => setElementFilter('agua')}><img src={aguaIcon} alt={isEn ? 'Water' : 'Água'} /></button>
+            <button className={`element-filter-btn ${elementFilter === 'terra' ? 'active' : ''}`} onClick={() => setElementFilter('terra')}><img src={terraIcon} alt={isEn ? 'Earth' : 'Terra'} /></button>
+            <button className={`element-filter-btn ${elementFilter === 'ar' ? 'active' : ''}`} onClick={() => setElementFilter('ar')}><img src={arIcon} alt={isEn ? 'Air' : 'Ar'} /></button>
+            <button className={`element-filter-btn ${elementFilter === 'puro' ? 'active' : ''}`} onClick={() => setElementFilter('puro')}><img src={puroIcon} alt={isEn ? 'Pure' : 'Puro'} /></button>
           </div>
           <select className="deck-library-sort" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
-            <option value="all">Tipo</option>
-            <option value="effect">Efeito</option>
-            <option value="campo">Campo</option>
-            <option value="mistica">Mística</option>
-            <option value="sombria">Sombria</option>
-            <option value="draconideo">Draconídeo</option>
-            <option value="ave">Ave</option>
-            <option value="fera">Fera</option>
-            <option value="monstro">Monstro</option>
-            <option value="reptiloide">Reptiloide</option>
+            <option value="all">{isEn ? 'Type' : 'Tipo'}</option>
+            <option value="effect">{isEn ? 'Effect' : 'Efeito'}</option>
+            <option value="campo">{isEn ? 'Field' : 'Campo'}</option>
+            <option value="mistica">{isEn ? 'Mystic' : 'Mística'}</option>
+            <option value="sombria">{isEn ? 'Shadow' : 'Sombria'}</option>
+            <option value="draconideo">{isEn ? 'Draconid' : 'Draconídeo'}</option>
+            <option value="ave">{isEn ? 'Bird' : 'Ave'}</option>
+            <option value="fera">{isEn ? 'Beast' : 'Fera'}</option>
+            <option value="monstro">{isEn ? 'Monster' : 'Monstro'}</option>
+            <option value="reptiloide">{isEn ? 'Reptiloid' : 'Reptiloide'}</option>
           </select>
           <select className="deck-library-sort" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-            <option value="name-asc">Nome A-Z</option>
-            <option value="name-desc">Nome Z-A</option>
-            <option value="hp-asc">HP Crescente</option>
-            <option value="hp-desc">HP Decrescente</option>
-            <option value="element">Elemento</option>
+            <option value="name-asc">{isEn ? 'Name A-Z' : 'Nome A-Z'}</option>
+            <option value="name-desc">{isEn ? 'Name Z-A' : 'Nome Z-A'}</option>
+            <option value="hp-asc">{isEn ? 'HP Ascending' : 'HP Crescente'}</option>
+            <option value="hp-desc">{isEn ? 'HP Descending' : 'HP Decrescente'}</option>
+            <option value="element">{isEn ? 'Element' : 'Elemento'}</option>
           </select>
         </div>
         <DeckLibraryGrid
@@ -939,9 +960,10 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
           handleDragEnd={handleDragEnd}
           openCardLoadout={openCardLoadout}
           addCardToDeck={addCardToDeck}
+          isEn={isEn}
         />
         {/* Ghost/hover preview removido para não atrapalhar o fluxo no deckbuilder */}
-        {showSavedToast && <div className="deck-saved-toast">✓ Salvo</div>}
+        {showSavedToast && <div className="deck-saved-toast">{isEn ? '✓ Saved' : '✓ Salvo'}</div>}
         {showDeckIncompleteWarning && (
           <div
             className="loadout-modal-overlay"
@@ -960,7 +982,7 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
                   fontWeight: '700',
                 }}
               >
-                ⚠️ Deck Incompleto
+                {isEn ? '⚠️ Incomplete Deck' : '⚠️ Deck Incompleto'}
               </h2>
 
               <p
@@ -971,9 +993,17 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
                   lineHeight: '1.6',
                 }}
               >
-                Seu deck precisa ter exatamente <strong>20 cartas</strong> para ser finalizado.
+                {isEn ? (
+                  <>Your deck needs exactly <strong>20 cards</strong> to be finalized.</>
+                ) : (
+                  <>Seu deck precisa ter exatamente <strong>20 cartas</strong> para ser finalizado.</>
+                )}
                 <br />
-                Atualmente você tem: <strong>{cardCount} cartas</strong>
+                {isEn ? (
+                  <>You currently have: <strong>{cardCount} cards</strong></>
+                ) : (
+                  <>Atualmente você tem: <strong>{cardCount} cartas</strong></>
+                )}
               </p>
 
               <button
@@ -996,7 +1026,7 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
                   e.target.style.background = 'linear-gradient(135deg, rgba(144, 97, 249, 0.2), rgba(122, 90, 248, 0.15))';
                 }}
               >
-                Voltar ao Deck
+                {isEn ? 'Back to Deck' : 'Voltar ao Deck'}
               </button>
               <button
                 onClick={() => {
@@ -1022,7 +1052,7 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
                 onMouseEnter={(e) => { e.target.style.background = 'linear-gradient(135deg, rgba(220,60,70,0.25), rgba(200,40,50,0.15))'; }}
                 onMouseLeave={(e) => { e.target.style.background = 'linear-gradient(135deg, rgba(220,60,70,0.15), rgba(200,40,50,0.08))'; }}
               >
-                Descartar deck
+                {isEn ? 'Discard deck' : 'Descartar deck'}
               </button>
             </div>
           </div>
@@ -1094,7 +1124,7 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
                 {/* Lista de habilidades à direita */}
                 <div className="loadout-modal-right">
                   <div className="loadout-modal-header">
-                    <h3>Configurar Carta</h3>
+                    <h3>{isEn ? 'Configure Card' : 'Configurar Carta'}</h3>
                   </div>
                   {(() => {
                     const unlocks = [];
@@ -1142,10 +1172,10 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
                         <div className="loadout-section">
                           <div className="loadout-section-header">
                             <div className="loadout-section-label">
-                              Habilidades e Perks (Escolha 2 habilidades + 1 perk)
+                              {isEn ? 'Abilities and Perks (Choose 2 abilities + 1 perk)' : 'Habilidades e Perks (Escolha 2 habilidades + 1 perk)'}
                             </div>
                             <div className="loadout-selected-count">
-                              Habilidades: {editingSelectedSkills.filter((s) => s).length}/2 | Perk: {editingSelectedPerk ? '1/1' : '0/1'}
+                              {isEn ? 'Abilities' : 'Habilidades'}: {editingSelectedSkills.filter((s) => s).length}/2 | Perk: {editingSelectedPerk ? '1/1' : '0/1'}
                             </div>
                           </div>
                           <div className="loadout-skill-scroll">
@@ -1176,10 +1206,10 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
                                     }
                                   }}
                                 >
-                                  <div className="loadout-skill-level">Nv. {unlock.level ?? 0}</div>
+                                  <div className="loadout-skill-level">{isEn ? 'Lv.' : 'Nv.'} {unlock.level ?? 0}</div>
                                   <div className="loadout-skill-name">
                                     {getName(unlock.name, lang)}
-                                    {isSkill && (<span className="loadout-skill-badge"> [HABILIDADE]</span>)}
+                                    {isSkill && (<span className="loadout-skill-badge"> {isEn ? '[ABILITY]' : '[HABILIDADE]'}</span>)}
                                     {isPerk && (<span className="loadout-perk-badge"> [PERK]</span>)}
                                   </div>
                                   <div className="loadout-skill-desc">
@@ -1188,7 +1218,7 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
                                   {isSkill && unlock.cost && (
                                     <div className="loadout-skill-cost">
                                       {[...Array(unlock.cost)].map((_, i) => (
-                                        <img key={i} src={soulEssence} alt="Essência" className="loadout-essence-icon" />
+                                        <img key={i} src={soulEssence} alt={isEn ? 'Essence' : 'Essência'} className="loadout-essence-icon" />
                                       ))}
                                     </div>
                                   )}
@@ -1199,7 +1229,7 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
                             })}
                           </div>
                         </div>
-                        <button className="loadout-save-btn" onClick={saveCardLoadout}>Salvar Configuração</button>
+                        <button className="loadout-save-btn" onClick={saveCardLoadout}>{isEn ? 'Save Configuration' : 'Salvar Configuração'}</button>
                       </>
                     );
                   })()}

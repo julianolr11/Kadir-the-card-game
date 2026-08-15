@@ -12,7 +12,7 @@ import draconideoBadge from '../assets/img/badge/draconideo.png';
 const CAMPAIGN_PROGRESS_KEY = 'kadirCampaignTowerProgress';
 const CAMPAIGN_BADGE_CELEBRATION_KEY = 'kadirCampaignLastBadgeCelebrated';
 
-const CAMPAIGN_TOWER_TYPES = [
+export const CAMPAIGN_TOWER_TYPES = [
   { key: 'reptiloide', label: 'Reptiloide', guardianFallback: 'viborom', rank: 'I', badge: reptiloideBadge },
   { key: 'ave', label: 'Ave', guardianFallback: 'griffor', rank: 'II', badge: aveBadge },
   { key: 'monstro', label: 'Monstro', guardianFallback: 'gravhyr', rank: 'III', badge: monstroBadge },

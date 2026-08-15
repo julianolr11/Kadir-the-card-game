@@ -3,7 +3,10 @@ import { AppContext } from '../context/AppContext';
 import cardsPool from '../assets/cards';
 import DeckSelectModal from './DeckSelectModal';
 import { ACHIEVEMENTS } from '../assets/achievementsData';
+import { CAMPAIGN_TOWER_TYPES, CAMPAIGN_TOTAL_LEVELS, getCampaignProgress } from './CampaignTower';
 import '../styles/pvp-lobby.css';
+
+const LEVELS_PER_TOWER = CAMPAIGN_TOTAL_LEVELS / CAMPAIGN_TOWER_TYPES.length;
 
 const pickFirstDeckEntry = (decks) => {
   const ids = Object.keys(decks || {});
@@ -13,6 +16,12 @@ const pickFirstDeckEntry = (decks) => {
   if (!deck || !Array.isArray(deck.cards) || deck.cards.length === 0) return null;
   return { id, deck };
 };
+
+// Insígnias das torres do modo campanha desbloqueadas até um dado progresso (mesma fórmula
+// usada em AchievementsRoom.jsx: progresso >= (índice_da_torre + 1) * níveis_por_torre).
+const unlockedTowerBadges = (campaignProgress) => CAMPAIGN_TOWER_TYPES.filter(
+  (tower, idx) => (campaignProgress || 0) >= (idx + 1) * LEVELS_PER_TOWER,
+);
 
 export default function PvpLobby({ onBack, onStartBattle }) {
   const { lang = 'ptbr', decks, unlockedAchievements = [] } = useContext(AppContext) || {};
@@ -30,10 +39,23 @@ export default function PvpLobby({ onBack, onStartBattle }) {
   const [selectedDeckId, setSelectedDeckId] = useState(null);
   const [deckLocked, setDeckLocked] = useState(false);
   const [deckPickerOpen, setDeckPickerOpen] = useState(false);
-  const [profiles, setProfiles] = useState({}); // steamId64 -> { achievements, guardianId, deckName }
+  const [profiles, setProfiles] = useState({}); // steamId64 -> { achievements, guardianId, deckName, campaignProgress }
+  const [campaignProgress, setCampaignProgress] = useState(getCampaignProgress);
   const startTimeoutRef = useRef(null);
 
   const selectedDeck = selectedDeckId ? decks?.[selectedDeckId] : null;
+
+  // Progresso da campanha (insígnias das torres) fica só no localStorage, não no AppContext —
+  // mesmo esquema de leitura usado em AchievementsRoom.jsx.
+  useEffect(() => {
+    const refresh = () => setCampaignProgress(getCampaignProgress());
+    window.addEventListener('storage', refresh);
+    window.addEventListener('focus', refresh);
+    return () => {
+      window.removeEventListener('storage', refresh);
+      window.removeEventListener('focus', refresh);
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -94,10 +116,11 @@ export default function PvpLobby({ onBack, onStartBattle }) {
     window.electron?.ipcRenderer?.sendP2PMessage?.(peer.steamId64, {
       type: 'profile',
       achievements: unlockedAchievements,
+      campaignProgress,
       guardianId: selectedDeck?.guardianId || null,
       deckName: selectedDeck?.name || null,
     });
-  }, [lobby, mySteamId64, selectedDeck, unlockedAchievements]);
+  }, [lobby, mySteamId64, selectedDeck, unlockedAchievements, campaignProgress]);
 
   // Handshake de início de partida: anfitrião pede o baralho do convidado, o convidado
   // responde, e então o anfitrião avisa o convidado que pode entrar na tela de batalha.
@@ -111,6 +134,7 @@ export default function PvpLobby({ onBack, onStartBattle }) {
           ...prev,
           [fromSteamId64]: {
             achievements: message.achievements || [],
+            campaignProgress: message.campaignProgress || 0,
             guardianId: message.guardianId || null,
             deckName: message.deckName || null,
           },
@@ -219,10 +243,20 @@ export default function PvpLobby({ onBack, onStartBattle }) {
 
   const renderPlayerCard = (member, isMe) => {
     const profile = isMe
-      ? { achievements: unlockedAchievements, guardianId: selectedDeck?.guardianId || null, deckName: selectedDeck?.name || null }
+      ? {
+        achievements: unlockedAchievements,
+        campaignProgress,
+        guardianId: selectedDeck?.guardianId || null,
+        deckName: selectedDeck?.name || null,
+      }
       : (profiles[member.steamId64] || {});
     const guardianCard = profile.guardianId ? cardsPool.find((c) => c.id === profile.guardianId) : null;
-    const unlockedBadges = ACHIEVEMENTS.filter((a) => (profile.achievements || []).includes(a.id));
+    const milestoneBadges = ACHIEVEMENTS.filter((a) => (profile.achievements || []).includes(a.id))
+      .map((a) => ({ id: a.id, img: a.img, label: a.name?.[isEn ? 'en' : 'pt'] || a.name?.pt }));
+    const towerBadges = unlockedTowerBadges(profile.campaignProgress).map((t) => ({
+      id: `tower-${t.key}`, img: t.badge, label: t.label,
+    }));
+    const badges = [...towerBadges, ...milestoneBadges];
 
     return (
       <div className="pvp-lobby-player-card" key={member.steamId64}>
@@ -234,15 +268,10 @@ export default function PvpLobby({ onBack, onStartBattle }) {
           )}
           <div className="pvp-lobby-player-name-col">
             <p className="pvp-lobby-player-name">{member.name || `Steam ID ${member.steamId64}`}</p>
-            {unlockedBadges.length > 0 && (
+            {badges.length > 0 && (
               <div className="pvp-lobby-player-badges">
-                {unlockedBadges.map((a) => (
-                  <img
-                    key={a.id}
-                    src={a.img}
-                    alt={a.name?.[isEn ? 'en' : 'pt'] || a.name?.pt}
-                    title={a.name?.[isEn ? 'en' : 'pt'] || a.name?.pt}
-                  />
+                {badges.map((b) => (
+                  <img key={b.id} src={b.img} alt={b.label} title={b.label} />
                 ))}
               </div>
             )}

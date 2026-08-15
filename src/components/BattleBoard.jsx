@@ -2383,23 +2383,11 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
               if (cardData?.type === 'effect') {
                 return (
                   <div style={{ width: 370 }}>
-                    <div className={`card-preview card-preview-field ${isHolo ? 'card-preview-holo' : ''}`}>
-                      <div className="card-preview-header">
-                        <span className="card-preview-name" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          {typeof cardData.name === 'object' ? cardData.name.pt || cardData.name.en : cardData.name}
-                          {isHolo && <span className="holo-indicator">✨</span>}
-                        </span>
-                        <span className="card-preview-id">#{cardData.num || cardData.id}</span>
-                      </div>
-                      <div className="card-preview-art-wrapper">
-                        <img src={cardData.img} alt={typeof cardData.name === 'object' ? cardData.name.pt || cardData.name.en : cardData.name} className="card-preview-art" />
-                      </div>
-                      <div className="card-preview-field-desc">
-                        <div style={{ marginBottom: 8, fontSize: '14px', color: '#a87fff', fontWeight: 600 }}>Carta de Efeito</div>
-                        <strong>Efeito:</strong>
-                        <div style={{ whiteSpace: 'pre-line', fontSize: '13px', color: '#fff', lineHeight: '1.4', marginTop: 8 }}>{typeof cardData.description === 'object' ? cardData.description.pt || cardData.description.en : cardData.description}</div>
-                      </div>
-                    </div>
+                    <CreatureCardPreview
+                      creature={cardData}
+                      isHolo={isHolo}
+                      allowFlip={false}
+                    />
                   </div>
                 );
               }

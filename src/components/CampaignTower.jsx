@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import cardsPool from '../assets/cards';
+import { AppContext } from '../context/AppContext';
 import '../styles/campaign-tower.css';
 import reptiloideBadge from '../assets/img/badge/reptiloide.png';
 import aveBadge from '../assets/img/badge/ave.png';
@@ -13,30 +14,30 @@ const CAMPAIGN_PROGRESS_KEY = 'kadirCampaignTowerProgress';
 const CAMPAIGN_BADGE_CELEBRATION_KEY = 'kadirCampaignLastBadgeCelebrated';
 
 export const CAMPAIGN_TOWER_TYPES = [
-  { key: 'reptiloide', label: 'Reptiloide', guardianFallback: 'viborom', rank: 'I', badge: reptiloideBadge },
-  { key: 'ave', label: 'Ave', guardianFallback: 'griffor', rank: 'II', badge: aveBadge },
-  { key: 'monstro', label: 'Monstro', guardianFallback: 'gravhyr', rank: 'III', badge: monstroBadge },
-  { key: 'fera', label: 'Fera', guardianFallback: 'roenhell', rank: 'IV', badge: feraBadge },
-  { key: 'mistica', label: 'Mistica', guardianFallback: 'faskel', rank: 'V', badge: misticaBadge },
-  { key: 'sombria', label: 'Sombria', guardianFallback: 'noctyra', rank: 'VI', badge: sombriaBadge },
-  { key: 'draconideo', label: 'Draconideo', guardianFallback: 'draak', rank: 'VII', badge: draconideoBadge },
+  { key: 'reptiloide', label: { pt: 'Reptiloide', en: 'Reptiloid' }, guardianFallback: 'viborom', rank: 'I', badge: reptiloideBadge },
+  { key: 'ave', label: { pt: 'Ave', en: 'Bird' }, guardianFallback: 'griffor', rank: 'II', badge: aveBadge },
+  { key: 'monstro', label: { pt: 'Monstro', en: 'Monster' }, guardianFallback: 'gravhyr', rank: 'III', badge: monstroBadge },
+  { key: 'fera', label: { pt: 'Fera', en: 'Beast' }, guardianFallback: 'roenhell', rank: 'IV', badge: feraBadge },
+  { key: 'mistica', label: { pt: 'Mistica', en: 'Mystic' }, guardianFallback: 'faskel', rank: 'V', badge: misticaBadge },
+  { key: 'sombria', label: { pt: 'Sombria', en: 'Shadow' }, guardianFallback: 'noctyra', rank: 'VI', badge: sombriaBadge },
+  { key: 'draconideo', label: { pt: 'Draconideo', en: 'Draconid' }, guardianFallback: 'draak', rank: 'VII', badge: draconideoBadge },
 ];
 
 const CAMPAIGN_LEVELS_PER_TOWER = 11;
 export const CAMPAIGN_TOTAL_LEVELS = CAMPAIGN_TOWER_TYPES.length * CAMPAIGN_LEVELS_PER_TOWER;
 
 const DIFFICULTY_LABELS = [
-  'Iniciante',
-  'Iniciante',
-  'Aprendiz',
-  'Aprendiz',
-  'Adepto',
-  'Ameaca',
-  'Guardiao',
-  'Guardiao',
-  'Campeao',
-  'Campeao',
-  'Lenda',
+  { pt: 'Iniciante', en: 'Beginner' },
+  { pt: 'Iniciante', en: 'Beginner' },
+  { pt: 'Aprendiz', en: 'Apprentice' },
+  { pt: 'Aprendiz', en: 'Apprentice' },
+  { pt: 'Adepto', en: 'Adept' },
+  { pt: 'Ameaca', en: 'Threat' },
+  { pt: 'Guardiao', en: 'Guardian' },
+  { pt: 'Guardiao', en: 'Guardian' },
+  { pt: 'Campeao', en: 'Champion' },
+  { pt: 'Campeao', en: 'Champion' },
+  { pt: 'Lenda', en: 'Legend' },
 ];
 
 const getGuardianCardData = (guardianId) => {
@@ -78,7 +79,8 @@ function getCreatureCardsByType(typeKey) {
   ));
 }
 
-function buildTowerLevels(tower, towerIndex) {
+function buildTowerLevels(tower, towerIndex, isEn) {
+  const key = isEn ? 'en' : 'pt';
   const typeCards = getCreatureCardsByType(tower.key);
   const cards = typeCards.length > 0
     ? typeCards
@@ -94,13 +96,13 @@ function buildTowerLevels(tower, towerIndex) {
       towerIndex,
       levelIndex,
       typeKey: tower.key,
-      typeLabel: tower.label,
+      typeLabel: tower.label[key],
       guardianId: guardianCard?.id || tower.guardianFallback,
       card: guardianCard,
-      name: getCardName(guardianCard, tower.label),
-      subtitle: getCardSubtitle(guardianCard, tower.label),
+      name: getCardName(guardianCard, tower.label[key]),
+      subtitle: getCardSubtitle(guardianCard, tower.label[key]),
       img: guardianCard?.img,
-      difficulty: DIFFICULTY_LABELS[levelIndex] || 'Guardiao',
+      difficulty: (DIFFICULTY_LABELS[levelIndex] || DIFFICULTY_LABELS[DIFFICULTY_LABELS.length - 1])[key],
     };
   });
 }
@@ -119,6 +121,8 @@ export function unlockNextCampaignEnemy(enemyIndex) {
 }
 
 export default function CampaignTower({ onBack, onStartBattle }) {
+  const { lang = 'ptbr' } = useContext(AppContext) || {};
+  const isEn = lang?.startsWith('en');
   const [progress, setProgress] = useState(getCampaignProgress);
   const [badgeCelebration, setBadgeCelebration] = useState(null);
   const currentTowerIndex = Math.min(
@@ -131,7 +135,7 @@ export default function CampaignTower({ onBack, onStartBattle }) {
 
   const towers = useMemo(() => (
     CAMPAIGN_TOWER_TYPES.map((tower, towerIndex) => {
-      const levels = buildTowerLevels(tower, towerIndex).map(level => ({
+      const levels = buildTowerLevels(tower, towerIndex, isEn).map(level => ({
         ...level,
         unlocked: level.index <= progress,
         completed: level.index < progress,
@@ -142,6 +146,7 @@ export default function CampaignTower({ onBack, onStartBattle }) {
 
       return {
         ...tower,
+        label: tower.label[isEn ? 'en' : 'pt'],
         index: towerIndex,
         levels,
         completedCount,
@@ -150,7 +155,7 @@ export default function CampaignTower({ onBack, onStartBattle }) {
         currentLevel,
       };
     })
-  ), [progress]);
+  ), [progress, isEn]);
 
   useEffect(() => {
     const handleStorage = () => setProgress(getCampaignProgress());
@@ -204,21 +209,21 @@ export default function CampaignTower({ onBack, onStartBattle }) {
       <div className="campaign-tower-bg" />
       <header className="campaign-tower-header">
         <button className="campaign-back-btn" onClick={onBack}>
-          <span aria-hidden>←</span> Voltar
+          <span aria-hidden>←</span> {isEn ? 'Back' : 'Voltar'}
         </button>
         <div>
-          <p className="campaign-kicker">Campanha</p>
-          <h1>Torres dos Guardiões</h1>
+          <p className="campaign-kicker">{isEn ? 'Campaign' : 'Campanha'}</p>
+          <h1>{isEn ? 'Guardian Towers' : 'Torres dos Guardiões'}</h1>
           <div className="campaign-title-rule" aria-hidden><span /></div>
         </div>
         <div className="campaign-progress-pill">
-          <span>Progresso</span>
+          <span>{isEn ? 'Progress' : 'Progresso'}</span>
           <strong>{Math.min(progress + 1, CAMPAIGN_TOTAL_LEVELS)}/{CAMPAIGN_TOTAL_LEVELS}</strong>
         </div>
       </header>
 
       <main className="campaign-tower-layout">
-        <nav className="campaign-type-rail" aria-label="Torres da campanha">
+        <nav className="campaign-type-rail" aria-label={isEn ? 'Campaign towers' : 'Torres da campanha'}>
           {towers.map((tower) => (
             <button
               key={tower.key}
@@ -237,8 +242,12 @@ export default function CampaignTower({ onBack, onStartBattle }) {
         <section className="campaign-tower-ladder">
           <div className="campaign-tower-title">
             <div>
-              <span>Torre {selectedTower?.rank}</span>
-              <small>{selectedTower?.completedCount} de {CAMPAIGN_LEVELS_PER_TOWER} combates vencidos</small>
+              <span>{isEn ? 'Tower' : 'Torre'} {selectedTower?.rank}</span>
+              <small>
+                {isEn
+                  ? `${selectedTower?.completedCount} of ${CAMPAIGN_LEVELS_PER_TOWER} battles won`
+                  : `${selectedTower?.completedCount} de ${CAMPAIGN_LEVELS_PER_TOWER} combates vencidos`}
+              </small>
             </div>
             <strong>{selectedTower?.label}</strong>
           </div>
@@ -252,7 +261,7 @@ export default function CampaignTower({ onBack, onStartBattle }) {
               <span className="campaign-floor-number">{String(enemy.levelIndex + 1).padStart(2, '0')}</span>
               <span className="campaign-floor-line" />
               <span className="campaign-floor-name">{enemy.name}</span>
-              <span className="campaign-floor-difficulty">{enemy.completed ? 'Vencido' : enemy.difficulty}</span>
+              <span className="campaign-floor-difficulty">{enemy.completed ? (isEn ? 'Won' : 'Vencido') : enemy.difficulty}</span>
             </button>
           ))}
         </section>
@@ -262,14 +271,14 @@ export default function CampaignTower({ onBack, onStartBattle }) {
             {activeEnemy?.img && <img src={activeEnemy.img} alt={activeEnemy.name} />}
             <div className="campaign-preview-shade" />
             <div className="campaign-preview-text">
-              <span>Próximo combate</span>
+              <span>{isEn ? 'Next battle' : 'Próximo combate'}</span>
               <strong>{activeEnemy?.name}</strong>
               <small>{activeEnemy?.subtitle}</small>
-              <em>{selectedTower?.label} · Nível {(activeEnemy?.levelIndex || 0) + 1}</em>
+              <em>{selectedTower?.label} · {isEn ? 'Level' : 'Nível'} {(activeEnemy?.levelIndex || 0) + 1}</em>
             </div>
           </div>
           <button className="campaign-start-btn" onClick={() => activeEnemy && onStartBattle(activeEnemy)}>
-            <span>Enfrentar Guardião</span><b aria-hidden>→</b>
+            <span>{isEn ? 'Face the Guardian' : 'Enfrentar Guardião'}</span><b aria-hidden>→</b>
           </button>
         </aside>
       </main>
@@ -278,12 +287,12 @@ export default function CampaignTower({ onBack, onStartBattle }) {
         <div className="campaign-badge-celebration" onClick={closeBadgeCelebration}>
           <div className="campaign-badge-panel" onClick={(event) => event.stopPropagation()}>
             <div className="campaign-badge-rays" aria-hidden />
-            <p>Insignia adquirida</p>
-            <img src={badgeCelebration.badge} alt={`Insignia ${badgeCelebration.label}`} />
+            <p>{isEn ? 'Badge earned' : 'Insignia adquirida'}</p>
+            <img src={badgeCelebration.badge} alt={isEn ? `Badge ${badgeCelebration.label}` : `Insignia ${badgeCelebration.label}`} />
             <h2>{badgeCelebration.label}</h2>
-            <span>Torre {badgeCelebration.rank} concluida</span>
+            <span>{isEn ? `Tower ${badgeCelebration.rank} completed` : `Torre ${badgeCelebration.rank} concluida`}</span>
             <button type="button" onClick={closeBadgeCelebration}>
-              Guardar conquista
+              {isEn ? 'Save achievement' : 'Guardar conquista'}
             </button>
           </div>
         </div>

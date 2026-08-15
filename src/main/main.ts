@@ -41,6 +41,22 @@ const serializeLobby = (lobby: any) => ({
   ownerSteamId64: lobby.getOwner().steamId64.toString(),
 });
 
+// Resume uma mensagem P2P pro log — mensagens 'state' trafegam a cada mudança de estado da
+// partida e teriam um payload enorme, então mostramos só o essencial (fase/turno/quem joga)
+// em vez do JSON completo.
+const summarizeP2PMessage = (message: any): string => {
+  if (!message || typeof message !== 'object') return String(message);
+  if (message.type === 'state') {
+    const s = message.state || {};
+    return `[state] phase=${s.phase} turn=${s.turn} activePlayer=${s.activePlayer}`;
+  }
+  const { type, ...rest } = message;
+  const details = Object.entries(rest)
+    .map(([k, v]) => `${k}=${typeof v === 'object' ? JSON.stringify(v) : v}`)
+    .join(' ');
+  return `[${type}] ${details}`;
+};
+
 const initSteam = () => {
   try {
     // eslint-disable-next-line global-require
@@ -85,6 +101,7 @@ const initSteam = () => {
           const packet = steamClient.networking.readP2PPacket(packetSize);
           try {
             const message = JSON.parse(packet.data.toString('utf8'));
+            log.info(`[PvP] <- ${packet.steamId.steamId64.toString()}: ${summarizeP2PMessage(message)}`);
             mainWindow.webContents.send('steam-p2p-message', {
               fromSteamId64: packet.steamId.steamId64.toString(),
               message,
@@ -190,6 +207,7 @@ ipcMain.handle('steam-send-p2p-message', (_event, targetSteamId64: string, messa
       steamClient.networking.SendType.Reliable,
       payload,
     );
+    log.info(`[PvP] -> ${targetSteamId64}: ${summarizeP2PMessage(message)}`);
     return { ok: Boolean(sent) };
   } catch (err: any) {
     log.warn(`Falha ao enviar pacote P2P para ${targetSteamId64}: ${err?.message || err}`);

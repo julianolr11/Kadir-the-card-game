@@ -5486,8 +5486,15 @@ export function BattleProvider({ children }) {
     if (state.mode !== 'pvp' || !state.isHost) return undefined;
     const unsubscribe = window.electron?.ipcRenderer?.onP2PMessage?.(({ fromSteamId64, message }) => {
       if (!message || message.type !== 'action') return;
-      if (state.peerSteamId64 && fromSteamId64 !== state.peerSteamId64) return;
-      if (state.phase !== 'playing' || state.activePlayer !== 'ai') return;
+      if (state.peerSteamId64 && fromSteamId64 !== state.peerSteamId64) {
+        console.warn(`[PvP] Ação de ${fromSteamId64} ignorada: não é o adversário esperado (${state.peerSteamId64}).`);
+        return;
+      }
+      if (state.phase !== 'playing' || state.activePlayer !== 'ai') {
+        console.warn(`[PvP] Ação "${message.action}" ignorada: phase=${state.phase} activePlayer=${state.activePlayer} (esperado: playing/ai).`);
+        return;
+      }
+      console.log(`[PvP] Aplicando ação do convidado: ${message.action}`, message);
 
       if (message.action === 'summon') {
         summonFromHandForOpponent(message.index, message.slotIndex);
@@ -5523,7 +5530,11 @@ export function BattleProvider({ children }) {
     if (state.mode !== 'pvp' || state.isHost !== false) return undefined;
     const unsubscribe = window.electron?.ipcRenderer?.onP2PMessage?.(({ fromSteamId64, message }) => {
       if (!message || message.type !== 'state') return;
-      if (state.peerSteamId64 && fromSteamId64 !== state.peerSteamId64) return;
+      if (state.peerSteamId64 && fromSteamId64 !== state.peerSteamId64) {
+        console.warn(`[PvP] Estado de ${fromSteamId64} ignorado: não é o anfitrião esperado (${state.peerSteamId64}).`);
+        return;
+      }
+      console.log(`[PvP] Estado recebido do anfitrião: phase=${message.state?.phase} turn=${message.state?.turn} activePlayer=${message.state?.activePlayer}`);
       setState((s) => swapPerspective({ ...message.state, mode: s.mode, isHost: s.isHost, peerSteamId64: s.peerSteamId64 }));
     });
     return () => unsubscribe?.();

@@ -104,7 +104,7 @@ export function FullArtCard({ card, lang = 'ptbr', className = '', level = 0, cu
         <b>#{card?.num ? String(card.num).padStart(3, '0') : '???'}</b>
       </header>
       <section className="kadir-full-art-info">
-        <div className="kadir-full-art-blessing"><span>{blessingName || 'Bênção'}</span><p>{blessingDesc || getText(card?.fielddesc, langKey)}</p></div>
+        <div className="kadir-full-art-blessing"><span>{blessingName || (langKey === 'en' ? 'Blessing' : 'Bênção')}</span><p>{blessingDesc || getText(card?.fielddesc, langKey)}</p></div>
         <div
           className={`kadir-full-art-skills ${onAbilityClick ? 'is-clickable' : ''}`}
           onClick={onAbilityClick ? (event) => {
@@ -114,9 +114,9 @@ export function FullArtCard({ card, lang = 'ptbr', className = '', level = 0, cu
             if (abilityIndex >= 0) onAbilityClick(abilityIndex);
           } : undefined}
         >
-          {visibleSkills.map((skill) => <div key={skill.id || getText(skill.name, langKey)}><header><strong>{getText(skill.name, langKey)}</strong><span className="kadir-full-art-cost">{Array.from({ length: Math.max(1, Number(skill.cost || 1)) }).map((_, index) => <img key={index} src={soulEssenceIcon} alt="Essência" />)}</span></header><p><StatusText text={stripHtml(skill.desc || skill.displayText)} /></p></div>)}
+          {visibleSkills.map((skill) => <div key={skill.id || getText(skill.name, langKey)}><header><strong>{getText(skill.name, langKey)}</strong><span className="kadir-full-art-cost">{Array.from({ length: Math.max(1, Number(skill.cost || 1)) }).map((_, index) => <img key={index} src={soulEssenceIcon} alt={langKey === 'en' ? 'Essence' : 'Essência'} />)}</span></header><p><StatusText text={stripHtml(skill.desc || skill.displayText)} /></p></div>)}
         </div>
-        <footer className="kadir-full-art-stats"><span>{type}</span><span>{Number(card?.height || 0).toFixed(2)}m</span><span className="kadir-full-art-weakness">{elementIcons[weakness] ? <img src={elementIcons[weakness]} alt={`Fraqueza ${weakness}`} /> : weakness || '-'}</span><span className="kadir-full-art-level"><img src={lvlIcon} alt="Nível" />{level}</span><strong className="kadir-full-art-hp"><img src={heartIcon} alt="Vida" />{currentHp ?? card?.hp ?? 0}</strong></footer>
+        <footer className="kadir-full-art-stats"><span>{type}</span><span>{Number(card?.height || 0).toFixed(2)}m</span><span className="kadir-full-art-weakness">{elementIcons[weakness] ? <img src={elementIcons[weakness]} alt={`${langKey === 'en' ? 'Weakness' : 'Fraqueza'} ${weakness}`} /> : weakness || '-'}</span><span className="kadir-full-art-level"><img src={lvlIcon} alt={langKey === 'en' ? 'Level' : 'Nível'} />{level}</span><strong className="kadir-full-art-hp"><img src={heartIcon} alt={langKey === 'en' ? 'HP' : 'Vida'} />{currentHp ?? card?.hp ?? 0}</strong></footer>
       </section>
     </article>
   );
@@ -198,12 +198,12 @@ function KadirFullArtPreview() {
   return (
     <div className={`kadir-full-art-overlay ${obtained ? 'kadir-full-art-obtained' : ''}`} onClick={() => setOpen(false)}>
       <div className="kadir-full-art-stage" onClick={(event) => event.stopPropagation()}>
-        {obtained && <div className="kadir-full-art-obtained-copy"><span>Relíquia descoberta</span><strong>Você obteve</strong><b>FULL ART</b></div>}
+        {obtained && <div className="kadir-full-art-obtained-copy"><span>{langKey === 'en' ? 'Relic discovered' : 'Relíquia descoberta'}</span><strong>{langKey === 'en' ? 'You obtained' : 'Você obteve'}</strong><b>FULL ART</b></div>}
         <button
           type="button"
           className="kadir-full-art-close"
           onClick={() => setOpen(false)}
-          aria-label="Fechar full-art"
+          aria-label={langKey === 'en' ? 'Close full-art' : 'Fechar full-art'}
         >
           x
         </button>
@@ -283,7 +283,7 @@ function KadirFullArtPreview() {
         </article> */}
 
         <div className="kadir-full-art-note">
-          {obtained ? getText(card.name, langKey) : 'Protótipo temporário full-art'}
+          {obtained ? getText(card.name, langKey) : (langKey === 'en' ? 'Temporary full-art prototype' : 'Protótipo temporário full-art')}
         </div>
       </div>
     </div>

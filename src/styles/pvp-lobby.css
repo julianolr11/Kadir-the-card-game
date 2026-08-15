@@ -1,0 +1,180 @@
+.pvp-lobby {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  color: #fff2c7;
+  background: radial-gradient(circle at 50% 20%, #241a30, #0a0710 78%);
+  font-family: 'Poppins', sans-serif;
+}
+
+.pvp-lobby-vignette {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(120, 241, 220, 0.06), transparent 40%),
+    linear-gradient(180deg, rgba(4, 3, 6, 0.2), rgba(5, 3, 9, 0.88));
+  pointer-events: none;
+}
+
+.pvp-lobby-header {
+  position: relative;
+  z-index: 2;
+  margin: 42px 0 8px;
+  text-align: center;
+}
+
+.pvp-lobby-header p {
+  margin: 0 0 4px;
+  color: #78f1dc;
+  font-size: 0.78rem;
+  font-weight: 950;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.pvp-lobby-header h1 {
+  margin: 0;
+  color: #ffe6b0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(2rem, 3.6vw, 3.2rem);
+  font-weight: 600;
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.72), 0 0 30px rgba(255, 192, 82, 0.2);
+}
+
+.pvp-lobby-panel {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  width: min(560px, 90vw);
+}
+
+.pvp-lobby-message {
+  color: rgba(255, 230, 176, 0.8);
+  font-weight: 700;
+  text-align: center;
+}
+
+.pvp-lobby-message-warning {
+  color: #f0a26b;
+}
+
+.pvp-lobby-empty,
+.pvp-lobby-room {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  padding: 32px;
+  border: 1px solid rgba(230, 192, 119, 0.28);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(26, 16, 35, 0.76), rgba(6, 4, 9, 0.82));
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+  text-align: center;
+}
+
+.pvp-lobby-primary-btn {
+  border: 1px solid rgba(255, 230, 176, 0.5);
+  border-radius: 8px;
+  background: rgba(18, 10, 28, 0.85);
+  color: #ffe6b0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 700;
+  padding: 12px 26px;
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease, opacity 180ms ease;
+}
+
+.pvp-lobby-primary-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  background: rgba(34, 20, 48, 0.94);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4), 0 0 24px rgba(255, 230, 176, 0.16);
+}
+
+.pvp-lobby-primary-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.pvp-lobby-room-id {
+  margin: 0;
+  color: #78f1dc;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.pvp-lobby-members {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pvp-lobby-member {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border: 1px solid rgba(255, 230, 176, 0.14);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.28);
+  font-weight: 700;
+}
+
+.pvp-lobby-member-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #78f1dc;
+  box-shadow: 0 0 8px rgba(120, 241, 220, 0.6);
+}
+
+.pvp-lobby-member-waiting {
+  color: rgba(255, 230, 176, 0.55);
+  font-style: italic;
+  font-weight: 600;
+}
+
+.pvp-lobby-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px;
+}
+
+.pvp-lobby-back-btn {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-width: 270px;
+  margin-bottom: 28px;
+  padding: 13px 24px;
+  border: 1px solid rgba(225, 190, 124, 0.46);
+  border-radius: 8px;
+  background: rgba(18, 10, 28, 0.82);
+  color: #ffe6b0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+
+.pvp-lobby-back-btn:hover {
+  transform: translateY(-2px);
+  background: rgba(34, 20, 48, 0.94);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.42), 0 0 24px rgba(255, 230, 176, 0.18);
+}

@@ -776,13 +776,19 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
                 </span>
                 <span className="battle-menu-option-arrow" aria-hidden>→</span>
               </button>
-              <button className="battle-menu-option battle-menu-option-muted" disabled>
+              <button
+                className="battle-menu-option"
+                onClick={() => {
+                  setShowBattleMenu(false);
+                  onNavigate('pvp-lobby');
+                }}
+              >
                 <span className="battle-menu-option-seal" aria-hidden>Ⅱ</span>
                 <span className="battle-menu-option-copy">
                   <strong>PvP Casual</strong>
-                  <small>Encontre adversários ou convide amigos pela Steam</small>
+                  <small>Convide um amigo pela Steam para uma sala de desafio</small>
                 </span>
-                <span className="battle-menu-coming-soon">Em breve</span>
+                <span className="battle-menu-option-arrow" aria-hidden>→</span>
               </button>
               <button className="battle-menu-option battle-menu-option-muted" disabled>
                 <span className="battle-menu-option-seal" aria-hidden>Ⅲ</span>

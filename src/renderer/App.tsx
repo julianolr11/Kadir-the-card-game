@@ -12,6 +12,7 @@ import StartFlow from '../components/StartFlow';
 import DeckBuilder from '../components/DeckBuilder';
 import BattleBoard from '../components/BattleBoard';
 import CampaignTower from '../components/CampaignTower';
+import PvpLobby from '../components/PvpLobby';
 import KadirFullArtPreview from '../components/KadirFullArtPreview';
 import { AppProvider } from '../context/AppContext';
 import { BattleProvider } from '../context/BattleContext';
@@ -116,6 +117,21 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [updateVersion]);
 
+  // Aceita convite de sala PvP vindo dos amigos da Steam, de qualquer tela.
+  useEffect(() => {
+    const unsubscribe = window.electron?.ipcRenderer?.onSteamLobbyJoinRequested?.(
+      async (data: { lobbyId: string; friendSteamId64: string }) => {
+        const result = await window.electron?.ipcRenderer?.joinSteamLobby?.(data.lobbyId);
+        if (result?.ok) {
+          setScreen('pvp-lobby');
+        }
+      },
+    );
+    return () => {
+      unsubscribe?.();
+    };
+  }, []);
+
   // Buscar release notes do GitHub
   const fetchReleaseNotes = async (version: string) => {
     try {
@@ -173,6 +189,7 @@ export default function App() {
     }
     else if (route === 'deck') setScreen('deck');
     else if (route === 'campaign') setScreen('campaign');
+    else if (route === 'pvp-lobby') setScreen('pvp-lobby');
     else if (route === 'battle') {
       setBattleDeck(params?.deck || null);
       setBattleConfig(params || null);
@@ -257,6 +274,9 @@ export default function App() {
           onBack={() => setScreen('home')}
           onStartBattle={(opponent: any) => handleNavigate('battle', { mode: 'campaign', opponent })}
         />
+      )}
+      {screen === 'pvp-lobby' && (
+        <PvpLobby onBack={() => setScreen('home')} />
       )}
       {screen === 'battle' && (
         <BattleProvider>

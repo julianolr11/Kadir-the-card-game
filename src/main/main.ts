@@ -19,6 +19,25 @@ import { setupAudioManager } from './audioManager';
 
 // Cliente Steamworks (null se a inicialização falhar, ex: Steam não está rodando)
 let steamClient: any = null;
+// Sala (lobby) PvP atual, se houver
+let currentLobby: any = null;
+
+const serializeMember = (member: { steamId64: bigint; accountId: number }) => ({
+  steamId64: member.steamId64.toString(),
+  accountId: member.accountId,
+  // A SDK 0.4.0 não expõe nome de outros usuários (sem namespace `friends`);
+  // só sabemos o nosso próprio nome via localplayer.
+  name:
+    steamClient && member.steamId64 === steamClient.localplayer.getSteamId().steamId64
+      ? steamClient.localplayer.getName()
+      : null,
+});
+
+const serializeLobby = (lobby: any) => ({
+  lobbyId: lobby.id.toString(),
+  members: lobby.getMembers().map(serializeMember),
+  ownerSteamId64: lobby.getOwner().steamId64.toString(),
+});
 
 const initSteam = () => {
   try {
@@ -27,6 +46,21 @@ const initSteam = () => {
     // steam_appid.txt (raiz do projeto/app) define o App ID quando nenhum é passado aqui.
     steamClient = steamworks.init();
     log.info(`Steamworks inicializado. Usuário: ${steamClient.localplayer.getName()}`);
+
+    // Alguém entrou/saiu da sala atual: avisa o renderer para atualizar a lista de membros.
+    steamClient.callback.register(steamworks.SteamCallback.LobbyChatUpdate, () => {
+      if (currentLobby && mainWindow) {
+        mainWindow.webContents.send('steam-lobby-updated', serializeLobby(currentLobby));
+      }
+    });
+
+    // O jogador aceitou um convite (pelos amigos da Steam) para entrar numa sala.
+    steamClient.callback.register(steamworks.SteamCallback.GameLobbyJoinRequested, (data: any) => {
+      mainWindow?.webContents.send('steam-lobby-join-requested', {
+        lobbyId: data.lobby_steam_id.toString(),
+        friendSteamId64: data.friend_steam_id.toString(),
+      });
+    });
   } catch (err: any) {
     steamClient = null;
     log.warn(`Steamworks não inicializado (Steam não está rodando ou steam_api64.dll ausente): ${err?.message || err}`);
@@ -52,6 +86,58 @@ ipcMain.handle('steam-unlock-achievement', (_event, achievementId: string) => {
     log.warn(`Falha ao ativar conquista Steam "${achievementId}": ${err?.message || err}`);
     return { activated: false, error: err?.message || 'Steam achievement error' };
   }
+});
+
+ipcMain.handle('steam-create-lobby', async () => {
+  if (!steamClient) return { ok: false, reason: 'steam-not-connected' };
+  try {
+    // eslint-disable-next-line global-require
+    const steamworks = require('steamworks.js');
+    const lobby = await steamClient.matchmaking.createLobby(steamworks.LobbyType.FriendsOnly, 2);
+    currentLobby = lobby;
+    log.info(`Sala PvP criada: ${lobby.id.toString()}`);
+    return { ok: true, lobby: serializeLobby(lobby) };
+  } catch (err: any) {
+    log.warn(`Falha ao criar sala PvP: ${err?.message || err}`);
+    return { ok: false, error: err?.message || 'Falha ao criar sala' };
+  }
+});
+
+ipcMain.handle('steam-join-lobby', async (_event, lobbyId: string) => {
+  if (!steamClient) return { ok: false, reason: 'steam-not-connected' };
+  try {
+    const lobby = await steamClient.matchmaking.joinLobby(BigInt(lobbyId));
+    currentLobby = lobby;
+    log.info(`Entrou na sala PvP: ${lobby.id.toString()}`);
+    return { ok: true, lobby: serializeLobby(lobby) };
+  } catch (err: any) {
+    log.warn(`Falha ao entrar na sala PvP ${lobbyId}: ${err?.message || err}`);
+    return { ok: false, error: err?.message || 'Falha ao entrar na sala' };
+  }
+});
+
+ipcMain.handle('steam-leave-lobby', () => {
+  if (currentLobby) {
+    log.info(`Saiu da sala PvP: ${currentLobby.id.toString()}`);
+    currentLobby.leave();
+    currentLobby = null;
+  }
+  return { ok: true };
+});
+
+ipcMain.handle('steam-invite-to-lobby', () => {
+  if (!steamClient || !currentLobby) return { ok: false, reason: 'no-active-lobby' };
+  try {
+    steamClient.overlay.activateInviteDialog(currentLobby.id);
+    return { ok: true };
+  } catch (err: any) {
+    return { ok: false, error: err?.message || 'Falha ao abrir convite' };
+  }
+});
+
+ipcMain.handle('steam-get-lobby', () => {
+  if (!currentLobby) return { ok: false, reason: 'no-active-lobby' };
+  return { ok: true, lobby: serializeLobby(currentLobby) };
 });
 
 // Novo fluxo: inicialização do autoUpdater será feita sob demanda via IPC

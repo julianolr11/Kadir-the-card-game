@@ -66,6 +66,22 @@ const electronHandler = {
     getSteamStatus: () => ipcRenderer.invoke('steam-get-status'),
     unlockSteamAchievement: (achievementId: string) =>
       ipcRenderer.invoke('steam-unlock-achievement', achievementId),
+    // --- Steam PvP lobby helpers ---
+    createSteamLobby: () => ipcRenderer.invoke('steam-create-lobby'),
+    joinSteamLobby: (lobbyId: string) => ipcRenderer.invoke('steam-join-lobby', lobbyId),
+    leaveSteamLobby: () => ipcRenderer.invoke('steam-leave-lobby'),
+    inviteToSteamLobby: () => ipcRenderer.invoke('steam-invite-to-lobby'),
+    getSteamLobby: () => ipcRenderer.invoke('steam-get-lobby'),
+    onSteamLobbyUpdated: (cb: (lobby: any) => void) => {
+      const subscription = (_event: IpcRendererEvent, lobby: any) => cb(lobby);
+      ipcRenderer.on('steam-lobby-updated', subscription);
+      return () => ipcRenderer.removeListener('steam-lobby-updated', subscription);
+    },
+    onSteamLobbyJoinRequested: (cb: (data: { lobbyId: string; friendSteamId64: string }) => void) => {
+      const subscription = (_event: IpcRendererEvent, data: any) => cb(data);
+      ipcRenderer.on('steam-lobby-join-requested', subscription);
+      return () => ipcRenderer.removeListener('steam-lobby-join-requested', subscription);
+    },
   },
 };
 

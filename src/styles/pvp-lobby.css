@@ -153,6 +153,26 @@
   gap: 14px;
 }
 
+.pvp-lobby-join-input {
+  border: 1px solid rgba(255, 230, 176, 0.32);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.32);
+  color: #ffe6b0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 600;
+  padding: 12px 16px;
+  min-width: 220px;
+}
+
+.pvp-lobby-join-input:focus {
+  outline: none;
+  border-color: rgba(255, 230, 176, 0.65);
+}
+
+.pvp-lobby-join-input::placeholder {
+  color: rgba(255, 230, 176, 0.4);
+}
+
 .pvp-lobby-back-btn {
   position: relative;
   z-index: 2;

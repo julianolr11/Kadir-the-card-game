@@ -20,6 +20,8 @@ export default function PvpLobby({ onBack, onStartBattle }) {
   const [status, setStatus] = useState('idle'); // idle | creating | error
   const [error, setError] = useState(null);
   const [starting, setStarting] = useState(false); // aguardando o handshake de início de partida
+  const [joinCode, setJoinCode] = useState('');
+  const [joining, setJoining] = useState(false);
   const startTimeoutRef = useRef(null);
 
   useEffect(() => {
@@ -103,6 +105,21 @@ export default function PvpLobby({ onBack, onStartBattle }) {
     await window.electron?.ipcRenderer?.inviteToSteamLobby?.();
   };
 
+  const handleJoinByCode = async () => {
+    const trimmed = joinCode.trim();
+    if (!trimmed) return;
+    setJoining(true);
+    setError(null);
+    const result = await window.electron?.ipcRenderer?.joinSteamLobby?.(trimmed);
+    setJoining(false);
+    if (result?.ok) {
+      setLobby(result.lobby);
+      setJoinCode('');
+    } else {
+      setError(result?.error || (isEn ? 'Could not join that room.' : 'Não foi possível entrar nessa sala.'));
+    }
+  };
+
   const handleLeave = async () => {
     await window.electron?.ipcRenderer?.leaveSteamLobby?.();
     setLobby(null);
@@ -154,6 +171,22 @@ export default function PvpLobby({ onBack, onStartBattle }) {
               {status === 'creating' ? (isEn ? 'Creating…' : 'Criando…') : (isEn ? 'Create room' : 'Criar sala')}
             </button>
             {status === 'error' && <p className="pvp-lobby-message pvp-lobby-message-warning">{error}</p>}
+
+            <p className="pvp-lobby-message" style={{ marginTop: 18 }}>
+              {isEn ? 'Or enter a room code a friend shared with you:' : 'Ou entre com o código de uma sala que um amigo te passou:'}
+            </p>
+            <div className="pvp-lobby-actions">
+              <input
+                type="text"
+                value={joinCode}
+                onChange={(e) => setJoinCode(e.target.value)}
+                placeholder={isEn ? 'Room code' : 'Código da sala'}
+                className="pvp-lobby-join-input"
+              />
+              <button type="button" className="pvp-lobby-primary-btn" onClick={handleJoinByCode} disabled={!joinCode.trim() || joining}>
+                {joining ? (isEn ? 'Joining…' : 'Entrando…') : (isEn ? 'Join' : 'Entrar')}
+              </button>
+            </div>
           </div>
         )}
 
@@ -175,6 +208,11 @@ export default function PvpLobby({ onBack, onStartBattle }) {
                 </li>
               )}
             </ul>
+            <p className="pvp-lobby-message" style={{ fontSize: '0.82rem', fontWeight: 500 }}>
+              {isEn
+                ? "Room code: share this with your friend so they can join with the code above — the Steam invite button below won't correctly launch the game yet, since it isn't published."
+                : 'Código da sala: passe pro seu amigo pra ele entrar pelo código acima — o botão de convite da Steam abaixo ainda não abre o jogo certo do lado dele, porque ele não está publicado.'}
+            </p>
             <div className="pvp-lobby-actions">
               <button type="button" className="pvp-lobby-primary-btn" onClick={handleInvite}>
                 {isEn ? 'Invite friend' : 'Convidar amigo'}

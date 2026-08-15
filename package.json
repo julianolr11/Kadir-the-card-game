@@ -194,9 +194,13 @@
       }
     ],
     "extraResources": [
+      "./assets/**",
       {
-        "from": "assets/iconlive.ico",
-        "to": "assets/iconlive.ico"
+        "from": "public/assets",
+        "to": "assets",
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "mac": {
@@ -262,16 +266,6 @@
       "buildResources": "assets",
       "output": "release/build"
     },
-    "extraResources": [
-      "./assets/**",
-      {
-        "from": "public/assets",
-        "to": "assets",
-        "filter": [
-          "**/*"
-        ]
-      }
-    ],
     "publish": {
       "provider": "github",
       "owner": "julianolr11",

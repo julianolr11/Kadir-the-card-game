@@ -2519,7 +2519,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
           <GhostPreviewPortal>
             <div
               className={`battle-matchup-indicator ${hasAdvantage ? 'battle-matchup-advantage' : 'battle-matchup-disadvantage'}`}
-              style={{ left: mousePos.x + 14, top: mousePos.y + 10 }}
+              style={{ left: mousePos.x + 6, top: mousePos.y + 4 }}
             >
               {hasAdvantage ? '+' : '-'}
             </div>

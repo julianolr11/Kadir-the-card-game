@@ -139,7 +139,7 @@ function BoosterResultsSlider({ cards, lang, onClose }) {
       >
         {/* Header */}
         <div className="slider-header">
-          <h2 className="booster-results-title">Booster aberto</h2>
+          <h2 className="booster-results-title">{lang === 'en' ? 'Booster opened' : 'Booster aberto'}</h2>
           <div className="slider-counter">
             {currentCardIndex + 1}/{cards.length}
           </div>
@@ -150,7 +150,7 @@ function BoosterResultsSlider({ cards, lang, onClose }) {
           <button
             className="slider-arrow slider-arrow-left"
             onClick={handlePrevCard}
-            aria-label="Carta anterior"
+            aria-label={lang === 'en' ? 'Previous card' : 'Carta anterior'}
           >
             ‹
           </button>
@@ -383,7 +383,7 @@ function BoosterResultsSlider({ cards, lang, onClose }) {
                                     <img
                                       key={i}
                                       src={soulEssence}
-                                      alt="Essência"
+                                      alt={lang === 'en' ? 'Essence' : 'Essência'}
                                       className="essence-icon"
                                     />
                                   ))}
@@ -419,13 +419,13 @@ function BoosterResultsSlider({ cards, lang, onClose }) {
                       {/* Bottom info */}
                       <div className="card-preview-bottom">
                         <span className="card-preview-level-icon">
-                          <img src={lvlIcon} alt="Nível" className="icon-bg" />
+                          <img src={lvlIcon} alt={lang === 'en' ? 'Level' : 'Nível'} className="icon-bg" />
                           <span className="icon-text">{card?.level || 0}</span>
                         </span>
                         <div className="card-preview-descs-inline">
                           {card?.type && (
                             <div className="desc-col">
-                              <span className="desc-label">Tipo</span>
+                              <span className="desc-label">{lang === 'en' ? 'Type' : 'Tipo'}</span>
                               <span className="desc-value">
                                 {getLocalizedText(card.type, lang)}
                               </span>
@@ -433,13 +433,13 @@ function BoosterResultsSlider({ cards, lang, onClose }) {
                           )}
                           {card?.height && (
                             <div className="desc-col">
-                              <span className="desc-label">Altura</span>
+                              <span className="desc-label">{lang === 'en' ? 'Height' : 'Altura'}</span>
                               <span className="desc-value">{card.height}m</span>
                             </div>
                           )}
                           {card?.weakness && getElementImage(card.weakness) && (
                             <div className="desc-col">
-                              <span className="desc-label">Fraqueza</span>
+                              <span className="desc-label">{lang === 'en' ? 'Weakness' : 'Fraqueza'}</span>
                               <span className="desc-value">
                                 <img
                                   src={getElementImage(card.weakness)}
@@ -451,7 +451,7 @@ function BoosterResultsSlider({ cards, lang, onClose }) {
                           )}
                         </div>
                         <span className="card-preview-hp-icon">
-                          <img src={heartIcon} alt="Vida" className="icon-bg" />
+                          <img src={heartIcon} alt={lang === 'en' ? 'HP' : 'Vida'} className="icon-bg" />
                           <span className="icon-text">{card?.hp || '0'}</span>
                         </span>
                       </div>
@@ -466,7 +466,7 @@ function BoosterResultsSlider({ cards, lang, onClose }) {
           <button
             className="slider-arrow slider-arrow-right"
             onClick={handleNextCard}
-            aria-label="Próxima carta"
+            aria-label={lang === 'en' ? 'Next card' : 'Próxima carta'}
           >
             ›
           </button>
@@ -478,7 +478,7 @@ function BoosterResultsSlider({ cards, lang, onClose }) {
           onClick={onClose}
           className="booster-results-close slider-close-btn"
         >
-          Fechar
+          {lang === 'en' ? 'Close' : 'Fechar'}
         </button>
       </div>
     </div>

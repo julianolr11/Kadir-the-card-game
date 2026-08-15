@@ -121,8 +121,25 @@ const processDescription = (desc) => {
 };
 
 // Função helper para renderizar descrição com ícone de status effect
-const normalizeFieldLabel = (value) => {
+const normalizeFieldLabel = (value, langKey = 'pt') => {
   if (!value) return '';
+  if (langKey === 'en') {
+    const normalized = String(value)
+      .replace(/_/g, ' ')
+      .replace(/\bdraconideo\b/i, 'Draconid')
+      .replace(/\bagua\b/i, 'Water')
+      .replace(/\bar\b/i, 'Air')
+      .replace(/\bfogo\b/i, 'Fire')
+      .replace(/\bterra\b/i, 'Earth')
+      .replace(/\bpuro\b/i, 'Pure')
+      .replace(/\bmonstro\b/i, 'Monster')
+      .replace(/\bfera\b/i, 'Beast')
+      .replace(/\bave\b/i, 'Bird')
+      .replace(/\breptiloide\b/i, 'Reptiloid')
+      .replace(/\bmistica\b/i, 'Mystic')
+      .replace(/\bsombria\b/i, 'Shadow');
+    return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+  }
   const normalized = String(value)
     .replace(/_/g, ' ')
     .replace(/\bdraconideo\b/i, 'Draconídeo')
@@ -241,8 +258,8 @@ function CreatureCardPreview({
   // Detecta se é carta de campo
   const isFieldCard = creature.type === 'field';
   const isEffectCard = creature.type === 'effect';
-  const fieldElementLabel = normalizeFieldLabel(creature.element);
-  const fieldTypeLabel = normalizeFieldLabel(creature.fieldType);
+  const fieldElementLabel = normalizeFieldLabel(creature.element, langKey);
+  const fieldTypeLabel = normalizeFieldLabel(creature.fieldType, langKey);
   const fieldElementBoosts = creature.elementBoosts || {};
   const fieldTypeBoosts = creature.cardTypeBoosts || {};
   const fieldSpecialBoosts = creature.specialBoosts || {};
@@ -402,37 +419,37 @@ function CreatureCardPreview({
               <div className="card-preview-field-desc field-card-info">
                 {creature.lore && (
                   <div className="field-card-lore">
-                    <span className="field-card-label">Descrição</span>
+                    <span className="field-card-label">{langKey === 'en' ? 'Description' : 'Descrição'}</span>
                     <p>{creature.lore}</p>
                   </div>
                 )}
 
                 <div className="field-card-affinity">
-                  <span className="field-card-label">Fortalece</span>
+                  <span className="field-card-label">{langKey === 'en' ? 'Strengthens' : 'Fortalece'}</span>
                   <div className="field-card-tags">
-                    {fieldElementLabel && <span className="field-card-tag field-card-tag-element">Elemento {fieldElementLabel}</span>}
-                    {fieldTypeLabel && <span className="field-card-tag field-card-tag-type">Tipo {fieldTypeLabel}</span>}
+                    {fieldElementLabel && <span className="field-card-tag field-card-tag-element">{langKey === 'en' ? 'Element' : 'Elemento'} {fieldElementLabel}</span>}
+                    {fieldTypeLabel && <span className="field-card-tag field-card-tag-type">{langKey === 'en' ? 'Type' : 'Tipo'} {fieldTypeLabel}</span>}
                   </div>
                 </div>
 
                 <div className="field-card-bonuses">
-                  <span className="field-card-label">Bônus do campo</span>
+                  <span className="field-card-label">{langKey === 'en' ? 'Field bonus' : 'Bônus do campo'}</span>
                   {Object.entries(fieldElementBoosts).map(([element, value]) => (
                     <div className="field-card-bonus-row" key={`element-${element}`}>
-                      <span>Criaturas de {normalizeFieldLabel(element)}</span>
-                      <strong>+{value} dano / +{value} vida</strong>
+                      <span>{langKey === 'en' ? `${normalizeFieldLabel(element, langKey)} creatures` : `Criaturas de ${normalizeFieldLabel(element, langKey)}`}</span>
+                      <strong>{langKey === 'en' ? `+${value} damage / +${value} HP` : `+${value} dano / +${value} vida`}</strong>
                     </div>
                   ))}
                   {Object.entries(fieldTypeBoosts).map(([type, value]) => (
                     <div className="field-card-bonus-row" key={`type-${type}`}>
-                      <span>Criaturas do tipo {normalizeFieldLabel(type)}</span>
-                      <strong>+{value} dano / +{value} vida</strong>
+                      <span>{langKey === 'en' ? `${normalizeFieldLabel(type, langKey)} type creatures` : `Criaturas do tipo ${normalizeFieldLabel(type, langKey)}`}</span>
+                      <strong>{langKey === 'en' ? `+${value} damage / +${value} HP` : `+${value} dano / +${value} vida`}</strong>
                     </div>
                   ))}
                   {Object.entries(fieldSpecialBoosts).map(([key, value]) => (
                     <div className="field-card-bonus-row field-card-bonus-row-special" key={`special-${key}`}>
-                      <span>{fieldElementLabel && fieldTypeLabel ? `${fieldElementLabel} + ${fieldTypeLabel}` : 'Afinidade dupla'}</span>
-                      <strong>+{value.damage} dano / +{value.hp} vida</strong>
+                      <span>{fieldElementLabel && fieldTypeLabel ? `${fieldElementLabel} + ${fieldTypeLabel}` : (langKey === 'en' ? 'Double affinity' : 'Afinidade dupla')}</span>
+                      <strong>{langKey === 'en' ? `+${value.damage} damage / +${value.hp} HP` : `+${value.damage} dano / +${value.hp} vida`}</strong>
                     </div>
                   ))}
                 </div>
@@ -441,29 +458,29 @@ function CreatureCardPreview({
               <div className="card-preview-field-desc effect-card-info">
                 {creature.lore && (
                   <div style={{ marginBottom: 12, fontSize: '13px', fontStyle: 'italic', color: '#ddd', lineHeight: '1.4' }}>
-                    <strong>Descrição:</strong> {creature.lore}
+                    <strong>{langKey === 'en' ? 'Description:' : 'Descrição:'}</strong> {creature.lore}
                   </div>
                 )}
                 <div className="effect-card-kind">
-                  <span className="effect-card-label">Categoria</span>
+                  <span className="effect-card-label">{langKey === 'en' ? 'Category' : 'Categoria'}</span>
                   <span className="effect-card-chip">{effectLabel}</span>
                 </div>
                 <div className="effect-card-quick-stats">
                   <div>
-                    <span>Alvo</span>
+                    <span>{langKey === 'en' ? 'Target' : 'Alvo'}</span>
                     <strong>{effectTarget}</strong>
                   </div>
                   <div>
-                    <span>Duração</span>
+                    <span>{langKey === 'en' ? 'Duration' : 'Duração'}</span>
                     <strong>{effectDuration}</strong>
                   </div>
                   <div>
-                    <span>Potência</span>
+                    <span>{langKey === 'en' ? 'Power' : 'Potência'}</span>
                     <strong>{effectPower}</strong>
                   </div>
                 </div>
                 <div className="effect-card-rule">
-                  <span className="effect-card-label">Efeito em jogo</span>
+                  <span className="effect-card-label">{langKey === 'en' ? 'In-game effect' : 'Efeito em jogo'}</span>
                   <div className="effect-card-effect-text">
                     <StatusText text={effectDescription} />
                   </div>

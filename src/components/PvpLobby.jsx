@@ -23,15 +23,19 @@ const unlockedTowerBadges = (campaignProgress) => CAMPAIGN_TOWER_TYPES.filter(
   (tower, idx) => (campaignProgress || 0) >= (idx + 1) * LEVELS_PER_TOWER,
 );
 
-const SWIPE_TRACK_WIDTH = 130;
-const SWIPE_KNOB_SIZE = 26;
-const SWIPE_MAX_X = SWIPE_TRACK_WIDTH - SWIPE_KNOB_SIZE - 4;
+const SWIPE_TRACK_WIDTH = 156;
+const SWIPE_TRACK_HEIGHT = 38;
+const SWIPE_KNOB_SIZE = 32;
+const SWIPE_KNOB_INSET = 3;
+const SWIPE_MAX_X = SWIPE_TRACK_WIDTH - SWIPE_KNOB_SIZE - SWIPE_KNOB_INSET * 2;
 const SWIPE_LOCK_THRESHOLD = 0.82;
+// Zona de texto: começa depois de onde o botão fica em repouso, pra nunca ficar por baixo dele.
+const SWIPE_LABEL_START = SWIPE_KNOB_INSET * 2 + SWIPE_KNOB_SIZE;
 
 // Controle "arraste pra travar": o usuário precisa arrastar o botão até o fim da trilha pra
-// confirmar o baralho escolhido. Solta antes do fim, volta pro início sem travar (com uma
-// mola/bounce). O preenchimento e as setinhas dão feedback contínuo de progresso; ao travar,
-// a trilha dá um "pop" e o cadeado aparece com uma pequena animação de entrada.
+// confirmar o baralho escolhido. Solta antes do fim, volta pro início com uma mola/bounce.
+// O próprio botão carrega o ícone (seta -> cadeado); o texto fica sempre na área livre à
+// direita dele (nunca por baixo) e vai sumindo conforme o progresso avança.
 function SwipeToLockToggle({ locked, onLock, label }) {
   const trackRef = useRef(null);
   const [dragX, setDragX] = useState(locked ? SWIPE_MAX_X : 0);
@@ -43,6 +47,7 @@ function SwipeToLockToggle({ locked, onLock, label }) {
   }, [locked]);
 
   const progress = SWIPE_MAX_X > 0 ? dragX / SWIPE_MAX_X : 0;
+  const fillWidth = SWIPE_KNOB_INSET + dragX + SWIPE_KNOB_SIZE;
 
   const handlePointerDown = (e) => {
     if (locked) return;
@@ -79,21 +84,20 @@ function SwipeToLockToggle({ locked, onLock, label }) {
       ref={trackRef}
       onAnimationEnd={() => setJustLocked(false)}
     >
-      <div
-        className="pvp-lobby-swipe-fill"
-        style={{ width: `${SWIPE_KNOB_SIZE / 2 + dragX}px`, opacity: locked || dragging ? 1 : 0 }}
-      />
-      <span className="pvp-lobby-swipe-chevrons" style={{ opacity: locked ? 0 : Math.max(0, 1 - progress * 1.8) }}>
-        <span>›</span><span>›</span><span>›</span>
-      </span>
-      <span className="pvp-lobby-swipe-label" style={{ opacity: locked ? 0 : Math.max(0, 1 - progress * 2.2) }}>
+      <div className="pvp-lobby-swipe-fill" style={{ width: `${fillWidth}px` }} />
+      <span
+        className="pvp-lobby-swipe-label"
+        style={{
+          left: `${SWIPE_LABEL_START}px`,
+          opacity: locked ? 0 : Math.max(0, 1 - progress * 1.6),
+        }}
+      >
         {label}
       </span>
-      <span className={`pvp-lobby-swipe-lock-icon ${locked ? 'pvp-lobby-swipe-lock-icon-in' : ''}`}>🔒</span>
       <div
         className="pvp-lobby-swipe-knob"
         style={{
-          transform: `translateX(${dragX}px) scale(${dragging ? 1.14 : 1})`,
+          transform: `translateX(${dragX}px) scale(${dragging ? 1.08 : 1})`,
           transition: dragging
             ? 'transform 90ms ease'
             : 'transform 420ms cubic-bezier(0.34, 1.56, 0.64, 1)',
@@ -101,7 +105,11 @@ function SwipeToLockToggle({ locked, onLock, label }) {
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
-      />
+      >
+        <span className={`pvp-lobby-swipe-knob-icon ${locked ? 'pvp-lobby-swipe-knob-icon-locked' : ''}`}>
+          {locked ? '🔒' : '›'}
+        </span>
+      </div>
     </div>
   );
 }
@@ -390,7 +398,7 @@ export default function PvpLobby({ onBack, onStartBattle }) {
               <SwipeToLockToggle
                 locked={deckLocked}
                 onLock={handleLockDeck}
-                label={isEn ? 'Swipe to lock' : 'Arraste p/ travar'}
+                label={isEn ? 'Slide to lock' : 'Arraste para travar'}
               />
             </div>
           ) : (

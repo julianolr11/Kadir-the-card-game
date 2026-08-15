@@ -308,11 +308,10 @@ const createWindow = async () => {
     return path.join(RESOURCES_PATH, ...paths);
   };
 
-  // Ícone customizado para Windows
-  const iconPath = path.join(
-    __dirname,
-    '../../src/assets/img/icons/iconlive.png',
-  );
+  // Ícone customizado para Windows. Em build empacotado, 'src/' não é distribuído —
+  // getAssetPath() resolve pra resources/assets/ (populado via extraResources no package.json),
+  // igual ao esquema já usado pro steam_api64.dll.
+  const iconPath = getAssetPath('iconlive.ico');
 
   const primaryWorkArea = screen.getPrimaryDisplay().workArea;
   const initialScale = Math.min(

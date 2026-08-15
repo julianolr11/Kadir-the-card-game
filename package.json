@@ -181,7 +181,7 @@
     "appId": "org.erb.ElectronReact",
     "asar": true,
     "afterSign": ".erb/scripts/notarize.js",
-    "asarUnpack": "**\\*.{node,dll}",
+    "asarUnpack": "**\\*.{node,dll,mp4,webm}",
     "files": [
       "dist",
       "node_modules",
@@ -191,6 +191,12 @@
       {
         "from": "resources/steam/steam_api64.dll",
         "to": "steam_api64.dll"
+      }
+    ],
+    "extraResources": [
+      {
+        "from": "assets/iconlive.ico",
+        "to": "assets/iconlive.ico"
       }
     ],
     "mac": {

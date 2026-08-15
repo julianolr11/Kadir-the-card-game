@@ -32,6 +32,7 @@ import BattleModalPortal from './BattleModalPortal.jsx';
 import swordPng from '../assets/img/icons/sword.png';
 import { unlockNextCampaignEnemy, CAMPAIGN_TOTAL_LEVELS } from './CampaignTower.jsx';
 import StatusText from './StatusText.jsx';
+import { getElementModifier } from '../utils/effectRegistry';
 
 const getBattleExitRoute = (battleConfig) => {
   if (battleConfig?.mode === 'campaign') return 'campaign';
@@ -2619,6 +2620,25 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
           </div>
         </GhostPreviewPortal>
       )}
+
+      {/* Indicador de vantagem/desvantagem elemental ao mirar um alvo pra atacar */}
+      {selectedAbility && hoveredCard?.source === 'slot' && hoveredCard.owner === 'ai' && hoveredCard.index !== undefined && (() => {
+        const attackerSlot = state.player.field.slots[selectedAbility.slotIndex];
+        const targetSlot = state.ai.field.slots[hoveredCard.index];
+        if (!attackerSlot || !targetSlot) return null;
+        const { hasAdvantage, hasDisadvantage } = getElementModifier(attackerSlot.element, targetSlot.element);
+        if (!hasAdvantage && !hasDisadvantage) return null;
+        return (
+          <GhostPreviewPortal>
+            <div
+              className={`battle-matchup-indicator ${hasAdvantage ? 'battle-matchup-advantage' : 'battle-matchup-disadvantage'}`}
+              style={{ left: mousePos.x + 14, top: mousePos.y + 10 }}
+            >
+              {hasAdvantage ? '+' : '-'}
+            </div>
+          </GhostPreviewPortal>
+        );
+      })()}
     </div>
     {turnBlockModalOpen && (
       <div style={turnModalBgStyle}>

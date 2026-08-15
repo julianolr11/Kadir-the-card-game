@@ -2256,6 +2256,49 @@
   filter: drop-shadow(0 8px 32px rgba(0, 0, 0, 0.6));
 }
 
+.battle-matchup-indicator {
+  position: fixed;
+  z-index: 100150;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 900;
+  font-size: 1.05rem;
+  line-height: 1;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  animation: battleMatchupPop 160ms ease-out;
+}
+
+.battle-matchup-advantage {
+  background: radial-gradient(circle at 35% 30%, #6df0a8, #1f9c56 75%);
+  box-shadow: 0 0 12px rgba(80, 230, 140, 0.75), 0 3px 8px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 1px 2px rgba(0, 60, 30, 0.6);
+}
+
+.battle-matchup-disadvantage {
+  background: radial-gradient(circle at 35% 30%, #f0716d, #a3211d 75%);
+  box-shadow: 0 0 12px rgba(230, 90, 80, 0.75), 0 3px 8px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 1px 2px rgba(60, 10, 5, 0.6);
+}
+
+@keyframes battleMatchupPop {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 @keyframes ghostFadeIn {
   from {
     opacity: 0;

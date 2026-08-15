@@ -2521,13 +2521,10 @@ export function BattleProvider({ children }) {
   // Invocação equivalente a summonFromHand, mas para o lado 'ai' (usada no modo PvP para
   // aplicar a jogada de invocação recebida do jogador convidado pela rede).
   //
-  // ATENÇÃO: cobre stats/habilidades/perks (idêntico ao summonFromHand), mas
-  // DELIBERADAMENTE NÃO reimplementa as ~24 bênçãos exclusivas de guardião
-  // (Ignis, Ekeranth, Nihil, etc.) — isso ficou de fora nesta primeira versão do PvP
-  // por segurança, para não duplicar/arriscar centenas de linhas só usadas hoje pelo
-  // modo campanha. Um guardião do convidado com bênção especial ainda funciona
-  // normalmente (dano, habilidades, perks), só o efeito extra de bênção-ao-invocar
-  // não dispara.
+  // Cobre stats/habilidades/perks (idêntico ao summonFromHand) e reaproveita
+  // applyAiSummonBlessings — a mesma função já usada pelas invocações da IA local — para as
+  // ~24 bênçãos exclusivas de guardião. Isso resolve as bênçãos automaticamente (mesma lógica
+  // que já vale contra a IA), sem exigir um fluxo de escolha interativa pelo convidado.
   const summonFromHandForOpponent = useCallback((index, slotIndex) => {
     playFlipCardSound();
     setState((s) => {
@@ -2596,6 +2593,8 @@ export function BattleProvider({ children }) {
         statusEffects: [],
         firstAttackNegated: !!build.perkEffects?.firstAttackNegated,
         perkEffects: build.perkEffects || {},
+        hasGravhyrBlessing: !!build.hasGravhyrBlessing,
+        hasDraakBlessing: !!build.hasDraakBlessing,
       };
 
       slots[slotIndex] = creature;
@@ -2621,6 +2620,11 @@ export function BattleProvider({ children }) {
         },
         log: [...s.log, `Oponente invocou ${creature.name} no slot ${slotIndex + 1}.`],
       };
+
+      // Bênçãos de guardião (mesma lógica usada pela IA local) — muta newState.ai/newState.player
+      // diretamente e pode agendar animações via setState (idêntico ao caminho da IA).
+      const aiBlessingResult = applyAiSummonBlessings(newState, build, creatureData, slotIndex, slots, newState.log);
+      newState.log = aiBlessingResult.logEntries;
 
       // Perk de um aliado JÁ em campo: buffa criaturas de ar recém-invocadas (ex: VERDANT_INSPIRATION)
       if (creature.element === 'ar') {
@@ -2695,7 +2699,7 @@ export function BattleProvider({ children }) {
 
       return newState;
     });
-  }, [resolveCreatureBuild, cardCollection]);
+  }, [resolveCreatureBuild, cardCollection, applyAiSummonBlessings]);
 
   // Ressuscita uma criatura do cemitério (benção do Ignis)
   const resurrectCreature = useCallback((graveyardIndex, targetSlotIndex) => {
@@ -3228,9 +3232,10 @@ export function BattleProvider({ children }) {
   const invokeFieldCard = useCallback((handIndex) => {
     playFieldChangeSound();
     setState((s) => {
-      // Cartas de campo ainda não têm suporte em rede no PvP (fase 3b, primeira fatia).
+      // No PvP, o convidado não roda o motor localmente: envia a jogada pro anfitrião simular.
       if (s.mode === 'pvp' && s.isHost === false) {
-        return { ...s, log: [...s.log, 'Cartas de campo ainda não estão disponíveis no PvP.'] };
+        window.electron?.ipcRenderer?.sendP2PMessage?.(s.peerSteamId64, { type: 'action', action: 'field', handIndex });
+        return s;
       }
       if (s.phase !== 'playing') return s;
       if (s.activePlayer !== 'player') return s;
@@ -3760,12 +3765,15 @@ export function BattleProvider({ children }) {
   // Funções para gerenciar cartas de efeito
   const sacrificeCreature = useCallback((side, slotIndex) => {
     setState((s) => {
-      // Sacrifício ainda não tem suporte em rede no PvP (fase 3b, primeira fatia).
+      // No PvP, o convidado não roda o motor localmente: envia a jogada pro anfitrião simular.
       if (s.mode === 'pvp' && s.isHost === false) {
-        return { ...s, log: [...s.log, 'Sacrificar criaturas ainda não está disponível no PvP.'] };
+        window.electron?.ipcRenderer?.sendP2PMessage?.(s.peerSteamId64, { type: 'action', action: 'sacrifice', slotIndex });
+        return s;
       }
       if (s.phase !== 'playing') return s;
-      if (side !== 'player') return s;
+      // Fora do PvP, só o jogador humano sacrifica por essa ação (a IA nunca chamou isso).
+      // No PvP, o anfitrião também aplica sacrifícios do lado 'ai' (o convidado).
+      if (side !== 'player' && !(s.mode === 'pvp' && side === 'ai')) return s;
       if (s.activePlayer !== side) return s;
 
       const slots = [...(s[side]?.field?.slots || [])];
@@ -3796,9 +3804,12 @@ export function BattleProvider({ children }) {
 
   const playEffectCard = useCallback((handIndex, targetInfo = null) => {
     setState((s) => {
-      // Cartas de efeito ainda não têm suporte em rede no PvP (fase 3b, primeira fatia).
+      // No PvP, o convidado não roda o motor localmente: envia a jogada pro anfitrião simular.
+      // targetInfo já vem resolvido pela seleção local (selectEffectCardTarget/updateEffectCardTarget
+      // rodam só no cliente, sem mutar o estado real — por isso não precisam de rede).
       if (s.mode === 'pvp' && s.isHost === false) {
-        return { ...s, log: [...s.log, 'Cartas de efeito ainda não estão disponíveis no PvP.'] };
+        window.electron?.ipcRenderer?.sendP2PMessage?.(s.peerSteamId64, { type: 'action', action: 'effect', handIndex, targetInfo });
+        return s;
       }
       let newState = JSON.parse(JSON.stringify(s));
       const cardId = s.player.hand[handIndex];
@@ -3968,6 +3979,175 @@ export function BattleProvider({ children }) {
     });
   }, [cardCollection, log]);
 
+  // Versão de playEffectCard para o lado 'ai' (usada no modo PvP para aplicar uma carta de
+  // efeito jogada pelo convidado). executeEffectCard (ai.js) assume caster="player"/alvo="ai"
+  // em todos os tipos de efeito — em vez de duplicar a lógica de cada um, invertemos
+  // player<->ai (e battleStats.player<->battleStats.ai) só na chamada, e desfazemos a troca
+  // no resultado. O resto da função (descarte da mão, limpeza de animação, morte por
+  // damageAll, recompensa de essência, fim de jogo) é o mesmo código de playEffectCard com
+  // "player" e "ai" trocados.
+  const playEffectCardForOpponent = useCallback((handIndex, targetInfo = null) => {
+    setState((s) => {
+      let newState = JSON.parse(JSON.stringify(s));
+      const cardId = s.ai.hand[handIndex];
+
+      if (!cardId) return s;
+
+      let baseId = null;
+      if (String(cardId).toLowerCase().startsWith('effect_')) {
+        baseId = cardId;
+      } else {
+        Object.keys(cardCollection).forEach(key => {
+          const instances = cardCollection[key];
+          if (instances.some(inst => inst.instanceId === cardId)) {
+            baseId = key;
+          }
+        });
+      }
+
+      if (!baseId) {
+        console.warn(`BaseId not found for instance: ${cardId}`);
+        return s;
+      }
+
+      let effectCard = null;
+      if (String(baseId).toLowerCase().startsWith('effect_')) {
+        try {
+          const effectCards = require('../assets/cards/effectCards');
+          effectCard = effectCards.find(c => c.id === baseId);
+        } catch (e) {
+          console.warn(`Effect card not found in playEffectCardForOpponent: ${baseId}`, e);
+          return s;
+        }
+      }
+
+      if (!effectCard) {
+        console.warn(`Effect card is null: ${baseId}`);
+        return s;
+      }
+
+      // Executa o efeito com player/ai (e battleStats) invertidos
+      const { executeEffectCard } = require('../logic/ai');
+      const swappedIn = {
+        ...newState,
+        player: newState.ai,
+        ai: newState.player,
+        activePlayer: 'player',
+        battleStats: { ...newState.battleStats, player: newState.battleStats.ai, ai: newState.battleStats.player },
+      };
+      const swappedOut = executeEffectCard(swappedIn, effectCard, targetInfo);
+      newState = {
+        ...swappedOut,
+        player: swappedOut.ai,
+        ai: swappedOut.player,
+        activePlayer: s.activePlayer,
+        battleStats: { ...swappedOut.battleStats, player: swappedOut.battleStats.ai, ai: swappedOut.battleStats.player },
+      };
+
+      newState.creaturesWithUsedAbility = new Set(s.creaturesWithUsedAbility || []);
+      newState.drawOpponentPending = null;
+
+      if (targetInfo?.sacrificeCardId) {
+        const effectIndex = newState.ai.hand.indexOf(cardId);
+        if (effectIndex !== -1) {
+          newState.ai.hand.splice(effectIndex, 1);
+        }
+      } else {
+        newState.ai.hand = newState.ai.hand.filter((_, idx) => idx !== handIndex);
+      }
+
+      newState.effectCardPending = null;
+      newState.lastDiscardedEffectCard = cardId;
+
+      setTimeout(() => {
+        setState(s2 => ({ ...s2, lastDiscardedEffectCard: null }));
+      }, 800);
+
+      const effectName = typeof effectCard.name === 'object' ? effectCard.name.pt : effectCard.name;
+      newState.log = [...(newState.log || []), `Oponente jogou ${effectName}`];
+
+      if (newState.animations && Object.keys(newState.animations).length > 0) {
+        const animTargets = Object.keys(newState.animations);
+
+        setTimeout(() => {
+          setState(s2 => {
+            const anims = { ...(s2.animations || {}) };
+            animTargets.forEach(id => {
+              if (anims[id] && anims[id].type === 'damage') {
+                delete anims[id];
+              }
+            });
+            return { ...s2, animations: anims };
+          });
+        }, 900);
+
+        animTargets.forEach((targetId) => {
+          const targetCreature = (newState.player?.field?.slots || []).find(slot => slot?.id === targetId);
+          if (targetCreature && targetCreature.hp <= 0) {
+            setTimeout(() => {
+              setState(s3 => ({
+                ...s3,
+                animations: { ...(s3.animations || {}), [targetId]: { death: true } },
+              }));
+
+              setTimeout(() => {
+                setState(s4 => {
+                  const updated = { ...s4 };
+                  const targetCreatureNow = updated.player.field.slots.find(slot => slot?.id === targetId);
+                  if (targetCreatureNow) {
+                    updated.player.field.slots = updated.player.field.slots.map(slot => slot?.id === targetId ? null : slot);
+                    updated.player.graveyard = [...(updated.player.graveyard || []), targetCreatureNow];
+                    updated.player.orbs = Math.max(0, (updated.player.orbs || 5) - 1);
+                    updated.ai = {
+                      ...updated.ai,
+                      essence: (updated.ai.essence || 0) + 1,
+                    };
+                    updated.essenceRewardPulse = {
+                      side: 'ai',
+                      id: `ai-${targetId}-${Date.now()}`,
+                    };
+                    updated.killFeed = [...(updated.killFeed || []), {
+                      turn: updated.turn,
+                      attacker: effectName || 'Effect',
+                      attackerId: effectCard.id,
+                      target: targetCreatureNow.name,
+                      targetId: targetCreatureNow.id,
+                      hadAdvantage: false,
+                    }];
+
+                    updated.battleStats = {
+                      ...updated.battleStats,
+                      ai: {
+                        ...updated.battleStats.ai,
+                        cardsKilled: [...(updated.battleStats.ai.cardsKilled || []), effectCard.id],
+                      },
+                    };
+
+                    updated.log = [...updated.log, `${targetCreatureNow.name} foi derrotado! ${updated.player.orbs === 0 ? '⚰️ FIM DE JOGO!' : '⚰️ -1 orbe'}`];
+
+                    if (updated.player.orbs === 0) {
+                      updated.phase = 'ended';
+                      updated.gameResult = {
+                        winner: 'ai',
+                        loser: 'player',
+                        kills: updated.killFeed,
+                        turns: updated.turn,
+                        stats: updated.battleStats,
+                      };
+                    }
+                  }
+                  return updated;
+                });
+              }, 600);
+            }, 300);
+          }
+        });
+      }
+
+      return newState;
+    });
+  }, [cardCollection]);
+
   const selectEffectCardTarget = useCallback((handIndex) => {
     const cardId = state.player.hand[handIndex];
     console.log('1. selectEffectCardTarget chamado. handIndex:', handIndex, 'cardId:', cardId);
@@ -4083,6 +4263,10 @@ export function BattleProvider({ children }) {
 
   const executeSpectralAttack = useCallback((targetSlotIndex) => {
     setState(s => {
+      // Sepultura do Espectro ainda não tem suporte em rede no PvP (carta rara, fatia futura).
+      if (s.mode === 'pvp' && s.isHost === false) {
+        return { ...s, log: [...s.log, 'Esse ataque espectral ainda não está disponível no PvP.'] };
+      }
       if (!s.spectralAttackPending) return s;
 
       if (s.spectralAttackPending.resolving) return s;
@@ -5311,10 +5495,16 @@ export function BattleProvider({ children }) {
         useAbility('ai', message.attackerSlot, message.abilityIndex, 'player', message.targetSlot);
       } else if (message.action === 'endTurn') {
         endTurn();
+      } else if (message.action === 'sacrifice') {
+        sacrificeCreature('ai', message.slotIndex);
+      } else if (message.action === 'field') {
+        invokeFieldCardAI(message.handIndex);
+      } else if (message.action === 'effect') {
+        playEffectCardForOpponent(message.handIndex, message.targetInfo);
       }
     });
     return () => unsubscribe?.();
-  }, [state.mode, state.isHost, state.peerSteamId64, state.phase, state.activePlayer, summonFromHandForOpponent, useAbility, endTurn]);
+  }, [state.mode, state.isHost, state.peerSteamId64, state.phase, state.activePlayer, summonFromHandForOpponent, useAbility, endTurn, sacrificeCreature, invokeFieldCardAI, playEffectCardForOpponent]);
 
   useEffect(() => {
     if (state.mode !== 'pvp' || !state.isHost || !state.peerSteamId64) return;

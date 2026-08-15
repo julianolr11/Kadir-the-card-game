@@ -2699,7 +2699,11 @@ export function BattleProvider({ children }) {
 
       return newState;
     });
-  }, [resolveCreatureBuild, cardCollection, applyAiSummonBlessings]);
+  // Nota: applyAiSummonBlessings é declarada bem mais abaixo neste componente (função grande,
+  // usada por vários pontos), então não pode entrar aqui como dependência — o array de deps do
+  // useCallback é avaliado na hora, e a referenciaria antes da inicialização (TDZ). O corpo da
+  // função ainda a chama normalmente, já que só executa depois que o componente termina de montar.
+  }, [resolveCreatureBuild, cardCollection]);
 
   // Ressuscita uma criatura do cemitério (benção do Ignis)
   const resurrectCreature = useCallback((graveyardIndex, targetSlotIndex) => {

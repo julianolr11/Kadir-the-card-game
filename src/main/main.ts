@@ -17,6 +17,31 @@ import { resolveHtmlPath } from './util';
 import setupResolutionIPC from './ipcResolution';
 import { setupAudioManager } from './audioManager';
 
+// Cliente Steamworks (null se a inicialização falhar, ex: Steam não está rodando)
+let steamClient: any = null;
+
+const initSteam = () => {
+  try {
+    // eslint-disable-next-line global-require
+    const steamworks = require('steamworks.js');
+    // steam_appid.txt (raiz do projeto/app) define o App ID quando nenhum é passado aqui.
+    steamClient = steamworks.init();
+    log.info(`Steamworks inicializado. Usuário: ${steamClient.localplayer.getName()}`);
+  } catch (err: any) {
+    steamClient = null;
+    log.warn(`Steamworks não inicializado (Steam não está rodando ou steam_api64.dll ausente): ${err?.message || err}`);
+  }
+};
+
+ipcMain.handle('steam-get-status', () => {
+  if (!steamClient) return { connected: false };
+  try {
+    return { connected: true, username: steamClient.localplayer.getName() };
+  } catch (err: any) {
+    return { connected: false, error: err?.message || 'Steam client error' };
+  }
+});
+
 // Novo fluxo: inicialização do autoUpdater será feita sob demanda via IPC
 log.transports.file.level = 'info';
 autoUpdater.logger = log;
@@ -250,11 +275,20 @@ app.on('window-all-closed', () => {
 app
   .whenReady()
   .then(() => {
+    initSteam();
     createWindow();
     app.on('activate', () => {
       // On macOS it's common to re-create a window in the app when the
       // dock icon is clicked and there are no other windows open.
       if (mainWindow === null) createWindow();
     });
+    if (steamClient) {
+      try {
+        // eslint-disable-next-line global-require
+        require('steamworks.js').electronEnableSteamOverlay();
+      } catch (err: any) {
+        log.warn(`Falha ao habilitar o overlay da Steam: ${err?.message || err}`);
+      }
+    }
   })
   .catch(console.log);

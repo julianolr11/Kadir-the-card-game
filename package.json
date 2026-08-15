@@ -187,6 +187,12 @@
       "node_modules",
       "package.json"
     ],
+    "extraFiles": [
+      {
+        "from": "resources/steam/steam_api64.dll",
+        "to": "steam_api64.dll"
+      }
+    ],
     "mac": {
       "notarize": false,
       "target": {
@@ -255,7 +261,9 @@
       {
         "from": "public/assets",
         "to": "assets",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "publish": {

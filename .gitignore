@@ -27,3 +27,8 @@ npm-debug.log.*
 *.css.d.ts
 *.sass.d.ts
 *.scss.d.ts
+
+# Steamworks: DLL de dev fica só localmente (a cópia versionada vive em resources/steam/);
+# steam_appid.txt é específico do App ID que cada dev está testando.
+/steam_api64.dll
+/steam_appid.txt

@@ -62,6 +62,8 @@ const electronHandler = {
     onUpdateError: (cb: (err: any) => void) => {
       ipcRenderer.on('update-error', (_event, err) => cb(err));
     },
+    // --- Steam helpers ---
+    getSteamStatus: () => ipcRenderer.invoke('steam-get-status'),
   },
 };
 

@@ -20,7 +20,7 @@ export const RARITY_TIERS = {
 export const RARITY_CONFIG = {
   common: {
     tier: 0,
-    name: 'Comum',
+    name: { pt: 'Comum', en: 'Common' },
     color: '#c0c0c0', // Silver
     glowColor: 'rgba(192, 192, 192, 0.5)',
     borderWidth: '2px',
@@ -28,7 +28,7 @@ export const RARITY_CONFIG = {
   },
   uncommon: {
     tier: 1,
-    name: 'Incomum',
+    name: { pt: 'Incomum', en: 'Uncommon' },
     color: '#a85c33', // Bronze
     glowColor: 'rgba(168, 92, 51, 0.5)',
     borderWidth: '2px',
@@ -36,7 +36,7 @@ export const RARITY_CONFIG = {
   },
   rare: {
     tier: 2,
-    name: 'Rara',
+    name: { pt: 'Rara', en: 'Rare' },
     color: '#4a90e2', // Blue
     glowColor: 'rgba(74, 144, 226, 0.5)',
     borderWidth: '3px',
@@ -44,7 +44,7 @@ export const RARITY_CONFIG = {
   },
   epic: {
     tier: 3,
-    name: 'Épica',
+    name: { pt: 'Épica', en: 'Epic' },
     color: '#9b59b6', // Purple
     glowColor: 'rgba(155, 89, 182, 0.7)',
     borderWidth: '3px',
@@ -52,7 +52,7 @@ export const RARITY_CONFIG = {
   },
   legendary: {
     tier: 4,
-    name: 'Lendária',
+    name: { pt: 'Lendária', en: 'Legendary' },
     color: '#f39c12', // Gold
     glowColor: 'rgba(243, 156, 18, 0.8)',
     borderWidth: '4px',

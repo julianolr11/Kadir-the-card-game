@@ -117,10 +117,10 @@ function CardRecycler({ lang = 'ptbr' }) {
           type,
           rarity: rarityKey,
           rarityName: rarityKey === 'field'
-            ? 'Campo'
+            ? (langKey === 'en' ? 'Field' : 'Campo')
             : rarityKey === 'essence'
-              ? 'Essencia'
-              : RARITY_CONFIG[rarityKey]?.name || rarityKey,
+              ? (langKey === 'en' ? 'Essence' : 'Essencia')
+              : getLocalizedName(RARITY_CONFIG[rarityKey]?.name, langKey, rarityKey),
           rarityColor: rarityKey === 'field'
             ? '#66c2ff'
             : rarityKey === 'essence'
@@ -171,7 +171,7 @@ function CardRecycler({ lang = 'ptbr' }) {
           name: getLocalizedName(creatureData?.name || creatureData?.title, langKey, creatureId),
           element: creatureData?.element || 'puro',
           img: creatureData?.img,
-          rarityName: RARITY_CONFIG[rarityData.rarity]?.name || rarityData.rarity,
+          rarityName: getLocalizedName(RARITY_CONFIG[rarityData.rarity]?.name, langKey, rarityData.rarity),
           keys: [],
           quantity: 0,
           valueEach: value,

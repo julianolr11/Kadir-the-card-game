@@ -195,6 +195,7 @@ function Shop({ onBack }) {
   }, [addCardsFromBooster]);
 
   const currentLang = lang === 'en' ? 'en' : 'pt';
+  const isEn = currentLang === 'en';
 
   const handleProductClick = (product) => {
     if (selectedProduct?.id === product.id) return;
@@ -301,20 +302,20 @@ function Shop({ onBack }) {
           }
         }}
       >
-        <span className="shop-back-text">Voltar</span>
+        <span className="shop-back-text">{isEn ? 'Back' : 'Voltar'}</span>
         <span className="shop-back-arrow">→</span>
       </button>
 
       {/* Título e Saldo de Moedas */}
       <div className="shop-header">
         <div className="shop-heading">
-          <span className="shop-eyebrow">Mercado do reino</span>
-          <h1 className="shop-title">Loja</h1>
+          <span className="shop-eyebrow">{isEn ? 'Kingdom market' : 'Mercado do reino'}</span>
+          <h1 className="shop-title">{isEn ? 'Shop' : 'Loja'}</h1>
         </div>
         <div className="shop-wallet">
           <div className="shop-wallet-item">
-            <img src={coinIcon} alt="Moedas" className="coin-icon-large" />
-            <div><span>Seu saldo</span><strong>{coins.toLocaleString()}</strong></div>
+            <img src={coinIcon} alt={isEn ? 'Coins' : 'Moedas'} className="coin-icon-large" />
+            <div><span>{isEn ? 'Your balance' : 'Seu saldo'}</span><strong>{coins.toLocaleString()}</strong></div>
           </div>
           <div className="shop-wallet-divider" />
           <div className="shop-wallet-item shop-wallet-boosters">
@@ -331,7 +332,7 @@ function Shop({ onBack }) {
           <div className={`shop-preview-card ${isFading ? 'fade-out' : 'fade-in'}`}>
             {selectedProduct && (
               <>
-                <div className="preview-kicker">Oferta selecionada</div>
+                <div className="preview-kicker">{isEn ? 'Selected offer' : 'Oferta selecionada'}</div>
                 <div className="preview-image-container">
                   <div className="preview-spotlight" aria-hidden="true" />
                   <img
@@ -355,7 +356,7 @@ function Shop({ onBack }) {
                         boxShadow: `0 2px 8px ${selectedProduct.rarityColor}80`
                       }}
                     >
-                      {RARITY_CONFIG[selectedProduct.rarity]?.name || selectedProduct.name[currentLang]}
+                      {RARITY_CONFIG[selectedProduct.rarity]?.name?.[currentLang] || selectedProduct.name[currentLang]}
                     </div>
                   ) : (
                     <h2 className="preview-product-name">{selectedProduct.name[currentLang]}</h2>
@@ -364,13 +365,13 @@ function Shop({ onBack }) {
                     {selectedProduct.description[currentLang]}
                   </p>
                   <div className="preview-benefits">
-                    <span>Entrega imediata</span>
-                    <span>{selectedProduct.type === 'booster' ? 'Conteúdo surpresa' : 'Raridade garantida'}</span>
+                    <span>{isEn ? 'Immediate delivery' : 'Entrega imediata'}</span>
+                    <span>{selectedProduct.type === 'booster' ? (isEn ? 'Surprise content' : 'Conteúdo surpresa') : (isEn ? 'Guaranteed rarity' : 'Raridade garantida')}</span>
                   </div>
                   <div className="preview-purchase-row">
                     <div className="preview-product-price">
-                      <span className="preview-price-label">Preço</span>
-                      <img src={coinIcon} alt="Moedas" className="coin-icon-small" />
+                      <span className="preview-price-label">{isEn ? 'Price' : 'Preço'}</span>
+                      <img src={coinIcon} alt={isEn ? 'Coins' : 'Moedas'} className="coin-icon-small" />
                       <span className="price-amount">{selectedProduct.price}</span>
                     </div>
                   </div>
@@ -379,7 +380,13 @@ function Shop({ onBack }) {
                     onClick={handlePurchase}
                     disabled={!canAfford || purchaseSuccess}
                   >
-                    <span>{purchaseSuccess ? '✓ Comprado!' : !canAfford ? 'Moedas insuficientes' : 'Comprar agora'}</span>
+                    <span>
+                      {purchaseSuccess
+                        ? (isEn ? '✓ Purchased!' : '✓ Comprado!')
+                        : !canAfford
+                          ? (isEn ? 'Insufficient coins' : 'Moedas insuficientes')
+                          : (isEn ? 'Buy now' : 'Comprar agora')}
+                    </span>
                     {canAfford && !purchaseSuccess && <span className="purchase-button-arrow">→</span>}
                   </button>
                 </div>
@@ -392,10 +399,10 @@ function Shop({ onBack }) {
         <div className="shop-products-column">
           <div className="shop-catalog-header">
             <div>
-              <span className="shop-eyebrow">Catálogo</span>
-              <h2>Escolha sua recompensa</h2>
+              <span className="shop-eyebrow">{isEn ? 'Catalog' : 'Catálogo'}</span>
+              <h2>{isEn ? 'Choose your reward' : 'Escolha sua recompensa'}</h2>
             </div>
-            <span className="shop-offer-count">{SHOP_PRODUCTS.length} ofertas</span>
+            <span className="shop-offer-count">{SHOP_PRODUCTS.length} {isEn ? 'offers' : 'ofertas'}</span>
           </div>
           <div className="shop-products-grid">
             {SHOP_PRODUCTS.map((product) => (
@@ -417,7 +424,7 @@ function Shop({ onBack }) {
                 } : {}}
               >
                 {selectedProduct?.id === product.id && (
-                  <span className="product-selected-mark">Selecionado</span>
+                  <span className="product-selected-mark">{isEn ? 'Selected' : 'Selecionado'}</span>
                 )}
                 <div className="product-card-image">
                   <img
@@ -433,11 +440,11 @@ function Shop({ onBack }) {
                 </div>
                 <div className="product-card-info">
                   <span className="product-card-type">
-                    {product.type === 'booster' ? `${product.quantity} ${product.quantity === 1 ? 'booster' : 'boosters'}` : 'Carta garantida'}
+                    {product.type === 'booster' ? `${product.quantity} ${product.quantity === 1 ? 'booster' : 'boosters'}` : (isEn ? 'Guaranteed card' : 'Carta garantida')}
                   </span>
                   <h3 className="product-card-name">{product.name[currentLang]}</h3>
                   <div className="product-card-price">
-                    <img src={coinIcon} alt="Moedas" className="coin-icon-small" />
+                    <img src={coinIcon} alt={isEn ? 'Coins' : 'Moedas'} className="coin-icon-small" />
                     <span>{product.price}</span>
                   </div>
                 </div>
@@ -462,7 +469,7 @@ function Shop({ onBack }) {
             <div className={`card-flip-container ${isFlipping ? 'flipped' : ''}`}>
               {/* Verso da Carta */}
               <div className="card-face card-back">
-                <img src={cardVerso} alt="Verso" />
+                <img src={cardVerso} alt={isEn ? 'Card back' : 'Verso'} />
                 <div
                   className="card-rarity-glow"
                   style={{

@@ -38,7 +38,8 @@ function LoadingMenu({ onNavigate, menuMusicRef, introMusicRef }: LoadingMenuPro
   });
   const videoRef = useRef<HTMLVideoElement>(null);
   const keyClickAudioRef = useRef<HTMLAudioElement>(null);
-  const { effectsVolume } = useContext(AppContext);
+  const { effectsVolume, lang } = useContext(AppContext);
+  const isEn = lang?.startsWith('en');
 
   const playClickSound = () => {
     const audio = keyClickAudioRef.current;
@@ -218,13 +219,13 @@ function LoadingMenu({ onNavigate, menuMusicRef, introMusicRef }: LoadingMenuPro
         className="fade-in opening-menu-actions"
       >
         <button className="opening-menu-btn opening-menu-btn-primary" onClick={handlePrimaryAction}>
-          {hasStartedJourney ? 'Continuar' : 'Iniciar'}
+          {hasStartedJourney ? (isEn ? 'Continue' : 'Continuar') : (isEn ? 'Start' : 'Iniciar')}
         </button>
         <button className="opening-menu-btn" onClick={() => { playClickSound(); setShowOptions(true); }}>
-          Opções
+          {isEn ? 'Options' : 'Opções'}
         </button>
         <button className="opening-menu-btn opening-menu-btn-exit" onClick={() => { playClickSound(); setShowExit(true); }}>
-          Sair
+          {isEn ? 'Exit' : 'Sair'}
         </button>
       </div>
       {showOptions && (

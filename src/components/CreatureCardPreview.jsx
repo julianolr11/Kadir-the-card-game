@@ -515,7 +515,7 @@ function CreatureCardPreview({
                       >
                         <span className="essence-cost-icons">
                           {[...Array(cost)].map((_, i) => (
-                            <img key={i} src={soulEssence} alt="Essência" className="essence-icon" />
+                            <img key={i} src={soulEssence} alt={langKey === 'en' ? 'Essence' : 'Essência'} className="essence-icon" />
                           ))}
                         </span>
                         <div>
@@ -546,7 +546,7 @@ function CreatureCardPreview({
             {!isFieldCard && !isEffectCard && (
               <div className="card-preview-bottom">
                 <span className="card-preview-level-icon">
-                  <img src={lvlIcon} alt="Nível" className="icon-bg" />
+                  <img src={lvlIcon} alt={langKey === 'en' ? 'Level' : 'Nível'} className="icon-bg" />
                   <span className="icon-text">{level}</span>
                 </span>
                 <div className="card-preview-descs-inline">

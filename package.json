@@ -179,7 +179,7 @@
   "build": {
     "productName": "kadir11-card-game",
     "appId": "org.erb.ElectronReact",
-    "asar": true,
+    "asar": false,
     "afterSign": ".erb/scripts/notarize.js",
     "asarUnpack": "**\\*.{node,dll,mp4,webm}",
     "files": [

@@ -35,6 +35,7 @@ function CardInstanceSelector({
   title = 'Selecione uma cópia',
   lang = 'ptbr',
 }) {
+  const isEn = lang === 'en';
   const [selectedInstanceId, setSelectedInstanceId] = useState(
     instances?.[0]?.instanceId || null
   );
@@ -164,7 +165,7 @@ function CardInstanceSelector({
 
   const getCardName = () => {
     if (typeof cardData?.name === 'string') return cardData.name;
-    return cardData?.name?.[lang === 'en' ? 'en' : 'ptbr'] || cardData?.name?.pt || 'Carta';
+    return cardData?.name?.[lang === 'en' ? 'en' : 'ptbr'] || cardData?.name?.pt || (isEn ? 'Card' : 'Carta');
   };
 
   return (
@@ -180,7 +181,7 @@ function CardInstanceSelector({
           <button
             className="instance-selector-close-btn"
             onClick={onClose}
-            aria-label="Fechar"
+            aria-label={isEn ? 'Close' : 'Fechar'}
           >
             ✕
           </button>
@@ -190,7 +191,7 @@ function CardInstanceSelector({
         {/* Instances List */}
         <div className="instances-list-container">
           {sortedInstances.length === 0 ? (
-            <p className="no-instances-message">Nenhuma cópia disponível</p>
+            <p className="no-instances-message">{isEn ? 'No copies available' : 'Nenhuma cópia disponível'}</p>
           ) : (
             <ul className="instances-list">
               {sortedInstances.map((instance, index) => (
@@ -206,7 +207,7 @@ function CardInstanceSelector({
                 >
                   {/* Número da cópia e holo status */}
                   <div className="instance-header">
-                    <span className="instance-number">Cópia #{index + 1}</span>
+                    <span className="instance-number">{isEn ? `Copy #${index + 1}` : `Cópia #${index + 1}`}</span>
                     {instance.isFullArt
                       ? <span className="holo-badge full-art-badge">◆ Full Art</span>
                       : instance.isHolo && <span className="holo-badge">✨ Holo</span>}
@@ -219,15 +220,15 @@ function CardInstanceSelector({
                       <span className="stat-value">{instance.level}</span>
                     </div>
                     <div className="stat-block">
-                      <span className="stat-label">Adquirida</span>
+                      <span className="stat-label">{isEn ? 'Acquired' : 'Adquirida'}</span>
                       <span className="stat-value">{formatDate(instance.acquiredAt)}</span>
                     </div>
                     <div
                       className="stat-block stat-block-recycle"
                       onClick={(e) => handleRecycle(instance.instanceId, e)}
-                      title="Clique para reciclar esta carta"
+                      title={isEn ? 'Click to recycle this card' : 'Clique para reciclar esta carta'}
                     >
-                      <span className="stat-label">♻️ Reciclar</span>
+                      <span className="stat-label">{isEn ? '♻️ Recycle' : '♻️ Reciclar'}</span>
                       <span className="stat-value stat-recycle">
                         {recyclingInstanceId === instance.instanceId ? '...' : `+${calculateCardValue(instance)} 🪙`}
                       </span>
@@ -243,7 +244,7 @@ function CardInstanceSelector({
                         onEdit(cardId, instance.instanceId);
                       }}
                     >
-                      Editar carta
+                      {isEn ? 'Edit card' : 'Editar carta'}
                     </button>
                   )}
 
@@ -254,7 +255,7 @@ function CardInstanceSelector({
                       name="instance-selection"
                       checked={selectedInstanceId === instance.instanceId}
                       onChange={() => handleSelectInstance(instance.instanceId)}
-                      aria-label={`Selecionar cópia ${index + 1}`}
+                      aria-label={isEn ? `Select copy ${index + 1}` : `Selecionar cópia ${index + 1}`}
                     />
                   </div>
                 </li>
@@ -281,8 +282,8 @@ function CardInstanceSelector({
               </div>
               <div className="instance-preview-recycle">
                 <div className="instance-preview-value">
-                  <span>{lang === 'en' ? 'Recycle value' : 'Valor ao reciclar'}</span>
-                  <strong>+{selectedInstanceValue} moeda{selectedInstanceValue === 1 ? '' : 's'}</strong>
+                  <span>{isEn ? 'Recycle value' : 'Valor ao reciclar'}</span>
+                  <strong>+{selectedInstanceValue} {isEn ? `coin${selectedInstanceValue === 1 ? '' : 's'}` : `moeda${selectedInstanceValue === 1 ? '' : 's'}`}</strong>
                 </div>
                 <button
                   type="button"
@@ -290,7 +291,9 @@ function CardInstanceSelector({
                   onClick={(e) => handleRecycle(selectedInstance.instanceId, e)}
                   disabled={recyclingInstanceId === selectedInstance.instanceId}
                 >
-                  {recyclingInstanceId === selectedInstance.instanceId ? 'Reciclando...' : 'Reciclar carta'}
+                  {recyclingInstanceId === selectedInstance.instanceId
+                    ? (isEn ? 'Recycling...' : 'Reciclando...')
+                    : (isEn ? 'Recycle card' : 'Reciclar carta')}
                 </button>
                 {onAdorn && (
                   <button
@@ -300,12 +303,12 @@ function CardInstanceSelector({
                     disabled={!canAdornSelected || adorningInstanceId === selectedInstance.instanceId}
                   >
                     {adorningInstanceId === selectedInstance.instanceId
-                      ? 'Adornando...'
+                      ? (isEn ? 'Adorning...' : 'Adornando...')
                       : selectedInstance.isHolo
-                        ? 'Carta holográfica'
+                        ? (isEn ? 'Holo card' : 'Carta holográfica')
                         : adornCount >= 10
-                          ? 'Adornar carta'
-                          : `Adornar (${adornCount}/10)`}
+                          ? (isEn ? 'Adorn card' : 'Adornar carta')
+                          : `${isEn ? 'Adorn' : 'Adornar'} (${adornCount}/10)`}
                   </button>
                 )}
                 {onFullArt && selectedInstance?.isHolo && (
@@ -316,11 +319,11 @@ function CardInstanceSelector({
                     disabled={!canCreateFullArt || adorningInstanceId === selectedInstance.instanceId}
                   >
                     {adorningInstanceId === selectedInstance.instanceId
-                      ? 'Criando Full Art...'
+                      ? (isEn ? 'Creating Full Art...' : 'Criando Full Art...')
                       : selectedInstance.isFullArt
-                        ? 'Carta Full Art'
+                        ? (isEn ? 'Full Art card' : 'Carta Full Art')
                         : fullArtCount >= 10
-                          ? 'Criar Full Art'
+                          ? (isEn ? 'Create Full Art' : 'Criar Full Art')
                           : `Full Art (${fullArtCount}/10)`}
                   </button>
                 )}

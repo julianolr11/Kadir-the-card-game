@@ -1155,7 +1155,8 @@ export function BattleProvider({ children }) {
 
   const startBattle = useCallback((battleSetup = null) => {
     const isCampaignBattle = battleSetup && !Array.isArray(battleSetup) && battleSetup.mode === 'campaign';
-    const deckOverride = isCampaignBattle ? battleSetup.deck : battleSetup;
+    const isPvpBattle = battleSetup && !Array.isArray(battleSetup) && battleSetup.mode === 'pvp';
+    const deckOverride = (isCampaignBattle || isPvpBattle) ? battleSetup.deck : battleSetup;
     const opponent = isCampaignBattle ? battleSetup.opponent : null;
     // Deck do jogador: selecionado pelo modal; sen├úo primeiro deck salvo; sen├úo amostra aleat├│ria
     const playerDeck = (Array.isArray(deckOverride) && deckOverride.length > 0)
@@ -1165,6 +1166,9 @@ export function BattleProvider({ children }) {
       ? opponent.levelIndex
       : (Number.isFinite(opponent?.index) ? opponent.index : 0);
     const campaignStage = getCampaignStage(opponentIndex);
+    // PvP: o baralho do adversário (convidado) ainda não é sincronizado via rede (isso é
+    // trabalho da Fase 3b, o cliente do convidado). Por enquanto usamos uma amostra, só para
+    // permitir testar/desenvolver o motor de sincronização do lado do anfitrião.
     const aiDeck = isCampaignBattle
       ? buildCampaignAiDeck(opponent, campaignStage)
       : sampleDeckFromPool(20);
@@ -1185,6 +1189,9 @@ export function BattleProvider({ children }) {
       phase: 'coinflip',
       turn: 1,
       activePlayer: 'player',
+      mode: isPvpBattle ? 'pvp' : (isCampaignBattle ? 'campaign' : 'normal'),
+      isHost: isPvpBattle ? (battleSetup.isHost !== false) : null,
+      peerSteamId64: isPvpBattle ? (battleSetup.peerSteamId64 || null) : null,
       creaturesInvokedThisTurn: { player: 0, ai: 0 },
       resurrectionPending: null,
       returnCardPending: null,
@@ -2424,6 +2431,185 @@ export function BattleProvider({ children }) {
       return newState;
     });
   }, [resolveCreatureBuild, cardCollection, settleDefeatedCreature]);
+
+  // Invocação equivalente a summonFromHand, mas para o lado 'ai' (usada no modo PvP para
+  // aplicar a jogada de invocação recebida do jogador convidado pela rede).
+  //
+  // ATENÇÃO: cobre stats/habilidades/perks (idêntico ao summonFromHand), mas
+  // DELIBERADAMENTE NÃO reimplementa as ~24 bênçãos exclusivas de guardião
+  // (Ignis, Ekeranth, Nihil, etc.) — isso ficou de fora nesta primeira versão do PvP
+  // por segurança, para não duplicar/arriscar centenas de linhas só usadas hoje pelo
+  // modo campanha. Um guardião do convidado com bênção especial ainda funciona
+  // normalmente (dano, habilidades, perks), só o efeito extra de bênção-ao-invocar
+  // não dispara.
+  const summonFromHandForOpponent = useCallback((index, slotIndex) => {
+    playFlipCardSound();
+    setState((s) => {
+      if (s.phase !== 'playing') return s;
+      if (s.activePlayer !== 'ai') return s;
+
+      const hand = [...s.ai.hand];
+      const cardId = hand[index];
+      if (!cardId) return s;
+
+      let baseId = cardId;
+      if (cardId.includes('-')) {
+        for (const [base, instances] of Object.entries(cardCollection || {})) {
+          if (instances.find(inst => inst.instanceId === cardId)) {
+            baseId = base;
+            break;
+          }
+        }
+      }
+
+      const sourceInstance = (cardCollection?.[baseId] || []).find(
+        (inst) => inst.instanceId === cardId
+      );
+
+      if (String(baseId).toLowerCase().startsWith('effect_')) {
+        return { ...s, log: [...s.log, 'Cartas de efeito não podem ser invocadas em slots!'] };
+      }
+      if (/^f\d{3}$/i.test(baseId) || String(baseId).toLowerCase().startsWith('field_')) {
+        return { ...s, log: [...s.log, 'Cartas de campo devem ser invocadas com o botão específico!'] };
+      }
+      if ((s.creaturesInvokedThisTurn?.ai || 0) >= 1) {
+        return { ...s, log: [...s.log, 'O oponente já invocou 1 criatura neste turno!'] };
+      }
+
+      const slots = [...s.ai.field.slots];
+      if (slots[slotIndex]) return s;
+
+      const creatureData = creaturesPool.find(c => c.id === baseId);
+      if (!creatureData) {
+        console.warn(`Criatura ${baseId} não encontrada no pool`);
+        return s;
+      }
+
+      const build = resolveCreatureBuild(creatureData);
+      const summonAtk = build.atk + (
+        build.perkEffects?.dragonAllyAttackBonus && slots.some(slot => isDragonCreature(slot)) ? 1 : 0
+      );
+
+      const creature = {
+        id: cardId,
+        baseId,
+        isHolo: Boolean(sourceInstance?.isHolo),
+        isFullArt: Boolean(sourceInstance?.isFullArt),
+        name: creatureData.name?.pt || creatureData.name?.en || baseId,
+        type: creatureData.type?.pt || creatureData.type?.en,
+        element: creatureData.element || 'puro',
+        hp: build.hp,
+        maxHp: build.maxHp,
+        atk: summonAtk,
+        def: build.def,
+        abilities: build.abilities,
+        buffs: buildInitialBuffs(build),
+        debuffs: [],
+        shield: build.perkEffects?.shieldOnSummon?.amount || 0,
+        shieldTurns: build.perkEffects?.shieldOnSummon?.duration || 0,
+        statusEffects: [],
+        firstAttackNegated: !!build.perkEffects?.firstAttackNegated,
+        perkEffects: build.perkEffects || {},
+      };
+
+      slots[slotIndex] = creature;
+      hand.splice(index, 1);
+
+      const newState = {
+        ...s,
+        creaturesInvokedThisTurn: {
+          ...(s.creaturesInvokedThisTurn || { player: 0, ai: 0 }),
+          ai: (s.creaturesInvokedThisTurn?.ai || 0) + 1,
+        },
+        ai: {
+          ...s.ai,
+          hand,
+          field: { ...s.ai.field, slots },
+        },
+        battleStats: {
+          ...s.battleStats,
+          ai: {
+            ...s.battleStats.ai,
+            cardsSummoned: [...s.battleStats.ai.cardsSummoned, cardId],
+          },
+        },
+        log: [...s.log, `Oponente invocou ${creature.name} no slot ${slotIndex + 1}.`],
+      };
+
+      // Perk de um aliado JÁ em campo: buffa criaturas de ar recém-invocadas (ex: VERDANT_INSPIRATION)
+      if (creature.element === 'ar') {
+        const inspirer = newState.ai.field.slots.find(
+          (slot) => slot && slot.id !== creature.id && slot.hp > 0 && slot.perkEffects?.airAllyAttackBuffOnAllySummon
+        );
+        if (inspirer) {
+          const { value, duration } = inspirer.perkEffects.airAllyAttackBuffOnAllySummon;
+          const buffedSlots = newState.ai.field.slots.map((slot) => (slot && slot.id === creature.id
+            ? { ...slot, buffs: [...(slot.buffs || []), { id: `buff_air_${Date.now()}`, name: inspirer.name, stat: 'attack', value, duration, type: 'flat' }] }
+            : slot));
+          newState.ai = { ...newState.ai, field: { ...newState.ai.field, slots: buffedSlots } };
+          newState.log = [...newState.log, `${inspirer.name} inspirou ${creature.name}!`];
+        }
+      }
+
+      // Perk de time: concede um bônus a todos os aliados ao entrar em campo (ex: LUNAR_AURA)
+      if (build.perkEffects?.teamBuffOnSummon) {
+        const { stat, value, duration } = build.perkEffects.teamBuffOnSummon;
+        const buffedSlots = newState.ai.field.slots.map((slot) => {
+          if (!slot || slot.hp <= 0) return slot;
+          const buff = { id: `buff_team_${Date.now()}_${slot.id}`, name: creature.name, stat, value, duration, type: 'flat' };
+          return { ...slot, buffs: [...(slot.buffs || []), buff] };
+        });
+        newState.ai = { ...newState.ai, field: { ...newState.ai.field, slots: buffedSlots } };
+        newState.log = [...newState.log, `${creature.name} concedeu um bônus a todos os aliados!`];
+      }
+
+      // Perk de time: aplica um status a todos os inimigos ao entrar em campo (ex: ABYSSAL_THORNS)
+      if (build.perkEffects?.teamDebuffOnSummon) {
+        const { status, duration, value } = build.perkEffects.teamDebuffOnSummon;
+        let tsAfterDebuff = newState;
+        (tsAfterDebuff.player.field.slots || []).forEach((slot) => {
+          if (!slot || slot.hp <= 0) return;
+          const statusResult = effectRegistry.applyStatusEffect(tsAfterDebuff, {
+            targetId: slot.id, effectType: status, duration, value, attackerId: creature.id,
+          });
+          tsAfterDebuff = statusResult.newState;
+        });
+        newState.player = tsAfterDebuff.player;
+        newState.log = [...newState.log, `${creature.name} afetou todos os inimigos!`];
+      }
+
+      // Perk de time: remove debuffs de todos os aliados ao entrar em campo (ex: PURE_HORIZON)
+      if (build.perkEffects?.teamCleanseOnSummon) {
+        const { count } = build.perkEffects.teamCleanseOnSummon;
+        const cleansedSlots = newState.ai.field.slots.map((slot) => {
+          if (!slot || slot.hp <= 0) return slot;
+          const { buffs } = effectRegistry.removeCreatureDebuffs(slot, count);
+          return { ...slot, buffs };
+        });
+        newState.ai = { ...newState.ai, field: { ...newState.ai.field, slots: cleansedSlots } };
+        newState.log = [...newState.log, `${creature.name} purificou os aliados!`];
+      }
+
+      // Perk: aplica um debuff a 1 inimigo aleatório ao entrar em campo (ex: PIERCING_GAZE)
+      if (build.perkEffects?.singleEnemyDebuffOnSummon) {
+        const { stat, value, duration } = build.perkEffects.singleEnemyDebuffOnSummon;
+        const enemyIndices = newState.player.field.slots
+          .map((slot, idx) => (slot && slot.hp > 0 ? idx : null))
+          .filter((idx) => idx !== null);
+        if (enemyIndices.length > 0) {
+          const targetIdx = enemyIndices[Math.floor(Math.random() * enemyIndices.length)];
+          const targetSlot = newState.player.field.slots[targetIdx];
+          const debuffResult = effectRegistry.applyDebuff(newState, {
+            targetId: targetSlot.id, stat, value, duration, name: 'Enfraquecido', type: 'flat',
+          });
+          newState.player = debuffResult.newState.player;
+          newState.log = [...newState.log, `${creature.name} enfraqueceu ${targetSlot.name}!`];
+        }
+      }
+
+      return newState;
+    });
+  }, [resolveCreatureBuild, cardCollection]);
 
   // Ressuscita uma criatura do cemitério (benção do Ignis)
   const resurrectCreature = useCallback((graveyardIndex, targetSlotIndex) => {
@@ -4973,6 +5159,7 @@ export function BattleProvider({ children }) {
   }, [applyAiSummonBlessings, continueAiCombat]);
 
   useEffect(() => {
+    if (state.mode === 'pvp') return; // No PvP, o lado "ai" é o convidado humano — não roda ai.js
     if (state.phase === 'playing' && state.activePlayer === 'ai') {
       // Adiciona delay de 1.5s antes da IA agir
       const aiDelayTimer = setTimeout(() => {
@@ -4980,11 +5167,12 @@ export function BattleProvider({ children }) {
       }, 1500);
       return () => clearTimeout(aiDelayTimer);
     }
-  }, [state.phase, state.activePlayer, performAiTurn]);
+  }, [state.mode, state.phase, state.activePlayer, performAiTurn]);
 
   // Processa ataque pendente da IA
 
   useEffect(() => {
+    if (state.mode === 'pvp') return;
     if (state.aiPendingAttack && state.phase === 'playing' && state.activePlayer === 'ai') {
       const attackTimer = setTimeout(() => {
         useAbility('ai', state.aiPendingAttack.attackerSlot, state.aiPendingAttack.abilityIndex, 'player', state.aiPendingAttack.targetSlot);
@@ -4996,7 +5184,40 @@ export function BattleProvider({ children }) {
       }, 500);
       return () => clearTimeout(attackTimer);
     }
-  }, [state.aiPendingAttack, state.phase, state.activePlayer, useAbility, continueAiCombat]);
+  }, [state.mode, state.aiPendingAttack, state.phase, state.activePlayer, useAbility, continueAiCombat]);
+
+  // --- PvP (Fase 3a, somente anfitrião): aplica ações recebidas do convidado por P2P e
+  // transmite o estado da partida (redigido) de volta para ele. O cliente do convidado
+  // (Fase 3b) ainda não existe, então nada consome essas mensagens de estado hoje — isso
+  // deixa o motor pronto para quando o thin-client do convidado for construído.
+  useEffect(() => {
+    if (state.mode !== 'pvp' || !state.isHost) return undefined;
+    const unsubscribe = window.electron?.ipcRenderer?.onP2PMessage?.(({ fromSteamId64, message }) => {
+      if (!message || message.type !== 'action') return;
+      if (state.peerSteamId64 && fromSteamId64 !== state.peerSteamId64) return;
+      if (state.phase !== 'playing' || state.activePlayer !== 'ai') return;
+
+      if (message.action === 'summon') {
+        summonFromHandForOpponent(message.index, message.slotIndex);
+      } else if (message.action === 'attack') {
+        useAbility('ai', message.attackerSlot, message.abilityIndex, 'player', message.targetSlot);
+      } else if (message.action === 'endTurn') {
+        endTurn();
+      }
+    });
+    return () => unsubscribe?.();
+  }, [state.mode, state.isHost, state.peerSteamId64, state.phase, state.activePlayer, summonFromHandForOpponent, useAbility, endTurn]);
+
+  useEffect(() => {
+    if (state.mode !== 'pvp' || !state.isHost || !state.peerSteamId64) return;
+    const { player, ...rest } = state;
+    const redactedState = {
+      ...rest,
+      player: { ...player, hand: (player.hand || []).map(() => 'hidden') },
+      creaturesWithUsedAbility: Array.from(state.creaturesWithUsedAbility || []),
+    };
+    window.electron?.ipcRenderer?.sendP2PMessage?.(state.peerSteamId64, { type: 'state', state: redactedState });
+  }, [state]);
 
   // <-- FECHAMENTO DE BLOCO ADICIONADO CASO FALTANDO
 

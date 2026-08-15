@@ -21,6 +21,8 @@ import { setupAudioManager } from './audioManager';
 let steamClient: any = null;
 // Sala (lobby) PvP atual, se houver
 let currentLobby: any = null;
+// Intervalo de sondagem de pacotes P2P recebidos
+let p2pPollInterval: NodeJS.Timeout | undefined;
 
 const serializeMember = (member: { steamId64: bigint; accountId: number }) => ({
   steamId64: member.steamId64.toString(),
@@ -61,6 +63,41 @@ const initSteam = () => {
         friendSteamId64: data.friend_steam_id.toString(),
       });
     });
+
+    // Outro jogador está tentando abrir uma conexão P2P conosco: aceitamos sempre
+    // (o convite/entrada na sala já é o controle de acesso real).
+    steamClient.callback.register(steamworks.SteamCallback.P2PSessionRequest, (data: any) => {
+      try {
+        steamClient.networking.acceptP2PSession(data.remote);
+        log.info(`Sessão P2P aceita de ${data.remote.toString()}`);
+      } catch (err: any) {
+        log.warn(`Falha ao aceitar sessão P2P de ${data.remote?.toString()}: ${err?.message || err}`);
+      }
+    });
+
+    // Sondagem de pacotes P2P recebidos (a API da Steam é baseada em polling, não em evento).
+    clearInterval(p2pPollInterval);
+    p2pPollInterval = setInterval(() => {
+      if (!steamClient || !mainWindow) return;
+      try {
+        let packetSize = steamClient.networking.isP2PPacketAvailable();
+        while (packetSize) {
+          const packet = steamClient.networking.readP2PPacket(packetSize);
+          try {
+            const message = JSON.parse(packet.data.toString('utf8'));
+            mainWindow.webContents.send('steam-p2p-message', {
+              fromSteamId64: packet.steamId.steamId64.toString(),
+              message,
+            });
+          } catch (parseErr: any) {
+            log.warn(`Pacote P2P recebido não é JSON válido: ${parseErr?.message || parseErr}`);
+          }
+          packetSize = steamClient.networking.isP2PPacketAvailable();
+        }
+      } catch (err: any) {
+        log.warn(`Erro ao ler pacotes P2P: ${err?.message || err}`);
+      }
+    }, 50);
   } catch (err: any) {
     steamClient = null;
     log.warn(`Steamworks não inicializado (Steam não está rodando ou steam_api64.dll ausente): ${err?.message || err}`);
@@ -91,9 +128,9 @@ ipcMain.handle('steam-unlock-achievement', (_event, achievementId: string) => {
 ipcMain.handle('steam-create-lobby', async () => {
   if (!steamClient) return { ok: false, reason: 'steam-not-connected' };
   try {
-    // eslint-disable-next-line global-require
-    const steamworks = require('steamworks.js');
-    const lobby = await steamClient.matchmaking.createLobby(steamworks.LobbyType.FriendsOnly, 2);
+    // Os enums (LobbyType, SendType etc.) só existem no objeto cliente já
+    // inicializado (steamClient.<namespace>.<Enum>), não no módulo `steamworks.js` em si.
+    const lobby = await steamClient.matchmaking.createLobby(steamClient.matchmaking.LobbyType.FriendsOnly, 2);
     currentLobby = lobby;
     log.info(`Sala PvP criada: ${lobby.id.toString()}`);
     return { ok: true, lobby: serializeLobby(lobby) };
@@ -138,6 +175,22 @@ ipcMain.handle('steam-invite-to-lobby', () => {
 ipcMain.handle('steam-get-lobby', () => {
   if (!currentLobby) return { ok: false, reason: 'no-active-lobby' };
   return { ok: true, lobby: serializeLobby(currentLobby) };
+});
+
+ipcMain.handle('steam-send-p2p-message', (_event, targetSteamId64: string, message: any) => {
+  if (!steamClient) return { ok: false, reason: 'steam-not-connected' };
+  try {
+    const payload = Buffer.from(JSON.stringify(message), 'utf8');
+    const sent = steamClient.networking.sendP2PPacket(
+      BigInt(targetSteamId64),
+      steamClient.networking.SendType.Reliable,
+      payload,
+    );
+    return { ok: Boolean(sent) };
+  } catch (err: any) {
+    log.warn(`Falha ao enviar pacote P2P para ${targetSteamId64}: ${err?.message || err}`);
+    return { ok: false, error: err?.message || 'Falha ao enviar pacote P2P' };
+  }
 });
 
 // Novo fluxo: inicialização do autoUpdater será feita sob demanda via IPC

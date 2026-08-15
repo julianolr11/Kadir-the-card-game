@@ -82,6 +82,14 @@ const electronHandler = {
       ipcRenderer.on('steam-lobby-join-requested', subscription);
       return () => ipcRenderer.removeListener('steam-lobby-join-requested', subscription);
     },
+    // --- Steam P2P messaging (usado para sincronizar a partida PvP) ---
+    sendP2PMessage: (targetSteamId64: string, message: any) =>
+      ipcRenderer.invoke('steam-send-p2p-message', targetSteamId64, message),
+    onP2PMessage: (cb: (data: { fromSteamId64: string; message: any }) => void) => {
+      const subscription = (_event: IpcRendererEvent, data: any) => cb(data);
+      ipcRenderer.on('steam-p2p-message', subscription);
+      return () => ipcRenderer.removeListener('steam-p2p-message', subscription);
+    },
   },
 };
 

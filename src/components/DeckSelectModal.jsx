@@ -39,7 +39,7 @@ function DeckSelectModal({ visible, onClose, onSelect }) {
   });
 
   const handleDeckClick = (deck) => {
-    onSelect(deck.cards);
+    onSelect(deck.cards, deck.id, deck.guardianId);
   };
 
   return (

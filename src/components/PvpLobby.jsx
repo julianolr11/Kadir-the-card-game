@@ -1,17 +1,22 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { AppContext } from '../context/AppContext';
+import cardsPool from '../assets/cards';
+import CreatureCardPreview from './CreatureCardPreview';
+import DeckSelectModal from './DeckSelectModal';
+import { ACHIEVEMENTS } from '../assets/achievementsData';
 import '../styles/pvp-lobby.css';
 
-const pickFirstDeckCards = (decks) => {
+const pickFirstDeckEntry = (decks) => {
   const ids = Object.keys(decks || {});
   if (ids.length === 0) return null;
-  const first = decks[ids[0]];
-  if (!first || !Array.isArray(first.cards) || first.cards.length === 0) return null;
-  return first.cards;
+  const id = ids[0];
+  const deck = decks[id];
+  if (!deck || !Array.isArray(deck.cards) || deck.cards.length === 0) return null;
+  return { id, deck };
 };
 
 export default function PvpLobby({ onBack, onStartBattle }) {
-  const { lang = 'ptbr', decks } = useContext(AppContext) || {};
+  const { lang = 'ptbr', decks, unlockedAchievements = [] } = useContext(AppContext) || {};
   const isEn = lang?.startsWith('en');
 
   const [steamConnected, setSteamConnected] = useState(null); // null = ainda verificando
@@ -23,7 +28,13 @@ export default function PvpLobby({ onBack, onStartBattle }) {
   const [joinCode, setJoinCode] = useState('');
   const [joining, setJoining] = useState(false);
   const [avatars, setAvatars] = useState({});
+  const [selectedDeckId, setSelectedDeckId] = useState(null);
+  const [deckLocked, setDeckLocked] = useState(false);
+  const [deckPickerOpen, setDeckPickerOpen] = useState(false);
+  const [profiles, setProfiles] = useState({}); // steamId64 -> { achievements, guardianId, deckName }
   const startTimeoutRef = useRef(null);
+
+  const selectedDeck = selectedDeckId ? decks?.[selectedDeckId] : null;
 
   useEffect(() => {
     let cancelled = false;
@@ -52,42 +63,14 @@ export default function PvpLobby({ onBack, onStartBattle }) {
     };
   }, []);
 
-  // Handshake de início de partida: anfitrião pede o baralho do convidado, o convidado
-  // responde, e então o anfitrião avisa o convidado que pode entrar na tela de batalha.
+  // Pré-seleciona o primeiro baralho salvo (ainda destravado) só pra sempre ter algo pronto
+  // pra mostrar/enviar caso o jogador nunca abra o seletor manualmente.
   useEffect(() => {
-    const unsubscribe = window.electron?.ipcRenderer?.onP2PMessage?.(({ fromSteamId64, message }) => {
-      if (!message) return;
-
-      if (message.type === 'deck-request') {
-        const myDeck = pickFirstDeckCards(decks);
-        window.electron?.ipcRenderer?.sendP2PMessage?.(fromSteamId64, {
-          type: 'deck-response',
-          deck: myDeck || [],
-        });
-        return;
-      }
-
-      if (message.type === 'deck-response') {
-        if (startTimeoutRef.current) {
-          clearTimeout(startTimeoutRef.current);
-          startTimeoutRef.current = null;
-        }
-        window.electron?.ipcRenderer?.sendP2PMessage?.(fromSteamId64, { type: 'battle-start' });
-        onStartBattle?.({ isHost: true, peerSteamId64: fromSteamId64, opponentDeck: message.deck });
-        return;
-      }
-
-      if (message.type === 'battle-start') {
-        onStartBattle?.({ isHost: false, peerSteamId64: fromSteamId64 });
-      }
-    });
-
-    return () => unsubscribe?.();
-  }, [decks, onStartBattle]);
-
-  useEffect(() => () => {
-    if (startTimeoutRef.current) clearTimeout(startTimeoutRef.current);
-  }, []);
+    if (selectedDeckId || deckLocked) return;
+    const first = pickFirstDeckEntry(decks);
+    if (first) setSelectedDeckId(first.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [decks]);
 
   // Busca as fotos de perfil dos membros da sala (steamworks.js não expõe isso, só a Web API)
   useEffect(() => {
@@ -103,6 +86,74 @@ export default function PvpLobby({ onBack, onStartBattle }) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lobby?.members]);
+
+  // Avisa o adversário (se já entrou na sala) sempre que meu perfil (conquistas/baralho) muda.
+  useEffect(() => {
+    if (!lobby || (lobby.members?.length || 0) < 2 || !mySteamId64) return;
+    const peer = lobby.members.find((m) => m.steamId64 !== mySteamId64);
+    if (!peer) return;
+    window.electron?.ipcRenderer?.sendP2PMessage?.(peer.steamId64, {
+      type: 'profile',
+      achievements: unlockedAchievements,
+      guardianId: selectedDeck?.guardianId || null,
+      deckName: selectedDeck?.name || null,
+    });
+  }, [lobby, mySteamId64, selectedDeck, unlockedAchievements]);
+
+  // Handshake de início de partida: anfitrião pede o baralho do convidado, o convidado
+  // responde, e então o anfitrião avisa o convidado que pode entrar na tela de batalha.
+  // Também recebe o "profile" (conquistas/baralho selecionado) do adversário pra exibir na sala.
+  useEffect(() => {
+    const unsubscribe = window.electron?.ipcRenderer?.onP2PMessage?.(({ fromSteamId64, message }) => {
+      if (!message) return;
+
+      if (message.type === 'profile') {
+        setProfiles((prev) => ({
+          ...prev,
+          [fromSteamId64]: {
+            achievements: message.achievements || [],
+            guardianId: message.guardianId || null,
+            deckName: message.deckName || null,
+          },
+        }));
+        return;
+      }
+
+      if (message.type === 'deck-request') {
+        const myDeckCards = selectedDeck?.cards || null;
+        window.electron?.ipcRenderer?.sendP2PMessage?.(fromSteamId64, {
+          type: 'deck-response',
+          deck: myDeckCards || [],
+        });
+        return;
+      }
+
+      if (message.type === 'deck-response') {
+        if (startTimeoutRef.current) {
+          clearTimeout(startTimeoutRef.current);
+          startTimeoutRef.current = null;
+        }
+        window.electron?.ipcRenderer?.sendP2PMessage?.(fromSteamId64, { type: 'battle-start' });
+        onStartBattle?.({
+          isHost: true,
+          peerSteamId64: fromSteamId64,
+          opponentDeck: message.deck,
+          deck: selectedDeck?.cards,
+        });
+        return;
+      }
+
+      if (message.type === 'battle-start') {
+        onStartBattle?.({ isHost: false, peerSteamId64: fromSteamId64 });
+      }
+    });
+
+    return () => unsubscribe?.();
+  }, [selectedDeck, onStartBattle]);
+
+  useEffect(() => () => {
+    if (startTimeoutRef.current) clearTimeout(startTimeoutRef.current);
+  }, []);
 
   const handleCreateLobby = async () => {
     setStatus('creating');
@@ -142,17 +193,88 @@ export default function PvpLobby({ onBack, onStartBattle }) {
     onBack?.();
   };
 
+  const handleOpenDeckPicker = () => {
+    if (deckLocked) return;
+    setDeckPickerOpen(true);
+  };
+
+  const handleDeckPicked = (_cards, deckId) => {
+    setSelectedDeckId(deckId);
+    setDeckLocked(true);
+    setDeckPickerOpen(false);
+  };
+
   const isHostOfLobby = Boolean(lobby && mySteamId64 && lobby.ownerSteamId64 === mySteamId64);
+  const myMember = lobby?.members?.find((m) => m.steamId64 === mySteamId64) || null;
   const opponent = lobby?.members?.find((m) => m.steamId64 !== mySteamId64) || null;
 
   const handleStartBattle = () => {
-    if (!opponent || starting) return;
+    if (!opponent || starting || !deckLocked) return;
     setStarting(true);
     window.electron?.ipcRenderer?.sendP2PMessage?.(opponent.steamId64, { type: 'deck-request' });
     startTimeoutRef.current = setTimeout(() => {
       setStarting(false);
       setError(isEn ? 'Opponent did not respond. Try again.' : 'O adversário não respondeu. Tente novamente.');
     }, 10000);
+  };
+
+  const renderPlayerCard = (member, isMe) => {
+    const profile = isMe
+      ? { achievements: unlockedAchievements, guardianId: selectedDeck?.guardianId || null, deckName: selectedDeck?.name || null }
+      : (profiles[member.steamId64] || {});
+    const guardianCard = profile.guardianId ? cardsPool.find((c) => c.id === profile.guardianId) : null;
+    const unlockedBadges = ACHIEVEMENTS.filter((a) => (profile.achievements || []).includes(a.id));
+
+    return (
+      <div className="pvp-lobby-player-card" key={member.steamId64}>
+        <div className="pvp-lobby-player-header">
+          {avatars[member.steamId64] ? (
+            <img className="pvp-lobby-player-avatar" src={avatars[member.steamId64]} alt="" />
+          ) : (
+            <span className="pvp-lobby-member-dot" aria-hidden />
+          )}
+          <div className="pvp-lobby-player-name-col">
+            <p className="pvp-lobby-player-name">{member.name || `Steam ID ${member.steamId64}`}</p>
+            {unlockedBadges.length > 0 && (
+              <div className="pvp-lobby-player-badges">
+                {unlockedBadges.map((a) => (
+                  <img
+                    key={a.id}
+                    src={a.img}
+                    alt={a.name?.[isEn ? 'en' : 'pt'] || a.name?.pt}
+                    title={a.name?.[isEn ? 'en' : 'pt'] || a.name?.pt}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="pvp-lobby-player-guardian">
+          {guardianCard ? (
+            <div className="pvp-lobby-guardian-scale">
+              <CreatureCardPreview creature={guardianCard} onClose={null} allowFlip={false} />
+            </div>
+          ) : (
+            <p className="pvp-lobby-message" style={{ fontSize: '0.78rem' }}>
+              {isMe
+                ? (isEn ? 'No deck selected yet' : 'Nenhum baralho selecionado ainda')
+                : (isEn ? 'Waiting for opponent’s deck…' : 'Aguardando baralho do adversário…')}
+            </p>
+          )}
+        </div>
+
+        {isMe && (
+          deckLocked ? (
+            <p className="pvp-lobby-deck-locked">🔒 {selectedDeck?.name}</p>
+          ) : (
+            <button type="button" className="pvp-lobby-primary-btn" onClick={handleOpenDeckPicker}>
+              {isEn ? 'Choose deck' : 'Escolher baralho'}
+            </button>
+          )
+        )}
+      </div>
+    );
   };
 
   return (
@@ -163,7 +285,7 @@ export default function PvpLobby({ onBack, onStartBattle }) {
         <h1>{isEn ? 'Challenge Room' : 'Sala de Desafio'}</h1>
       </header>
 
-      <main className="pvp-lobby-panel">
+      <main className={`pvp-lobby-panel ${lobby ? 'pvp-lobby-panel-room' : ''}`}>
         {steamConnected === null && (
           <p className="pvp-lobby-message">{isEn ? 'Checking Steam connection…' : 'Verificando conexão com a Steam…'}</p>
         )}
@@ -211,23 +333,20 @@ export default function PvpLobby({ onBack, onStartBattle }) {
             <p className="pvp-lobby-room-id">
               {isEn ? 'Room' : 'Sala'} #{lobby.lobbyId}
             </p>
-            <ul className="pvp-lobby-members">
-              {lobby.members.map((member) => (
-                <li key={member.steamId64} className="pvp-lobby-member">
-                  {avatars[member.steamId64] ? (
-                    <img className="pvp-lobby-member-avatar" src={avatars[member.steamId64]} alt="" />
-                  ) : (
-                    <span className="pvp-lobby-member-dot" aria-hidden />
-                  )}
-                  {member.name || `Steam ID ${member.steamId64}`}
-                </li>
-              ))}
-              {lobby.members.length < 2 && (
-                <li className="pvp-lobby-member pvp-lobby-member-waiting">
-                  {isEn ? 'Waiting for opponent…' : 'Esperando adversário…'}
-                </li>
+
+            <div className="pvp-lobby-players">
+              {myMember && renderPlayerCard(myMember, true)}
+              {opponent ? (
+                renderPlayerCard(opponent, false)
+              ) : (
+                <div className="pvp-lobby-player-card pvp-lobby-player-card-waiting">
+                  <p className="pvp-lobby-message pvp-lobby-member-waiting">
+                    {isEn ? 'Waiting for opponent…' : 'Esperando adversário…'}
+                  </p>
+                </div>
               )}
-            </ul>
+            </div>
+
             <p className="pvp-lobby-message" style={{ fontSize: '0.82rem', fontWeight: 500 }}>
               {isEn
                 ? "The Steam invite below works, but since the game isn't published yet, Steam can't auto-launch it for your friend — they need to already have it open (any screen). If they don't, share the room code above instead."
@@ -242,8 +361,14 @@ export default function PvpLobby({ onBack, onStartBattle }) {
                   type="button"
                   className="pvp-lobby-primary-btn pvp-lobby-start-btn"
                   onClick={handleStartBattle}
-                  disabled={!opponent || starting}
-                  title={!opponent ? (isEn ? 'Waiting for an opponent to join' : 'Esperando um adversário entrar') : undefined}
+                  disabled={!opponent || starting || !deckLocked}
+                  title={
+                    !opponent
+                      ? (isEn ? 'Waiting for an opponent to join' : 'Esperando um adversário entrar')
+                      : !deckLocked
+                        ? (isEn ? 'Choose your deck first' : 'Escolha seu baralho primeiro')
+                        : undefined
+                  }
                 >
                   {starting
                     ? (isEn ? 'Starting…' : 'Iniciando…')
@@ -265,6 +390,8 @@ export default function PvpLobby({ onBack, onStartBattle }) {
       <button className="pvp-lobby-back-btn" type="button" onClick={handleLeave}>
         <span aria-hidden>←</span> {isEn ? 'Back to main menu' : 'Voltar ao menu principal'}
       </button>
+
+      <DeckSelectModal visible={deckPickerOpen} onClose={() => setDeckPickerOpen(false)} onSelect={handleDeckPicked} />
     </section>
   );
 }

@@ -30,7 +30,7 @@ import GhostPreviewPortal from './GhostPreviewPortal.jsx';
 import HandPortal from './HandPortal.jsx';
 import BattleModalPortal from './BattleModalPortal.jsx';
 import swordPng from '../assets/img/icons/sword.png';
-import { unlockNextCampaignEnemy } from './CampaignTower.jsx';
+import { unlockNextCampaignEnemy, CAMPAIGN_TOTAL_LEVELS } from './CampaignTower.jsx';
 import StatusText from './StatusText.jsx';
 
 const getBattleExitRoute = (battleConfig) => {
@@ -76,7 +76,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
     applyVirideerBless,
     cancelVirideerBless,
   } = useBattle();
-  const { cardCollection, effectsVolume, lang = 'ptbr', coins, spendCoins } = React.useContext(AppContext);
+  const { cardCollection, effectsVolume, lang = 'ptbr', coins, spendCoins, unlockAchievement } = React.useContext(AppContext);
   const [activeCardIndex, setActiveCardIndex] = React.useState(null);
   const [deckCardDrawn, setDeckCardDrawn] = React.useState(false);
   const [opponentDeckCardDrawn, setOpponentDeckCardDrawn] = React.useState(false);
@@ -464,8 +464,11 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
   useEffect(() => {
     if (state.phase !== 'ended' || state.gameResult?.winner !== 'player') return;
     if (battleConfig?.mode !== 'campaign' || typeof battleConfig?.opponent?.index !== 'number') return;
-    unlockNextCampaignEnemy(battleConfig.opponent.index);
-  }, [battleConfig, state.phase, state.gameResult]);
+    const newProgress = unlockNextCampaignEnemy(battleConfig.opponent.index);
+    if (newProgress >= CAMPAIGN_TOTAL_LEVELS) {
+      unlockAchievement?.('TOWER_COMPLETE');
+    }
+  }, [battleConfig, state.phase, state.gameResult, unlockAchievement]);
 
   // Portais de status vivem fora do tabuleiro. Limpa as animações assim que a
   // batalha termina para que nenhum buff/debuff atravesse o modal de resultado.

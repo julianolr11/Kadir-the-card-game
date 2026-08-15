@@ -42,6 +42,18 @@ ipcMain.handle('steam-get-status', () => {
   }
 });
 
+ipcMain.handle('steam-unlock-achievement', (_event, achievementId: string) => {
+  if (!steamClient) return { activated: false, reason: 'steam-not-connected' };
+  try {
+    const activated = steamClient.achievement.activate(achievementId);
+    log.info(`Conquista Steam "${achievementId}": ${activated ? 'ativada' : 'não reconhecida pelo App ID atual'}`);
+    return { activated };
+  } catch (err: any) {
+    log.warn(`Falha ao ativar conquista Steam "${achievementId}": ${err?.message || err}`);
+    return { activated: false, error: err?.message || 'Steam achievement error' };
+  }
+});
+
 // Novo fluxo: inicialização do autoUpdater será feita sob demanda via IPC
 log.transports.file.level = 'info';
 autoUpdater.logger = log;

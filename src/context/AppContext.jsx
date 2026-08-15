@@ -121,6 +121,36 @@ export function AppProvider({ children }) {
   };
   // ===== END COINS SYSTEM =====
 
+  // ===== ACHIEVEMENTS SYSTEM =====
+  const [unlockedAchievements, setUnlockedAchievements] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('unlockedAchievements');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) return parsed;
+        } catch (e) {
+          // ignora storage corrompido
+        }
+      }
+    }
+    return [];
+  });
+
+  // Desbloqueia uma conquista (idempotente) e notifica a Steam quando disponível.
+  const unlockAchievement = (id) => {
+    setUnlockedAchievements((prev) => {
+      if (prev.includes(id)) return prev;
+      const next = [...prev, id];
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('unlockedAchievements', JSON.stringify(next));
+      }
+      window.electron?.ipcRenderer?.unlockSteamAchievement?.(id);
+      return next;
+    });
+  };
+  // ===== END ACHIEVEMENTS SYSTEM =====
+
   // ===== CARD COLLECTION SYSTEM =====
   // Coleção de cartas: { cardId: [{ instanceId, xp, level, isHolo }, ...] }
   const [cardCollection, setCardCollection] = useState(() => {
@@ -158,10 +188,26 @@ export function AppProvider({ children }) {
   };
 
   const updateCardCollection = (newCollection) => {
+    // Detecta instâncias holo/full art novas (ganhas ou promovidas via craft) para
+    // desbloquear as conquistas "Brilho Raro" / "Arte Completa" uma única vez.
+    let gainedHolo = false;
+    let gainedFullArt = false;
+    Object.keys(newCollection).forEach((cardId) => {
+      const oldInstances = cardCollection[cardId] || [];
+      const oldById = new Map(oldInstances.map((inst) => [inst.instanceId, inst]));
+      (newCollection[cardId] || []).forEach((inst) => {
+        const previous = oldById.get(inst.instanceId);
+        if (inst.isFullArt && !previous?.isFullArt) gainedFullArt = true;
+        else if (inst.isHolo && !previous?.isHolo) gainedHolo = true;
+      });
+    });
+
     setCardCollection(newCollection);
     if (typeof window !== 'undefined') {
       localStorage.setItem('cardCollection', JSON.stringify(newCollection));
     }
+    if (gainedFullArt) unlockAchievement('FIRST_FULL_ART');
+    if (gainedHolo) unlockAchievement('FIRST_HOLO');
   };
 
   // Criar nova instância de carta
@@ -447,6 +493,9 @@ export function AppProvider({ children }) {
       // Guardian Loadout System
       saveGuardianLoadout,
       loadGuardianLoadout,
+      // Achievements
+      unlockedAchievements,
+      unlockAchievement,
     }),
     [
       lang,
@@ -463,6 +512,7 @@ export function AppProvider({ children }) {
       cardCollection,
       decks,
       guardianLoadouts,
+      unlockedAchievements,
     ],
   );
 

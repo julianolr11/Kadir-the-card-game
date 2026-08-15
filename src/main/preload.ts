@@ -64,6 +64,8 @@ const electronHandler = {
     },
     // --- Steam helpers ---
     getSteamStatus: () => ipcRenderer.invoke('steam-get-status'),
+    unlockSteamAchievement: (achievementId: string) =>
+      ipcRenderer.invoke('steam-unlock-achievement', achievementId),
   },
 };
 

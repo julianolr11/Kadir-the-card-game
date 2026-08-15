@@ -1,5 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import '../styles/achievements-room.css';
+import { AppContext } from '../context/AppContext';
+import { ACHIEVEMENTS } from '../assets/achievementsData';
 
 import trophyRoomBg from '../assets/img/wallpaper/trophy-room.png';
 import trophyIcon from '../assets/img/badge/trophy.png';
@@ -30,6 +32,8 @@ function readCampaignProgress() {
 }
 
 export default function AchievementsRoom({ onBack }) {
+  const { unlockedAchievements = [], lang = 'ptbr' } = useContext(AppContext) || {};
+  const langKey = lang?.startsWith('en') ? 'en' : 'pt';
   const [campaignProgress, setCampaignProgress] = useState(readCampaignProgress);
 
   useEffect(() => {
@@ -54,6 +58,14 @@ export default function AchievementsRoom({ onBack }) {
   ), [campaignProgress]);
 
   const unlockedCount = badges.filter(badge => badge.unlocked).length;
+
+  const milestones = useMemo(() => (
+    ACHIEVEMENTS.map((achievement) => ({
+      ...achievement,
+      unlocked: unlockedAchievements.includes(achievement.id),
+    }))
+  ), [unlockedAchievements]);
+  const unlockedMilestoneCount = milestones.filter((m) => m.unlocked).length;
 
   return (
     <section className="achievements-room" style={{ backgroundImage: `url(${trophyRoomBg})` }}>
@@ -84,26 +96,54 @@ export default function AchievementsRoom({ onBack }) {
           </div>
         </section>
 
-        <section className="achievements-badge-grid" aria-label="Insignias da campanha">
-          {badges.map((badge) => (
-            <article
-              key={badge.key}
-              className={`achievement-badge-card${badge.unlocked ? ' unlocked' : ' locked'}`}
-            >
-              <div className="achievement-badge-orb">
-                <img src={badge.img} alt={`Insignia ${badge.label}`} />
-              </div>
-              <div className="achievement-badge-copy">
-                <span>{badge.unlocked ? 'Conquistada' : `${badge.progress}/${LEVELS_PER_TOWER}`}</span>
-                <strong>{badge.label}</strong>
-                <small>{badge.unlocked ? 'Torre vencida' : 'Bloqueada'}</small>
-                <div className="achievement-badge-meter" aria-hidden>
-                  <i style={{ width: `${(badge.progress / LEVELS_PER_TOWER) * 100}%` }} />
+        <div className="achievements-right-column">
+          <h2 className="achievements-section-title">
+            Insígnias das torres
+            <span>{unlockedCount}/{badges.length}</span>
+          </h2>
+          <section className="achievements-badge-grid" aria-label="Insignias da campanha">
+            {badges.map((badge) => (
+              <article
+                key={badge.key}
+                className={`achievement-badge-card${badge.unlocked ? ' unlocked' : ' locked'}`}
+              >
+                <div className="achievement-badge-orb">
+                  <img src={badge.img} alt={`Insignia ${badge.label}`} />
                 </div>
-              </div>
-            </article>
-          ))}
-        </section>
+                <div className="achievement-badge-copy">
+                  <span>{badge.unlocked ? 'Conquistada' : `${badge.progress}/${LEVELS_PER_TOWER}`}</span>
+                  <strong>{badge.label}</strong>
+                  <small>{badge.unlocked ? 'Torre vencida' : 'Bloqueada'}</small>
+                  <div className="achievement-badge-meter" aria-hidden>
+                    <i style={{ width: `${(badge.progress / LEVELS_PER_TOWER) * 100}%` }} />
+                  </div>
+                </div>
+              </article>
+            ))}
+          </section>
+
+          <h2 className="achievements-section-title">
+            Marcos do jogador
+            <span>{unlockedMilestoneCount}/{milestones.length}</span>
+          </h2>
+          <section className="achievements-badge-grid" aria-label="Marcos do jogador">
+            {milestones.map((achievement) => (
+              <article
+                key={achievement.id}
+                className={`achievement-badge-card${achievement.unlocked ? ' unlocked' : ' locked'}`}
+              >
+                <div className="achievement-badge-orb">
+                  <img src={achievement.img} alt={achievement.name[langKey] || achievement.name.pt} />
+                </div>
+                <div className="achievement-badge-copy">
+                  <span>{achievement.unlocked ? 'Conquistada' : 'Bloqueada'}</span>
+                  <strong>{achievement.name[langKey] || achievement.name.pt}</strong>
+                  <small>{achievement.desc[langKey] || achievement.desc.pt}</small>
+                </div>
+              </article>
+            ))}
+          </section>
+        </div>
       </main>
 
       <button className="achievements-bottom-back-btn" type="button" onClick={onBack}>

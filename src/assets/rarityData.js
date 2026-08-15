@@ -98,7 +98,7 @@ export const creatureRarities = {
   seract: { rarity: RARITY_TIERS.RARE, value: 65 },
   noctyra: { rarity: RARITY_TIERS.RARE, value: 70 },
 
-  // EPIC (7) - 60 a 90 moedas
+  // EPIC (9) - 60 a 90 moedas
   ekeranth: { rarity: RARITY_TIERS.EPIC, value: 70 },
   lunethal: { rarity: RARITY_TIERS.EPIC, value: 75 },
   elythra: { rarity: RARITY_TIERS.EPIC, value: 80 },
@@ -106,6 +106,8 @@ export const creatureRarities = {
   ekonos: { rarity: RARITY_TIERS.EPIC, value: 80 },
   ekernoth: { rarity: RARITY_TIERS.EPIC, value: 90 },
   ekerath: { rarity: RARITY_TIERS.EPIC, value: 80 },
+  ekerion: { rarity: RARITY_TIERS.EPIC, value: 85 },
+  galgar: { rarity: RARITY_TIERS.EPIC, value: 75 },
 
   // LEGENDARY (4) - 80 a 150 moedas
   pawferion: { rarity: RARITY_TIERS.LEGENDARY, value: 100 },

@@ -22,6 +22,7 @@ export default function PvpLobby({ onBack, onStartBattle }) {
   const [starting, setStarting] = useState(false); // aguardando o handshake de início de partida
   const [joinCode, setJoinCode] = useState('');
   const [joining, setJoining] = useState(false);
+  const [avatars, setAvatars] = useState({});
   const startTimeoutRef = useRef(null);
 
   useEffect(() => {
@@ -87,6 +88,21 @@ export default function PvpLobby({ onBack, onStartBattle }) {
   useEffect(() => () => {
     if (startTimeoutRef.current) clearTimeout(startTimeoutRef.current);
   }, []);
+
+  // Busca as fotos de perfil dos membros da sala (steamworks.js não expõe isso, só a Web API)
+  useEffect(() => {
+    const ids = (lobby?.members || []).map((m) => m.steamId64).filter((id) => !avatars[id]);
+    if (ids.length === 0) return;
+    let cancelled = false;
+    window.electron?.ipcRenderer?.getSteamPlayerAvatars?.(ids).then((result) => {
+      if (cancelled || !result?.ok) return;
+      setAvatars((prev) => ({ ...prev, ...result.avatars }));
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lobby?.members]);
 
   const handleCreateLobby = async () => {
     setStatus('creating');
@@ -198,7 +214,11 @@ export default function PvpLobby({ onBack, onStartBattle }) {
             <ul className="pvp-lobby-members">
               {lobby.members.map((member) => (
                 <li key={member.steamId64} className="pvp-lobby-member">
-                  <span className="pvp-lobby-member-dot" aria-hidden />
+                  {avatars[member.steamId64] ? (
+                    <img className="pvp-lobby-member-avatar" src={avatars[member.steamId64]} alt="" />
+                  ) : (
+                    <span className="pvp-lobby-member-dot" aria-hidden />
+                  )}
                   {member.name || `Steam ID ${member.steamId64}`}
                 </li>
               ))}

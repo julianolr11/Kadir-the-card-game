@@ -64,6 +64,8 @@ const electronHandler = {
     },
     // --- Steam helpers ---
     getSteamStatus: () => ipcRenderer.invoke('steam-get-status'),
+    getSteamPlayerAvatars: (steamId64s: string[]) =>
+      ipcRenderer.invoke('steam-get-player-avatars', steamId64s),
     unlockSteamAchievement: (achievementId: string) =>
       ipcRenderer.invoke('steam-unlock-achievement', achievementId),
     // --- Steam PvP lobby helpers ---

@@ -121,6 +121,46 @@ const initSteam = () => {
   }
 };
 
+// Chave da Steam Web API (ISteamUser/GetPlayerSummaries), usada só pra buscar foto de perfil
+// dos membros da sala. steamworks.js não expõe avatar (não tem namespace `friends`), então
+// essa é a única forma. Fica num arquivo local não versionado, do lado do steam_appid.txt.
+let cachedWebApiKey: string | null | undefined;
+const getWebApiKey = (): string | null => {
+  if (cachedWebApiKey !== undefined) return cachedWebApiKey;
+  try {
+    const keyPath = path.join(process.cwd(), 'steam_webapi_key.txt');
+    cachedWebApiKey = require('fs').readFileSync(keyPath, 'utf8').trim() || null;
+  } catch (err) {
+    cachedWebApiKey = null;
+  }
+  return cachedWebApiKey;
+};
+
+ipcMain.handle('steam-get-player-avatars', async (_event, steamId64s: string[]) => {
+  const apiKey = getWebApiKey();
+  if (!apiKey) return { ok: false, reason: 'no-api-key' };
+  if (!Array.isArray(steamId64s) || steamId64s.length === 0) return { ok: true, avatars: {} };
+  try {
+    const url = `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=${apiKey}&steamids=${steamId64s.join(',')}`;
+    const response = await fetch(url);
+    if (!response.ok) {
+      log.warn(`Steam Web API retornou ${response.status} ao buscar avatares`);
+      return { ok: false, error: `HTTP ${response.status}` };
+    }
+    const data: any = await response.json();
+    const avatars: Record<string, string> = {};
+    (data?.response?.players || []).forEach((player: any) => {
+      if (player?.steamid && player?.avatarfull) {
+        avatars[player.steamid] = player.avatarfull;
+      }
+    });
+    return { ok: true, avatars };
+  } catch (err: any) {
+    log.warn(`Falha ao buscar avatares via Steam Web API: ${err?.message || err}`);
+    return { ok: false, error: err?.message || 'Falha ao buscar avatares' };
+  }
+});
+
 ipcMain.handle('steam-get-status', () => {
   if (!steamClient) return { connected: false };
   try {

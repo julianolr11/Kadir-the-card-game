@@ -32,3 +32,5 @@ npm-debug.log.*
 # steam_appid.txt é específico do App ID que cada dev está testando.
 /steam_api64.dll
 /steam_appid.txt
+# Chave pessoal da Steam Web API (nunca deve ir pro git).
+/steam_webapi_key.txt

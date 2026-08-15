@@ -10,7 +10,8 @@ import coinIcon from '../assets/img/icons/head.png';
 import creaturesPool from '../assets/cards';
 
 export default function BattleResultModal({ gameResult, killFeed, playerDeck, onClose, battleStats }) {
-  const { cardCollection, updateCardInstanceXp, setBoosters, boosters, addCoins, loadGuardianLoadout } = useContext(AppContext);
+  const { cardCollection, updateCardInstanceXp, setBoosters, boosters, addCoins, loadGuardianLoadout, lang = 'ptbr' } = useContext(AppContext);
+  const isEn = lang?.startsWith('en');
 
   const isPlayerWon = gameResult?.winner === 'player';
   const playerCards = Array.isArray(playerDeck) ? playerDeck : [];
@@ -274,21 +275,26 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
 
         const breakdown = [];
         if (kills > 0) {
-          breakdown.push({ label: `${kills} abate${kills > 1 ? 's' : ''}`, xp: kills * XP_BASE * XP_MULTIPLIERS.kill });
+          breakdown.push({ label: isEn ? `${kills} kill${kills > 1 ? 's' : ''}` : `${kills} abate${kills > 1 ? 's' : ''}`, xp: kills * XP_BASE * XP_MULTIPLIERS.kill });
         }
         if (killsWithAdvantage > 0) {
-          breakdown.push({ label: `${killsWithAdvantage} abate${killsWithAdvantage > 1 ? 's' : ''} com vantagem`, xp: killsWithAdvantage * XP_BASE * XP_MULTIPLIERS.killAdvantage });
+          breakdown.push({
+            label: isEn
+              ? `${killsWithAdvantage} kill${killsWithAdvantage > 1 ? 's' : ''} with advantage`
+              : `${killsWithAdvantage} abate${killsWithAdvantage > 1 ? 's' : ''} com vantagem`,
+            xp: killsWithAdvantage * XP_BASE * XP_MULTIPLIERS.killAdvantage,
+          });
         }
         if (assists > 0) {
-          breakdown.push({ label: `${assists} assistência${assists > 1 ? 's' : ''}`, xp: assists * XP_BASE * XP_MULTIPLIERS.assist });
+          breakdown.push({ label: isEn ? `${assists} assist${assists > 1 ? 's' : ''}` : `${assists} assistência${assists > 1 ? 's' : ''}`, xp: assists * XP_BASE * XP_MULTIPLIERS.assist });
         }
         if (summons > 0) {
-          breakdown.push({ label: 'Invocação', xp: summons * XP_BASE * XP_MULTIPLIERS.summon });
+          breakdown.push({ label: isEn ? 'Summon' : 'Invocação', xp: summons * XP_BASE * XP_MULTIPLIERS.summon });
         }
         if (isPlayerWon) {
-          breakdown.push({ label: 'Vitória', xp: XP_BASE * XP_MULTIPLIERS.victory });
+          breakdown.push({ label: isEn ? 'Victory' : 'Vitória', xp: XP_BASE * XP_MULTIPLIERS.victory });
         } else {
-          breakdown.push({ label: 'Derrota', xp: XP_BASE * XP_MULTIPLIERS.defeat });
+          breakdown.push({ label: isEn ? 'Defeat' : 'Derrota', xp: XP_BASE * XP_MULTIPLIERS.defeat });
         }
 
         // Aplicar bônus de nível após somar tudo
@@ -317,7 +323,7 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
           instanceId: instance.instanceId,
           isHolo: Boolean(instance.isHolo),
           isFullArt: Boolean(instance.isFullArt),
-          name: (cardData?.name && (cardData.name.pt || cardData.name.en || cardData.name)) || baseId,
+          name: (cardData?.name && (isEn ? (cardData.name.en || cardData.name.pt) : (cardData.name.pt || cardData.name.en)) || cardData.name) || baseId,
           image: imagePath,
           xpGained: finalXpGain,
           oldLevel,
@@ -365,27 +371,29 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
         <div className={`battle-result-header ${isPlayerWon ? 'victory' : 'defeat'}`}>
           <div className="battle-result-emblem" aria-hidden="true">{isPlayerWon ? '♛' : '⚔'}</div>
           <div className="battle-result-heading-copy">
-            <span className="battle-result-eyebrow">Resultado da batalha</span>
-            <h1 className="battle-result-title">{isPlayerWon ? 'Vitória' : 'Derrota'}</h1>
+            <span className="battle-result-eyebrow">{isEn ? 'Battle result' : 'Resultado da batalha'}</span>
+            <h1 className="battle-result-title">{isPlayerWon ? (isEn ? 'Victory' : 'Vitória') : (isEn ? 'Defeat' : 'Derrota')}</h1>
             <p className="battle-result-subtitle">
-              {isPlayerWon ? 'O campo pertence a você.' : 'A batalha terminou, mas a guerra continua.'}
+              {isPlayerWon
+                ? (isEn ? 'The field belongs to you.' : 'O campo pertence a você.')
+                : (isEn ? 'The battle is over, but the war goes on.' : 'A batalha terminou, mas a guerra continua.')}
             </p>
           </div>
         </div>
 
         <div className="battle-result-section-heading">
-          <span>Resumo</span><i />
+          <span>{isEn ? 'Summary' : 'Resumo'}</span><i />
         </div>
 
         {/* Estatísticas */}
         <div className="battle-result-stats-container">
           <div className="battle-result-stats">
             <div className="stat-block">
-              <div className="stat-label">Inimigos Derrotados</div>
+              <div className="stat-label">{isEn ? 'Enemies Defeated' : 'Inimigos Derrotados'}</div>
               <div className="stat-value">{killFeed?.length || 0}</div>
             </div>
             <div className="stat-block">
-              <div className="stat-label">Experiência total</div>
+              <div className="stat-label">{isEn ? 'Total Experience' : 'Experiência total'}</div>
               <div className="stat-value">+{totalXpGained}<small> XP</small></div>
             </div>
           </div>
@@ -394,17 +402,17 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
           <div className="battle-result-rewards">
             {/* Moedas */}
             <div className="battle-result-coins-panel">
-              <img src={coinIcon} alt="Moedas" className="battle-result-coin-img" />
+              <img src={coinIcon} alt={isEn ? 'Coins' : 'Moedas'} className="battle-result-coin-img" />
               <span className="battle-result-coins-label">
-                +{coinsEarned} moedas
+                +{coinsEarned} {isEn ? 'coins' : 'moedas'}
               </span>
             </div>
 
             {/* Booster (apenas vitória) */}
             {isPlayerWon && (
               <div className="battle-result-booster-panel">
-                <img src={require('../assets/img/card/booster.png')} alt="Booster adquirido" className="battle-result-booster-img" />
-                <span className="battle-result-booster-label"><small>Recompensa especial</small>1 booster</span>
+                <img src={require('../assets/img/card/booster.png')} alt={isEn ? 'Booster earned' : 'Booster adquirido'} className="battle-result-booster-img" />
+                <span className="battle-result-booster-label"><small>{isEn ? 'Special reward' : 'Recompensa especial'}</small>1 booster</span>
               </div>
             )}
           </div>
@@ -414,7 +422,7 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
         {killFeed && killFeed.length > 0 && (
           <div className="battle-result-kills-feed-grid">
             <div className="battle-result-section-heading">
-              <span>Eliminações</span><i /><b>{killFeed.length}</b>
+              <span>{isEn ? 'Eliminations' : 'Eliminações'}</span><i /><b>{killFeed.length}</b>
             </div>
             <div className="kills-grid">
               {killFeed.map((kill, idx) => {
@@ -423,15 +431,15 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
                 const isUserCard = battleStats?.player?.cardsSummoned?.includes(kill.attacker);
                 return (
                   <div key={idx} className={`kills-grid-cell ${isUserCard ? 'user' : 'opponent'}`} style={{ animationDelay: `${idx * 0.1}s` }}>
-                    <div className="kills-grid-turn">Turno {kill.turn}</div>
+                    <div className="kills-grid-turn">{isEn ? 'Turn' : 'Turno'} {kill.turn}</div>
                     <div className="kills-grid-content">
                       <div className="kills-grid-attacker">
-                        <span className="kills-grid-name">{attackerData?.name?.pt || kill.attacker}</span>
+                        <span className="kills-grid-name">{(isEn ? attackerData?.name?.en : attackerData?.name?.pt) || attackerData?.name?.pt || kill.attacker}</span>
                         {attackerData?.element && <img alt={attackerData.element} src={require(`../assets/img/elements/${attackerData.element}.png`)} className="kills-grid-element" />}
                       </div>
-                      <div className="kills-grid-vs">eliminou</div>
+                      <div className="kills-grid-vs">{isEn ? 'defeated' : 'eliminou'}</div>
                       <div className="kills-grid-target">
-                        <span className="kills-grid-name">{targetData?.name?.pt || kill.target}</span>
+                        <span className="kills-grid-name">{(isEn ? targetData?.name?.en : targetData?.name?.pt) || targetData?.name?.pt || kill.target}</span>
                         {targetData?.element && <img alt={targetData.element} src={require(`../assets/img/elements/${targetData.element}.png`)} className="kills-grid-element" />}
                       </div>
                     </div>
@@ -445,7 +453,7 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
         {/* XP por Carta */}
         <div className="battle-result-xp-cards">
           <div className="battle-result-section-heading">
-            <span>Progressão do esquadrão</span><i /><b>+{totalXpGained} XP</b>
+            <span>{isEn ? 'Squad progression' : 'Progressão do esquadrão'}</span><i /><b>+{totalXpGained} XP</b>
           </div>
           {cardProgressData.length > 0 ? (
             <div className="xp-cards-list">
@@ -472,7 +480,7 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
                         <div className="xp-progress-bar-full">
                           <div className="xp-progress-fill-full" style={{ width: `${card.progressPercent}%` }} />
                           <span className="xp-progress-text-full">
-                            {card.newLevel >= 10 ? 'MAX' : `Nível ${card.newLevel}`}
+                            {card.newLevel >= 10 ? 'MAX' : `${isEn ? 'Level' : 'Nível'} ${card.newLevel}`}
                           </span>
                         </div>
                         <div className="xp-breakdown-list">
@@ -494,16 +502,22 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
               })}
             </div>
           ) : (
-            <div style={{color:'#ffe6b0',textAlign:'center',margin:'32px 0',fontSize:'1.1rem'}}>Nenhuma carta ganhou experiência nesta batalha.<br/>Verifique se as cartas participantes pertencem à sua coleção.</div>
+            <div style={{color:'#ffe6b0',textAlign:'center',margin:'32px 0',fontSize:'1.1rem'}}>
+              {isEn ? (
+                <>No cards gained experience in this battle.<br/>Check that the cards involved belong to your collection.</>
+              ) : (
+                <>Nenhuma carta ganhou experiência nesta batalha.<br/>Verifique se as cartas participantes pertencem à sua coleção.</>
+              )}
+            </div>
           )}
         </div>
         </div>
 
         {/* Botão de Continuar */}
         <div className="battle-result-footer">
-          <span>Recompensas serão adicionadas à sua coleção</span>
+          <span>{isEn ? 'Rewards will be added to your collection' : 'Recompensas serão adicionadas à sua coleção'}</span>
           <button className="battle-result-continue-btn" onClick={handleContinue}>
-            Continuar <b aria-hidden="true">→</b>
+            {isEn ? 'Continue' : 'Continuar'} <b aria-hidden="true">→</b>
           </button>
         </div>
       </div>

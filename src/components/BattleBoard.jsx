@@ -1250,7 +1250,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
           // 5px pra não ficar espiando por cima da área onde os modais de batalha aparecem.
           const opponentExtraDown = owner === 'ai' ? 5 : 0;
           const gradWidth = Math.round(r.width * 1.01);
-          const gradHeight = Math.round(r.height * 0.52);
+          const gradHeight = Math.round(r.height * 0.38);
           const gradLeft = r.left + (r.width / 2);
           const burnYOffset = 36;
           const burnTopNudge = 6;

@@ -6,6 +6,7 @@ import '../styles/animations.css';
 import '../styles/vinheta.css';
 import wallpaperStatic from '../assets/img/wallpaper/wallpaper.png';
 import rastroLogo from '../assets/img/rastro-logo-cropped.png';
+import wallpaperMenuVideo from '../assets/img/wallpaper/wallpaper-menu.mp4';
 import OptionsModal from './OptionsModal';
 import ExitModal from './ExitModal';
 import StartFlow from './StartFlow';
@@ -133,7 +134,7 @@ function LoadingScreen({ onFinish, menuMusicRef }) {
       {!videoError && (
         <video
           ref={videoRef}
-          src="/assets/img/wallpaper/wallpaper-menu.mp4"
+          src={wallpaperMenuVideo}
           autoPlay
           loop
           muted

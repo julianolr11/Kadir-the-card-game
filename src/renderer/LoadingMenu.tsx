@@ -7,6 +7,7 @@ import '../styles/vinheta.css';
 import wallpaper from '../assets/img/wallpaper/wallpaper.png';
 import keyClickSound from '../assets/sounds/effects/key_click.MP3';
 import rastroLogo from '../assets/img/rastro-logo-cropped.png';
+import wallpaperMenuVideo from '../assets/img/wallpaper/wallpaper-menu.mp4';
 
 interface LoadingMenuProps {
   onNavigate: (route: string, params?: any) => void;
@@ -160,7 +161,7 @@ function LoadingMenu({ onNavigate, menuMusicRef, introMusicRef }: LoadingMenuPro
       {!videoError && (
         <video
           ref={videoRef}
-          src="/assets/img/wallpaper/wallpaper-menu.mp4"
+          src={wallpaperMenuVideo}
           autoPlay
           loop
           muted

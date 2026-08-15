@@ -13,3 +13,11 @@
 *.ttf   binary
 *.woff  binary
 *.woff2 binary
+*.webp  binary
+*.gif   binary
+*.cur   binary
+*.mp3   binary
+*.MP3   binary
+*.mp4   binary
+*.webm  binary
+*.wav   binary

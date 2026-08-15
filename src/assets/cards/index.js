@@ -7,6 +7,7 @@ const effectCards = Array.isArray(effectCardsModule) ? effectCardsModule : (effe
 
 const creatures = [
   require('./booster1/draak'),
+  require('./booster1/ekerath'),
   require('./booster1/mawthorn'),
   require('./booster1/kael'),
   require('./booster1/leoracal'),

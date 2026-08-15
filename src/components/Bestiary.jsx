@@ -42,6 +42,7 @@ function Bestiary({ onBack }) {
   const pageFlipAudioRef = React.useRef(null);
   const movingAudioRef = React.useRef(null);
   const { cardCollection, lang = 'ptbr', effectsVolume } = useContext(AppContext);
+  const isEn = lang !== 'ptbr';
   const [selectedCard, setSelectedCard] = useState(null);
   const [isFading, setIsFading] = useState(false);
   const [displayCard, setDisplayCard] = useState(null);
@@ -87,7 +88,7 @@ function Bestiary({ onBack }) {
     if (!displayCard) {
       return (
         <div className="bestiary-preview-placeholder">
-          <p>Selecione uma carta</p>
+          <p>{isEn ? 'Select a card' : 'Selecione uma carta'}</p>
         </div>
       );
     }
@@ -105,7 +106,7 @@ function Bestiary({ onBack }) {
           <div className={`creature-preview-card creature-preview-border-${displayCard.element || 'neutral'}`}>
             <div className="creature-preview-unknown">
               <span className="creature-preview-question">?</span>
-              <p className="creature-preview-locked-text">Carta não desbloqueada</p>
+              <p className="creature-preview-locked-text">{isEn ? 'Card not unlocked' : 'Carta não desbloqueada'}</p>
             </div>
           </div>
         </div>
@@ -143,8 +144,8 @@ function Bestiary({ onBack }) {
 
           <div className="creature-preview-stats">
             <div className="creature-preview-stat">
-              <span className="creature-preview-stat-label">Tipo:</span>
-              <span className="creature-preview-stat-value">{displayCard.type === 'effect' ? (lang === 'ptbr' ? 'Efeito' : 'Effect') : (getText(displayCard.type, lang) || 'Criatura')}</span>
+              <span className="creature-preview-stat-label">{isEn ? 'Type:' : 'Tipo:'}</span>
+              <span className="creature-preview-stat-value">{displayCard.type === 'effect' ? (isEn ? 'Effect' : 'Efeito') : (getText(displayCard.type, lang) || (isEn ? 'Creature' : 'Criatura'))}</span>
             </div>
             <div className="creature-preview-stat">
               <span className="creature-preview-stat-label">HP:</span>
@@ -198,7 +199,7 @@ function Bestiary({ onBack }) {
         onMouseEnter={handleBackMouseEnter}
       >
         <span className="bestiary-back-arrow">←</span>
-        Principal
+        {isEn ? 'Main menu' : 'Principal'}
       </button>
 
       {/* Conteúdo do Bestiário */}
@@ -215,7 +216,7 @@ function Bestiary({ onBack }) {
             {creatures.some(card => card.type !== 'field' && card.type !== 'effect') && (
               <div className="bestiary-divider bestiary-divider-top">
                 <div className="bestiary-divider-line"></div>
-                <span className="bestiary-divider-label">CRIATURAS</span>
+                <span className="bestiary-divider-label">{isEn ? 'CREATURES' : 'CRIATURAS'}</span>
                 <div className="bestiary-divider-line"></div>
               </div>
             )}
@@ -253,7 +254,7 @@ function Bestiary({ onBack }) {
             {creatures.some(card => card.type === 'field') && (
               <div className="bestiary-divider">
                 <div className="bestiary-divider-line"></div>
-                <span className="bestiary-divider-label">CARTAS DE CAMPO</span>
+                <span className="bestiary-divider-label">{isEn ? 'FIELD CARDS' : 'CARTAS DE CAMPO'}</span>
                 <div className="bestiary-divider-line"></div>
               </div>
             )}
@@ -291,7 +292,7 @@ function Bestiary({ onBack }) {
             {creatures.some(card => card.type === 'effect') && (
               <div className="bestiary-divider">
                 <div className="bestiary-divider-line"></div>
-                <span className="bestiary-divider-label">CARTAS DE EFEITO</span>
+                <span className="bestiary-divider-label">{isEn ? 'EFFECT CARDS' : 'CARTAS DE EFEITO'}</span>
                 <div className="bestiary-divider-line"></div>
               </div>
             )}

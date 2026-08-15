@@ -23,6 +23,63 @@ const unlockedTowerBadges = (campaignProgress) => CAMPAIGN_TOWER_TYPES.filter(
   (tower, idx) => (campaignProgress || 0) >= (idx + 1) * LEVELS_PER_TOWER,
 );
 
+const SWIPE_TRACK_WIDTH = 130;
+const SWIPE_KNOB_SIZE = 26;
+const SWIPE_MAX_X = SWIPE_TRACK_WIDTH - SWIPE_KNOB_SIZE - 4;
+const SWIPE_LOCK_THRESHOLD = 0.82;
+
+// Controle "arraste pra travar": o usuário precisa arrastar o botão até o fim da trilha pra
+// confirmar o baralho escolhido. Solta antes do fim, volta pro início sem travar.
+function SwipeToLockToggle({ locked, onLock, label }) {
+  const trackRef = useRef(null);
+  const [dragX, setDragX] = useState(locked ? SWIPE_MAX_X : 0);
+  const [dragging, setDragging] = useState(false);
+
+  useEffect(() => {
+    if (locked) setDragX(SWIPE_MAX_X);
+  }, [locked]);
+
+  const handlePointerDown = (e) => {
+    if (locked) return;
+    setDragging(true);
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e) => {
+    if (!dragging || locked) return;
+    const rect = trackRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left - SWIPE_KNOB_SIZE / 2;
+    setDragX(Math.max(0, Math.min(SWIPE_MAX_X, x)));
+  };
+
+  const handlePointerUp = () => {
+    if (!dragging || locked) return;
+    setDragging(false);
+    if (dragX >= SWIPE_MAX_X * SWIPE_LOCK_THRESHOLD) {
+      setDragX(SWIPE_MAX_X);
+      onLock();
+    } else {
+      setDragX(0);
+    }
+  };
+
+  return (
+    <div className={`pvp-lobby-swipe-track ${locked ? 'pvp-lobby-swipe-track-locked' : ''}`} ref={trackRef}>
+      <span className="pvp-lobby-swipe-label">{locked ? '🔒' : label}</span>
+      <div
+        className="pvp-lobby-swipe-knob"
+        style={{
+          transform: `translateX(${dragX}px)`,
+          transition: dragging ? 'none' : 'transform 260ms cubic-bezier(0.34, 1.56, 0.64, 1)',
+        }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+      />
+    </div>
+  );
+}
+
 export default function PvpLobby({ onBack, onStartBattle }) {
   const { lang = 'ptbr', decks, unlockedAchievements = [] } = useContext(AppContext) || {};
   const isEn = lang?.startsWith('en');
@@ -223,9 +280,10 @@ export default function PvpLobby({ onBack, onStartBattle }) {
 
   const handleDeckPicked = (_cards, deckId) => {
     setSelectedDeckId(deckId);
-    setDeckLocked(true);
     setDeckPickerOpen(false);
   };
+
+  const handleLockDeck = () => setDeckLocked(true);
 
   const isHostOfLobby = Boolean(lobby && mySteamId64 && lobby.ownerSteamId64 === mySteamId64);
   const myMember = lobby?.members?.find((m) => m.steamId64 === mySteamId64) || null;
@@ -278,7 +336,11 @@ export default function PvpLobby({ onBack, onStartBattle }) {
           </div>
         </div>
 
-        <div className="pvp-lobby-player-guardian">
+        <div
+          className="pvp-lobby-player-guardian"
+          onClick={isMe && !deckLocked ? handleOpenDeckPicker : undefined}
+          style={isMe && !deckLocked ? { cursor: 'pointer' } : undefined}
+        >
           {guardianCard ? (
             <div className="pvp-lobby-guardian-art">
               <img
@@ -296,12 +358,14 @@ export default function PvpLobby({ onBack, onStartBattle }) {
         </div>
 
         {isMe && (
-          deckLocked ? (
+          guardianCard ? (
             <div className="pvp-lobby-deck-lock-row">
               <span className="pvp-lobby-deck-name-label">{selectedDeck?.name}</span>
-              <span className="pvp-lobby-deck-lock-toggle pvp-lobby-deck-lock-toggle-on" aria-hidden>
-                <span className="pvp-lobby-deck-lock-knob" />
-              </span>
+              <SwipeToLockToggle
+                locked={deckLocked}
+                onLock={handleLockDeck}
+                label={isEn ? 'Swipe to lock' : 'Arraste p/ travar'}
+              />
             </div>
           ) : (
             <button type="button" className="pvp-lobby-choose-deck-btn" onClick={handleOpenDeckPicker}>

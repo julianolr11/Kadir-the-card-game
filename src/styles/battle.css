@@ -19,6 +19,7 @@
 .burn-gradient {
   position: absolute;
   pointer-events: none;
+  margin-top: 8px;
   transform: translate(-50%, -100%);
   transform-origin: 50% 100%;
   border-radius: 10px;

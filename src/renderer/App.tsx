@@ -276,7 +276,12 @@ export default function App() {
         />
       )}
       {screen === 'pvp-lobby' && (
-        <PvpLobby onBack={() => setScreen('home')} />
+        <PvpLobby
+          onBack={() => setScreen('home')}
+          onStartBattle={(params: { isHost: boolean; peerSteamId64: string; opponentDeck?: any[] }) => {
+            handleNavigate('battle', { mode: 'pvp', ...params });
+          }}
+        />
       )}
       {screen === 'battle' && (
         <BattleProvider>

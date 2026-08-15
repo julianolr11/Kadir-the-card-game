@@ -107,7 +107,11 @@ const initSteam = () => {
 ipcMain.handle('steam-get-status', () => {
   if (!steamClient) return { connected: false };
   try {
-    return { connected: true, username: steamClient.localplayer.getName() };
+    return {
+      connected: true,
+      username: steamClient.localplayer.getName(),
+      steamId64: steamClient.localplayer.getSteamId().steamId64.toString(),
+    };
   } catch (err: any) {
     return { connected: false, error: err?.message || 'Steam client error' };
   }

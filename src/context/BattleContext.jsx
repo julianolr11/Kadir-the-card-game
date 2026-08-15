@@ -328,6 +328,40 @@ const buildInitialBuffs = (build) => {
   return buffs;
 };
 
+// PvP (convidado): o motor do anfitrião sempre chama o convidado de "ai" e a si mesmo de
+// "player". O convidado, porém, deve se ver sempre como "player" (embaixo) e o anfitrião
+// como "ai" (em cima) — o mesmo princípio de visão espelhada que já vale pro modo campanha.
+// Esta função traduz o estado bruto recebido do anfitrião para essa perspectiva local.
+const swapPerspective = (s) => {
+  const swapSide = (val) => (val === 'ai' ? 'player' : (val === 'player' ? 'ai' : val));
+  const swappedAnimations = {};
+  Object.entries(s.animations || {}).forEach(([id, anim]) => {
+    swappedAnimations[id] = anim && anim.owner ? { ...anim, owner: swapSide(anim.owner) } : anim;
+  });
+  return {
+    ...s,
+    player: s.ai,
+    ai: s.player,
+    activePlayer: swapSide(s.activePlayer),
+    creaturesInvokedThisTurn: {
+      player: s.creaturesInvokedThisTurn?.ai || 0,
+      ai: s.creaturesInvokedThisTurn?.player || 0,
+    },
+    battleStats: {
+      player: s.battleStats?.ai,
+      ai: s.battleStats?.player,
+    },
+    elderoxDoubleDamage: s.elderoxDoubleDamage
+      ? { player: s.elderoxDoubleDamage.ai, ai: s.elderoxDoubleDamage.player }
+      : s.elderoxDoubleDamage,
+    animations: swappedAnimations,
+    creaturesWithUsedAbility: new Set(Array.isArray(s.creaturesWithUsedAbility) ? s.creaturesWithUsedAbility : []),
+    gameResult: s.gameResult
+      ? { ...s.gameResult, winner: swapSide(s.gameResult.winner), loser: swapSide(s.gameResult.loser) }
+      : s.gameResult,
+  };
+};
+
 export function BattleProvider({ children }) {
   const { decks, cardCollection, effectsVolume, musicVolume, loadGuardianLoadout } = useContext(AppContext);
   const battleAudioRef = useRef(null);
@@ -1156,6 +1190,44 @@ export function BattleProvider({ children }) {
   const startBattle = useCallback((battleSetup = null) => {
     const isCampaignBattle = battleSetup && !Array.isArray(battleSetup) && battleSetup.mode === 'campaign';
     const isPvpBattle = battleSetup && !Array.isArray(battleSetup) && battleSetup.mode === 'pvp';
+    const isPvpGuest = isPvpBattle && battleSetup.isHost === false;
+
+    if (isPvpGuest) {
+      // O convidado não simula a partida localmente: só monta uma casca de estado e espera
+      // o primeiro broadcast do anfitrião (ver useEffect de recebimento de estado, mais abaixo)
+      // preencher player/ai de verdade.
+      setState({
+        phase: 'coinflip',
+        turn: 1,
+        activePlayer: 'player',
+        mode: 'pvp',
+        isHost: false,
+        peerSteamId64: battleSetup.peerSteamId64 || null,
+        creaturesInvokedThisTurn: { player: 0, ai: 0 },
+        creaturesWithUsedAbility: new Set(),
+        resurrectionPending: null,
+        returnCardPending: null,
+        poisonPending: null,
+        stealCardPending: null,
+        swapCardPending: null,
+        freezePending: null,
+        healPending: null,
+        virideerBlessPending: null,
+        player: { orbs: 5, essence: 0, deck: [], hand: [], field: { slots: [null, null, null], effects: [null, null, null] }, graveyard: [], fieldGraveyard: [] },
+        ai: { orbs: 5, essence: 0, deck: [], hand: [], field: { slots: [null, null, null], effects: [null, null, null] }, graveyard: [], fieldGraveyard: [] },
+        sharedField: { active: false, id: null },
+        log: ['Aguardando o anfitrião iniciar a partida...'],
+        gameResult: null,
+        killFeed: [],
+        animations: {},
+        battleStats: {
+          player: { cardsDrawn: [], cardsSummoned: [], cardsKilled: [], cardsAssisted: [] },
+          ai: { cardsDrawn: [], cardsSummoned: [], cardsKilled: [], cardsAssisted: [] },
+        },
+      });
+      return;
+    }
+
     const deckOverride = (isCampaignBattle || isPvpBattle) ? battleSetup.deck : battleSetup;
     const opponent = isCampaignBattle ? battleSetup.opponent : null;
     // Deck do jogador: selecionado pelo modal; sen├úo primeiro deck salvo; sen├úo amostra aleat├│ria
@@ -1166,12 +1238,14 @@ export function BattleProvider({ children }) {
       ? opponent.levelIndex
       : (Number.isFinite(opponent?.index) ? opponent.index : 0);
     const campaignStage = getCampaignStage(opponentIndex);
-    // PvP: o baralho do adversário (convidado) ainda não é sincronizado via rede (isso é
-    // trabalho da Fase 3b, o cliente do convidado). Por enquanto usamos uma amostra, só para
-    // permitir testar/desenvolver o motor de sincronização do lado do anfitrião.
+    // PvP (anfitrião): usa o baralho real do convidado quando já foi recebido pelo handshake
+    // de seleção de baralho (ver PvpLobby); se ainda não chegou, cai numa amostra.
+    const pvpOpponentDeck = isPvpBattle && Array.isArray(battleSetup.opponentDeck) && battleSetup.opponentDeck.length > 0
+      ? battleSetup.opponentDeck
+      : null;
     const aiDeck = isCampaignBattle
       ? buildCampaignAiDeck(opponent, campaignStage)
-      : sampleDeckFromPool(20);
+      : (pvpOpponentDeck || sampleDeckFromPool(20));
 
     // Embaralhar e comprar m├úo inicial (4 cartas)
     const pShuffled = shuffle(playerDeck);
@@ -1236,6 +1310,11 @@ export function BattleProvider({ children }) {
 
   const endTurn = useCallback(() => {
     setState((s) => {
+      // No PvP, o convidado não roda o motor localmente: envia a jogada pro anfitrião simular.
+      if (s.mode === 'pvp' && s.isHost === false) {
+        window.electron?.ipcRenderer?.sendP2PMessage?.(s.peerSteamId64, { type: 'action', action: 'endTurn' });
+        return s;
+      }
       const currentSide = s.activePlayer;
       const nextActive = s.activePlayer === 'player' ? 'ai' : 'player';
       const nextTurn = s.turn + (nextActive === 'player' ? 1 : 0);
@@ -1662,6 +1741,8 @@ export function BattleProvider({ children }) {
   const drawPlayerCard = useCallback(() => {
     playFlipCardSound();
     setState((s) => {
+      // No PvP, o convidado compra automaticamente pelo motor do anfitrião (endTurn) — nada a fazer aqui.
+      if (s.mode === 'pvp' && s.isHost === false) return s;
       if (s.phase !== 'playing') return s;
       if (s.activePlayer !== 'player') return s;
 
@@ -1694,6 +1775,11 @@ export function BattleProvider({ children }) {
   const summonFromHand = useCallback((index, slotIndex) => {
     playFlipCardSound();
     setState((s) => {
+      // No PvP, o convidado não roda o motor localmente: envia a jogada pro anfitrião simular.
+      if (s.mode === 'pvp' && s.isHost === false) {
+        window.electron?.ipcRenderer?.sendP2PMessage?.(s.peerSteamId64, { type: 'action', action: 'summon', index, slotIndex });
+        return s;
+      }
       if (s.phase !== 'playing') return s;
       if (s.activePlayer !== 'player') return s; // por enquanto s├│ jogador manual
 
@@ -3142,6 +3228,10 @@ export function BattleProvider({ children }) {
   const invokeFieldCard = useCallback((handIndex) => {
     playFieldChangeSound();
     setState((s) => {
+      // Cartas de campo ainda não têm suporte em rede no PvP (fase 3b, primeira fatia).
+      if (s.mode === 'pvp' && s.isHost === false) {
+        return { ...s, log: [...s.log, 'Cartas de campo ainda não estão disponíveis no PvP.'] };
+      }
       if (s.phase !== 'playing') return s;
       if (s.activePlayer !== 'player') return s;
 
@@ -3288,6 +3378,13 @@ export function BattleProvider({ children }) {
     };
 
     setState((s) => {
+      // No PvP, o convidado não roda o motor localmente: envia a jogada pro anfitrião simular.
+      if (s.mode === 'pvp' && s.isHost === false) {
+        window.electron?.ipcRenderer?.sendP2PMessage?.(s.peerSteamId64, {
+          type: 'action', action: 'attack', attackerSlot: slotIndex, abilityIndex, targetSlot: targetSlotIndex,
+        });
+        return s;
+      }
       if (s.phase !== 'playing') return s;
       if (s.activePlayer !== playerSide) return s; // Só pode usar habilidade no seu turno
 
@@ -3663,6 +3760,10 @@ export function BattleProvider({ children }) {
   // Funções para gerenciar cartas de efeito
   const sacrificeCreature = useCallback((side, slotIndex) => {
     setState((s) => {
+      // Sacrifício ainda não tem suporte em rede no PvP (fase 3b, primeira fatia).
+      if (s.mode === 'pvp' && s.isHost === false) {
+        return { ...s, log: [...s.log, 'Sacrificar criaturas ainda não está disponível no PvP.'] };
+      }
       if (s.phase !== 'playing') return s;
       if (side !== 'player') return s;
       if (s.activePlayer !== side) return s;
@@ -3695,6 +3796,10 @@ export function BattleProvider({ children }) {
 
   const playEffectCard = useCallback((handIndex, targetInfo = null) => {
     setState((s) => {
+      // Cartas de efeito ainda não têm suporte em rede no PvP (fase 3b, primeira fatia).
+      if (s.mode === 'pvp' && s.isHost === false) {
+        return { ...s, log: [...s.log, 'Cartas de efeito ainda não estão disponíveis no PvP.'] };
+      }
       let newState = JSON.parse(JSON.stringify(s));
       const cardId = s.player.hand[handIndex];
 
@@ -4160,11 +4265,16 @@ export function BattleProvider({ children }) {
     cancelSpectralAttack,
     triggerAnimation,
     startPlaying: (firstPlayer) => {
-      setState(s => ({
-        ...s,
-        phase: 'playing',
-        activePlayer: firstPlayer === 'player' ? 'player' : 'ai',
-      }));
+      setState(s => {
+        // No PvP, quem decide o primeiro a jogar é o anfitrião — o convidado só espera o
+        // broadcast real (evita que os dois lados sorteiem vencedores diferentes do coinflip).
+        if (s.mode === 'pvp' && s.isHost === false) return s;
+        return {
+          ...s,
+          phase: 'playing',
+          activePlayer: firstPlayer === 'player' ? 'player' : 'ai',
+        };
+      });
     },
   }), [state, startBattle, endTurn, drawPlayerCard, summonFromHand, invokeFieldCard, invokeFieldCardAI, useAbility, sacrificeCreature, resurrectCreature, cancelResurrection, returnEnemyCard, cancelReturnCard, poisonEnemyCard, cancelPoisonCard, stealEnemyCard, revealEnemyCard, cancelStealCard, cancelRevealEnemy, selectFieldCardForSwap, completeSwap, cancelSwap, freezeEnemyCard, cancelFreezeCard, healAllyCard, cancelHealCard, applyVirideerBless, cancelVirideerBless, log, playEffectCard, selectEffectCardTarget, updateEffectCardTarget, cancelEffectCard, cancelDrawOpponent, selectSpectralAbility, executeSpectralAttack, cancelSpectralAttack]);
 
@@ -5186,10 +5296,8 @@ export function BattleProvider({ children }) {
     }
   }, [state.mode, state.aiPendingAttack, state.phase, state.activePlayer, useAbility, continueAiCombat]);
 
-  // --- PvP (Fase 3a, somente anfitrião): aplica ações recebidas do convidado por P2P e
-  // transmite o estado da partida (redigido) de volta para ele. O cliente do convidado
-  // (Fase 3b) ainda não existe, então nada consome essas mensagens de estado hoje — isso
-  // deixa o motor pronto para quando o thin-client do convidado for construído.
+  // --- PvP: lado do anfitrião — aplica ações recebidas do convidado por P2P e transmite o
+  // estado da partida (redigido) de volta para ele.
   useEffect(() => {
     if (state.mode !== 'pvp' || !state.isHost) return undefined;
     const unsubscribe = window.electron?.ipcRenderer?.onP2PMessage?.(({ fromSteamId64, message }) => {
@@ -5218,6 +5326,18 @@ export function BattleProvider({ children }) {
     };
     window.electron?.ipcRenderer?.sendP2PMessage?.(state.peerSteamId64, { type: 'state', state: redactedState });
   }, [state]);
+
+  // --- PvP: lado do convidado — recebe o estado transmitido pelo anfitrião e o adota como
+  // verdade local (thin-client: o convidado nunca roda o motor de batalha, só espelha).
+  useEffect(() => {
+    if (state.mode !== 'pvp' || state.isHost !== false) return undefined;
+    const unsubscribe = window.electron?.ipcRenderer?.onP2PMessage?.(({ fromSteamId64, message }) => {
+      if (!message || message.type !== 'state') return;
+      if (state.peerSteamId64 && fromSteamId64 !== state.peerSteamId64) return;
+      setState((s) => swapPerspective({ ...message.state, mode: s.mode, isHost: s.isHost, peerSteamId64: s.peerSteamId64 }));
+    });
+    return () => unsubscribe?.();
+  }, [state.mode, state.isHost, state.peerSteamId64]);
 
   // <-- FECHAMENTO DE BLOCO ADICIONADO CASO FALTANDO
 

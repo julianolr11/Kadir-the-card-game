@@ -1,15 +1,26 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { AppContext } from '../context/AppContext';
 import '../styles/pvp-lobby.css';
 
-export default function PvpLobby({ onBack }) {
-  const { lang = 'ptbr' } = useContext(AppContext) || {};
+const pickFirstDeckCards = (decks) => {
+  const ids = Object.keys(decks || {});
+  if (ids.length === 0) return null;
+  const first = decks[ids[0]];
+  if (!first || !Array.isArray(first.cards) || first.cards.length === 0) return null;
+  return first.cards;
+};
+
+export default function PvpLobby({ onBack, onStartBattle }) {
+  const { lang = 'ptbr', decks } = useContext(AppContext) || {};
   const isEn = lang?.startsWith('en');
 
   const [steamConnected, setSteamConnected] = useState(null); // null = ainda verificando
+  const [mySteamId64, setMySteamId64] = useState(null);
   const [lobby, setLobby] = useState(null);
   const [status, setStatus] = useState('idle'); // idle | creating | error
   const [error, setError] = useState(null);
+  const [starting, setStarting] = useState(false); // aguardando o handshake de início de partida
+  const startTimeoutRef = useRef(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -18,6 +29,7 @@ export default function PvpLobby({ onBack }) {
       const steamStatus = await window.electron?.ipcRenderer?.getSteamStatus?.();
       if (cancelled) return;
       setSteamConnected(Boolean(steamStatus?.connected));
+      setMySteamId64(steamStatus?.steamId64 || null);
       if (!steamStatus?.connected) return;
 
       // Já pode existir uma sala (ex: entrou via convite antes de abrir esta tela)
@@ -35,6 +47,43 @@ export default function PvpLobby({ onBack }) {
       cancelled = true;
       unsubscribeUpdate?.();
     };
+  }, []);
+
+  // Handshake de início de partida: anfitrião pede o baralho do convidado, o convidado
+  // responde, e então o anfitrião avisa o convidado que pode entrar na tela de batalha.
+  useEffect(() => {
+    const unsubscribe = window.electron?.ipcRenderer?.onP2PMessage?.(({ fromSteamId64, message }) => {
+      if (!message) return;
+
+      if (message.type === 'deck-request') {
+        const myDeck = pickFirstDeckCards(decks);
+        window.electron?.ipcRenderer?.sendP2PMessage?.(fromSteamId64, {
+          type: 'deck-response',
+          deck: myDeck || [],
+        });
+        return;
+      }
+
+      if (message.type === 'deck-response') {
+        if (startTimeoutRef.current) {
+          clearTimeout(startTimeoutRef.current);
+          startTimeoutRef.current = null;
+        }
+        window.electron?.ipcRenderer?.sendP2PMessage?.(fromSteamId64, { type: 'battle-start' });
+        onStartBattle?.({ isHost: true, peerSteamId64: fromSteamId64, opponentDeck: message.deck });
+        return;
+      }
+
+      if (message.type === 'battle-start') {
+        onStartBattle?.({ isHost: false, peerSteamId64: fromSteamId64 });
+      }
+    });
+
+    return () => unsubscribe?.();
+  }, [decks, onStartBattle]);
+
+  useEffect(() => () => {
+    if (startTimeoutRef.current) clearTimeout(startTimeoutRef.current);
   }, []);
 
   const handleCreateLobby = async () => {
@@ -58,6 +107,19 @@ export default function PvpLobby({ onBack }) {
     await window.electron?.ipcRenderer?.leaveSteamLobby?.();
     setLobby(null);
     onBack?.();
+  };
+
+  const isHostOfLobby = Boolean(lobby && mySteamId64 && lobby.ownerSteamId64 === mySteamId64);
+  const opponent = lobby?.members?.find((m) => m.steamId64 !== mySteamId64) || null;
+
+  const handleStartBattle = () => {
+    if (!opponent || starting) return;
+    setStarting(true);
+    window.electron?.ipcRenderer?.sendP2PMessage?.(opponent.steamId64, { type: 'deck-request' });
+    startTimeoutRef.current = setTimeout(() => {
+      setStarting(false);
+      setError(isEn ? 'Opponent did not respond. Try again.' : 'O adversário não respondeu. Tente novamente.');
+    }, 10000);
   };
 
   return (
@@ -117,15 +179,27 @@ export default function PvpLobby({ onBack }) {
               <button type="button" className="pvp-lobby-primary-btn" onClick={handleInvite}>
                 {isEn ? 'Invite friend' : 'Convidar amigo'}
               </button>
-              <button
-                type="button"
-                className="pvp-lobby-primary-btn pvp-lobby-start-btn"
-                disabled
-                title={isEn ? 'Battle sync coming soon' : 'Sincronização de batalha ainda não implementada'}
-              >
-                {isEn ? 'Start battle (soon)' : 'Iniciar partida (em breve)'}
-              </button>
+              {isHostOfLobby ? (
+                <button
+                  type="button"
+                  className="pvp-lobby-primary-btn pvp-lobby-start-btn"
+                  onClick={handleStartBattle}
+                  disabled={!opponent || starting}
+                  title={!opponent ? (isEn ? 'Waiting for an opponent to join' : 'Esperando um adversário entrar') : undefined}
+                >
+                  {starting
+                    ? (isEn ? 'Starting…' : 'Iniciando…')
+                    : (isEn ? 'Start battle' : 'Iniciar partida')}
+                </button>
+              ) : (
+                opponent && (
+                  <p className="pvp-lobby-message">
+                    {isEn ? 'Waiting for the host to start the battle…' : 'Esperando o anfitrião iniciar a partida…'}
+                  </p>
+                )
+              )}
             </div>
+            {error && <p className="pvp-lobby-message pvp-lobby-message-warning">{error}</p>}
           </div>
         )}
       </main>

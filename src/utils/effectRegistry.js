@@ -46,6 +46,110 @@ export function getElementModifier(attackerElement, defenderElement) {
   return { modifier: 0, hasAdvantage: false, hasDisadvantage: false }; // Neutro
 }
 
+const normalizeFieldAffinityText = (value) => String(value || '')
+  .normalize('NFD')
+  .replace(/[̀-ͯ]/g, '')
+  .toLowerCase()
+  .trim();
+
+/**
+ * Calcula o bônus de dano/HP que uma carta de campo concede a uma criatura,
+ * a partir de elementBoosts/cardTypeBoosts/specialBoosts do card de campo.
+ * Bônus especial (afinidade dupla) substitui os bônus simples, não soma com eles.
+ * @returns {{ damage: number, hp: number }}
+ */
+export function getFieldBonusForCreature(fieldData, creature) {
+  if (!fieldData || !creature) return { damage: 0, hp: 0 };
+
+  const elementBoosts = fieldData.elementBoosts || {};
+  const typeBoosts = fieldData.cardTypeBoosts || {};
+  const specialBoosts = fieldData.specialBoosts || {};
+
+  const creatureElement = normalizeFieldAffinityText(creature.element);
+  const creatureType = normalizeFieldAffinityText(creature.type);
+
+  const elementKey = Object.keys(elementBoosts).find(
+    (key) => normalizeFieldAffinityText(key) === creatureElement
+  );
+  const typeKey = Object.keys(typeBoosts).find((key) => {
+    const normalizedKey = normalizeFieldAffinityText(key);
+    if (creatureType.includes(normalizedKey) || normalizedKey.includes(creatureType)) return true;
+    if (creatureType.includes('dracon') && normalizedKey.includes('dracon')) return true;
+    if ((creatureType.includes('drag') || creatureType.includes('dragon')) && (normalizedKey.includes('dracon') || normalizedKey.includes('drag'))) return true;
+    return false;
+  });
+
+  const matchesElement = !!elementKey;
+  const matchesType = !!typeKey;
+
+  if (matchesElement && matchesType) {
+    const special = Object.values(specialBoosts)[0];
+    if (special) return { damage: special.damage || 0, hp: special.hp || 0 };
+    const value = (elementBoosts[elementKey] || 0) + (typeBoosts[typeKey] || 0);
+    return { damage: value, hp: value };
+  }
+  if (matchesElement) {
+    const value = elementBoosts[elementKey] || 0;
+    return { damage: value, hp: value };
+  }
+  if (matchesType) {
+    const value = typeBoosts[typeKey] || 0;
+    return { damage: value, hp: value };
+  }
+  return { damage: 0, hp: 0 };
+}
+
+/**
+ * Versão de getFieldBonusForCreature que lê a carta de campo ativa direto do state da batalha.
+ * @returns {{ damage: number, hp: number }}
+ */
+export function getFieldCombatBonus(state, creature) {
+  const fieldData = state?.sharedField?.active ? state.sharedField.cardData : null;
+  return getFieldBonusForCreature(fieldData, creature);
+}
+
+/**
+ * Ajusta hp/maxHp de uma criatura para refletir o bônus de HP da carta de campo
+ * informada, removendo primeiro qualquer bônus de campo aplicado anteriormente
+ * (rastreado em creature.fieldHpBonus). Seguro de chamar repetidamente: se o
+ * bônus não mudou, retorna a mesma criatura sem alterações.
+ */
+export function applyFieldHpBonusToCreature(creature, fieldData) {
+  if (!creature) return creature;
+  const oldBonus = creature.fieldHpBonus || 0;
+  const newBonus = getFieldBonusForCreature(fieldData, creature).hp;
+  if (oldBonus === newBonus) return creature;
+
+  const delta = newBonus - oldBonus;
+  const newMaxHp = Math.max(1, (creature.maxHp || 0) + delta);
+  const newHp = Math.max(0, Math.min((creature.hp || 0) + delta, newMaxHp));
+
+  return { ...creature, hp: newHp, maxHp: newMaxHp, fieldHpBonus: newBonus };
+}
+
+/**
+ * Reaplica o bônus de HP de campo a todas as criaturas vivas dos dois lados,
+ * usado quando uma carta de campo é jogada/substituída/removida em batalha.
+ */
+export function refreshFieldHpBonusForAllCreatures(state, fieldData) {
+  const applyToSlots = (slots = []) => slots.map((slot) => {
+    if (!slot || slot.hp <= 0) return slot;
+    return applyFieldHpBonusToCreature(slot, fieldData);
+  });
+
+  return {
+    ...state,
+    player: {
+      ...state.player,
+      field: { ...state.player.field, slots: applyToSlots(state.player?.field?.slots) },
+    },
+    ai: {
+      ...state.ai,
+      field: { ...state.ai.field, slots: applyToSlots(state.ai?.field?.slots) },
+    },
+  };
+}
+
 /**
  * Aplica modificadores de buffs/debuffs
  */
@@ -137,7 +241,10 @@ export function applyDamage(state, params) {
   const attackMods = attacker?.buffs?.filter(b => b.stat === 'attack') || [];
   const defenseMods = target.buffs?.filter(b => b.stat === 'defense') || [];
 
-  let damage = baseDamage + elementMod; // Soma/subtrai ao invés de multiplicar
+  // Bônus de dano concedido pela carta de campo ativa (afinidade de elemento/tipo)
+  const fieldDamageBonus = getFieldCombatBonus(state, attacker).damage;
+
+  let damage = baseDamage + elementMod + fieldDamageBonus; // Soma/subtrai ao invés de multiplicar
   damage = applyModifiers(damage, attackMods);
   damage = applyModifiers(damage, defenseMods.map(m => ({ ...m, value: -m.value })));
 

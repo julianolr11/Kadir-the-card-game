@@ -1872,7 +1872,8 @@ export function BattleProvider({ children }) {
         hasDraakBlessing: !!build.hasDraakBlessing,
       };
 
-      slots[slotIndex] = creature;
+      const activeFieldData = s.sharedField?.active ? s.sharedField.cardData : null;
+      slots[slotIndex] = effectRegistry.applyFieldHpBonusToCreature(creature, activeFieldData);
       hand.splice(index, 1);
 
       const newState = {
@@ -2597,7 +2598,8 @@ export function BattleProvider({ children }) {
         hasDraakBlessing: !!build.hasDraakBlessing,
       };
 
-      slots[slotIndex] = creature;
+      const activeFieldData = s.sharedField?.active ? s.sharedField.cardData : null;
+      slots[slotIndex] = effectRegistry.applyFieldHpBonusToCreature(creature, activeFieldData);
       hand.splice(index, 1);
 
       const newState = {
@@ -3289,7 +3291,7 @@ export function BattleProvider({ children }) {
           });
         }, 2400);
       }
-      return {
+      const fieldState = {
         ...s,
         player: {
           ...s.player,
@@ -3308,6 +3310,7 @@ export function BattleProvider({ children }) {
         },
         log: [...s.log, `Campo ${cardId} foi invocado!`],
       };
+      return effectRegistry.refreshFieldHpBonusForAllCreatures(fieldState, cardData);
     });
   }, [playFieldChangeSound]);
 
@@ -3350,7 +3353,7 @@ export function BattleProvider({ children }) {
           });
         }, 2400);
       }
-      return {
+      const fieldState = {
         ...s,
         ai: {
           ...s.ai,
@@ -3369,6 +3372,7 @@ export function BattleProvider({ children }) {
         },
         log: [...s.log, `IA invocou o campo ${cardId}!`],
       };
+      return effectRegistry.refreshFieldHpBonusForAllCreatures(fieldState, cardData);
     });
   }, [playFieldChangeSound]);
 
@@ -5170,7 +5174,7 @@ export function BattleProvider({ children }) {
           const summonAtk = build.atk + (
             build.perkEffects?.dragonAllyAttackBonus && slots.some(slot => isDragonCreature(slot)) ? 1 : 0
           );
-          slots[emptySlotIndex] = {
+          const summonedCreature = {
             id: instanceId,
             baseId: cardToInvoke,
             name: creatureData.name?.pt || creatureData.name?.en || cardToInvoke,
@@ -5191,6 +5195,8 @@ export function BattleProvider({ children }) {
             hasGravhyrBlessing: !!build.hasGravhyrBlessing,
             hasDraakBlessing: !!build.hasDraakBlessing,
           };
+          const activeFieldData = s.sharedField?.active ? s.sharedField.cardData : null;
+          slots[emptySlotIndex] = effectRegistry.applyFieldHpBonusToCreature(summonedCreature, activeFieldData);
 
           const aiBlessingResult = applyAiSummonBlessings(s, build, creatureData, emptySlotIndex, slots, logEntries);
           logEntries = aiBlessingResult.logEntries;
@@ -5314,7 +5320,7 @@ export function BattleProvider({ children }) {
         hand.splice(fieldCardIndex, 1);
         logEntries = [...logEntries, `IA invocou o campo ${cardId}!`];
 
-        return {
+        const fieldState = {
           ...s,
           ai: {
             ...s.ai,
@@ -5332,6 +5338,7 @@ export function BattleProvider({ children }) {
           },
           log: logEntries,
         };
+        return effectRegistry.refreshFieldHpBonusForAllCreatures(fieldState, cardData);
       }
 
       // PRIORIDADE 3: Se nao tem carta de campo, invoca criaturas (máximo 1 por turno)
@@ -5350,7 +5357,7 @@ export function BattleProvider({ children }) {
             const summonAtk = build.atk + (
               build.perkEffects?.dragonAllyAttackBonus && slots.some(slot => isDragonCreature(slot)) ? 1 : 0
             );
-            slots[slotIndex] = {
+            const summonedCreature = {
             id: instanceId,
             baseId: cardId,
             name: creatureData.name?.pt || creatureData.name?.en || cardId,
@@ -5371,6 +5378,8 @@ export function BattleProvider({ children }) {
             hasGravhyrBlessing: !!build.hasGravhyrBlessing,
             hasDraakBlessing: !!build.hasDraakBlessing,
           };
+            const activeFieldData = s.sharedField?.active ? s.sharedField.cardData : null;
+            slots[slotIndex] = effectRegistry.applyFieldHpBonusToCreature(summonedCreature, activeFieldData);
           const aiBlessingResult = applyAiSummonBlessings(s, build, creatureData, slotIndex, slots, logEntries);
           logEntries = aiBlessingResult.logEntries;
           updated = true;
@@ -5402,7 +5411,7 @@ export function BattleProvider({ children }) {
           const summonAtk = build.atk + (
             build.perkEffects?.dragonAllyAttackBonus && slots.some(slot => isDragonCreature(slot)) ? 1 : 0
           );
-          slots[emptyIndex] = {
+          const summonedCreature = {
             id: instanceId,
             baseId: cardToInvoke,
             name: creatureData.name?.pt || creatureData.name?.en || cardToInvoke,
@@ -5423,6 +5432,8 @@ export function BattleProvider({ children }) {
           hasGravhyrBlessing: !!build.hasGravhyrBlessing,
           hasDraakBlessing: !!build.hasDraakBlessing,
         };
+        const activeFieldData = s.sharedField?.active ? s.sharedField.cardData : null;
+        slots[emptyIndex] = effectRegistry.applyFieldHpBonusToCreature(summonedCreature, activeFieldData);
         const aiBlessingResult = applyAiSummonBlessings(s, build, creatureData, emptyIndex, slots, logEntries);
         logEntries = aiBlessingResult.logEntries;
         updated = true;

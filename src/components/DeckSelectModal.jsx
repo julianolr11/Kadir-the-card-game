@@ -63,7 +63,6 @@ function DeckSelectModal({ visible, onClose, onSelect }) {
                   >
                     <div className="deck-card-overlay">
                       <h3>{deck.name}</h3>
-                      <p className="deck-card-sub">{lang === 'ptbr' ? 'Pronto para editar' : 'Ready to edit'}</p>
                     </div>
                   </div>
                 </div>

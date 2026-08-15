@@ -1,7 +1,6 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { AppContext } from '../context/AppContext';
 import cardsPool from '../assets/cards';
-import CreatureCardPreview from './CreatureCardPreview';
 import DeckSelectModal from './DeckSelectModal';
 import { ACHIEVEMENTS } from '../assets/achievementsData';
 import '../styles/pvp-lobby.css';
@@ -252,8 +251,11 @@ export default function PvpLobby({ onBack, onStartBattle }) {
 
         <div className="pvp-lobby-player-guardian">
           {guardianCard ? (
-            <div className="pvp-lobby-guardian-scale">
-              <CreatureCardPreview creature={guardianCard} onClose={null} allowFlip={false} />
+            <div className="pvp-lobby-guardian-art">
+              <img
+                src={guardianCard.img}
+                alt={typeof guardianCard.name === 'object' ? guardianCard.name[isEn ? 'en' : 'pt'] : guardianCard.name}
+              />
             </div>
           ) : (
             <p className="pvp-lobby-message" style={{ fontSize: '0.78rem' }}>
@@ -266,9 +268,14 @@ export default function PvpLobby({ onBack, onStartBattle }) {
 
         {isMe && (
           deckLocked ? (
-            <p className="pvp-lobby-deck-locked">🔒 {selectedDeck?.name}</p>
+            <div className="pvp-lobby-deck-lock-row">
+              <span className="pvp-lobby-deck-name-label">{selectedDeck?.name}</span>
+              <span className="pvp-lobby-deck-lock-toggle pvp-lobby-deck-lock-toggle-on" aria-hidden>
+                <span className="pvp-lobby-deck-lock-knob" />
+              </span>
+            </div>
           ) : (
-            <button type="button" className="pvp-lobby-primary-btn" onClick={handleOpenDeckPicker}>
+            <button type="button" className="pvp-lobby-choose-deck-btn" onClick={handleOpenDeckPicker}>
               {isEn ? 'Choose deck' : 'Escolher baralho'}
             </button>
           )

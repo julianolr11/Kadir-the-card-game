@@ -5,12 +5,17 @@ import '../styles/animations.css';
 
 const translations = {
   ptbr: {
+    kicker: 'CONFIGURAÇÕES DO JOGO',
     options: 'Opções',
     language: 'Idioma',
     volume: 'Volume',
+    musicVolume: 'Volume da Música',
+    effectsVolume: 'Volume dos Efeitos',
     resolution: 'Resolução',
     fullscreen: 'Tela cheia',
+    fullscreenHint: 'Em tela cheia, o jogo usa a resolução nativa do monitor.',
     apply: 'Aplicar',
+    applying: 'Aplicando…',
     close: 'Fechar',
     portuguese: 'Português (BR)',
     english: 'English',
@@ -21,12 +26,17 @@ const translations = {
     feedback_erro: 'Erro ao enviar feedback.',
   },
   en: {
+    kicker: 'GAME SETTINGS',
     options: 'Options',
     language: 'Language',
     volume: 'Volume',
+    musicVolume: 'Music Volume',
+    effectsVolume: 'Effects Volume',
     resolution: 'Resolution',
     fullscreen: 'Fullscreen',
+    fullscreenHint: 'In fullscreen, the game uses the monitor\'s native resolution.',
     apply: 'Apply',
+    applying: 'Applying…',
     close: 'Close',
     portuguese: 'Portuguese (BR)',
     english: 'English',
@@ -174,7 +184,7 @@ function OptionsModal({
     <React.Fragment>
       <div style={modalBgStyle} className="options-modal-overlay">
         <div style={modalStyle} className="modal-zoom-in options-modal-panel">
-          <span className="options-modal-kicker">CONFIGURAÇÕES DO JOGO</span>
+          <span className="options-modal-kicker">{t.kicker}</span>
           <h2
             className="options-modal-title"
             style={{
@@ -206,7 +216,7 @@ function OptionsModal({
               </select>
             </div>
             <div>
-              <label style={labelStyle}>Volume da Música</label>
+              <label style={labelStyle}>{t.musicVolume}</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <input
                   type="range"
@@ -230,7 +240,7 @@ function OptionsModal({
               </div>
             </div>
             <div>
-              <label style={labelStyle}>Volume dos Efeitos</label>
+              <label style={labelStyle}>{t.effectsVolume}</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <input
                   type="range"
@@ -269,7 +279,7 @@ function OptionsModal({
               </select>
               {fullscreen && (
                 <small className="options-resolution-hint">
-                  Em tela cheia, o jogo usa a resolução nativa do monitor.
+                  {t.fullscreenHint}
                 </small>
               )}
             </div>
@@ -363,7 +373,7 @@ function OptionsModal({
             }}
           >
             <button className="options-action-btn options-action-primary" onClick={handleApply} style={btnStyle} disabled={isApplying}>
-              {isApplying ? 'Aplicando…' : t.apply}
+              {isApplying ? t.applying : t.apply}
             </button>
             <button className="options-action-btn options-action-secondary" onClick={handleClose} style={btnStyle}>
               {t.close}

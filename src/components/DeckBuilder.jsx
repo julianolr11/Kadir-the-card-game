@@ -174,6 +174,17 @@ const renderDisplayText = (displayText, langKey = 'pt') => {
           // Pular linhas que começam com "nv X -" ou "Lv X -" (título já exibido)
           if (/^(nv|lv)\s+\d+\s*-/i.test(line.trim())) return null;
 
+          const isEnText = langKey === 'en';
+          const statusWord = {
+            burn: isEnText ? 'burn' : 'queimadura',
+            freeze: isEnText ? 'freeze' : 'congelamento',
+            paralyze: isEnText ? 'paralyze' : 'paralisia',
+            poison: isEnText ? 'poison' : 'veneno',
+            sleep: isEnText ? 'sleep' : 'sono',
+            bleed: isEnText ? 'bleed' : 'sangramento',
+            armor: isEnText ? 'armor' : 'armadura',
+          };
+
           let rendered = line;
 
           // Substituir emojis por texto colorido com ícone
@@ -183,7 +194,7 @@ const renderDisplayText = (displayText, langKey = 'pt') => {
               burnIcon
             }" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ${
               STATUS_COLORS.burn
-            }; font-weight: 600;">queimadura</span>`,
+            }; font-weight: 600;">${statusWord.burn}</span>`,
           );
           rendered = rendered.replace(
             /❄️/g,
@@ -191,7 +202,7 @@ const renderDisplayText = (displayText, langKey = 'pt') => {
               freezeIcon
             }" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ${
               STATUS_COLORS.freeze
-            }; font-weight: 600;">congelamento</span>`,
+            }; font-weight: 600;">${statusWord.freeze}</span>`,
           );
           rendered = rendered.replace(
             /⚡/g,
@@ -199,7 +210,7 @@ const renderDisplayText = (displayText, langKey = 'pt') => {
               paralyzeIcon
             }" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ${
               STATUS_COLORS.paralyze
-            }; font-weight: 600;">paralisia</span>`,
+            }; font-weight: 600;">${statusWord.paralyze}</span>`,
           );
           rendered = rendered.replace(
             /☠️/g,
@@ -207,7 +218,7 @@ const renderDisplayText = (displayText, langKey = 'pt') => {
               poisonIcon
             }" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ${
               STATUS_COLORS.poison
-            }; font-weight: 600;">veneno</span>`,
+            }; font-weight: 600;">${statusWord.poison}</span>`,
           );
           rendered = rendered.replace(
             /😴/g,
@@ -215,7 +226,7 @@ const renderDisplayText = (displayText, langKey = 'pt') => {
               sleepIcon
             }" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ${
               STATUS_COLORS.sleep
-            }; font-weight: 600;">sono</span>`,
+            }; font-weight: 600;">${statusWord.sleep}</span>`,
           );
           rendered = rendered.replace(
             /🩸/g,
@@ -223,7 +234,7 @@ const renderDisplayText = (displayText, langKey = 'pt') => {
               bleedIcon
             }" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ${
               STATUS_COLORS.bleed
-            }; font-weight: 600;">sangramento</span>`,
+            }; font-weight: 600;">${statusWord.bleed}</span>`,
           );
           rendered = rendered.replace(
             /🛡️/g,
@@ -231,58 +242,58 @@ const renderDisplayText = (displayText, langKey = 'pt') => {
               shieldIcon
             }" style="width: 14px; height: 14px; vertical-align: middle; margin: 0 2px;" /> <span style="color: ${
               STATUS_COLORS.armor
-            }; font-weight: 600;">armadura</span>`,
+            }; font-weight: 600;">${statusWord.armor}</span>`,
           );
 
           // Colorir palavras-chave que não foram substituídas por emoji
           let colored = rendered;
-          if (!rendered.includes('queimadura</span>')) {
+          if (!rendered.includes(`${statusWord.burn}</span>`)) {
             colored = colored.replace(
-              /queimadura/gi,
-              (match) =>
-                `<span style="color: ${STATUS_COLORS.burn}; font-weight: 600;">queimadura</span>`,
+              new RegExp(statusWord.burn, 'gi'),
+              () =>
+                `<span style="color: ${STATUS_COLORS.burn}; font-weight: 600;">${statusWord.burn}</span>`,
             );
           }
-          if (!rendered.includes('congelamento</span>')) {
+          if (!rendered.includes(`${statusWord.freeze}</span>`)) {
             colored = colored.replace(
-              /congelamento/gi,
-              (match) =>
-                `<span style="color: ${STATUS_COLORS.freeze}; font-weight: 600;">congelamento</span>`,
+              new RegExp(statusWord.freeze, 'gi'),
+              () =>
+                `<span style="color: ${STATUS_COLORS.freeze}; font-weight: 600;">${statusWord.freeze}</span>`,
             );
           }
-          if (!rendered.includes('paralisia</span>')) {
+          if (!rendered.includes(`${statusWord.paralyze}</span>`)) {
             colored = colored.replace(
-              /paralisia/gi,
-              (match) =>
-                `<span style="color: ${STATUS_COLORS.paralyze}; font-weight: 600;">paralisia</span>`,
+              new RegExp(statusWord.paralyze, 'gi'),
+              () =>
+                `<span style="color: ${STATUS_COLORS.paralyze}; font-weight: 600;">${statusWord.paralyze}</span>`,
             );
           }
-          if (!rendered.includes('veneno</span>')) {
+          if (!rendered.includes(`${statusWord.poison}</span>`)) {
             colored = colored.replace(
-              /veneno/gi,
-              (match) =>
-                `<span style="color: ${STATUS_COLORS.poison}; font-weight: 600;">veneno</span>`,
+              new RegExp(statusWord.poison, 'gi'),
+              () =>
+                `<span style="color: ${STATUS_COLORS.poison}; font-weight: 600;">${statusWord.poison}</span>`,
             );
           }
-          if (!rendered.includes('sono</span>')) {
+          if (!rendered.includes(`${statusWord.sleep}</span>`)) {
             colored = colored.replace(
-              /sono/gi,
-              (match) =>
-                `<span style="color: ${STATUS_COLORS.sleep}; font-weight: 600;">sono</span>`,
+              new RegExp(statusWord.sleep, 'gi'),
+              () =>
+                `<span style="color: ${STATUS_COLORS.sleep}; font-weight: 600;">${statusWord.sleep}</span>`,
             );
           }
-          if (!rendered.includes('sangramento</span>')) {
+          if (!rendered.includes(`${statusWord.bleed}</span>`)) {
             colored = colored.replace(
-              /sangramento/gi,
-              (match) =>
-                `<span style="color: ${STATUS_COLORS.bleed}; font-weight: 600;">sangramento</span>`,
+              new RegExp(statusWord.bleed, 'gi'),
+              () =>
+                `<span style="color: ${STATUS_COLORS.bleed}; font-weight: 600;">${statusWord.bleed}</span>`,
             );
           }
-          if (!rendered.includes('armadura</span>')) {
+          if (!rendered.includes(`${statusWord.armor}</span>`)) {
             colored = colored.replace(
-              /armadura/gi,
-              (match) =>
-                `<span style="color: ${STATUS_COLORS.armor}; font-weight: 600;">armadura</span>`,
+              new RegExp(statusWord.armor, 'gi'),
+              () =>
+                `<span style="color: ${STATUS_COLORS.armor}; font-weight: 600;">${statusWord.armor}</span>`,
             );
           }
 
@@ -384,6 +395,7 @@ function DeckBuilder({ onNavigate }) {
   }, [decks]);
 
   const langKey = lang === 'en' ? 'en' : 'pt';
+  const isEn = langKey === 'en';
 
   // Helper para obter texto traduzido
   const getName = (nameObj) => {
@@ -799,28 +811,32 @@ function DeckBuilder({ onNavigate }) {
     <div className="deckbuilder-screen">
       <div className="deckbuilder-header">
         <button className="deckbuilder-back" onClick={() => onNavigate('home')}>
-          Voltar
+          {isEn ? 'Back' : 'Voltar'}
         </button>
 
         <div className="deckbuilder-titles">
-          <span className="deckbuilder-kicker">Arsenal do jogador</span>
-          <h1>{showRecycler ? 'Reciclar Cartas' : 'Meus Decks'}</h1>
-          <p>{showRecycler ? 'Converta cartas repetidas em moedas' : 'Máximo de 4 decks. Cada deck usa 1 guardião + 20 cartas.'}</p>
+          <span className="deckbuilder-kicker">{isEn ? 'Player arsenal' : 'Arsenal do jogador'}</span>
+          <h1>{showRecycler ? (isEn ? 'Recycle Cards' : 'Reciclar Cartas') : (isEn ? 'My Decks' : 'Meus Decks')}</h1>
+          <p>
+            {showRecycler
+              ? (isEn ? 'Convert duplicate cards into coins' : 'Converta cartas repetidas em moedas')
+              : (isEn ? 'Up to 4 decks. Each deck uses 1 guardian + 20 cards.' : 'Máximo de 4 decks. Cada deck usa 1 guardião + 20 cartas.')}
+          </p>
         </div>
 
         {!showRecycler && (
           <div className="deckbuilder-capacity">
             <strong>{slots.filter(Boolean).length}</strong>
-            <span>de {MAX_DECKS} decks</span>
+            <span>{isEn ? `of ${MAX_DECKS} decks` : `de ${MAX_DECKS} decks`}</span>
           </div>
         )}
 
         <button
           className="recycler-toggle-btn"
           onClick={() => setShowRecycler(!showRecycler)}
-          title={showRecycler ? 'Ver decks' : 'Reciclar cartas'}
+          title={showRecycler ? (isEn ? 'View decks' : 'Ver decks') : (isEn ? 'Recycle cards' : 'Reciclar cartas')}
         >
-          {showRecycler ? '← Voltar' : 'Reciclar 🪙'}
+          {showRecycler ? (isEn ? '← Back' : '← Voltar') : (isEn ? 'Recycle 🪙' : 'Reciclar 🪙')}
         </button>
       </div>
 
@@ -859,7 +875,7 @@ function DeckBuilder({ onNavigate }) {
                           const guardianId = deckData?.guardianId;
                           const guardianData = guardianId ? getGuardianData(guardianId) : null;
                           const guardianImageUrl = guardianData?.img ? guardianData.img : null;
-                          const guardianName = getName(guardianData?.name) || 'Guardião';
+                          const guardianName = getName(guardianData?.name) || (isEn ? 'Guardian' : 'Guardião');
                           const cardCount = Array.isArray(deckData?.cards) ? deckData.cards.length : 0;
 
             return (
@@ -876,13 +892,13 @@ function DeckBuilder({ onNavigate }) {
                   <div>
                     <span className="deck-slot-index">Deck {String(idx + 1).padStart(2, '0')}</span>
                     <div className="deck-slot-title">
-                      {slot ? slot.name : 'Espaço disponível'}
+                      {slot ? slot.name : (isEn ? 'Available slot' : 'Espaço disponível')}
                     </div>
                   </div>
                   <div className="deck-slot-status">
                     {slot
-                      ? (guardianId && cardCount === 20 ? 'Pronto para treino' : 'Incompleto')
-                      : 'Vazio'}
+                      ? (guardianId && cardCount === 20 ? (isEn ? 'Ready for training' : 'Pronto para treino') : (isEn ? 'Incomplete' : 'Incompleto'))
+                      : (isEn ? 'Empty' : 'Vazio')}
                   </div>
                 </div>
 
@@ -895,15 +911,15 @@ function DeckBuilder({ onNavigate }) {
                     }}
                   >
                     <span className="deck-slot-plus">+</span>
-                    <span><strong>Criar novo deck</strong><small>Escolha um guardião e monte sua estratégia</small></span>
+                    <span><strong>{isEn ? 'Create new deck' : 'Criar novo deck'}</strong><small>{isEn ? 'Choose a guardian and build your strategy' : 'Escolha um guardião e monte sua estratégia'}</small></span>
                   </button>
                 )}
 
                 {slot && (
                   <div className="deck-slot-filled-content">
                     <div className="deck-slot-summary">
-                      <div><small>Guardião</small><strong>{guardianName}</strong></div>
-                      <div className="deck-slot-card-count"><strong>{cardCount}</strong><small>/ 20 cartas</small></div>
+                      <div><small>{isEn ? 'Guardian' : 'Guardião'}</small><strong>{guardianName}</strong></div>
+                      <div className="deck-slot-card-count"><strong>{cardCount}</strong><small>{isEn ? '/ 20 cards' : '/ 20 cartas'}</small></div>
                     </div>
                     <div className="deck-slot-actions">
                       <button
@@ -911,25 +927,25 @@ function DeckBuilder({ onNavigate }) {
                         onClick={() => handleTraining(idx)}
                         disabled={!guardianId || cardCount !== 20}
                         title={!guardianId || cardCount !== 20
-                          ? 'Complete o deck para liberar o treino'
-                          : `Treinar com ${slot.name}`}
+                          ? (isEn ? 'Complete the deck to unlock training' : 'Complete o deck para liberar o treino')
+                          : (isEn ? `Train with ${slot.name}` : `Treinar com ${slot.name}`)}
                       >
                         <span className="deck-training-icon" aria-hidden>⚔</span>
-                        Treinar vs IA
-                        <small>Teste sua estratégia contra um oponente</small>
+                        {isEn ? 'Train vs AI' : 'Treinar vs IA'}
+                        <small>{isEn ? 'Test your strategy against an opponent' : 'Teste sua estratégia contra um oponente'}</small>
                       </button>
                       <button
                         className="deck-slot-btn"
                         onClick={() => handleEdit(idx)}
                       >
-                        Editar deck <span aria-hidden="true">→</span>
+                        {isEn ? 'Edit deck' : 'Editar deck'} <span aria-hidden="true">→</span>
                       </button>
                       <button
                         className="deck-slot-btn danger"
                         onClick={() => handleDelete(idx)}
-                        aria-label={`Apagar ${slot.name}`}
+                        aria-label={isEn ? `Delete ${slot.name}` : `Apagar ${slot.name}`}
                       >
-                        Apagar
+                        {isEn ? 'Delete' : 'Apagar'}
                       </button>
                     </div>
                   </div>
@@ -981,7 +997,7 @@ function DeckBuilder({ onNavigate }) {
                 </div>
                 <div className="guardian-progress">
                   <div className="guardian-progress-top">
-                    <span>Progresso para o próximo nível</span>
+                    <span>{isEn ? 'Progress to next level' : 'Progresso para o próximo nível'}</span>
                   </div>
                   <div className="guardian-progress-bar">
                     <div
@@ -990,11 +1006,11 @@ function DeckBuilder({ onNavigate }) {
                     />
                     <div className="guardian-progress-xp">
                       {guardianProgress.level >= 10
-                        ? 'Nível máximo'
+                        ? (isEn ? 'Max level' : 'Nível máximo')
                         : `${guardianProgress.xp}/${nextLevelXp} XP`}
                     </div>
                     <div className="guardian-progress-level-badge">
-                      <img src={lvlIcon} alt="Nível" />
+                      <img src={lvlIcon} alt={isEn ? 'Level' : 'Nível'} />
                       <span>{guardianProgress.level}</span>
                     </div>
                   </div>
@@ -1004,7 +1020,7 @@ function DeckBuilder({ onNavigate }) {
               {/* Lista de habilidades à direita */}
               <div className="loadout-modal-right">
                 <div className="loadout-modal-header">
-                  <h3>Configurar Guardião</h3>
+                  <h3>{isEn ? 'Configure Guardian' : 'Configurar Guardião'}</h3>
                 </div>
 
                 {guardianData ? (
@@ -1013,10 +1029,10 @@ function DeckBuilder({ onNavigate }) {
                     <div className="loadout-section">
                       <div className="loadout-section-header">
                         <div className="loadout-section-label">
-                          Habilidades e Perks (Escolha 2 habilidades + 1 perk)
+                          {isEn ? 'Abilities and Perks (Choose 2 abilities + 1 perk)' : 'Habilidades e Perks (Escolha 2 habilidades + 1 perk)'}
                         </div>
                         <div className="loadout-selected-count">
-                          Habilidades: {selectedSkills.filter((s) => s).length}
+                          {isEn ? 'Abilities' : 'Habilidades'}: {selectedSkills.filter((s) => s).length}
                           /2 | Perk: {selectedPerk ? '1/1' : '0/1'}
                         </div>
                       </div>
@@ -1066,14 +1082,14 @@ function DeckBuilder({ onNavigate }) {
                               }}
                             >
                               <div className="loadout-skill-level">
-                                Nv. {unlock.level}
+                                {isEn ? 'Lv.' : 'Nv.'} {unlock.level}
                               </div>
                               <div className="loadout-skill-name">
                                 {getName(unlock.name)}
                                 {isSkill && (
                                   <span className="loadout-skill-badge">
                                     {' '}
-                                    [HABILIDADE]
+                                    {isEn ? '[ABILITY]' : '[HABILIDADE]'}
                                   </span>
                                 )}
                                 {isPerk && (
@@ -1097,7 +1113,7 @@ function DeckBuilder({ onNavigate }) {
                                     <img
                                       key={i}
                                       src={soulEssence}
-                                      alt="Essência"
+                                      alt={isEn ? 'Essence' : 'Essência'}
                                       className="loadout-essence-icon"
                                     />
                                   ))}
@@ -1119,13 +1135,13 @@ function DeckBuilder({ onNavigate }) {
                       className="loadout-save-btn"
                       onClick={handleSaveLoadout}
                     >
-                      Salvar Configuração
+                      {isEn ? 'Save Configuration' : 'Salvar Configuração'}
                     </button>
                   </>
                 ) : (
                   <div className="loadout-section">
                     <div className="loadout-section-label">
-                      Dados do guardião não encontrados
+                      {isEn ? 'Guardian data not found' : 'Dados do guardião não encontrados'}
                     </div>
                     <div className="loadout-selection-info">
                       Adicione este guardião em guardiansData.js para configurar
@@ -1295,11 +1311,15 @@ function DeckBuilder({ onNavigate }) {
                 textAlign: 'center',
               }}
             >
-              ⚠️ Excluir Deck
+              {isEn ? '⚠️ Delete Deck' : '⚠️ Excluir Deck'}
             </h2>
 
             <div style={{ color: '#f0dede', marginBottom: 18, textAlign: 'center' }}>
-              Tem certeza que deseja excluir este deck? Esta ação <strong>não</strong> pode ser desfeita.
+              {isEn ? (
+                <>Are you sure you want to delete this deck? This action <strong>cannot</strong> be undone.</>
+              ) : (
+                <>Tem certeza que deseja excluir este deck? Esta ação <strong>não</strong> pode ser desfeita.</>
+              )}
             </div>
 
             <div style={{ marginBottom: 12, textAlign: 'center', color: '#e8dfe0' }}>
@@ -1311,7 +1331,9 @@ function DeckBuilder({ onNavigate }) {
                       const d = getDeck ? getDeck(slots[deleteIndex].id) : null;
                       const count = d?.cards?.length ?? '—';
                       const guardian = d?.guardianId || '—';
-                      return `${count} cartas • Guardião: ${guardian}`;
+                      return isEn
+                        ? `${count} cards • Guardian: ${guardian}`
+                        : `${count} cartas • Guardião: ${guardian}`;
                     })()}
                   </div>
                 </>
@@ -1333,7 +1355,7 @@ function DeckBuilder({ onNavigate }) {
                   cursor: 'pointer',
                 }}
               >
-                Cancelar
+                {isEn ? 'Cancel' : 'Cancelar'}
               </button>
               <button
                 onClick={confirmDeleteDeck}
@@ -1349,7 +1371,7 @@ function DeckBuilder({ onNavigate }) {
                   cursor: 'pointer',
                 }}
               >
-                Excluir Deck
+                {isEn ? 'Delete Deck' : 'Excluir Deck'}
               </button>
             </div>
           </div>

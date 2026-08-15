@@ -1190,7 +1190,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
     Object.keys(cardVisualRefs.current || {}).forEach((id) => {
       if (!liveIds.has(id)) delete cardVisualRefs.current[id];
     });
-    const gather = (slots = []) => {
+    const gather = (slots = [], owner) => {
       slots.forEach(slot => {
         if (!slot) return;
         const anim = state.animations?.[slot.id];
@@ -1245,16 +1245,19 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
 
         if (hasBurn) {
           // Gradient and flames stay inside the visible card instead of spilling past the slot.
+          // No lado do adversário (fileira de cima, mais perto dos modais) o burn desce mais
+          // 5px pra não ficar espiando por cima da área onde os modais de batalha aparecem.
+          const opponentExtraDown = owner === 'ai' ? 5 : 0;
           const gradWidth = Math.round(r.width * 1.01);
           const gradHeight = Math.round(r.height * 0.52);
           const gradLeft = r.left + (r.width / 2);
           const burnYOffset = 36;
           const burnTopNudge = 6;
-          const gradTop = r.top + (r.height * 0.88) + burnYOffset + burnTopNudge;
+          const gradTop = r.top + (r.height * 0.88) + burnYOffset + burnTopNudge + opponentExtraDown;
           burnGrad.push({ id: slot.id + '-burn-grad', left: gradLeft, top: gradTop, width: gradWidth, height: gradHeight });
 
           const flameBaseLeft = r.left + (r.width / 2);
-          const flameBaseTop = r.top + (r.height * 0.76) + burnYOffset - 20 + burnTopNudge;
+          const flameBaseTop = r.top + (r.height * 0.76) + burnYOffset - 20 + burnTopNudge + opponentExtraDown;
           const flameOffsets = [-0.34, -0.22, -0.08, 0.09, 0.23, 0.34].map(offset => Math.round(r.width * offset));
           const baseFlameSize = Math.max(18, Math.min(34, Math.round(r.width * 0.145)));
           const flameSizes = [
@@ -1314,8 +1317,8 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
     };
 
     try {
-      gather(state.player?.field?.slots || []);
-      gather(state.ai?.field?.slots || []);
+      gather(state.player?.field?.slots || [], 'player');
+      gather(state.ai?.field?.slots || [], 'ai');
       if (spectralRenderCreature) gather([spectralRenderCreature]);
     } catch (e) {
       // ignore

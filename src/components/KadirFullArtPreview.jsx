@@ -80,6 +80,7 @@ const fullArtFocus = {
   viborom: { position: '38% 47%', scale: 1.01 },
   virideer: { position: '35% 44%', scale: 1.01 },
   whalar: { position: '27% -324%', scale: 1.01 },
+  zefri: { position: '25% 150%', scale: 1.04 },
   zephyron: { position: '50% 263%', scale: 1.01 },
 };
 

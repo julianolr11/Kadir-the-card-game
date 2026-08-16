@@ -49,7 +49,7 @@ const fullArtFocus = {
   arguilia: { position: '46% 155%', scale: 1.14 },
   arigus: { position: '52% 42%', scale: 1.04 },
   ashfang: { position: '51% 44%', scale: 1.03 },
-  beoxyr: { position: '58% 74%%', scale: 1.01 },
+  beoxyr: { position: '57% -6%', scale: 1.01 },
   digitama: { position: '54% 229%', scale: 1.13 },
   draak: { position: '66% 74%', scale: 1.33 },
   drazaq: { position: '50% 44%', scale: 1.04 },

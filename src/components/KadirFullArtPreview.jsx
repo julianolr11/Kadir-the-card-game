@@ -60,7 +60,7 @@ const fullArtFocus = {
   ekonos: { position: '65% 105%', scale: 1.22 },
   elderox: { position: '57% 43%', scale: 1.04 },
   elythra: { position: '50% 42%', scale: 1.02 },
-  faskel: { position: '56% 8%', scale: 1.05 },
+  faskel: { position: '52% 115%', scale: 1.35 },
   galgar: { position: '50% 83%', scale: 1.14 },
   gravhyr: { position: '51% 43%', scale: 1.03 },
   griffor: { position: '43% 144%', scale: 1.35 },

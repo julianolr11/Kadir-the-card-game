@@ -46,6 +46,7 @@ const elementIcons = {
 const fullArtFocus = {
   agolir: { position: '36% 0%', scale: 1.01 },
   alatoy: { position: '20% 1774%', scale: 1.01 },
+  aldanor: { position: '33% 264%', scale: 1.04 },
   arguilia: { position: '46% 155%', scale: 1.14 },
   arigus: { position: '52% 42%', scale: 1.04 },
   ashfang: { position: '51% 44%', scale: 1.03 },

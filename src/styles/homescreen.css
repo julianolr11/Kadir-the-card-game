@@ -2122,10 +2122,22 @@ html, body, #root {
 .deck-btn:hover {
   transform: translateY(-10px) scale(1.045);
   filter: brightness(1.13) contrast(1.12) saturate(1.2);
-  box-shadow:
-    0 0 34px 10px color-mix(in srgb, var(--deck-aura-primary), transparent 18%),
-    0 0 72px 22px rgba(65, 240, 208, .24),
-    0 0 34px 8px rgba(255, 230, 163, .4) inset !important;
+  animation: deck-btn-aura-breathe 2.4s ease-in-out infinite;
+}
+
+@keyframes deck-btn-aura-breathe {
+  0%, 100% {
+    box-shadow:
+      0 0 34px 10px color-mix(in srgb, var(--deck-aura-primary), transparent 18%),
+      0 0 72px 22px rgba(65, 240, 208, .24),
+      0 0 34px 8px rgba(255, 230, 163, .4) inset;
+  }
+  50% {
+    box-shadow:
+      0 0 52px 18px color-mix(in srgb, var(--deck-aura-primary), transparent 6%),
+      0 0 100px 32px rgba(65, 240, 208, .38),
+      0 0 46px 14px rgba(255, 230, 163, .6) inset;
+  }
 }
 
 .deck-btn:hover::before {

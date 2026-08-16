@@ -55,6 +55,7 @@ const fullArtFocus = {
   draak: { position: '66% 74%', scale: 1.33 },
   drazaq: { position: '50% 44%', scale: 1.04 },
   ekeranth: { position: '50% 23%', scale: 1.34 },
+  ekerath: { position: '100% 234%', scale: 1.04 },
   ekernoth: { position: '43% -66%', scale: 1.01 },
   ekonos: { position: '65% 105%', scale: 1.22 },
   elderox: { position: '57% 43%', scale: 1.04 },

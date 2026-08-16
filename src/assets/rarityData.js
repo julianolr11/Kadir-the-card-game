@@ -65,7 +65,7 @@ export const RARITY_CONFIG = {
  * Baseado em análise de balanceamento do jogo
  */
 export const creatureRarities = {
-  // COMMON (10) - 10 a 30 moedas
+  // COMMON (11) - 10 a 30 moedas
   viborom: { rarity: RARITY_TIERS.COMMON, value: 10 },
   arguilia: { rarity: RARITY_TIERS.COMMON, value: 15 },
   leoracal: { rarity: RARITY_TIERS.COMMON, value: 20 },
@@ -75,6 +75,7 @@ export const creatureRarities = {
   nihil: { rarity: RARITY_TIERS.COMMON, value: 30 },
   virideer: { rarity: RARITY_TIERS.COMMON, value: 15 },
   grombi: { rarity: RARITY_TIERS.COMMON, value: 15 },
+  zefri: { rarity: RARITY_TIERS.COMMON, value: 15 },
 
   // UNCOMMON (11) - 20 a 50 moedas
   mawthorn: { rarity: RARITY_TIERS.UNCOMMON, value: 30 },

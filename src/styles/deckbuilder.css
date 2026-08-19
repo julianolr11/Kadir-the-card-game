@@ -1037,7 +1037,7 @@
 }
 
 .deck-slot {
-  aspect-ratio: 369 / 550;
+  aspect-ratio: 369 / 580;
   width: 100%;
   border-radius: 8px;
   border: 2px dashed rgba(255, 255, 255, 0.2);
@@ -1144,7 +1144,7 @@
 
 /* === Card Slots (DeckEditor) === */
 .card-slot {
-  aspect-ratio: 369 / 550;
+  aspect-ratio: 369 / 580;
   width: 100%;
   border-radius: 8px;
   border: 2px dashed rgba(255, 255, 255, 0.2);

@@ -13,6 +13,33 @@ module.exports = {
   color: 'fire',
   hp: 6,
 
+  // ===== MODO CALAMIDADE =====
+  // Forma de chefe usada apenas no modo Calamidade (1-4 jogadores). Não afeta a carta
+  // colecionável/Guardiã normal fora desse modo — hp/abilities acima continuam os mesmos.
+  calamity: {
+    isCalamity: true,
+    baseHp: 100, // vida do chefe em partida solo (100% de poder); ajustado após playtest (era 350, depois 90, 60, 80)
+    powerScale: { 1: 1, 2: 1.75, 3: 2.4, 4: 3 }, // multiplicador de HP e dano por nº de jogadores
+    attacks: {
+      single: {
+        name: { pt: 'Fúria Flamejante', en: 'Flaming Fury' },
+        desc: {
+          pt: 'Causa dano de fogo pesado à criatura de um jogador.',
+          en: 'Deals heavy fire damage to one player\'s creature.',
+        },
+        baseDamage: 5, // dano em partida solo (100% de poder); ajustado após playtest (era 14, depois 6)
+      },
+      area: {
+        name: { pt: 'Rajada de Fogo', en: 'Fire Burst' },
+        desc: {
+          pt: 'Causa dano de fogo à criatura de todos os jogadores.',
+          en: 'Deals fire damage to every player\'s creature.',
+        },
+        baseDamage: 3, // ajustado após playtest (era 8, depois 4)
+      },
+    },
+  },
+
   // Habilidades base (exibidas no card preview)
   abilities: [
     {

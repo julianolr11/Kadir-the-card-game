@@ -1,6 +1,10 @@
 import holoIcon from './img/help/card-holo.png';
 import fullArtIcon from './img/help/card-fullart.png';
 import trophyIcon from './img/badge/trophy.png';
+import ekeranthTrophy from './img/badge/ekeranth_trophy.png';
+import ekerionTrophy from './img/badge/ekerion_trophy.png';
+import ekernothTrophy from './img/badge/ekernoth_trophy.png';
+import ekerathTrophy from './img/badge/ekerath_trophy.png';
 
 // Conquistas com progresso real (independentes dos troféus de torre já existentes
 // na sala de Conquistas). O `id` é usado como API Name da conquista correspondente
@@ -32,6 +36,42 @@ export const ACHIEVEMENTS = [
     desc: {
       pt: 'Complete todas as Torres dos Guardiões.',
       en: 'Complete every Guardian Tower.',
+    },
+  },
+  {
+    id: 'CALAMITY_EKERANTH_DEFEATED',
+    img: ekeranthTrophy,
+    name: { pt: 'Fúria Extinta', en: 'Fury Extinguished' },
+    desc: {
+      pt: 'Derrote Ekeranth no modo Calamidade.',
+      en: 'Defeat Ekeranth in Calamity mode.',
+    },
+  },
+  {
+    id: 'CALAMITY_EKERION_DEFEATED',
+    img: ekerionTrophy,
+    name: { pt: 'Tempestade Silenciada', en: 'Storm Silenced' },
+    desc: {
+      pt: 'Derrote Ekerion no modo Calamidade.',
+      en: 'Defeat Ekerion in Calamity mode.',
+    },
+  },
+  {
+    id: 'CALAMITY_EKERNOTH_DEFEATED',
+    img: ekernothTrophy,
+    name: { pt: 'Abismo Domado', en: 'Abyss Tamed' },
+    desc: {
+      pt: 'Derrote Ekernoth no modo Calamidade.',
+      en: 'Defeat Ekernoth in Calamity mode.',
+    },
+  },
+  {
+    id: 'CALAMITY_EKERATH_DEFEATED',
+    img: ekerathTrophy,
+    name: { pt: 'Terra Pacificada', en: 'Earth Pacified' },
+    desc: {
+      pt: 'Derrote Ekerath no modo Calamidade.',
+      en: 'Defeat Ekerath in Calamity mode.',
     },
   },
 ];

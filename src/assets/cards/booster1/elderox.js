@@ -15,6 +15,10 @@ module.exports = {
     {
       name: { pt: 'Rugido Sísmico', en: 'Seismic Roar' },
       cost: 2,
+      // Sem "causa X de dano" no texto, o resolvedor caía na fórmula genérica (custo*2+1 = 5),
+      // bem acima de habilidades equivalentes (ex: Tempestade de Pó do Terrakhal: custo 2 -> 2
+      // de dano). Fixado aqui em 2 de dano pra ficar consistente com o resto do elenco.
+      damage: 2,
       desc: {
         pt: 'Causa dano em área e reduz a velocidade dos inimigos por 1 turno.',
         en: "Deals area damage and reduces enemies' speed for 1 turn.",

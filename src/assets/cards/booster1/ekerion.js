@@ -12,6 +12,33 @@ module.exports = {
   color: 'air',
   hp: 13,
 
+  // ===== MODO CALAMIDADE =====
+  // Forma de chefe usada apenas no modo Calamidade (1-4 jogadores). Não afeta a carta
+  // colecionável/Guardiã normal fora desse modo — hp/abilities acima continuam os mesmos.
+  calamity: {
+    isCalamity: true,
+    baseHp: 100, // vida do chefe em partida solo (100% de poder); ajustado após playtest (era 350, depois 90, 60, 80)
+    powerScale: { 1: 1, 2: 1.75, 3: 2.4, 4: 3 }, // multiplicador de HP e dano por nº de jogadores
+    attacks: {
+      single: {
+        name: { pt: 'Fenda Relâmpago', en: 'Lightning Rift' },
+        desc: {
+          pt: 'Causa dano de ar pesado à criatura de um jogador.',
+          en: 'Deals heavy air damage to one player\'s creature.',
+        },
+        baseDamage: 5, // dano em partida solo (100% de poder); ajustado após playtest (era 14, depois 6)
+      },
+      area: {
+        name: { pt: 'Fúria da Tormenta', en: "Storm's Fury" },
+        desc: {
+          pt: 'Causa dano de ar à criatura de todos os jogadores.',
+          en: 'Deals air damage to every player\'s creature.',
+        },
+        baseDamage: 3, // ajustado após playtest (era 9, depois 4)
+      },
+    },
+  },
+
   // Habilidades base (exibidas no card preview)
   abilities: [
     {
@@ -90,10 +117,10 @@ module.exports = {
   // Bênção padrão
   defaultBlessing: {
     id: 'ekerion_blessing',
-    name: { pt: 'Bênção da Tormenta', en: "Storm's Blessing" },
+    name: { pt: 'Rajada da Tormenta', en: 'Storm Gust' },
     desc: {
-      pt: 'Aliados ganham +1 de defesa; inimigos recebem -1 de velocidade enquanto Ekerion estiver em campo.',
-      en: "Allies gain +1 defense; enemies suffer -1 speed while Ekerion is on the field.",
+      pt: 'Ao ser invocado, uma rajada de vento causa 1 de dano a todas as criaturas em campo, aliadas ou adversárias.',
+      en: 'When summoned, a gust of wind deals 1 damage to every creature on the field, allied or enemy.',
     },
   },
 

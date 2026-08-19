@@ -10,6 +10,7 @@ import paralyzeIcon from '../assets/img/icons/paralyze.png';
 import poisonIcon from '../assets/img/icons/poison.png';
 import sleepIcon from '../assets/img/icons/sleep.png';
 import bleedIcon from '../assets/img/icons/bleed.png';
+import immunityIcon from '../assets/img/effect-cards/imunity_resultado.webp';
 import fogo from '../assets/img/elements/fogo.png';
 import agua from '../assets/img/elements/agua.png';
 import terra from '../assets/img/elements/terra.png';
@@ -58,15 +59,18 @@ const STATUS_COLORS = {
 };
 
 // Função para processar descrição com emojis e adicionar ícones + texto colorido
+// \b nas pontas de cada padrão evita "falso positivo" quando a raiz da palavra aparece no meio
+// de outra palavra sem relação (ex: sem isso, "cura" batia dentro de "escura", quebrando
+// "verde-escura" em "verde-es" + <cura destacado> + nada).
 const HIGHLIGHT_KEYWORDS = [
-  { className: 'debuff-poison', pattern: /(envenenamento|envenena(?:r|do|da|m|ndo)?|veneno|poison(?:ed|ing)?)/gi },
-  { className: 'debuff-freeze', pattern: /(congelamento|congela(?:r|do|da|m|ndo)?|freeze|frozen)/gi },
-  { className: 'debuff-burn', pattern: /(queimadura(?:s)?|queima(?:r|do|da|m|ndo)?|burn(?:ed|ing)?)/gi },
-  { className: 'debuff-sleep', pattern: /(sono|dorme(?:r|m|ndo)?|adormece(?:r|m|ndo)?|sleep|asleep)/gi },
-  { className: 'buff-protection', pattern: /(proteção|protecao|protege(?:r|m|ndo)?|escudo(?:s)?|armadura|shield(?:s)?|protection|armor)/gi },
-  { className: 'debuff-bleed', pattern: /(sangramento|sangra(?:r|do|da|m|ndo)?|bleed(?:ing)?)/gi },
-  { className: 'debuff-paralyze', pattern: /(paralisia|paralisa(?:r|do|da|m|ndo)?|paralyze(?:d)?|stun(?:ned)?)/gi },
-  { className: 'buff-positive', pattern: /(cura(?:r|do|da|m|ndo)?|regenera(?:ção|cao|r|m|ndo)?|aumenta(?:r|m|ndo)?|ganha(?:r|m|ndo)?|concede(?:r|m|ndo)?|velocidade|esquiva|crítico|critico|defesa|ataque|heal(?:ing)?|regeneration|gain(?:s)?|grant(?:s)?|speed|dodge|critical|defense|attack)/gi },
+  { className: 'debuff-poison', pattern: /\b(envenenamento|envenena(?:r|do|da|m|ndo)?|veneno|poison(?:ed|ing)?)\b/gi },
+  { className: 'debuff-freeze', pattern: /\b(congelamento|congela(?:r|do|da|m|ndo)?|freeze|frozen)\b/gi },
+  { className: 'debuff-burn', pattern: /\b(queimadura(?:s)?|queima(?:r|do|da|m|ndo)?|burn(?:ed|ing)?)\b/gi },
+  { className: 'debuff-sleep', pattern: /\b(sono|dorme(?:r|m|ndo)?|adormece(?:r|m|ndo)?|sleep|asleep)\b/gi },
+  { className: 'buff-protection', pattern: /\b(proteção|protecao|protege(?:r|m|ndo)?|escudo(?:s)?|armadura|shield(?:s)?|protection|armor)\b/gi },
+  { className: 'debuff-bleed', pattern: /\b(sangramento|sangra(?:r|do|da|m|ndo)?|bleed(?:ing)?)\b/gi },
+  { className: 'debuff-paralyze', pattern: /\b(paralisia|paralisa(?:r|do|da|m|ndo)?|paralyze(?:d)?|stun(?:ned)?|derruba(?:r|do|da|m|ndo)?|knock\s*down)\b/gi },
+  { className: 'buff-positive', pattern: /\b(cura(?:r|do|da|m|ndo)?|regenera(?:ção|cao|r|m|ndo)?|aumenta(?:r|m|ndo)?|ganha(?:r|m|ndo)?|concede(?:r|m|ndo)?|velocidade|esquiva|crítico|critico|defesa|ataque|heal(?:ing)?|regeneration|gain(?:s)?|grant(?:s)?|speed|dodge|critical|defense|attack)\b/gi },
 ];
 
 const highlightDescriptionKeywords = (text) => HIGHLIGHT_KEYWORDS.reduce(
@@ -219,6 +223,7 @@ function CreatureCardPreview({
   poison = 0,
   sleep = 0,
   bleed = 0,
+  immune = 0,
   shield = 0,
   shieldTurns = 0,
   onAbilityClick = null,
@@ -362,6 +367,7 @@ function CreatureCardPreview({
                 alt={typeof creature.name === 'object' ? creature.name[langKey] : creature.name}
                 className="card-preview-art"
                 draggable={false}
+                style={creature.imgPosition ? { objectPosition: creature.imgPosition } : undefined}
               />
               <div className="card-preview-effects-container">
                 {shield > 0 && (
@@ -410,6 +416,12 @@ function CreatureCardPreview({
                   <div className="card-preview-effect-indicator bleed">
                     <img src={bleedIcon} alt="Sangramento" className="effect-icon" />
                     <span className="effect-value">{bleed}</span>
+                  </div>
+                )}
+                {immune > 0 && (
+                  <div className="card-preview-effect-indicator immune">
+                    <img src={immunityIcon} alt="Imunidade" className="effect-icon" />
+                    <span className="effect-value">{immune}</span>
                   </div>
                 )}
               </div>

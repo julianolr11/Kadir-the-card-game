@@ -186,17 +186,20 @@ ipcMain.handle('steam-unlock-achievement', (_event, achievementId: string) => {
   }
 });
 
-ipcMain.handle('steam-create-lobby', async () => {
+ipcMain.handle('steam-create-lobby', async (_event, maxMembers?: number) => {
   if (!steamClient) return { ok: false, reason: 'steam-not-connected' };
   try {
     // Os enums (LobbyType, SendType etc.) só existem no objeto cliente já
     // inicializado (steamClient.<namespace>.<Enum>), não no módulo `steamworks.js` em si.
-    const lobby = await steamClient.matchmaking.createLobby(steamClient.matchmaking.LobbyType.FriendsOnly, 2);
+    // maxMembers: 2 para salas de PvP, 4 para o lobby social da Calamidade (co-op ainda não
+    // sincroniza a partida em si, só reúne o grupo — ver plano do modo Calamidade).
+    const cap = Number.isInteger(maxMembers) && maxMembers! > 0 ? maxMembers! : 2;
+    const lobby = await steamClient.matchmaking.createLobby(steamClient.matchmaking.LobbyType.FriendsOnly, cap);
     currentLobby = lobby;
-    log.info(`Sala PvP criada: ${lobby.id.toString()}`);
+    log.info(`Sala criada (max ${cap}): ${lobby.id.toString()}`);
     return { ok: true, lobby: serializeLobby(lobby) };
   } catch (err: any) {
-    log.warn(`Falha ao criar sala PvP: ${err?.message || err}`);
+    log.warn(`Falha ao criar sala: ${err?.message || err}`);
     return { ok: false, error: err?.message || 'Falha ao criar sala' };
   }
 });
@@ -346,8 +349,10 @@ const createWindow = async () => {
 
   mainWindow.loadURL(resolveHtmlPath('index.html'));
 
-  // Permitir autoplay de áudio
-  mainWindow.webContents.session.setPermissionCheckHandler(() => true);
+  // Permitir autoplay de áudio (só essa permissão, não todas)
+  mainWindow.webContents.session.setPermissionCheckHandler(
+    (_webContents, permission) => permission === 'media',
+  );
   setupAudioManager(mainWindow);
 
   mainWindow.on('ready-to-show', () => {
@@ -358,6 +363,10 @@ const createWindow = async () => {
       mainWindow.minimize();
     } else {
       mainWindow.show();
+    }
+    // DevTools só em dev — abrir sempre expõe os canais IPC (Steam/P2P) em builds empacotados.
+    if (isDebug) {
+      mainWindow.webContents.openDevTools();
     }
   });
 

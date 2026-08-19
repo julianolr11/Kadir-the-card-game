@@ -87,7 +87,14 @@ function buildTowerLevels(tower, towerIndex, isEn) {
     : [getGuardianCardData(tower.guardianFallback)].filter(Boolean);
 
   return Array.from({ length: CAMPAIGN_LEVELS_PER_TOWER }, (_, levelIndex) => {
-    const guardianCard = cards[levelIndex % cards.length] || getGuardianCardData(tower.guardianFallback);
+    // Primeira volta: cada guardião único aparece uma vez, na ordem em que foi adicionado ao jogo.
+    // Quando os slots restantes precisam repetir alguém, prioriza os guardiões mais recentes
+    // (fim do array) em vez de repetir logo os mais antigos - assim as cartas novas aparecem
+    // com mais frequência que as antigas nas torres com poucos guardiões daquele tipo.
+    const guardianCard = (levelIndex < cards.length
+      ? cards[levelIndex]
+      : cards[cards.length - 1 - ((levelIndex - cards.length) % cards.length)]
+    ) || getGuardianCardData(tower.guardianFallback);
     const index = towerIndex * CAMPAIGN_LEVELS_PER_TOWER + levelIndex;
 
     return {

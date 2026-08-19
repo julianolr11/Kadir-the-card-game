@@ -155,7 +155,7 @@ function LoadingMenu({ onNavigate, menuMusicRef, introMusicRef }: LoadingMenuPro
           userSelect: 'none',
         }}
       >
-        v{appVersion}
+        v{appVersion} · Early Access
       </div>
 
       {/* Vídeo do wallpaper em loop */}

@@ -49,6 +49,11 @@ const creatures = [
   require('./booster1/grombi'),
   require('./booster1/zefri'),
   require('./booster1/aldanor'),
+  require('./booster1/hipoderion'),
+  require('./booster1/albot'),
+  require('./booster1/arvel'),
+  require('./booster1/crogal'),
+  require('./booster1/igrazar'),
 ];
 
 // Adiciona field cards se estiverem disponíveis
@@ -61,7 +66,11 @@ if (Array.isArray(effectCards) && effectCards.length > 0) {
   creatures.push(...effectCards);
 }
 
+// Criaturas jogáveis como chefe no modo Calamidade (ver campo `calamity` em cada carta).
+const getCalamityCreatures = () => creatures.filter((c) => c && c.calamity && c.calamity.isCalamity);
+
 module.exports = creatures;
 module.exports.creatures = creatures;
 module.exports.fieldCards = fieldCards;
 module.exports.effectCards = effectCards;
+module.exports.getCalamityCreatures = getCalamityCreatures;

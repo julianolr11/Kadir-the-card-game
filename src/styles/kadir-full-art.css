@@ -207,6 +207,84 @@
   line-height: 1;
 }
 
+.kadir-full-art-effects-container {
+  position: absolute;
+  z-index: 4;
+  top: 70px;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
+  pointer-events: none;
+}
+
+.kadir-full-art-effect-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: rgba(20, 15, 30, 0.85);
+  border-radius: 8px;
+  padding: 4px 8px;
+  box-shadow: 0 2px 8px #000a;
+  border: 1.5px solid rgba(255, 230, 176, 0.6);
+}
+
+.kadir-full-art-effect-indicator .effect-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 3px #000a);
+}
+
+.kadir-full-art-effect-indicator .effect-value {
+  font-weight: 700;
+  font-size: 12px;
+  color: #ffe6b0;
+}
+
+.kadir-full-art-effect-indicator.armor {
+  border-color: rgba(255, 230, 176, 0.7);
+  background: rgba(30, 20, 10, 0.85);
+}
+
+.kadir-full-art-effect-indicator.shield {
+  border-color: rgba(100, 200, 255, 0.8);
+  background: rgba(10, 30, 50, 0.9);
+  box-shadow: 0 2px 8px #000a, 0 0 12px rgba(100, 200, 255, 0.5);
+}
+
+.kadir-full-art-effect-indicator.burn {
+  border-color: rgba(255, 100, 50, 0.6);
+  background: rgba(40, 20, 10, 0.85);
+}
+
+.kadir-full-art-effect-indicator.freeze {
+  border-color: rgba(100, 200, 255, 0.6);
+  background: rgba(10, 20, 40, 0.85);
+}
+
+.kadir-full-art-effect-indicator.paralyze {
+  border-color: rgba(255, 255, 100, 0.6);
+  background: rgba(40, 40, 10, 0.85);
+}
+
+.kadir-full-art-effect-indicator.poison {
+  border-color: rgba(150, 100, 255, 0.6);
+  background: rgba(30, 10, 40, 0.85);
+}
+
+.kadir-full-art-effect-indicator.sleep {
+  border-color: rgba(200, 150, 255, 0.6);
+  background: rgba(30, 20, 40, 0.85);
+}
+
+.kadir-full-art-effect-indicator.bleed {
+  border-color: rgba(255, 100, 100, 0.6);
+  background: rgba(40, 10, 10, 0.85);
+}
+
 .kadir-full-art-element {
   width: 24px;
   height: 24px;
@@ -405,6 +483,55 @@
   height: 18px;
   object-fit: contain;
   filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.65));
+}
+
+.kadir-full-art-hpbar {
+  position: relative;
+  height: 26px;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid rgba(230, 195, 118, 0.55);
+  background: rgba(8, 4, 10, 0.82);
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.65),
+    0 4px 16px rgba(0, 0, 0, 0.4),
+    0 0 18px rgba(233, 60, 40, 0.25);
+}
+
+.kadir-full-art-hpbar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #7c1d1d 0%, #d3341f 45%, #f2c94c 100%);
+  box-shadow: 0 0 14px rgba(242, 201, 76, 0.55);
+  transition: width 300ms ease;
+}
+
+.kadir-full-art-hpbar-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.65);
+  font-variant-numeric: tabular-nums;
+}
+
+.kadir-full-art-hpbar.is-healing {
+  animation: kadir-hpbar-heal-pulse 550ms ease-out 2;
+}
+
+.kadir-full-art-hpbar.is-healing .kadir-full-art-hpbar-fill {
+  background: linear-gradient(90deg, #1f6d3a 0%, #3fae5c 45%, #b6f2b0 100%);
+  box-shadow: 0 0 18px rgba(120, 255, 140, 0.75);
+}
+
+@keyframes kadir-hpbar-heal-pulse {
+  0% { box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.65), 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 0 rgba(120, 255, 140, 0); }
+  50% { box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.65), 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 26px rgba(120, 255, 140, 0.85); }
+  100% { box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.65), 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 0 rgba(120, 255, 140, 0); }
 }
 
 .kadir-full-art-note {

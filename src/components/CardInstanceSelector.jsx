@@ -5,6 +5,7 @@ import lvlIcon from '../assets/img/icons/lvlicon.png';
 import heartIcon from '../assets/img/icons/hearticon.png';
 import CreatureCardPreview from './CreatureCardPreview';
 import { FullArtCard } from './KadirFullArtPreview';
+import BattleModalPortal from './BattleModalPortal';
 
 /**
  * CardInstanceSelector - Modal para selecionar qual instância de uma carta usar
@@ -169,6 +170,7 @@ function CardInstanceSelector({
   };
 
   return (
+    <BattleModalPortal>
     <div className="card-instance-selector-overlay" onClick={onClose}>
       <div
         className="card-instance-selector-panel"
@@ -355,6 +357,7 @@ function CardInstanceSelector({
         </div>
       </div>
     </div>
+    </BattleModalPortal>
   );
 }
 

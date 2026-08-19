@@ -12,19 +12,23 @@ module.exports = {
   hp: 5,
   abilities: [
     {
-      name: { pt: 'Impacto Bestial', en: 'Beast Strike' },
-      cost: 3,
+      // Era "Impacto Bestial" - genérico, não remetia a nada do tema vulcânico/draconídeo do
+      // Drazraq. Renomeado pra encaixar no resto do kit dele (garras em brasa, lava). Custo 3
+      // com dano+sangramento+derrubada era desproporcional pra uma habilidade básica -
+      // simplificado pra um efeito mais barato e direto.
+      name: { pt: 'Investida Incandescente', en: 'Incandescent Charge' },
+      cost: 1,
       desc: {
-        pt: 'Causa 4 de dano, aplica sangramento leve e derruba (knockdown) 1 turno.',
-        en: 'Deals 4 damage, applies light bleed and knocks down 1 turn.',
+        pt: 'Investe com garras em brasa: causa 1 de dano e aplica sangramento leve por 2 turnos.',
+        en: 'Charges with ember-hot claws: deals 1 damage and applies light bleed for 2 turns.',
       },
     },
     {
       name: { pt: 'Fúria Vulcânica', en: 'Volcanic Rage' },
-      cost: 2,
+      cost: 1,
       desc: {
-        pt: 'Ganha +1 ataque por 2 turnos e jogue a moeda 1 vez; se der cara, paralisa ao atacar.',
-        en: 'Gain +1 attack for 2 turns and flips a coin once; on heads, paralyzes on hit.',
+        pt: 'Causa 1 de dano ao adversário e elimina 1 de essência do oponente, caso ele tenha.',
+        en: 'Deals 1 damage to the opponent and removes 1 essence from the opponent, if they have any.',
       },
     },
   ],

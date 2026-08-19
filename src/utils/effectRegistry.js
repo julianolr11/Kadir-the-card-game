@@ -185,6 +185,21 @@ export function applyDamage(state, params) {
     return { newState: state, log: [], damageDealt: 0, hasAdvantage: false, hasDisadvantage: false, shieldHit: false, shieldBroken: false };
   }
 
+  // Carta de efeito "Imunidade": bloqueia todo dano (inclusive DoT) enquanto o status durar.
+  if ((target.statusEffects || []).some(e => e.type === 'immune' && e.duration > 0)) {
+    return {
+      newState: state,
+      log: [`${target.name || 'Alvo'} está imune e não sofreu dano!`],
+      damageDealt: 0,
+      hasAdvantage: false,
+      hasDisadvantage: false,
+      shieldHit: false,
+      shieldBroken: false,
+      died: false,
+      immune: true,
+    };
+  }
+
   if (target.firstAttackNegated) {
     const newState = updateCreature(state, targetId, { firstAttackNegated: false });
     return {
@@ -197,6 +212,25 @@ export function applyDamage(state, params) {
       shieldBroken: false,
       died: false,
     };
+  }
+
+  // Imunidade a criaturas sombrias ou de fogo (ex: Bênção do Galgar)
+  if (target.perkEffects?.immuneToShadowOrFire && attacker) {
+    const attackerTypeText = (attacker.type || '').toLowerCase();
+    const isShadowOrFireAttacker = attackerTypeText.includes('sombr') || attackerTypeText.includes('shadow') || attacker.element === 'fogo';
+    if (isShadowOrFireAttacker) {
+      return {
+        newState: state,
+        log: [`${target.name || 'Alvo'} é imune a ataques de criaturas sombrias ou de fogo!`],
+        damageDealt: 0,
+        hasAdvantage: false,
+        hasDisadvantage: false,
+        shieldHit: false,
+        shieldBroken: false,
+        died: false,
+        immune: true,
+      };
+    }
   }
 
   const isNight = applyCombatPerks && isNightTurn(state);
@@ -244,7 +278,12 @@ export function applyDamage(state, params) {
   // Bônus de dano concedido pela carta de campo ativa (afinidade de elemento/tipo)
   const fieldDamageBonus = getFieldCombatBonus(state, attacker).damage;
 
-  let damage = baseDamage + elementMod + fieldDamageBonus; // Soma/subtrai ao invés de multiplicar
+  // Bônus de dano temporário concedido por cartas de efeito (ex: Ira do Julgamento).
+  // Guardado como campo simples (não no array `buffs`) porque é aplicado direto pelas
+  // cartas de efeito em ai.js, então precisa ser lido aqui manualmente.
+  const damageBuffBonus = attacker?.damageBuff || 0;
+
+  let damage = baseDamage + elementMod + fieldDamageBonus + damageBuffBonus; // Soma/subtrai ao invés de multiplicar
   damage = applyModifiers(damage, attackMods);
   damage = applyModifiers(damage, defenseMods.map(m => ({ ...m, value: -m.value })));
 
@@ -642,6 +681,12 @@ export function applyStatusEffect(state, params) {
     return { newState: state, log: [] };
   }
 
+  // Carta de efeito "Imunidade": bloqueia novos efeitos/debuffs enquanto durar (não bloqueia a
+  // própria reaplicação de 'immune', ex: usar a carta de novo pra renovar a duração).
+  if (effectType !== 'immune' && (target.statusEffects || []).some(e => e.type === 'immune' && e.duration > 0)) {
+    return { newState: state, log: [`${target.name} está imune e não foi afetado!`] };
+  }
+
   // Perks que fortalecem o status causado pelo próprio atacante (bônus específico de queimadura + genérico por tipo)
   let finalDuration = duration;
   let finalValue = value;
@@ -687,6 +732,7 @@ export function applyStatusEffect(state, params) {
     regeneration: 'regeneração',
     sleep: 'sono',
     bleed: 'sangramento',
+    immune: 'imunidade',
   };
 
   const log = [`${target.name} foi afetado por ${effectNames[effectType] || effectType}`];
@@ -882,6 +928,16 @@ export function processStatusEffects(state, creatureId) {
         log.push(`${creature.name} permanece congelado.`);
       } else {
         log.push(`${creature.name} não está mais congelado.`);
+      }
+    } else if (effect.type === 'immune') {
+      // Imunidade (carta de efeito): sem efeito de tick, só mantém até expirar via
+      // decrementRoundDurations - sem esse ramo, o efeito seria descartado no primeiro turno
+      // (o forEach acima só preserva os tipos que reconhece explicitamente).
+      if (effect.duration > 0) {
+        updatedEffects.push(effect);
+        log.push(`${creature.name} permanece imune.`);
+      } else {
+        log.push(`${creature.name} não está mais imune.`);
       }
     }
   });

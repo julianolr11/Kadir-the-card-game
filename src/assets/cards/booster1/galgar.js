@@ -94,8 +94,8 @@ module.exports = {
     id: 'galgar_blessing',
     name: { pt: 'Bênção do Vagante', en: "Wanderer's Blessing" },
     desc: {
-      pt: 'Aliados ganham evasão aumentada; inimigos recebem -1 de precisão enquanto Galgar estiver em campo.',
-      en: 'Allies gain increased evasion; enemies suffer -1 accuracy while Galgar is on the field.',
+      pt: 'Galgar é imune a dano causado por criaturas sombrias ou de fogo.',
+      en: 'Galgar is immune to damage from shadow or fire creatures.',
     },
   },
 

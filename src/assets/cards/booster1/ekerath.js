@@ -12,6 +12,33 @@ module.exports = {
   color: 'earth',
   hp: 14,
 
+  // ===== MODO CALAMIDADE =====
+  // Forma de chefe usada apenas no modo Calamidade (1-4 jogadores). Não afeta a carta
+  // colecionável/Guardiã normal fora desse modo — hp/abilities acima continuam os mesmos.
+  calamity: {
+    isCalamity: true,
+    baseHp: 100, // vida do chefe em partida solo (100% de poder); ajustado após playtest (era 350, depois 90, 60, 80)
+    powerScale: { 1: 1, 2: 1.75, 3: 2.4, 4: 3 }, // multiplicador de HP e dano por nº de jogadores
+    attacks: {
+      single: {
+        name: { pt: 'Colapso de Pedra', en: 'Stone Collapse' },
+        desc: {
+          pt: 'Causa dano de terra pesado à criatura de um jogador.',
+          en: 'Deals heavy earth damage to one player\'s creature.',
+        },
+        baseDamage: 5, // dano em partida solo (100% de poder); ajustado após playtest (era 15, depois 6)
+      },
+      area: {
+        name: { pt: 'Tremor do Mundo', en: 'World Tremor' },
+        desc: {
+          pt: 'Causa dano de terra à criatura de todos os jogadores.',
+          en: 'Deals earth damage to every player\'s creature.',
+        },
+        baseDamage: 3, // ajustado após playtest (era 8, depois 4)
+      },
+    },
+  },
+
   // Habilidades base (exibidas no card preview)
   abilities: [
     {
@@ -92,8 +119,8 @@ module.exports = {
     id: 'ekerath_blessing',
     name: { pt: 'Bênção do Firmamento', en: 'Blessing of the Firmament' },
     desc: {
-      pt: 'Aliados ganham +1 de defesa e recuperam 1 de vida por turno; inimigos recebem -1 de velocidade.',
-      en: 'Allies gain +1 defense and recover 1 HP per turn; enemies suffer -1 speed.',
+      pt: 'Ao entrar em campo, todos os aliados ganham +1 de escudo e +1 de vida.',
+      en: 'When summoned, all allies gain +1 shield and +1 HP.',
     },
   },
 

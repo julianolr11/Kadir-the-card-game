@@ -11,6 +11,34 @@ module.exports = {
   img: require('../../img/creatures/ekernoth_bio.webp'),
   color: 'water',
   hp: 13,
+
+  // ===== MODO CALAMIDADE =====
+  // Forma de chefe usada apenas no modo Calamidade (1-4 jogadores). Não afeta a carta
+  // colecionável/Guardiã normal fora desse modo — hp/abilities acima continuam os mesmos.
+  calamity: {
+    isCalamity: true,
+    baseHp: 100, // vida do chefe em partida solo (100% de poder); ajustado após playtest (era 350, depois 90, 60, 80)
+    powerScale: { 1: 1, 2: 1.75, 3: 2.4, 4: 3 }, // multiplicador de HP e dano por nº de jogadores
+    attacks: {
+      single: {
+        name: { pt: 'Garra Marinada', en: 'Brine Claw' },
+        desc: {
+          pt: 'Causa dano de água pesado à criatura de um jogador.',
+          en: 'Deals heavy water damage to one player\'s creature.',
+        },
+        baseDamage: 5, // dano em partida solo (100% de poder); ajustado após playtest (era 16, depois 6)
+      },
+      area: {
+        name: { pt: 'Redemoinho Esmagador', en: 'Crushing Maelstrom' },
+        desc: {
+          pt: 'Causa dano de água à criatura de todos os jogadores.',
+          en: 'Deals water damage to every player\'s creature.',
+        },
+        baseDamage: 3, // ajustado após playtest (era 9, depois 4)
+      },
+    },
+  },
+
   abilities: [
     {
       name: { pt: 'Garra Marinada', en: 'Brine Claw' },

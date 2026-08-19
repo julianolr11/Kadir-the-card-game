@@ -55,7 +55,10 @@ const effectCards = [
     effectValue: 2,
     targetType: 'self',
     duration: 0,
-    color: 'pure'
+    color: 'pure',
+    // Peso de sorteio em booster: 1 = chance normal (padrão quando ausente). Reduzido porque
+    // essência grátis sem custo é forte demais pra ter a mesma chance que os outros efeitos.
+    dropWeight: 0.3
   },
 
   {
@@ -215,6 +218,24 @@ const effectCards = [
     effectValue: 2,
     targetType: 'allyMonster', // Requer seleção de alvo (monstro aliado)
     duration: 1, // Dura 1 turno
+    color: 'pure'
+  },
+
+  {
+    id: 'effect_immunity',
+    num: 14,
+    name: { pt: 'Imunidade', en: 'Immunity' },
+    type: 'effect',
+    element: 'puro',
+    cost: 0,
+    img: require('../img/effect-cards/imunity_resultado.webp'),
+    description: {
+      pt: 'Torna uma criatura aliada imune a golpes, efeitos e debuffs por 2 turnos',
+      en: 'Makes one of your creatures immune to hits, effects and debuffs for 2 turns'
+    },
+    effectType: 'immunity',
+    targetType: 'allyMonster', // Requer seleção de alvo (monstro aliado)
+    duration: 2,
     color: 'pure'
   },
 

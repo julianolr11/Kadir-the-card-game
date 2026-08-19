@@ -94,8 +94,8 @@ module.exports = {
     id: 'aldanor_blessing',
     name: { pt: 'Bênção do Véu', en: 'Blessing of the Veil' },
     desc: {
-      pt: 'Aliados ganham evasão aumentada por 1 turno ao entrar em campo; inimigos recebem -1 de precisão.',
-      en: 'Allies gain increased evasion for 1 turn when summoned; enemies suffer -1 accuracy.',
+      pt: 'Ao entrar em campo, faz todas as outras criaturas dormirem por 2 turnos — apenas Aldanor pode atacar.',
+      en: 'When summoned, puts every other creature on the field to sleep for 2 turns — only Aldanor can attack.',
     },
   },
 

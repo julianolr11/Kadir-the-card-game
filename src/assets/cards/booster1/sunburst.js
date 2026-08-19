@@ -76,9 +76,13 @@ module.exports = {
   defaultBlessing: {
     id: 'sunburst_blessing',
     name: { pt: 'Radiância Solar', en: 'Solar Radiance' },
+    // Corrigido de "criaturas de luz" pra "sombrias" - Sunburst é do tipo Sombria (ver `type`
+    // acima) e o próprio bônus de campo dele (`fielddesc`) já bufa criaturas sombrias, não de
+    // luz. Nota: essa bênção ainda não está implementada no motor de batalha (ver BattleContext,
+    // bloco "Aplica bênção do guardião" - todo outro guardião guardian tem um bloco lá; este não).
     desc: {
-      pt: 'Criaturas de luz ganham +1 ataque enquanto Sunburst estiver em campo.',
-      en: 'Light creatures gain +1 attack while Sunburst is on the field.',
+      pt: 'Criaturas sombrias ganham +1 ataque enquanto Sunburst estiver em campo.',
+      en: 'Shadow creatures gain +1 attack while Sunburst is on the field.',
     },
   },
   unlockTable: [

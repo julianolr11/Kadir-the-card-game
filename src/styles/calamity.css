@@ -1,0 +1,718 @@
+/* Modo Calamidade — lobby (seleção de chefe/deck) e tela de batalha (Fase 1: solo).
+   A mesa de batalha reaproveita .board/.slot/.turn-indicator/.board-divider de battle.css
+   e os componentes CreatureCardPreview/FullArtCard — só o lobby e os acabamentos próprios
+   da Calamidade (barra de vida do chefe, cooldown) têm CSS dedicado aqui. */
+
+.calamity-lobby {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 30px;
+  padding: 48px 32px 40px;
+  --calamity-ambient: #b073f5;
+  --calamity-gold: #d3a654;
+  --calamity-gold-bright: #efdeb7;
+  --calamity-mint: #79f2dc;
+  background:
+    radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--calamity-ambient) 16%, transparent), transparent 42%),
+    radial-gradient(circle at 50% 0%, rgba(118, 68, 132, 0.2), transparent 46%),
+    linear-gradient(155deg, #241a2a 0%, #0f0a14 100%);
+  color: #ece7f7;
+  font-family: -apple-system, 'Segoe UI', Arial, sans-serif;
+  overflow-y: auto;
+  transition: background 600ms ease;
+}
+
+.calamity-lobby[data-element="fogo"] { --calamity-ambient: #ef6b3c; }
+.calamity-lobby[data-element="agua"] { --calamity-ambient: #4db3f0; }
+.calamity-lobby[data-element="terra"] { --calamity-ambient: #8fc85f; }
+.calamity-lobby[data-element="ar"] { --calamity-ambient: #6fe0d6; }
+
+.calamity-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.calamity-section-heading {
+  width: 100%;
+  max-width: 900px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.calamity-section-eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: rgba(118, 226, 207, 0.8);
+  white-space: nowrap;
+}
+
+.calamity-section-heading::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(224, 191, 132, 0.32), transparent);
+}
+
+.calamity-section-secondary {
+  gap: 10px;
+  opacity: 0.92;
+}
+.calamity-section-secondary .calamity-section-eyebrow { color: rgba(118, 226, 207, 0.5); }
+
+.calamity-lobby-header {
+  position: relative;
+  text-align: center;
+  max-width: 640px;
+}
+
+.calamity-back-btn {
+  position: absolute;
+  top: 28px;
+  left: 32px;
+  border: 1px solid rgba(255, 230, 176, 0.34);
+  background: rgba(9, 6, 14, 0.72);
+  color: var(--calamity-gold-bright);
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 700;
+  transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+}
+.calamity-back-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 230, 176, 0.72);
+  background: rgba(28, 18, 40, 0.9);
+}
+
+.calamity-lobby-kicker {
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 0.66rem;
+  font-weight: 800;
+  color: rgba(118, 226, 207, 0.85);
+  margin: 0 0 4px;
+}
+
+.calamity-lobby-title {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 600;
+  font-size: 2.1rem;
+  letter-spacing: 0.015em;
+  color: var(--calamity-gold-bright);
+  margin: 0 0 4px;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
+}
+.calamity-lobby-title::after {
+  content: '';
+  display: block;
+  width: 64px;
+  height: 1px;
+  margin: 14px auto 12px;
+  background: linear-gradient(90deg, transparent, var(--calamity-gold), transparent);
+  box-shadow: 0 0 8px rgba(211, 166, 84, 0.3);
+}
+
+.calamity-lobby-sub {
+  color: rgba(210, 195, 214, 0.62);
+  font-size: 0.95rem;
+}
+
+.calamity-seal {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(215, 174, 99, 0.32);
+  border-radius: 50%;
+  color: var(--calamity-gold);
+  background: rgba(8, 6, 12, 0.4);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1rem;
+  box-shadow: inset 0 0 12px rgba(126, 76, 138, 0.16);
+  flex-shrink: 0;
+}
+
+.calamity-party-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+  max-width: 900px;
+}
+
+.calamity-party-slot {
+  flex: 1;
+  min-width: 150px;
+  max-width: 190px;
+  aspect-ratio: 3 / 4;
+  border-radius: 10px;
+  border: 1px solid rgba(224, 191, 132, 0.22);
+  background: linear-gradient(90deg, rgba(48, 32, 48, 0.5), rgba(15, 12, 21, 0.6));
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ece7f7;
+  font-family: inherit;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 160ms ease, transform 160ms ease;
+}
+.calamity-party-slot-me {
+  border-color: rgba(224, 191, 132, 0.4);
+}
+.calamity-party-slot-me:hover { border-color: rgba(255, 230, 176, 0.75); transform: translateY(-2px); }
+
+.calamity-party-slot-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.78rem;
+  color: rgba(210, 195, 214, 0.7);
+}
+.calamity-party-slot-empty .calamity-seal { width: 30px; height: 30px; font-size: 0.9rem; }
+
+.calamity-party-slot-deck-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 22px 8px 10px;
+  background: linear-gradient(to top, rgba(6, 4, 9, 0.95) 0%, rgba(6, 4, 9, 0.6) 60%, transparent 100%);
+  text-align: center;
+}
+.calamity-party-slot-deck-overlay strong {
+  font-family: Georgia, serif;
+  font-size: 0.9rem;
+  color: var(--calamity-gold-bright);
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+}
+.calamity-party-slot-deck-overlay span {
+  font-size: 0.66rem;
+  color: rgba(230, 222, 235, 0.75);
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+}
+
+.calamity-party-slot-invite {
+  border-style: dashed;
+  flex-direction: column;
+  gap: 5px;
+  color: rgba(210, 195, 214, 0.5);
+  font-size: 0.78rem;
+}
+.calamity-party-slot-invite:hover:not(:disabled) { border-color: rgba(255, 230, 176, 0.6); color: rgba(230, 222, 235, 0.8); }
+.calamity-party-slot-invite:disabled { cursor: not-allowed; opacity: 0.55; }
+.calamity-party-slot-invite .calamity-seal { width: 30px; height: 30px; font-size: 0.9rem; opacity: 0.6; }
+.calamity-party-slot-soon {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(118, 226, 207, 0.4);
+}
+
+.calamity-party-slot-me-wrap {
+  flex: 1;
+  min-width: 150px;
+  max-width: 190px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.calamity-party-slot-me-wrap .calamity-party-slot-me {
+  flex: none;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+}
+
+.calamity-party-slot-steam-caption {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 2px 0;
+  font-size: 0.72rem;
+  color: rgba(230, 222, 235, 0.8);
+}
+.calamity-steam-caption-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid rgba(224, 191, 132, 0.4);
+  flex-shrink: 0;
+}
+.calamity-steam-caption-avatar-fallback {
+  width: 20px;
+  height: 20px;
+  font-size: 0.6rem;
+  flex-shrink: 0;
+}
+.calamity-steam-caption-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: Georgia, serif;
+  color: var(--calamity-gold-bright);
+}
+
+.calamity-party-slot-member {
+  cursor: default;
+  border-color: rgba(224, 191, 132, 0.4);
+}
+.calamity-party-slot-member .calamity-seal { width: 30px; height: 30px; font-size: 0.9rem; margin-bottom: 4px; }
+
+.calamity-boss-card-voted {
+  border-color: #e9c968 !important;
+  box-shadow: 0 0 0 1px #e9c968, 0 0 18px rgba(233, 201, 104, 0.25);
+}
+
+.calamity-vote-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #1b1522;
+  background: #e9c968;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.calamity-ready-btn {
+  padding: 14px 32px;
+  font-size: 0.95rem;
+}
+.calamity-btn-primary.calamity-ready-btn {
+  background: linear-gradient(135deg, #e5c17f, #b98b3e);
+  border-color: rgba(255, 230, 176, 0.5);
+  color: #1b1522;
+  font-weight: 800;
+}
+.calamity-btn-primary.calamity-ready-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #efd299, #c99a49);
+  border-color: rgba(255, 230, 176, 0.85);
+}
+
+.calamity-deck-error {
+  max-width: 480px;
+  text-align: center;
+  margin: -6px 0 0;
+  padding: 8px 16px;
+  border: 1px solid rgba(224, 122, 107, 0.4);
+  border-radius: 8px;
+  background: rgba(224, 122, 107, 0.1);
+  color: #f0a99c;
+  font-size: 0.82rem;
+}
+
+.calamity-boss-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+  width: 100%;
+  max-width: 960px;
+}
+
+.calamity-boss-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 18px;
+  border-radius: 14px;
+  border: 1px solid rgba(224, 191, 132, 0.26);
+  background:
+    radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--calamity-el, #b073f5) 14%, transparent), transparent 65%),
+    linear-gradient(90deg, rgba(48, 32, 48, 0.55), rgba(15, 12, 21, 0.7));
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+.calamity-boss-card:hover { transform: translateY(-4px); border-color: var(--calamity-el, #d3a654); box-shadow: 0 14px 30px rgba(0, 0, 0, 0.35); }
+
+.calamity-boss-card-cooldown {
+  cursor: default;
+  opacity: 0.55;
+  filter: grayscale(0.6);
+}
+.calamity-boss-card-cooldown:hover { transform: none; border-color: rgba(224, 191, 132, 0.26); }
+
+.calamity-boss-cooldown-overlay {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 1.1rem;
+}
+
+.calamity-boss-cooldown {
+  font-size: 0.78rem;
+  color: #e9c968;
+  font-variant-numeric: tabular-nums;
+}
+
+.calamity-boss-fogo { --calamity-el: #ef6b3c; }
+.calamity-boss-agua { --calamity-el: #4db3f0; }
+.calamity-boss-terra { --calamity-el: #8fc85f; }
+.calamity-boss-ar { --calamity-el: #6fe0d6; }
+
+.calamity-boss-img {
+  width: 112px;
+  height: 112px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid rgba(224, 191, 132, 0.5);
+  box-shadow:
+    0 0 0 5px rgba(8, 6, 12, 0.5),
+    0 0 0 7px color-mix(in srgb, var(--calamity-el, #b073f5) 55%, transparent);
+}
+
+.calamity-boss-info { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.calamity-boss-element { text-transform: uppercase; font-size: 0.68rem; letter-spacing: 0.12em; color: var(--calamity-el, #b073f5); font-weight: 700; }
+.calamity-boss-name { font-family: Georgia, serif; font-size: 1.2rem; color: var(--calamity-gold-bright); }
+.calamity-boss-hp { font-size: 0.78rem; color: rgba(210, 195, 214, 0.55); }
+
+/* ===== Mesa de batalha (arena) ===== */
+
+.calamity-arena-root {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 28px;
+  background: radial-gradient(circle at 50% 50%, #1a0f2e, #0d0815, #000000);
+  color: #ffe6b0;
+  font-family: 'Segoe UI', sans-serif;
+  overflow: auto;
+}
+
+.calamity-battle-error { align-items: center; justify-content: center; }
+
+.calamity-intro,
+.calamity-result {
+  margin: auto;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.calamity-intro-card { display: flex; justify-content: center; }
+
+.calamity-intro-stats { color: #cbb8e5; font-size: 0.95rem; }
+.calamity-intro-stats b { color: #f1dda5; }
+
+.calamity-intro h1,
+.calamity-result h1 {
+  font-family: Georgia, serif;
+  font-size: 1.9rem;
+  margin: 6px 0;
+}
+
+.calamity-result-won h1 { color: #e9c968; }
+.calamity-result-lost h1 { color: #e07a6b; }
+
+.calamity-rewards {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(176, 115, 245, 0.3);
+  border-radius: 10px;
+  padding: 16px 24px;
+  min-width: 260px;
+}
+.calamity-rewards ul { list-style: none; padding: 0; margin: 8px 0 0; font-size: 0.85rem; color: #cfc6e0; }
+.calamity-rewards li { padding: 2px 0; }
+
+/* Tabuleiro: reaproveita .board/.slot/.turn-indicator/.board-divider de battle.css,
+   só ajustando as dimensões (que lá assumem o canvas fixo de 1920x1080 da Campanha/PvP).
+   NOTA: .calamity-board/.calamity-boss-side/etc abaixo não são usados no JSX atual (o board da
+   Calamidade reaproveita a mesma <div className="board"> da Campanha/PvP sem classe extra) -
+   mantidos caso venham a ser conectados, mas o ajuste de fato usado é .board-calamity abaixo,
+   que É aplicado condicionalmente em BattleBoard.jsx quando state.mode === 'calamity'. */
+.calamity-board {
+  width: min(980px, 94vw);
+  max-height: 84vh;
+  min-height: 0;
+  margin: 0;
+  padding: 22px 26px;
+  justify-items: center;
+  align-content: start;
+  overflow-y: auto;
+}
+
+.board-calamity {
+  /* Mais respiro no topo - o card do chefe ficava colado na borda superior do tabuleiro. */
+  padding-top: 40px;
+}
+
+.calamity-turn-indicator { justify-self: center; }
+
+/* Aura vermelha de fúria do chefe - fase 2 (<=50% vida) e fase 3 (<=10%, maior e mais intensa).
+   Ver runCalamityBossTurn em BattleContext.jsx pra lógica das fases.
+   Aplicada direto no .kadir-full-art-card (via prop className do FullArtCard) em vez do
+   .card-slot-preview, que também engloba a barra de vida abaixo da carta — isso fazia o
+   brilho "vazar" pra baixo e ficar maior do que a carta ali. Sem override de border-radius
+   aqui: herda o 24px do próprio .kadir-full-art-card, então o brilho acompanha o
+   arredondado real dos cantos da carta. */
+.calamity-boss-slot-phase2 {
+  animation: calamityBossAuraPhase2 1.6s ease-in-out infinite;
+}
+.calamity-boss-slot-phase3 {
+  animation: calamityBossAuraPhase3 1s ease-in-out infinite;
+}
+
+@keyframes calamityBossAuraPhase2 {
+  0%, 100% { box-shadow: 0 0 22px 4px rgba(255, 40, 40, 0.35), 0 0 8px rgba(255, 40, 40, 0.5); }
+  50% { box-shadow: 0 0 34px 8px rgba(255, 40, 40, 0.55), 0 0 12px rgba(255, 40, 40, 0.7); }
+}
+
+@keyframes calamityBossAuraPhase3 {
+  0%, 100% {
+    box-shadow: 0 0 40px 10px rgba(255, 20, 20, 0.55), 0 0 70px 18px rgba(255, 60, 0, 0.3), 0 0 14px rgba(255, 80, 0, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 58px 16px rgba(255, 20, 20, 0.8), 0 0 96px 26px rgba(255, 60, 0, 0.45), 0 0 20px rgba(255, 100, 0, 0.9);
+  }
+}
+
+/* Agora que .board-divider tem position:relative (battle.css), a joia já centraliza
+   corretamente na linha por padrão - este hook fica disponível caso a Calamidade precise
+   de um ajuste fino próprio no futuro. */
+.board-divider-jewel.board-divider-jewel-calamity { margin-top: 0; }
+
+.calamity-boss-side { align-items: center; }
+
+.calamity-boss-portrait { display: flex; justify-content: center; }
+
+.calamity-player-side { align-items: center; }
+
+/* Popup de conquista ao derrotar um chefe de Calamidade - mesmo visual da insígnia de torre da
+   Campanha (.campaign-badge-* em campaign-tower.css, reaproveita as keyframes de lá), só que
+   aparece na hora, junto com o modal de resultado da batalha, em vez de só na próxima vez que o
+   jogador abrir a tela da Campanha. */
+.calamity-trophy-celebration {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-card-modal, 12000);
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at center, rgba(200, 160, 255, 0.16), transparent 28%),
+    rgba(5, 3, 9, 0.74);
+  backdrop-filter: blur(9px);
+  animation: campaign-badge-overlay-in 260ms ease both;
+}
+
+.calamity-trophy-panel {
+  position: relative;
+  display: flex;
+  width: min(430px, calc(100vw - 42px));
+  min-height: 480px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  overflow: hidden;
+  padding: 38px 34px 30px;
+  border: 1px solid rgba(200, 160, 255, 0.62);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(31, 19, 43, 0.88), rgba(6, 4, 10, 0.92)),
+    radial-gradient(circle at 50% 28%, rgba(200, 160, 255, 0.14), transparent 45%);
+  box-shadow:
+    0 30px 90px rgba(0, 0, 0, 0.66),
+    0 0 42px rgba(200, 160, 255, 0.24),
+    inset 0 0 54px rgba(200, 160, 255, 0.06);
+  animation: campaign-badge-panel-in 680ms cubic-bezier(.16,.88,.18,1.08) both;
+}
+
+.calamity-trophy-panel::before {
+  content: '';
+  position: absolute;
+  inset: 18px;
+  border: 1px solid rgba(200, 160, 255, 0.26);
+  border-radius: 13px;
+  pointer-events: none;
+}
+
+.calamity-trophy-rays {
+  position: absolute;
+  inset: -35%;
+  opacity: 0.44;
+  background:
+    repeating-conic-gradient(from 0deg, rgba(200, 160, 255, 0.00) 0 10deg, rgba(200, 160, 255, 0.23) 11deg 13deg, rgba(120, 80, 200, 0.00) 14deg 28deg);
+  filter: blur(1px);
+  animation: campaign-badge-rays-spin 18s linear infinite;
+}
+
+.calamity-trophy-panel p,
+.calamity-trophy-panel h2,
+.calamity-trophy-panel span,
+.calamity-trophy-panel button,
+.calamity-trophy-panel img {
+  position: relative;
+  z-index: 2;
+}
+
+.calamity-trophy-panel p {
+  margin: 0;
+  color: #d6b8ff;
+  font-size: 0.78rem;
+  font-weight: 950;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.calamity-trophy-panel img {
+  width: min(220px, 62vw);
+  height: min(220px, 62vw);
+  object-fit: contain;
+  margin: 8px 0;
+  filter: drop-shadow(0 18px 34px rgba(0, 0, 0, 0.56)) drop-shadow(0 0 28px rgba(200, 160, 255, 0.38));
+  animation: campaign-badge-medal-in 920ms cubic-bezier(.16,.88,.18,1.08) both 120ms;
+}
+
+.calamity-trophy-panel h2 {
+  margin: 0;
+  color: #fff6d8;
+  font-size: clamp(1.7rem, 4.4vw, 2.5rem);
+  font-weight: 950;
+  text-align: center;
+  text-shadow: 0 4px 18px rgba(0, 0, 0, 0.76), 0 0 22px rgba(200, 160, 255, 0.34);
+}
+
+.calamity-trophy-panel span {
+  color: rgba(230, 210, 255, 0.82);
+  font-weight: 700;
+  text-align: center;
+}
+
+.calamity-trophy-panel button {
+  min-width: 220px;
+  margin-top: 18px;
+  padding: 13px 22px;
+  border: 1px solid rgba(200, 160, 255, 0.66);
+  border-radius: 10px;
+  background: linear-gradient(180deg, #cfa8ff, #6a2fc5);
+  color: #12081f;
+  font-weight: 950;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.42), 0 0 18px rgba(200, 160, 255, 0.20);
+  transition: transform 180ms ease, filter 180ms ease;
+}
+
+.calamity-trophy-panel button:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+}
+
+.calamity-boss-slot .full-art-slot-scale { position: relative; }
+
+.calamity-boss-heal-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  animation: calamity-boss-heal-fade 1.8s ease-out forwards;
+}
+
+.calamity-boss-heal-amount {
+  font-family: Georgia, serif;
+  font-weight: 900;
+  font-size: 2.4rem;
+  color: #a8ffb0;
+  text-shadow:
+    0 0 14px rgba(120, 255, 140, 0.95),
+    0 0 34px rgba(80, 230, 110, 0.75),
+    0 3px 6px rgba(0, 0, 0, 0.9);
+  animation: calamity-boss-heal-rise 1.8s ease-out forwards;
+}
+
+@keyframes calamity-boss-heal-rise {
+  0% { transform: translateY(18px) scale(0.75); opacity: 0; }
+  18% { transform: translateY(0) scale(1.15); opacity: 1; }
+  32% { transform: translateY(-6px) scale(1); opacity: 1; }
+  100% { transform: translateY(-70px) scale(1); opacity: 0; }
+}
+
+@keyframes calamity-boss-heal-fade {
+  0%, 70% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.calamity-slots { grid-template-columns: repeat(auto-fit, minmax(200px, 230px)); }
+
+.calamity-card-slot { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+.calamity-card-slot > div { transform: scale(0.6); transform-origin: center center; }
+
+.calamity-sidebar {
+  width: min(980px, 94vw);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.calamity-log {
+  width: 100%;
+  max-width: 640px;
+  max-height: 110px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 4px;
+  padding: 10px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.35);
+  font-size: 0.8rem;
+  color: #cfc6e0;
+}
+.calamity-log p { margin: 0; }
+
+.calamity-queue-count { font-size: 0.78rem; color: #a397bd; }
+
+.calamity-btn {
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: 1px solid rgba(176, 115, 245, 0.5);
+  background: rgba(176, 115, 245, 0.12);
+  color: #ece7f7;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+.calamity-btn:hover:not(:disabled) { border-color: #c491fa; background: rgba(176, 115, 245, 0.22); }
+.calamity-btn:disabled { opacity: 0.45; cursor: default; }
+
+.calamity-btn-primary {
+  background: linear-gradient(135deg, #b073f5, #7c3aed);
+  border-color: transparent;
+  font-weight: 700;
+}

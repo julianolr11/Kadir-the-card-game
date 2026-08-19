@@ -1,7 +1,11 @@
 import React from 'react';
 import '../styles/status-text.css';
 
-const STATUS_PATTERN = /(envenenamento|envenenado|envenena|veneno|poison(?:ed|ing)?|congelamento|congelado|congela|freeze|frozen|queimaduras?|queimado|queima|burn(?:ed|ing)?|paralisia|paralisado|paralisa|atordoado|atordoa|paraly[sz]e(?:d)?|stun(?:ned)?|sangramento|sangrando|sangra|bleed(?:ing)?|sono|dormindo|dorme|adormece|sleep|asleep|escudos?|armadura|shield(?:s)?|armor|cura|curando|regenera(?:ção|cao)?|regenera|heal(?:ing)?)/gi;
+// \b nas pontas evita casar a raiz no meio de outra palavra sem relação (ex: "cura" dentro de
+// "escura"). "atordoamento" precisa vir antes de "atordoa(?:m)?" na alternância - a regex tenta
+// as opções em ordem e para na primeira que casa, então a forma mais curta "ganhava" primeiro
+// e cortava a palavra ao meio ("atordoam" + "ento" sobrando).
+const STATUS_PATTERN = /\b(envenenamento|envenenado|envenena(?:m)?|veneno|poison(?:s|ed|ing)?|congelamento|congelado|congela(?:m)?|freeze(?:s)?|frozen|queimaduras?|queimado|queima(?:m)?|burn(?:s|ed|ing)?|paralisia|paralisado|paralisa(?:m)?|atordoado|atordoamento|atordoa(?:m)?|paraly[sz]e(?:s|d)?|stun(?:s|ned)?|derrubado|derruba(?:m)?|knock\s*down|sangramento|sangrando|sangra(?:m)?|bleed(?:s|ing)?|sono|dormindo|dorme(?:m)?|adormece(?:m)?|sleep(?:s)?|asleep|escudos?|armadura|shield(?:s)?|armor|cura(?:m)?|curando|regenera(?:ção|cao)?|regenera(?:m)?|heal(?:s|ing)?)\b/gi;
 const STATUS_EXACT = new RegExp(`^(?:${STATUS_PATTERN.source})$`, 'i');
 
 const statusClass = (word) => {

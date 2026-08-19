@@ -57,6 +57,7 @@ function DeckLibraryGrid({
   handleDragEnd = () => {},
   openCardLoadout = () => {},
   addCardToDeck = () => {},
+  isDeckFull = false,
   isEn = false,
 }) {
   // Parâmetros do grid
@@ -111,12 +112,25 @@ function DeckLibraryGrid({
     const instanceCount = instances ? instances.length : 0;
     const availableCount = availableInstances ? availableInstances.length : 0;
     const maxPerDeck = Math.min(instanceCount, 2);
-    const isDisabled = countInDeck >= maxPerDeck || availableCount === 0;
+    const atMaxCopiesInDeck = countInDeck >= maxPerDeck;
+    const isDisabled = atMaxCopiesInDeck || availableCount === 0 || isDeckFull;
     const hasMultipleInstances = instances && instances.length > 1;
     const bestAvailableInstance = getBestAvailableInstance(card.id);
     // Se não houver instância disponível, mostra a carta como desabilitada
     const displayLevel = bestAvailableInstance?.level || 1;
     const unavailable = !bestAvailableInstance;
+    // Distingue os motivos de "+" desabilitado: sem cópias na coleção (unavailable), já tem o
+    // máximo de cópias dessa carta no deck (atMaxCopies), ou o deck já está com 20/20 cartas
+    // (isDeckFull) - antes todos pareciam idênticos (botão cinza, sem explicação nenhuma),
+    // fazendo parecer que cartas aleatórias simplesmente não podiam ser adicionadas.
+    const atMaxCopies = !unavailable && atMaxCopiesInDeck;
+    const disabledReasonLabel = unavailable
+      ? (isEn ? 'No copies available' : 'Nenhuma cópia disponível')
+      : (atMaxCopies
+        ? (isEn ? `Max copies in deck (${maxPerDeck})` : `Máximo de cópias no deck (${maxPerDeck})`)
+        : (isDeckFull
+          ? (isEn ? 'Deck is full (20/20)' : 'Deck está cheio (20/20)')
+          : (isEn ? 'Add to deck' : 'Adicionar ao deck')));
     return (
       <div
         key={card.id}
@@ -166,12 +180,13 @@ function DeckLibraryGrid({
             className="deck-action-btn deck-action-add"
             disabled={isDisabled || unavailable}
             onClick={(e) => { e.stopPropagation(); if (!isDisabled && !unavailable) addCardToDeck(card.id); }}
-            title={unavailable ? (isEn ? 'No copies available' : 'Nenhuma cópia disponível') : (isEn ? 'Add to deck' : 'Adicionar ao deck')}
+            title={disabledReasonLabel}
           >
             +
           </button>
         </div>
         {unavailable && <div style={{position:'absolute',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.35)',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700,fontSize:16,pointerEvents:'none'}}>{isEn ? 'Unavailable' : 'Indisponível'}</div>}
+        {atMaxCopies && <div style={{position:'absolute',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.35)',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700,fontSize:14,textAlign:'center',padding:8,pointerEvents:'none'}}>{isEn ? `Max copies in deck (${maxPerDeck})` : `Máximo no deck (${maxPerDeck})`}</div>}
       </div>
     );
   };
@@ -949,6 +964,11 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
             <option value="element">{isEn ? 'Element' : 'Elemento'}</option>
           </select>
         </div>
+        {(deckCards || []).filter(Boolean).length >= 20 && (
+          <div style={{ margin: '0 0 10px', padding: '8px 14px', borderRadius: 8, background: 'rgba(217, 119, 6, 0.18)', border: '1px solid rgba(255, 198, 88, 0.5)', color: '#ffdca0', fontSize: 13, fontWeight: 600, textAlign: 'center' }}>
+            {isEn ? 'Deck is full (20/20) — remove a card to add more.' : 'Deck está cheio (20/20) — remova uma carta para adicionar outra.'}
+          </div>
+        )}
         <DeckLibraryGrid
           cards={Array.isArray(libraryCards) ? libraryCards : []}
           getCardInstances={getCardInstances}
@@ -960,6 +980,7 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
           handleDragEnd={handleDragEnd}
           openCardLoadout={openCardLoadout}
           addCardToDeck={addCardToDeck}
+          isDeckFull={(deckCards || []).filter(Boolean).length >= 20}
           isEn={isEn}
         />
         {/* Ghost/hover preview removido para não atrapalhar o fluxo no deckbuilder */}

@@ -90,10 +90,10 @@ module.exports = {
   // Bênção padrão
   defaultBlessing: {
     id: 'grombi_blessing',
-    name: { pt: 'Bênção da Pedra-Alma', en: 'Blessing of the Soulstone' },
+    name: { pt: 'Bola de Pedra-Alma', en: 'Rolling Soulstone' },
     desc: {
-      pt: 'Aliados ganham um escudo que absorve 1 de dano ao entrar em campo.',
-      en: 'Allies gain a shield absorbing 1 damage when summoned.',
+      pt: 'Ao ser invocado, lança uma bola de pedra que rola pelo campo, causando 1 de dano a todas as cartas em campo, do seu lado e do adversário.',
+      en: 'When summoned, launches a stone ball that rolls across the field, dealing 1 damage to every card in play, on both sides.',
     },
   },
 

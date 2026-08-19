@@ -233,6 +233,13 @@
 .leoracal-reveal-front {
   backface-visibility: hidden;
   transform-style: preserve-3d;
+  transition: transform 220ms ease, box-shadow 220ms ease, filter 220ms ease;
+}
+
+.leoracal-reveal-card:not(.is-selected):not(.is-revealed):hover .leoracal-reveal-back {
+  transform: translateY(-6px) scale(1.05);
+  filter: brightness(1.15);
+  box-shadow: 0 14px 30px rgba(0,0,0,0.5), 0 0 24px rgba(255,230,176,0.35);
 }
 
 .leoracal-reveal-back.is-selected {
@@ -241,6 +248,19 @@
 
 .leoracal-reveal-card.is-revealed .leoracal-reveal-front {
   animation: leoracalCardFlipIn 620ms cubic-bezier(.2,.82,.22,1) both;
+  position: relative;
+}
+
+.leoracal-reveal-card.is-revealed .leoracal-reveal-front::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(115deg, transparent 30%, rgba(255,244,214,0.55) 48%, rgba(255,230,176,0.15) 56%, transparent 70%);
+  background-size: 260% 260%;
+  background-position: 130% 0%;
+  animation: leoracalShimmerSweep 900ms ease-out 180ms both;
+  mix-blend-mode: screen;
 }
 
 @keyframes leoracalBackPulse {
@@ -276,6 +296,75 @@
     transform: rotateY(0deg) scale(1);
     opacity: 1;
     filter: brightness(1);
+  }
+}
+
+@keyframes leoracalShimmerSweep {
+  0% { background-position: 130% -20%; opacity: 0; }
+  15% { opacity: 1; }
+  100% { background-position: -30% 40%; opacity: 0; }
+}
+
+/* Bênção do Drazraq: roubo de carta da mão do oponente */
+.drazaq-steal-card {
+  perspective: 900px;
+  transform-style: preserve-3d;
+  display: inline-block;
+}
+
+.drazaq-steal-back {
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+  transition: transform 200ms ease, box-shadow 200ms ease, filter 200ms ease;
+}
+
+.drazaq-steal-card:not(.is-selected):not(.is-stolen):hover .drazaq-steal-back {
+  transform: translateY(-6px) scale(1.06);
+  filter: brightness(1.15);
+  box-shadow: 0 14px 28px rgba(0,0,0,0.55), 0 0 22px rgba(168,85,247,0.45);
+}
+
+.drazaq-steal-back.is-selected {
+  animation: drazaqGrabPulse 420ms ease-in-out forwards;
+}
+
+.drazaq-steal-card.is-stolen .drazaq-steal-back {
+  animation: drazaqCardSteal 620ms cubic-bezier(.55,0,.85,.35) forwards;
+}
+
+@keyframes drazaqGrabPulse {
+  0% {
+    transform: rotate(0deg) scale(1);
+    filter: brightness(1) saturate(1);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.45), 0 0 0 rgba(168,85,247,0);
+  }
+  55% {
+    transform: rotate(-5deg) scale(1.1);
+    filter: brightness(1.3) saturate(1.4);
+    box-shadow: 0 14px 30px rgba(0,0,0,0.55), 0 0 32px rgba(168,85,247,0.7);
+  }
+  100% {
+    transform: rotate(4deg) scale(1.04);
+    filter: brightness(1.15) saturate(1.2);
+    box-shadow: 0 12px 26px rgba(0,0,0,0.5), 0 0 22px rgba(168,85,247,0.5);
+  }
+}
+
+@keyframes drazaqCardSteal {
+  0% {
+    transform: rotate(4deg) scale(1.04) translate(0, 0);
+    opacity: 1;
+    filter: brightness(1.15) saturate(1.2) blur(0);
+  }
+  40% {
+    transform: rotate(-12deg) scale(0.88) translate(-18px, -22px);
+    opacity: 0.85;
+    filter: brightness(1.5) saturate(1.5) blur(0.5px);
+  }
+  100% {
+    transform: rotate(-26deg) scale(0.25) translate(-90px, -140px);
+    opacity: 0;
+    filter: brightness(1.7) saturate(1.6) blur(2.5px);
   }
 }
 
@@ -1108,7 +1197,9 @@
   position: relative;
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.4) inset;
   overflow: visible;
-  z-index: 50;
+  /* Acima da linha/joia do divisor (z-index:100) - as cartas nas fileiras de cima/baixo do
+     tabuleiro não devem ficar atrás da linha quando as duas áreas ficam próximas. */
+  z-index: 110;
 }
 
 .slot.empty {
@@ -1117,9 +1208,12 @@
 
 .slot.slot-field-buff::before {
   content: '';
+  width: 244px;
+  height: 366px;
   position: absolute;
-  inset: -6px -5px;
-  border-radius: 20px;
+  inset: -17px -10px;
+  top: -7px; /* aura deslocada 10px pra baixo em relação ao inset original (-17px) */
+  border-radius: 15px;
   pointer-events: none;
   z-index: 50080;
   border: 1px solid rgba(93, 238, 255, 0.3);
@@ -1133,20 +1227,25 @@
 .slot.slot-field-buff::after {
   content: '';
   position: absolute;
-  inset: 6px;
-  border-radius: 14px;
+  inset: -4px;
+  border-radius: 10px;
   pointer-events: none;
   z-index: 50081;
+  transform: scale(var(--card-inner-scale, 1));
   box-shadow:
     inset 0 0 10px rgba(93, 238, 255, 0.16),
     inset 0 0 22px rgba(93, 238, 255, 0.11),
     inset 0 0 42px rgba(93, 238, 255, 0.06);
+  width: 253px;
+  top: -11px; /* aura deslocada 10px pra baixo em relação ao original (-21px), acompanha o ::before */
+  left: -12px;
+  height: 372px;
 }
 
 @keyframes fieldBuffSoftPulse {
   0%, 100% {
     opacity: 0.42;
-    transform: scale(0.99);
+    transform: scale(calc(0.99 * var(--card-inner-scale, 1)));
     box-shadow:
       0 0 12px rgba(93, 238, 255, 0.16),
       0 0 26px rgba(35, 198, 255, 0.14),
@@ -1154,7 +1253,7 @@
   }
   50% {
     opacity: 0.82;
-    transform: scale(1.022);
+    transform: scale(calc(1.022 * var(--card-inner-scale, 1)));
     box-shadow:
       0 0 20px rgba(93, 238, 255, 0.32),
       0 0 42px rgba(35, 198, 255, 0.22),
@@ -1178,6 +1277,9 @@
   width: 100%;
   max-width: 200px;
   height: 290px;
+  /* Acima da linha/joia do divisor (z-index:100) - sem isso a linha dourada atravessava
+     por cima do card de campo quando os dois se sobrepunham visualmente. */
+  z-index: 110;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1224,24 +1326,38 @@
   font-weight: 700;
 }
 
+/* Duas <hr> (uma de cada lado) + a joia entre elas como item de flex normal - em vez de uma
+   linha só com a joia em position:absolute tentando adivinhar o centro dela. Posicionamento
+   absoluto exigia que a altura/posição do wrapper batesse exatamente com a da <hr>, o que
+   quebrava sempre que o wrapper esticava mais que o conteúdo (item de grid) - com flex +
+   align-items:center, as três peças se alinham pelo próprio eixo cruzado do flex, sem cálculo. */
+.board-divider {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  /* Largura total original da linha (810px), agora no container em vez da <hr> - sem isso
+     o flex:1 das duas metades esticava até embaixo da caixa de campo e do Turno/End Turn
+     nas laterais. */
+  max-width: 810px;
+  margin: 0 auto;
+}
+
 .board-divider-jewel {
-  position: absolute;
-  left: 50%;
-  top: 52.6%;
-  transform: translate(-50%, -50%);
+  flex: none;
   width: 23px !important;
   height: auto;
   z-index: 100;
   filter: drop-shadow(0 2px 8px #ffd700cc) drop-shadow(0 0 2px #fffbe0);
-  padding-top: 18px;
 }
 
 .board-divider-line {
+  flex: 1 1 0;
   filter: drop-shadow(0 2px 8px #ffd700cc) drop-shadow(0 0 2px #fffbe0);
   border: 1px solid;
-  width: 810px;
+  width: auto;
   position: relative;
   z-index: 100;
+  margin: 0;
 }
 
 .player-essence img {
@@ -1487,7 +1603,7 @@
   font-weight: 900;
   /* use Comic Sans-like font for Zzz */
   font-family: 'Comic Sans MS', 'Comic Sans', 'cursive';
-  font-size: 18px;
+  font-size: calc(18px * var(--fx-scale, 1));
   line-height: 1;
   opacity: 0;
   transform-origin: center;
@@ -1499,16 +1615,19 @@
   animation: z-float 3.6s cubic-bezier(.22,.78,.26,1) infinite;
 }
 
-/* each Z slightly larger than the previous and offset left/right (smaller overall) */
-.sleep-zzz span:nth-child(1) { --tx: -18px; animation-delay: 0s; font-size: 16px; --r-start: 6deg; --r-mid: 3deg; --r-end: 12deg; }
-.sleep-zzz span:nth-child(2) { --tx: 0px; animation-delay: 0.45s; font-size: 20px; --r-start: -14deg; --r-mid: -10deg; --r-end: -6deg; }
-.sleep-zzz span:nth-child(3) { --tx: 18px; animation-delay: 0.90s; font-size: 24px; --r-start: 8deg; --r-mid: 4deg; --r-end: 14deg; }
+/* each Z slightly larger than the previous and offset left/right (smaller overall).
+   Both the offset (--tx) and font-size scale with --fx-scale (set per-instance in
+   BattleBoard.jsx from the card's real measured width) so the letters stay
+   proportional to the card instead of a fixed px size tuned for one card size. */
+.sleep-zzz span:nth-child(1) { --tx: calc(-18px * var(--fx-scale, 1)); animation-delay: 0s; font-size: calc(16px * var(--fx-scale, 1)); --r-start: 6deg; --r-mid: 3deg; --r-end: 12deg; }
+.sleep-zzz span:nth-child(2) { --tx: 0px; animation-delay: 0.45s; font-size: calc(20px * var(--fx-scale, 1)); --r-start: -14deg; --r-mid: -10deg; --r-end: -6deg; }
+.sleep-zzz span:nth-child(3) { --tx: calc(18px * var(--fx-scale, 1)); animation-delay: 0.90s; font-size: calc(24px * var(--fx-scale, 1)); --r-start: 8deg; --r-mid: 4deg; --r-end: 14deg; }
 
 @keyframes z-float {
-  0% { opacity: 0; transform: translateY(20px) translateX(var(--tx)) rotate(var(--r-start)) scale(0.72); }
-  18% { opacity: 1; transform: translateY(2px) translateX(calc(var(--tx) * 0.55)) rotate(var(--r-mid)) scale(1.04); }
-  68% { opacity: 0.92; transform: translateY(-34px) translateX(calc(var(--tx) * 0.18)) rotate(calc(var(--r-mid) + 3deg)) scale(1.28); }
-  100% { opacity: 0; transform: translateY(-72px) translateX(calc(var(--tx) * 0.02)) rotate(var(--r-end)) scale(1.08); }
+  0% { opacity: 0; transform: translateY(calc(20px * var(--fx-scale, 1))) translateX(var(--tx)) rotate(var(--r-start)) scale(0.72); }
+  18% { opacity: 1; transform: translateY(calc(2px * var(--fx-scale, 1))) translateX(calc(var(--tx) * 0.55)) rotate(var(--r-mid)) scale(1.04); }
+  68% { opacity: 0.92; transform: translateY(calc(-34px * var(--fx-scale, 1))) translateX(calc(var(--tx) * 0.18)) rotate(calc(var(--r-mid) + 3deg)) scale(1.28); }
+  100% { opacity: 0; transform: translateY(calc(-72px * var(--fx-scale, 1))) translateX(calc(var(--tx) * 0.02)) rotate(var(--r-end)) scale(1.08); }
 }
 
 @keyframes sleep-haze {
@@ -3126,6 +3245,140 @@ body.is-fullscreen .graveyard-container {
   }
 }
 
+/* Slot Ilusório (Ilusão de Teatro sem slot livre) */
+.slot.slot-illusion {
+  border: 3px solid rgba(200, 130, 255, 0.9);
+  border-radius: 12px;
+  background: radial-gradient(circle at center, rgba(150, 60, 220, 0.18), rgba(60, 10, 90, 0.08));
+  opacity: 1;
+  animation: illusionGlow 2s ease-in-out infinite;
+  box-shadow:
+    0 0 30px rgba(190, 90, 255, 0.45) inset,
+    0 0 40px rgba(190, 90, 255, 0.35),
+    0 0 70px rgba(140, 40, 220, 0.25);
+  position: relative;
+}
+
+.slot.slot-illusion::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translateX(-50%);
+  z-index: 100050;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(200, 130, 255, 0.12) 0%, transparent 50%, rgba(140, 40, 220, 0.08) 100%);
+  pointer-events: none;
+  animation: illusionWave 3s ease-in-out infinite;
+}
+
+.illusion-card-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(200, 130, 255, 0.22) 0%, transparent 40%, rgba(140, 40, 220, 0.18) 100%),
+    repeating-linear-gradient(25deg, rgba(220, 160, 255, 0.15) 0 2px, transparent 2px 14px),
+    repeating-linear-gradient(-35deg, rgba(190, 110, 255, 0.12) 0 1px, transparent 1px 12px);
+  pointer-events: none;
+  animation: illusionOverlay 2s ease-in-out infinite;
+  z-index: 5;
+  mix-blend-mode: screen;
+}
+
+.slot.slot-illusion.illusion-slot-disappearing::before {
+  animation: spectralWaveOut 0.6s ease-out forwards;
+}
+
+.slot.slot-illusion.illusion-slot-disappearing .illusion-card-overlay {
+  animation: spectralOverlayOut 0.6s ease-out forwards;
+}
+
+.slot.slot-illusion.illusion-slot-disappearing .card-chip,
+.slot.slot-illusion.illusion-slot-disappearing .card-slot-preview>div {
+  animation: spectralCardVanish 0.6s ease-out forwards;
+}
+
+@keyframes illusionGlow {
+  0%, 100% {
+    box-shadow:
+      0 0 30px rgba(190, 90, 255, 0.45) inset,
+      0 0 40px rgba(190, 90, 255, 0.35),
+      0 0 70px rgba(140, 40, 220, 0.25);
+    border-color: rgba(200, 130, 255, 0.9);
+  }
+  50% {
+    box-shadow:
+      0 0 48px rgba(190, 90, 255, 0.7) inset,
+      0 0 70px rgba(190, 90, 255, 0.55),
+      0 0 100px rgba(140, 40, 220, 0.45);
+    border-color: rgba(225, 175, 255, 1);
+  }
+}
+@keyframes illusionWave {
+  0%, 100% {
+    opacity: 0.1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* Badge da Ilusão */
+.illusion-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  font-size: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(25, 10, 35, 0.9);
+  border: 2px solid rgba(200, 130, 255, 0.9);
+  border-radius: 50%;
+  z-index: 10;
+  box-shadow: 0 0 14px rgba(200, 130, 255, 0.7);
+  animation: illusionBadgePulse 2s ease-in-out infinite;
+}
+
+@keyframes illusionBadgePulse {
+  0%, 100% {
+    box-shadow: 0 0 14px rgba(200, 130, 255, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 24px rgba(200, 130, 255, 1);
+  }
+}
+
+/* Animação do slot ilusório desaparecendo */
+.illusion-slot-disappearing {
+  pointer-events: none;
+}
+
+.illusion-slot-disappearing .illusion-badge {
+  animation: illusionBadgeExplode 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes illusionBadgeExplode {
+  0% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.5) rotate(-90deg);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0) rotate(-360deg);
+  }
+}
+
 /* ================================================================
    ARENA RITUAL — acabamento exclusivo dos componentes do campo.
    Mantém cartas, previews e escalas completamente independentes.
@@ -3256,8 +3509,17 @@ body.is-fullscreen .graveyard-container {
 .board-divider-line {
   height: 1px;
   border: 0;
-  background: linear-gradient(90deg, transparent, rgba(221, 185, 100, 0.42) 8%, #f1d98f 50%, rgba(221, 185, 100, 0.42) 92%, transparent);
   box-shadow: 0 0 8px rgba(246, 218, 138, 0.48), 0 0 22px rgba(137, 85, 174, 0.22);
+}
+
+/* Duas metades agora (uma de cada lado da joia) - cada uma precisa ficar clara na ponta que
+   encosta na joia e apagar pra transparente na ponta externa, senão as duas iam apagar bem no
+   meio (onde a joia fica) e deixar um buraco escuro em volta dela. */
+.board-divider .board-divider-line:first-of-type {
+  background: linear-gradient(90deg, transparent, rgba(221, 185, 100, 0.42) 8%, #f1d98f 100%);
+}
+.board-divider .board-divider-line:last-of-type {
+  background: linear-gradient(270deg, transparent, rgba(221, 185, 100, 0.42) 8%, #f1d98f 100%);
 }
 
 .board-divider-jewel {

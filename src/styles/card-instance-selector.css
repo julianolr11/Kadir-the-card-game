@@ -363,10 +363,12 @@
 /* Actions */
 .instance-selector-actions {
   display: flex;
+  justify-content: flex-end;
   gap: 12px;
   padding: 16px 20px;
   border-top: 1px solid rgba(74, 144, 226, 0.3);
   background: rgba(0, 0, 0, 0.2);
+  flex: 0 0 auto;
 }
 
 .instance-card-preview-panel {
@@ -631,8 +633,9 @@
 .instance-preview-fullart-btn:disabled { cursor: not-allowed; opacity: .48; filter: grayscale(.3); }
 
 .instance-selector-btn {
-  flex: 1;
-  padding: 10px 16px;
+  flex: 0 0 auto;
+  min-width: 120px;
+  padding: 10px 20px;
   border: none;
   border-radius: 6px;
   font-size: 14px;

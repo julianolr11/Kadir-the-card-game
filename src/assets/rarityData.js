@@ -65,7 +65,7 @@ export const RARITY_CONFIG = {
  * Baseado em análise de balanceamento do jogo
  */
 export const creatureRarities = {
-  // COMMON (11) - 10 a 30 moedas
+  // COMMON (13) - 10 a 30 moedas
   viborom: { rarity: RARITY_TIERS.COMMON, value: 10 },
   arguilia: { rarity: RARITY_TIERS.COMMON, value: 15 },
   leoracal: { rarity: RARITY_TIERS.COMMON, value: 20 },
@@ -76,8 +76,10 @@ export const creatureRarities = {
   virideer: { rarity: RARITY_TIERS.COMMON, value: 15 },
   grombi: { rarity: RARITY_TIERS.COMMON, value: 15 },
   zefri: { rarity: RARITY_TIERS.COMMON, value: 15 },
+  albot: { rarity: RARITY_TIERS.COMMON, value: 15 },
+  crogal: { rarity: RARITY_TIERS.COMMON, value: 15 },
 
-  // UNCOMMON (11) - 20 a 50 moedas
+  // UNCOMMON (12) - 20 a 50 moedas
   mawthorn: { rarity: RARITY_TIERS.UNCOMMON, value: 30 },
   griffor: { rarity: RARITY_TIERS.UNCOMMON, value: 25 },
   owlberoth: { rarity: RARITY_TIERS.UNCOMMON, value: 35 },
@@ -89,8 +91,9 @@ export const creatureRarities = {
   whalar: { rarity: RARITY_TIERS.UNCOMMON, value: 45 },
   gravhyr: { rarity: RARITY_TIERS.UNCOMMON, value: 50 },
   beoxyr: { rarity: RARITY_TIERS.UNCOMMON, value: 45 },
+  igrazar: { rarity: RARITY_TIERS.UNCOMMON, value: 35 },
 
-  // RARE (9) - 40 a 70 moedas
+  // RARE (11) - 40 a 70 moedas
   draak: { rarity: RARITY_TIERS.RARE, value: 50 },
   kael: { rarity: RARITY_TIERS.RARE, value: 45 },
   ignis: { rarity: RARITY_TIERS.RARE, value: 55 },
@@ -100,6 +103,8 @@ export const creatureRarities = {
   seract: { rarity: RARITY_TIERS.RARE, value: 65 },
   noctyra: { rarity: RARITY_TIERS.RARE, value: 70 },
   aldanor: { rarity: RARITY_TIERS.RARE, value: 55 },
+  hipoderion: { rarity: RARITY_TIERS.RARE, value: 60 },
+  arvel: { rarity: RARITY_TIERS.RARE, value: 65 },
 
   // EPIC (9) - 60 a 90 moedas
   ekeranth: { rarity: RARITY_TIERS.EPIC, value: 70 },
@@ -242,6 +247,43 @@ export const getRollRarity = () => {
     { tier: RARITY_TIERS.RARE, prob: 0.10 },        // 10.00%
     { tier: RARITY_TIERS.UNCOMMON, prob: 0.35 },    // 35.00%
     { tier: RARITY_TIERS.COMMON, prob: 0.50 },      // 50.00%
+  ];
+
+  let accumulated = 0;
+  for (const { tier, prob } of tiers) {
+    accumulated += prob;
+    if (roll <= accumulated) {
+      return tier;
+    }
+  }
+
+  return RARITY_TIERS.COMMON;
+};
+
+/**
+ * Distribuição de raridade do Booster de Calamidade (recompensa do modo Calamidade).
+ * Mais peso em rara/épica/lendária que o booster padrão.
+ */
+export const CALAMITY_RARITY_RATES = {
+  legendary: 0.03,   // 3.00%
+  epic: 0.12,        // 12.00%
+  rare: 0.22,        // 22.00%
+  uncommon: 0.33,    // 33.00%
+  common: 0.30,      // 30.00%
+};
+
+/**
+ * Calcula raridade aleatória para o Booster de Calamidade.
+ * @returns {string} Tier de raridade selecionado
+ */
+export const getRollRarityCalamity = () => {
+  const roll = Math.random();
+  const tiers = [
+    { tier: RARITY_TIERS.LEGENDARY, prob: CALAMITY_RARITY_RATES.legendary },
+    { tier: RARITY_TIERS.EPIC, prob: CALAMITY_RARITY_RATES.epic },
+    { tier: RARITY_TIERS.RARE, prob: CALAMITY_RARITY_RATES.rare },
+    { tier: RARITY_TIERS.UNCOMMON, prob: CALAMITY_RARITY_RATES.uncommon },
+    { tier: RARITY_TIERS.COMMON, prob: CALAMITY_RARITY_RATES.common },
   ];
 
   let accumulated = 0;

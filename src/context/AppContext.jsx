@@ -79,6 +79,62 @@ export function AppProvider({ children }) {
     }
   };
 
+  // ===== CALAMITY BOOSTERS (recompensa do modo Calamidade) =====
+  const [calamityBoosters, setCalamityBoosters] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('calamityBoosters');
+      if (stored !== null) return Number(stored);
+    }
+    return 0;
+  });
+
+  const updateCalamityBoosters = (value) => {
+    setCalamityBoosters(value);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('calamityBoosters', value);
+    }
+  };
+
+  const addCalamityBoosters = (amount) => {
+    setCalamityBoosters((prev) => {
+      const next = Math.max(0, prev + amount);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('calamityBoosters', next);
+      }
+      return next;
+    });
+  };
+  // ===== END CALAMITY BOOSTERS =====
+
+  // ===== CALAMITY COOLDOWNS (30min por chefe entre tentativas) =====
+  // { [bossId]: timestampMs da última vez que a luta começou }
+  const [calamityCooldowns, setCalamityCooldownsState] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('calamityCooldowns');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (parsed && typeof parsed === 'object') return parsed;
+        } catch (e) {
+          // ignora storage corrompido
+        }
+      }
+    }
+    return {};
+  });
+
+  // Marca agora como o início da última tentativa contra esse chefe.
+  const setCalamityCooldown = (bossId) => {
+    setCalamityCooldownsState((prev) => {
+      const next = { ...prev, [bossId]: Date.now() };
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('calamityCooldowns', JSON.stringify(next));
+      }
+      return next;
+    });
+  };
+  // ===== END CALAMITY COOLDOWNS =====
+
   // ===== COINS SYSTEM =====
   const [coins, setCoins] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -467,6 +523,11 @@ export function AppProvider({ children }) {
       setActiveGuardian: updateActiveGuardian,
       boosters,
       setBoosters: updateBoosters,
+      calamityBoosters,
+      setCalamityBoosters: updateCalamityBoosters,
+      addCalamityBoosters,
+      calamityCooldowns,
+      setCalamityCooldown,
       // Coins System
       coins,
       setCoins: updateCoins,
@@ -508,6 +569,8 @@ export function AppProvider({ children }) {
       setEffectsVolume,
       activeGuardian,
       boosters,
+      calamityBoosters,
+      calamityCooldowns,
       coins,
       cardCollection,
       decks,

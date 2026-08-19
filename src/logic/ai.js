@@ -13,11 +13,30 @@ try {
 }
 
 const { getFieldAffinityBonus } = require('./fieldAffinity');
+const { getElementModifier } = require('../utils/effectRegistry');
 
 /**
- * Escolhe ação principal da IA com heurísticas simples.
+ * Nível de "inteligência" da IA nesta batalha, de 0 (torre iniciante) a 10 (topo da torre).
+ * Reaproveita a mesma escala já usada para liberar cartas/perks do oponente (campaignBuildLevel),
+ * então a IA fica mais esperta exatamente na mesma cadência em que fica mais forte em stats -
+ * distribuindo a dificuldade ao longo dos 11 níveis de cada torre em vez de ser sempre igual.
+ * Fora da campanha (partida rápida / PvP local contra bot) usa um nível fixo médio-alto.
+ */
+export function resolveAiDifficulty(battleState) {
+  if (battleState?.ai?.campaignOpponent) {
+    const level = Number.isFinite(battleState.ai.campaignBuildLevel) ? battleState.ai.campaignBuildLevel : 0;
+    return Math.max(0, Math.min(10, level));
+  }
+  return 7;
+}
+
+/**
+ * Escolhe ação principal da IA com heurísticas de invocação.
  * - Prioriza invocar criatura quando estiver com muitas cartas e poucas criaturas.
- * - Escolhe o melhor monstro da mão com base em atk/hp comparado aos inimigos.
+ * - Escolhe o melhor monstro da mão considerando atk/hp, vantagem elemental contra o campo
+ *   inimigo atual e afinidade de campo compartilhado.
+ * - Em dificuldades baixas, adiciona ruído à pontuação (a IA "erra" escolhas com mais frequência
+ *   nos primeiros níveis da torre); em dificuldades altas a escolha é quase sempre a ótima.
  */
 export function chooseAction(battleState) {
   try {
@@ -30,12 +49,47 @@ export function chooseAction(battleState) {
 
     const aiCreatureCount = slots.filter(Boolean).length;
     const enemyCreatures = enemySlots.filter(Boolean);
+    const difficulty = resolveAiDifficulty(s);
+    // Ruído aleatório somado à pontuação de cada candidato: forte em dificuldade 0, quase nulo em 10.
+    const noiseAmplitude = Math.max(0, 3 - difficulty * 0.28);
 
     // If AI has many cards in hand (>=6) and few creatures (<=1), prioritize summoning
     const handThreshold = 6;
     // detect field/effect cards in hand
     const fieldCardIndex = hand.findIndex((c) => c && (/^f\d{3}$/i.test(c) || String(c).toLowerCase().startsWith('field_')));
     const effectCardIndex = hand.findIndex((c) => c && String(c).toLowerCase().startsWith('effect_'));
+
+    const scoreCandidate = (creatureDef) => {
+      const atk = typeof creatureDef.atk === 'number' ? creatureDef.atk : (creatureDef.attack || 2);
+      const hp = typeof creatureDef.hp === 'number' ? creatureDef.hp : (creatureDef.maxHp || 5);
+      let score = 0;
+      if (enemyCreatures.length === 0) {
+        // Prefer high-HP / sustain if no enemies
+        score = hp * 0.6 + atk * 0.4;
+      } else {
+        enemyCreatures.forEach((e) => {
+          const eAtk = e.atk || 1;
+          const eHp = e.hp || 3;
+          // Advantage if our atk > enemy def/atk, and survivability
+          score += (atk - (e.def || 0)) * 1.2 + (hp - eHp) * 0.35;
+          // Vantagem/desvantagem elemental (mesma tabela usada no cálculo de dano real) - uma
+          // criatura que "come" o campo inimigo vale bem mais que uma simplesmente mais forte.
+          const { hasAdvantage, hasDisadvantage } = getElementModifier(creatureDef.element, e.element);
+          if (hasAdvantage) score += 2.5;
+          if (hasDisadvantage) score -= 2.5;
+          // small bonus for elemental affinity if sharedField exists
+          try {
+            const field = s.sharedField && s.sharedField.cardData ? s.sharedField.cardData : (s.sharedField || {});
+            const aff = getFieldAffinityBonus(field, creatureDef);
+            score += (aff.bonusDano || 0) * 0.8 + (aff.bonusHP || 0) * 0.5;
+          } catch (err) {}
+        });
+      }
+      // Ruído: soma um valor aleatório (positivo ou negativo) proporcional à amplitude definida
+      // pela dificuldade - simula decisões menos refinadas nos primeiros níveis da torre.
+      score += (Math.random() * 2 - 1) * noiseAmplitude;
+      return score;
+    };
 
     if (hand.length >= handThreshold && aiCreatureCount <= 1) {
       // Evaluate each invokable creature in hand
@@ -50,30 +104,7 @@ export function chooseAction(battleState) {
         const creatureDef = creaturesPool.find(c => c.id === baseId) || null;
         if (!creatureDef) continue;
 
-        // Basic stats
-        const atk = typeof creatureDef.atk === 'number' ? creatureDef.atk : (creatureDef.attack || 2);
-        const hp = typeof creatureDef.hp === 'number' ? creatureDef.hp : (creatureDef.maxHp || 5);
-
-        // Score vs all enemy creatures
-        let score = 0;
-        if (enemyCreatures.length === 0) {
-          // Prefer high-HP / sustain if no enemies
-          score = hp * 0.6 + atk * 0.4;
-        } else {
-          enemyCreatures.forEach((e) => {
-            const eAtk = e.atk || 1;
-            const eHp = e.hp || 3;
-            // Advantage if our atk > enemy def/atk, and survivability
-            score += (atk - (e.def || 0)) * 1.2 + (hp - eHp) * 0.35;
-            // small bonus for elemental affinity if sharedField exists
-            try {
-              const field = s.sharedField && s.sharedField.cardData ? s.sharedField.cardData : (s.sharedField || {});
-              const aff = getFieldAffinityBonus(field, creatureDef);
-              score += (aff.bonusDano || 0) * 0.8 + (aff.bonusHP || 0) * 0.5;
-            } catch (err) {}
-          });
-        }
-
+        const score = scoreCandidate(creatureDef);
         if (!best || score > best.score) {
           best = { score, handIndex: i, baseId, creatureDef };
         }
@@ -113,23 +144,7 @@ export function chooseAction(battleState) {
       const baseId = cId.includes('-') ? cId.split('-')[0] : cId;
       const creatureDef = creaturesPool.find(c => c.id === baseId) || null;
       if (!creatureDef) continue;
-      const atk = typeof creatureDef.atk === 'number' ? creatureDef.atk : (creatureDef.attack || 2);
-      const hp = typeof creatureDef.hp === 'number' ? creatureDef.hp : (creatureDef.maxHp || 5);
-      let score = 0;
-      if (enemyCreatures.length === 0) {
-        score = hp * 0.6 + atk * 0.4;
-      } else {
-        enemyCreatures.forEach((e) => {
-          const eAtk = e.atk || 1;
-          const eHp = e.hp || 3;
-          score += (atk - (e.def || 0)) * 1.2 + (hp - eHp) * 0.35;
-          try {
-            const field = s.sharedField && s.sharedField.cardData ? s.sharedField.cardData : (s.sharedField || {});
-            const aff = getFieldAffinityBonus(field, creatureDef);
-            score += (aff.bonusDano || 0) * 0.8 + (aff.bonusHP || 0) * 0.5;
-          } catch (err) {}
-        });
-      }
+      const score = scoreCandidate(creatureDef);
       if (!best || score > best.score) {
         best = { score, handIndex: i, baseId, creatureDef };
       }
@@ -160,6 +175,90 @@ export function chooseAction(battleState) {
   } catch (e) {
     console.warn('chooseAction error', e);
     return { type: 'pass' };
+  }
+}
+
+// Tipos de carta de efeito que a IA sabe usar sozinha: nenhum deles precisa de seleção manual de
+// alvo (compram/curam/blindam o próprio lado, ou atingem todo o campo inimigo de uma vez), então
+// dá pra decidir e resolver tudo automaticamente sem reaproveitar o fluxo de targeting feito pra
+// jogador humano (Ilusão de Teatro, Sepultura do Espectro, trocas e afins continuam de fora).
+const SAFE_AI_EFFECT_TYPES = new Set(['draw', 'essence', 'heal', 'shieldAll', 'damageAll', 'destroyAll']);
+
+/**
+ * Decide se vale a pena jogar alguma carta de efeito "sem alvo" da mão da IA agora, e qual.
+ * Cada tipo tem sua própria heurística de valor (ex: cura só importa com orbes baixos, Frasco do
+ * Vazio só compensa com o campo inimigo cheio). Em dificuldades baixas a IA só age em oportunidades
+ * muito óbvias (limiar de pontuação alto); em dificuldades altas aproveita qualquer vantagem.
+ * @returns {{handIndex:number, card:object, score:number}|null}
+ */
+export function chooseAiEffectCardPlay(battleState, difficulty = 0) {
+  try {
+    const s = battleState;
+    const hand = Array.isArray(s?.ai?.hand) ? s.ai.hand : [];
+    if (hand.length === 0) return null;
+
+    const effectCards = require('../assets/cards/effectCards');
+    const candidates = [];
+    hand.forEach((cardId, handIndex) => {
+      if (!cardId || !String(cardId).toLowerCase().startsWith('effect_')) return;
+      const card = effectCards.find((c) => c.id === cardId);
+      if (!card || !SAFE_AI_EFFECT_TYPES.has(card.effectType)) return;
+      candidates.push({ handIndex, card });
+    });
+    if (candidates.length === 0) return null;
+
+    const aiCreatures = (s.ai?.field?.slots || []).filter(Boolean);
+    const playerCreatures = (s.player?.field?.slots || []).filter(Boolean);
+    const aiOrbs = Number.isFinite(s.ai?.orbs) ? s.ai.orbs : 5;
+    const aiHandSize = hand.length;
+
+    let best = null;
+    candidates.forEach(({ handIndex, card }) => {
+      let score = 0;
+      switch (card.effectType) {
+        case 'draw':
+          // Ramp de cartas: valioso com mão curta, sem sentido perto do limite de 7.
+          score = aiHandSize <= 4 ? 6 : 1;
+          break;
+        case 'essence':
+          score = 5; // essência grátis é sempre boa, mas não urgente
+          break;
+        case 'heal':
+          // Vida (orbes) é crítica perto da derrota (máximo 5 orbes).
+          score = aiOrbs <= 2 ? 20 : (aiOrbs <= 3 ? 8 : 0);
+          break;
+        case 'shieldAll':
+          // Só compensa havendo criaturas em campo pra proteger.
+          score = aiCreatures.length > 0 ? 4 + aiCreatures.length * 2 : 0;
+          break;
+        case 'damageAll':
+          // Meteoro Final: melhor com vários alvos inimigos no campo.
+          score = playerCreatures.length * 6;
+          break;
+        case 'destroyAll':
+          // Frasco do Vazio é forte demais pra desperdiçar contra 1 alvo só.
+          score = playerCreatures.length >= 2 ? 10 + playerCreatures.length * 8
+            : (playerCreatures.length === 1 ? 2 : 0);
+          break;
+        default:
+          score = 0;
+      }
+      if (score > 0 && (!best || score > best.score)) {
+        best = { handIndex, card, score };
+      }
+    });
+
+    if (!best) return null;
+
+    // Nos primeiros níveis a IA só usa cartas de efeito muito obviamente boas; no topo da torre
+    // aproveita qualquer oportunidade positiva.
+    const threshold = Math.max(1, 9 - difficulty);
+    if (best.score < threshold) return null;
+
+    return best;
+  } catch (e) {
+    console.warn('chooseAiEffectCardPlay error', e);
+    return null;
   }
 }
 
@@ -283,6 +382,9 @@ export function executeEffectCard(state, effectCard, targetInfo = null) {
               shieldHit: !!res.shieldHit,
               shieldBroken: !!res.shieldBroken,
               attackerId: effectCard.id || null,
+              // Final Meteor: mostra o meteoro caindo primeiro, só revela o número/flash de dano
+              // depois que ele "impacta" na tela (ver BattleContext.jsx, ~900ms).
+              hitPending: effectCard.id === 'effect_final_meteor',
             };
           }
           currState.log = [...(currState.log || []), ...accumulatedLog];
@@ -296,8 +398,13 @@ export function executeEffectCard(state, effectCard, targetInfo = null) {
       break;
 
     case 'destroyAll':
-      // Manda todos os monstros inimigos ao cemitério
-      if (newState.ai?.field?.slots && Array.isArray(newState.ai.field.slots)) {
+      // Manda todos os monstros inimigos ao cemitério - a Calamidade não tem baralho/mão de
+      // verdade e é sempre o único ocupante do slot ai[0]; mandá-la pro cemitério direto faz o
+      // chefe sumir sem a vitória disparar (a luta trava). Bloqueado nesse modo.
+      if (newState.mode === 'calamity') {
+        if (!newState.log) newState.log = [];
+        newState.log.push('A Calamidade é imune a esse efeito - só cai lutando!');
+      } else if (newState.ai?.field?.slots && Array.isArray(newState.ai.field.slots)) {
         const destroyed = newState.ai.field.slots.filter(c => c !== null);
         if (!newState.ai.graveyard) newState.ai.graveyard = [];
         newState.ai.graveyard.push(...destroyed);
@@ -382,16 +489,37 @@ export function executeEffectCard(state, effectCard, targetInfo = null) {
       }
       break;
 
-    case 'control':
-      // Controla uma criatura inimiga por N turnos
-      if (targetInfo && newState.ai?.field?.slots && newState.ai.field.slots[targetInfo.enemyIndex]) {
-        newState.ai.field.slots[targetInfo.enemyIndex] = {
-          ...newState.ai.field.slots[targetInfo.enemyIndex],
-          controlledBy: 'player',
-          controlDuration: effectCard.duration
-        };
+    case 'control': {
+      // Toma o controle de uma criatura inimiga por N turnos: ela realmente muda de lado
+      // (sai do campo da IA e entra no campo do jogador), para que o jogador consiga
+      // de fato usar as habilidades dela como se fosse sua. Volta ao dono original
+      // automaticamente quando a duração expira (ver endTurn em BattleContext.jsx).
+      const capturedCreature = newState.ai?.field?.slots?.[targetInfo?.enemyIndex];
+      const freeSlotIndex = newState.player?.field?.slots?.findIndex((slot) => !slot);
+      if (newState.mode === 'calamity' && capturedCreature?.isCalamityBoss) {
+        if (!newState.log) newState.log = [];
+        newState.log.push('A Calamidade é imune a esse efeito - só cai lutando!');
+      } else if (targetInfo && capturedCreature) {
+        if (freeSlotIndex !== undefined && freeSlotIndex !== -1) {
+          newState.ai.field.slots[targetInfo.enemyIndex] = null;
+          newState.player.field.slots[freeSlotIndex] = {
+            ...capturedCreature,
+            controlledBy: 'ai',
+            controlOriginSlot: targetInfo.enemyIndex,
+            controlDuration: effectCard.duration,
+          };
+        } else {
+          // Ilusão de Teatro sem slot livre: em vez de bloquear o efeito, permite um único
+          // ataque "ilusório" com a criatura inimiga (igual ao ataque espectral do cemitério).
+          // A criatura nunca sai de fato do campo do adversário - só ataca uma vez e volta.
+          newState.controlAttackPending = {
+            creatureIndex: targetInfo.enemyIndex,
+            creature: capturedCreature,
+          };
+        }
       }
       break;
+    }
 
     case 'resurrect':
       // Sepultura do Espectro: permite atacar uma vez do cemitério sem trazer a criatura
@@ -406,6 +534,25 @@ export function executeEffectCard(state, effectCard, targetInfo = null) {
         };
       }
       break;
+
+    case 'immunity': {
+      // Carta de efeito "Imunidade": bloqueia dano e novos debuffs numa criatura aliada por N
+      // turnos (ver applyDamage/applyStatusEffect em effectRegistry.js - checam statusEffects
+      // por type:'immune').
+      const target = newState.player?.field?.slots?.[targetInfo?.allyIndex];
+      if (targetInfo && target) {
+        const { applyStatusEffect } = require('../utils/effectRegistry');
+        const result = applyStatusEffect(newState, {
+          targetId: target.id,
+          effectType: 'immune',
+          duration: effectCard.duration,
+          value: null,
+          attackerId: null,
+        });
+        newState = result.newState;
+      }
+      break;
+    }
 
     case 'damageBuff':
       // Aumenta dano de uma criatura aliada por N turnos

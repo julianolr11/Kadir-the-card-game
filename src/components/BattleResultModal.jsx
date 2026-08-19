@@ -7,13 +7,19 @@ import CreatureCardPreview from './CreatureCardPreview.jsx';
 import { FullArtCard } from './KadirFullArtPreview.jsx';
 import swordIcon from '../assets/img/icons/sword.png';
 import coinIcon from '../assets/img/icons/head.png';
+import calamityBoosterImg from '../assets/img/card/calamity_booster.png';
 import creaturesPool from '../assets/cards';
 
-export default function BattleResultModal({ gameResult, killFeed, playerDeck, onClose, battleStats }) {
-  const { cardCollection, updateCardInstanceXp, setBoosters, boosters, addCoins, loadGuardianLoadout, lang = 'ptbr' } = useContext(AppContext);
+// Calamidade dá mais XP de carta que uma partida normal (ver plano de design do modo).
+const CALAMITY_XP_MULTIPLIER = 2;
+
+export default function BattleResultModal({ gameResult, killFeed, playerDeck, onClose, battleStats, mode, calamityPlayerCount }) {
+  const { cardCollection, updateCardInstanceXp, setBoosters, boosters, addCalamityBoosters, addCoins, loadGuardianLoadout, lang = 'ptbr' } = useContext(AppContext);
   const isEn = lang?.startsWith('en');
 
   const isPlayerWon = gameResult?.winner === 'player';
+  const isCalamity = mode === 'calamity';
+  const calamityBoostersEarned = Math.max(1, Number(calamityPlayerCount) || 1);
   const playerCards = Array.isArray(playerDeck) ? playerDeck : [];
   const [expandedCards, setExpandedCards] = useState({});
 
@@ -52,6 +58,7 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
       ...battleStats.player.cardsSummoned,
       ...battleStats.player.cardsKilled,
       ...battleStats.player.cardsAssisted,
+      ...(battleStats.player.cardsAttacked || []),
     ]);
 
     let total = 0;
@@ -89,6 +96,7 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
     killAdvantage: 0.2, // +0.2x adicional se abateu com vantagem de elemento
     assist: 0.5,    // 0.5x para assistência
     summon: 0.3,    // 0.3x para invocar
+    attack: 0.15,   // 0.15x por ataque à calamidade (modo Calamity só - ver cardsAttacked)
     victory: 0.5,   // +0.5x adicional por vitória
     defeat: 0.1,    // +0.1x adicional por derrota
   };
@@ -126,6 +134,7 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
     const kills = stats.cardsKilled.filter(id => id === cardId).length;
     const assists = stats.cardsAssisted.filter(id => id === cardId).length;
     const summons = stats.cardsSummoned.filter(id => id === cardId).length;
+    const attacks = (stats.cardsAttacked || []).filter(id => id === cardId).length;
 
     // Conta kills com vantagem de elemento
     const killsWithAdvantage = (killFeed || []).filter(
@@ -140,6 +149,7 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
     totalXp += killsWithAdvantage * XP_BASE * XP_MULTIPLIERS.killAdvantage * (1 + killXpBonus); // Bônus por vantagem
     totalXp += assists * XP_BASE * XP_MULTIPLIERS.assist;
     totalXp += summons * XP_BASE * XP_MULTIPLIERS.summon;
+    totalXp += attacks * XP_BASE * XP_MULTIPLIERS.attack;
 
     // Bônus por resultado da batalha (aplicado a todas as cartas que participaram)
     if (isPlayerWon) {
@@ -156,6 +166,10 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
     const levelBonus = 1 + (cardLevel * 0.1);
     totalXp *= levelBonus;
 
+    if (isCalamity) {
+      totalXp *= CALAMITY_XP_MULTIPLIER;
+    }
+
     return Math.floor(totalXp);
   };
 
@@ -169,6 +183,7 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
       ...battleStats.player.cardsSummoned,
       ...battleStats.player.cardsKilled,
       ...battleStats.player.cardsAssisted,
+      ...(battleStats.player.cardsAttacked || []),
     ]);
 
     allParticipants.forEach(cardId => {
@@ -211,6 +226,7 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
       ...battleStats.player.cardsSummoned,
       ...battleStats.player.cardsKilled,
       ...battleStats.player.cardsAssisted,
+      ...(battleStats.player.cardsAttacked || []),
     ]);
 
     const progressData = [];
@@ -269,6 +285,7 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
         const kills = stats.cardsKilled.filter(id => id === cardId).length;
         const assists = stats.cardsAssisted.filter(id => id === cardId).length;
         const summons = stats.cardsSummoned.filter(id => id === cardId).length;
+        const attacks = (stats.cardsAttacked || []).filter(id => id === cardId).length;
         const killsWithAdvantage = (killFeed || []).filter(
           k => k.attackerId === cardId && k.hadAdvantage
         ).length;
@@ -291,6 +308,9 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
         if (summons > 0) {
           breakdown.push({ label: isEn ? 'Summon' : 'Invocação', xp: summons * XP_BASE * XP_MULTIPLIERS.summon });
         }
+        if (attacks > 0) {
+          breakdown.push({ label: isEn ? `${attacks} attack${attacks > 1 ? 's' : ''} on the calamity` : `${attacks} ataque${attacks > 1 ? 's' : ''} à calamidade`, xp: attacks * XP_BASE * XP_MULTIPLIERS.attack });
+        }
         if (isPlayerWon) {
           breakdown.push({ label: isEn ? 'Victory' : 'Vitória', xp: XP_BASE * XP_MULTIPLIERS.victory });
         } else {
@@ -300,7 +320,7 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
         // Aplicar bônus de nível após somar tudo
         const baseXpTotal = breakdown.reduce((sum, item) => sum + item.xp, 0);
         const levelBonus = 1 + (oldLevel * 0.1);
-        const finalXpGain = Math.floor(baseXpTotal * levelBonus);
+        const finalXpGain = Math.floor(baseXpTotal * levelBonus * (isCalamity ? CALAMITY_XP_MULTIPLIER : 1));
 
         // Seleciona imagem com fallback
         let imagePath = '';
@@ -353,8 +373,13 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
     awardXpToCards();
 
     if (isPlayerWon) {
-      // Adiciona 1 booster por vitória
-      setBoosters(boosters + 1);
+      if (isCalamity) {
+        // Calamidade dá Calamity Boosters em vez do booster padrão — 1 por jogador participante.
+        addCalamityBoosters?.(calamityBoostersEarned);
+      } else {
+        // Adiciona 1 booster por vitória
+        setBoosters(boosters + 1);
+      }
     }
 
     onClose();
@@ -409,7 +434,16 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
             </div>
 
             {/* Booster (apenas vitória) */}
-            {isPlayerWon && (
+            {isPlayerWon && isCalamity && (
+              <div className="battle-result-booster-panel">
+                <img src={calamityBoosterImg} alt={isEn ? 'Calamity Booster earned' : 'Booster de Calamidade adquirido'} className="battle-result-booster-img" />
+                <span className="battle-result-booster-label">
+                  <small>{isEn ? 'Calamity reward' : 'Recompensa de Calamidade'}</small>
+                  {calamityBoostersEarned} {isEn ? 'Calamity Booster' : 'Booster de Calamidade'}{calamityBoostersEarned > 1 ? 's' : ''}
+                </span>
+              </div>
+            )}
+            {isPlayerWon && !isCalamity && (
               <div className="battle-result-booster-panel">
                 <img src={require('../assets/img/card/booster.png')} alt={isEn ? 'Booster earned' : 'Booster adquirido'} className="battle-result-booster-img" />
                 <span className="battle-result-booster-label"><small>{isEn ? 'Special reward' : 'Recompensa especial'}</small>1 booster</span>
@@ -426,20 +460,36 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
             </div>
             <div className="kills-grid">
               {killFeed.map((kill, idx) => {
-                const attackerData = creaturesPool.find(c => c.id === kill.attacker || c.id === kill.attacker.toLowerCase());
-                const targetData = creaturesPool.find(c => c.id === kill.target || c.id === kill.target.toLowerCase());
+                // kill.attacker/kill.target podem ser um id de criatura, um nome de exibição já
+                // resolvido, ou (em alguns fluxos) um instanceId tipo "arigus-1700000000-42".
+                // Tenta casar direto, depois pelo baseId (antes do primeiro "-"), e só then cai
+                // pro texto cru - assim nunca mostra o instanceId inteiro na tela.
+                const resolveCreatureData = (value) => {
+                  if (!value) return null;
+                  const lower = value.toLowerCase();
+                  const baseId = lower.split('-')[0];
+                  return creaturesPool.find(c => c.id === value || c.id === lower || c.id === baseId) || null;
+                };
+                const displayName = (data, rawValue) => {
+                  if (data) return (isEn ? data.name?.en : data.name?.pt) || data.name?.pt || rawValue;
+                  // Sem match no pool (ex: carta de efeito): usa o baseId, não o instanceId inteiro
+                  const baseId = String(rawValue).toLowerCase().split('-')[0];
+                  return baseId.charAt(0).toUpperCase() + baseId.slice(1);
+                };
+                const attackerData = resolveCreatureData(kill.attacker);
+                const targetData = resolveCreatureData(kill.target);
                 const isUserCard = battleStats?.player?.cardsSummoned?.includes(kill.attacker);
                 return (
                   <div key={idx} className={`kills-grid-cell ${isUserCard ? 'user' : 'opponent'}`} style={{ animationDelay: `${idx * 0.1}s` }}>
                     <div className="kills-grid-turn">{isEn ? 'Turn' : 'Turno'} {kill.turn}</div>
                     <div className="kills-grid-content">
                       <div className="kills-grid-attacker">
-                        <span className="kills-grid-name">{(isEn ? attackerData?.name?.en : attackerData?.name?.pt) || attackerData?.name?.pt || kill.attacker}</span>
+                        <span className="kills-grid-name">{displayName(attackerData, kill.attacker)}</span>
                         {attackerData?.element && <img alt={attackerData.element} src={require(`../assets/img/elements/${attackerData.element}.png`)} className="kills-grid-element" />}
                       </div>
                       <div className="kills-grid-vs">{isEn ? 'defeated' : 'eliminou'}</div>
                       <div className="kills-grid-target">
-                        <span className="kills-grid-name">{(isEn ? targetData?.name?.en : targetData?.name?.pt) || targetData?.name?.pt || kill.target}</span>
+                        <span className="kills-grid-name">{displayName(targetData, kill.target)}</span>
                         {targetData?.element && <img alt={targetData.element} src={require(`../assets/img/elements/${targetData.element}.png`)} className="kills-grid-element" />}
                       </div>
                     </div>

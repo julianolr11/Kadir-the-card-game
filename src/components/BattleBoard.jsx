@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo } from 'react';
 import { BattleProvider, useBattle } from '../context/BattleContext';
 import { AppContext } from '../context/AppContext';
+import { resolveAbility } from '../logic/abilityResolver';
 import CreatureCardPreview from './CreatureCardPreview.jsx';
 import { FullArtCard } from './KadirFullArtPreview.jsx';
 import BattleResultModal from './BattleResultModal.jsx';
@@ -13,6 +14,7 @@ import '../styles/battle.css';
 import '../styles/battle-result.css';
 import '../styles/effects.css';
 import '../styles/effect-cards.css';
+import '../styles/calamity.css';
 import shieldIcon from '../assets/img/icons/shield.png';
 import bleedIcon from '../assets/img/icons/bleed.png';
 import burnIcon from '../assets/img/icons/burn.png';
@@ -32,7 +34,18 @@ import BattleModalPortal from './BattleModalPortal.jsx';
 import swordPng from '../assets/img/icons/sword.png';
 import { unlockNextCampaignEnemy, CAMPAIGN_TOTAL_LEVELS } from './CampaignTower.jsx';
 import StatusText from './StatusText.jsx';
+import ACHIEVEMENTS from '../assets/achievementsData.js';
 import { getElementModifier } from '../utils/effectRegistry';
+
+// Reference card width (px) the status-effect icon art (Zzz letters, paralyze
+// bolt, freeze snowflakes) was hand-tuned against. Slots render at very
+// different sizes across contexts (small multiplayer grid vs. large 1v1/boss
+// view), so overlay art is scaled relative to this baseline in the gather()
+// effect below instead of assuming a fixed slot size.
+// Calibrated against the calamity boss's full-art card (real width ~324px,
+// confirmed via live DevTools that --fx-scale:1.1 looks correct there):
+// 324 / 1.1 ≈ 295.
+const STATUS_FX_REF_WIDTH = 295;
 
 const getBattleExitRoute = (battleConfig) => {
   if (battleConfig?.mode === 'campaign') return 'campaign';
@@ -71,14 +84,18 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
     selectSpectralAbility,
     executeSpectralAttack,
     cancelSpectralAttack,
+    selectControlAbility,
+    executeControlAttack,
+    cancelControlAttack,
     resurrectCreature,
     cancelResurrection,
     cancelDrawOpponent,
     applyVirideerBless,
     cancelVirideerBless,
   } = useBattle();
-  const { cardCollection, effectsVolume, lang = 'ptbr', coins, spendCoins, unlockAchievement } = React.useContext(AppContext);
+  const { cardCollection, effectsVolume, lang = 'ptbr', coins, spendCoins, unlockAchievement, unlockedAchievements } = React.useContext(AppContext);
   const isEn = lang?.startsWith('en');
+  const [trophyCelebration, setTrophyCelebration] = React.useState(null);
   const [activeCardIndex, setActiveCardIndex] = React.useState(null);
   const [deckCardDrawn, setDeckCardDrawn] = React.useState(false);
   const [opponentDeckCardDrawn, setOpponentDeckCardDrawn] = React.useState(false);
@@ -108,10 +125,14 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
   const [selectedAbility, setSelectedAbility] = React.useState(null); // { slotIndex, abilityIndex } - entra em modo targeting
   const [selectedFieldCreature, setSelectedFieldCreature] = React.useState(null); // { slotIndex, creature } - preview da carta em campo
   const [usedAttackNoticeOpen, setUsedAttackNoticeOpen] = React.useState(false);
+  const [incapacitatedNotice, setIncapacitatedNotice] = React.useState(null); // 'paralyze' | 'sleep' | 'freeze' | null
+  const [insufficientEssenceNoticeOpen, setInsufficientEssenceNoticeOpen] = React.useState(false);
   const [abandonConfirmOpen, setAbandonConfirmOpen] = React.useState(false);
   const [spectralAnimationState, setSpectralAnimationState] = React.useState(null); // 'appearing', 'present', 'disappearing', null
   const [overlayFrameTick, setOverlayFrameTick] = React.useState(0);
   const [spectralRenderCreature, setSpectralRenderCreature] = React.useState(null); // mantém criatura para animar saída
+  const [controlAnimationState, setControlAnimationState] = React.useState(null); // 'appearing', 'present', 'disappearing', null
+  const [controlRenderCreature, setControlRenderCreature] = React.useState(null); // mantém criatura ilusória para animar saída
   // Estado unificado para o drawer do cemitério
   const [graveyardOpen, setGraveyardOpen] = React.useState(false);
   const [essenceAnimating, setEssenceAnimating] = React.useState({ player: false, ai: false }); // Animação de ganho de essência
@@ -161,6 +182,16 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
   const showUsedAttackNotice = React.useCallback(() => {
     setUsedAttackNoticeOpen(true);
     window.setTimeout(() => setUsedAttackNoticeOpen(false), 2000);
+  }, []);
+
+  const showIncapacitatedNotice = React.useCallback((statusType) => {
+    setIncapacitatedNotice(statusType || 'generic');
+    window.setTimeout(() => setIncapacitatedNotice(null), 2000);
+  }, []);
+
+  const showInsufficientEssenceNotice = React.useCallback(() => {
+    setInsufficientEssenceNoticeOpen(true);
+    window.setTimeout(() => setInsufficientEssenceNoticeOpen(false), 2000);
   }, []);
 
   // estilos simples para modal centralizado
@@ -472,6 +503,21 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
     }
   }, [battleConfig, state.phase, state.gameResult, unlockAchievement]);
 
+  // Insígnia de conquista por cada Eker derrotado no modo Calamidade (uma por chefe -
+  // ver CALAMITY_<BOSS>_DEFEATED em achievementsData.js). Mostra a mesma celebração de troféu
+  // usada pelas insígnias de torre da Campanha (ver campaign-badge-celebration em
+  // campaign-tower.css) - antes só desbloqueava em silêncio, sem nenhum aviso na tela.
+  useEffect(() => {
+    if (state.mode !== 'calamity' || state.phase !== 'ended' || state.gameResult?.winner !== 'player') return;
+    if (!state.calamityBossId) return;
+    const achievementId = `CALAMITY_${state.calamityBossId.toUpperCase()}_DEFEATED`;
+    if (!unlockedAchievements?.includes(achievementId)) {
+      const achievement = ACHIEVEMENTS.find((a) => a.id === achievementId);
+      if (achievement) setTrophyCelebration(achievement);
+    }
+    unlockAchievement?.(achievementId);
+  }, [state.mode, state.phase, state.gameResult, state.calamityBossId, unlockAchievement, unlockedAchievements]);
+
   // Portais de status vivem fora do tabuleiro. Limpa as animações assim que a
   // batalha termina para que nenhum buff/debuff atravesse o modal de resultado.
   useEffect(() => {
@@ -493,6 +539,9 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
 
     Object.entries(state.animations || {}).forEach(([id, animation]) => {
       if (animation?.type !== 'damage') return;
+      // Final Meteor: enquanto hitPending for true o número/flash ainda não apareceu na tela,
+      // então o som de impacto também não deve tocar ainda - só quando ele virar false.
+      if (animation.hitPending) return;
       const soundKey = `${id}:${animation.amount || 0}:${animation.shieldHit ? 'shield' : 'hit'}`;
       currentDamageKeys.add(soundKey);
 
@@ -581,7 +630,9 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
 
   const renderOrbs = (count, side = 'player') => {
     const remaining = Number.isFinite(count) ? Math.max(0, count) : 0;
-    const total = Math.max(3, remaining);
+    // Cada jogador começa a partida com 5 orbes (BattleContext.jsx) - sempre mostra os 5
+    // slots e apaga os perdidos, em vez de encolher a fileira conforme os orbes acabam.
+    const total = 5;
     return (
       <div className={`orbs ${orbDamageState[side] ? 'orbs-damage' : ''}`}>
         {Array.from({ length: total }).map((_, i) => (
@@ -596,7 +647,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
     );
   };
 
-  const renderCardChip = (cardId, variant = 'slot', slotData = null) => {
+  const renderCardChip = (cardId, variant = 'slot', slotData = null, owner = null) => {
     // Se for carta de campo, renderiza com visual padrão de campo + holo
     if (isFieldId(cardId)) {
       const { instance } = resolveCardId(cardId);
@@ -724,7 +775,38 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
     const level = instance?.level || 1;
     const isHolo = Boolean(slotData?.isHolo ?? instance?.isHolo);
     const isFullArt = Boolean(slotData?.isFullArt ?? instance?.isFullArt);
-    if (isFullArt) {
+    // Modo Calamidade: o chefe ocupa um slot normal, mas é exibido como carta full-art
+    // maior, com uma barra de vida própria (em vez do ícone+número usado pelas criaturas comuns).
+    // Isso vale só pro lado do oponente (o chefe) — as criaturas dos players continuam com o
+    // visual normal (com os golpes visíveis), mesmo em modo calamidade.
+    const isCalamityMode = state.mode === 'calamity';
+    if (isCalamityMode && data?.calamity?.isCalamity && owner === 'ai') {
+      const bossMaxHp = slotData?.maxHp || data.calamity.baseHp || 1;
+      const bossHp = Math.max(0, slotData?.hp ?? bossMaxHp);
+      const bossHpPct = Math.max(0, Math.min(100, (bossHp / bossMaxHp) * 100));
+      // Fase 2 (<=50% vida) e fase 3 (<=10%) do chefe (ver runCalamityBossTurn em
+      // BattleContext.jsx) ganham uma aura vermelha crescente na carta, mais intensa na fase 3.
+      const bossPhase = bossHpPct <= 10 ? 3 : bossHpPct <= 50 ? 2 : 1;
+      // Cura por "covardia" (jogador esvaziou o campo de propósito - ver calamityBossHealPending
+      // em BattleContext.jsx): sem isso a barra só sobe silenciosamente e passa despercebido, já
+      // que normalmente HP só desce nessa tela. Um "+N" verde bem grande + pulso na barra deixa
+      // óbvio que a calamidade se recuperou.
+      const bossHealAnim = state.animations?.[slotData?.id];
+      const isBossHealing = bossHealAnim?.type === 'heal';
+      return (
+        <div className="card-slot-preview full-art-battle-card calamity-boss-slot">
+          <div className="full-art-slot-scale">
+            <FullArtCard card={data} lang={lang} currentHp={bossHp} maxHp={bossMaxHp} healing={isBossHealing} onlyBlessing className={bossPhase >= 2 ? `calamity-boss-slot-phase${bossPhase}` : ''} />
+            {isBossHealing && (
+              <div className="calamity-boss-heal-flash">
+                <span className="calamity-boss-heal-amount">+{bossHealAnim.amount} HP</span>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+    if (isFullArt && (!isCalamityMode || owner === 'ai')) {
       return (
         <div className="card-slot-preview full-art-battle-card">
           <div className="full-art-slot-scale">
@@ -745,6 +827,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
           maxHp={slotData?.maxHp || data?.hp}
           armor={slotData?.shield || 0}
           burn={(slotData?.statusEffects || []).find(e => e.type === 'burn')?.duration || 0}
+                      immune={(slotData?.statusEffects || []).find(e => e.type === 'immune')?.duration || 0}
           freeze={(slotData?.statusEffects || []).find(e => e.type === 'freeze')?.duration || 0}
           paralyze={(slotData?.statusEffects || []).find(e => e.type === 'paralyze')?.duration || 0}
           poison={(slotData?.statusEffects || []).find(e => e.type === 'poison')?.duration || 0}
@@ -865,12 +948,13 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
     }
   };
 
-  const renderSlots = (slots = [], owner = 'player', spectralSlot = null) => {
+  const renderSlots = (slots = [], owner = 'player', spectralSlot = null, controlSlot = null) => {
     return (
     <div className={`slots slots-${owner}`}>
       {slots.map((slot, i) => {
         const isTargetable = selectedAbility && owner !== state.activePlayer && slot && slot.hp > 0;
         const isSpectralTargetable = state.spectralAttackPending?.selectedAbility !== undefined && owner !== state.activePlayer && slot && slot.hp > 0;
+        const isControlTargetable = state.controlAttackPending?.selectedAbility !== undefined && owner === 'ai' && slot && slot.hp > 0 && i !== state.controlAttackPending?.creatureIndex;
         const isFreezeTargetable = state.freezePending && owner === 'ai' && slot && slot.hp > 0;
         const isPlayerCreature = owner === 'player' && slot && slot.hp > 0 && state.activePlayer === 'player';
         const isDying = slot && state.animations && state.animations[slot.id]?.death;
@@ -884,11 +968,11 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
           <div
             key={i}
             ref={el => { if (slot) slotRefs.current[slot.id] = el; }}
-            className={`slot ${slot ? 'occupied' : 'empty'}${isTargetable || isSpectralTargetable ? ' slot-targetable' : ''}${isPlayerCreature ? ' slot-clickable' : ''}${isDying ? ' slot-death-animation' : ''}${isAttacking ? ' slot-attacking' : ''}${isHit ? ' slot-hit-animation' : ''}${isFieldBuffed ? ' slot-field-buff' : ''}${returningClass}`}
+            className={`slot ${slot ? 'occupied' : 'empty'}${isTargetable || isSpectralTargetable || isControlTargetable ? ' slot-targetable' : ''}${isPlayerCreature ? ' slot-clickable' : ''}${isDying ? ' slot-death-animation' : ''}${isAttacking ? ' slot-attacking' : ''}${isHit ? ' slot-hit-animation' : ''}${isFieldBuffed ? ' slot-field-buff' : ''}${returningClass}`}
               onMouseEnter={() => {
               if (slot) setHoveredCard({ cardId: slot.id, source: 'slot', owner, index: i });
               // só altera o cursor para espada se estamos em modo de seleção e o slot é alvo válido
-              const targetNow = (selectedAbility && owner !== state.activePlayer && slot && slot.hp > 0) || (state.spectralAttackPending?.selectedAbility !== undefined && owner !== state.activePlayer && slot && slot.hp > 0) || (state.freezePending && owner === 'ai' && slot && slot.hp > 0);
+              const targetNow = (selectedAbility && owner !== state.activePlayer && slot && slot.hp > 0) || (state.spectralAttackPending?.selectedAbility !== undefined && owner !== state.activePlayer && slot && slot.hp > 0) || isControlTargetable || (state.freezePending && owner === 'ai' && slot && slot.hp > 0);
               if (targetNow) {
                 const elRef = slotRefs.current?.[slot.id];
                 const cursorValue = `url(/assets/img/icons/sword.cur), url(${swordPng}), auto`;
@@ -921,6 +1005,9 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
               } else if (isSpectralTargetable && state.spectralAttackPending?.selectedAbility !== undefined) {
                 // Executa ataque espectral no alvo
                 executeSpectralAttack(i);
+              } else if (isControlTargetable && state.controlAttackPending?.selectedAbility !== undefined) {
+                // Executa ataque ilusório no alvo
+                executeControlAttack(i);
               } else if (isPlayerCreature) {
                 // Abre preview da carta em campo
                 setSelectedFieldCreature({ slotIndex: i, creature: slot });
@@ -936,7 +1023,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
               }}
               style={{ position: 'relative', transform: 'scale(0.6)', transformOrigin: 'center center', pointerEvents: 'none' }}
             >
-              {renderCardChip(slot.id, 'slot', slot)}
+              {renderCardChip(slot.id, 'slot', slot, owner)}
               <div className="status-icons-overlay">
                 {/* Escudo */}
                 {slot.shield > 0 && (
@@ -957,19 +1044,30 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                   const cls = anim.hasAdvantage ? 'advantage' : (anim.hasDisadvantage ? 'disadvantage' : 'neutral');
                   return (
                     <>
-                      {/** Explosion behind the number for final meteor */}
+                      {/** Meteor falling onto the card, then exploding on impact */}
                       {anim.attackerId === 'effect_final_meteor' && (
-                        <div className="damage-explosion" />
-                      )}
-                      <div className={`damage-impact ${cls}`} />
-                      <div className={`effect-float effect-damage ${cls}`}>-{anim.amount}</div>
-                      {anim.shieldHit && <div className={`shield-shimmer${anim.shieldBroken ? ' shield-broken' : ''}`} />}
-                      {/* Foguinho animado para burn tick */}
-                      {anim.burnTick && (
-                        <div className="burn-tick-fire">
-                          <span className="burn-tick-fire-shape" />
-                          <span className="burn-tick-fire-spark" />
+                        <div className="meteor-strike">
+                          <div className="meteor-rock" />
+                          <div className="meteor-trail-glow" />
+                          <div className="meteor-blast" />
+                          <div className="meteor-blast-ring" />
                         </div>
+                      )}
+                      {/* Final Meteor: o meteoro cai primeiro (acima); número/flash de dano só
+                          aparece depois que ele impacta (hitPending vira false via setState) */}
+                      {!anim.hitPending && (
+                        <>
+                          <div className={`damage-impact ${cls}`} />
+                          <div className={`effect-float effect-damage ${cls}`}>-{anim.amount}</div>
+                          {anim.shieldHit && <div className={`shield-shimmer${anim.shieldBroken ? ' shield-broken' : ''}`} />}
+                          {/* Foguinho animado para burn tick */}
+                          {anim.burnTick && (
+                            <div className="burn-tick-fire">
+                              <span className="burn-tick-fire-shape" />
+                              <span className="burn-tick-fire-spark" />
+                            </div>
+                          )}
+                        </>
                       )}
                     </>
                   );
@@ -1009,6 +1107,20 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                       <div className="elderox-badge"><span className="elderox-arrow">▲</span> Dano x2</div>
                       <div className="elderox-arc" />
                       <div className="elderox-spark" />
+                    </>
+                  );
+                }
+                if (anim.type === 'buff') {
+                  const buffLabels = { dodge: { pt: 'Evasão', en: 'Evasion' } };
+                  const label = buffLabels[anim.stat]?.[isEn ? 'en' : 'pt'] || (isEn ? 'Buff' : 'Bônus');
+                  return (
+                    <>
+                      <div className="self-buff-badge"><span className="self-buff-icon">✦</span> +{anim.amount}% {label}</div>
+                      <div className="self-buff-ring" />
+                      <div className="self-buff-ring self-buff-ring-delay" />
+                      <div className="self-buff-sparkle self-buff-sparkle-1" />
+                      <div className="self-buff-sparkle self-buff-sparkle-2" />
+                      <div className="self-buff-sparkle self-buff-sparkle-3" />
                     </>
                   );
                 }
@@ -1063,7 +1175,49 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
           </div>
         </div>
       )}
+
+      {/* Slot Ilusório (Ilusão de Teatro sem slot livre) */}
+      {controlSlot && (
+        <div
+          className={`slot occupied slot-illusion${controlAnimationState === 'appearing' ? ' illusion-slot-appearing' : ''}${controlAnimationState === 'disappearing' ? ' illusion-slot-disappearing' : ''}`}
+          onMouseEnter={() => controlSlot && setHoveredCard({ cardId: controlSlot.id, source: 'control', owner: 'control', index: -1 })}
+          onMouseLeave={() => setHoveredCard(null)}
+          onClick={() => {
+            // Ao clicar no slot ilusório, abre modal de habilidades
+            setSelectedCreature({ slotIndex: -1, creature: controlSlot, isControl: true });
+          }}
+          style={{ cursor: 'pointer' }}
+        >
+          <div
+            ref={el => {
+              if (controlSlot && el) cardVisualRefs.current[controlSlot.id] = el;
+              else if (controlSlot) delete cardVisualRefs.current[controlSlot.id];
+            }}
+            style={{ position: 'relative', transform: 'scale(0.6)', transformOrigin: 'center center', pointerEvents: 'none' }}
+          >
+            {/* Indicador de Criatura Ilusória */}
+            <div className="illusion-badge">🎭</div>
+            {renderCardChip(controlSlot.id, 'slot', controlSlot)}
+            {/* Efeito Ilusório sobre a carta */}
+            <div className="illusion-card-overlay" />
+            <div className="status-icons-overlay">
+              {/* Escudo */}
+              {controlSlot.shield > 0 && (
+                <img src={shieldIcon} alt="shield" className="status-icon" />
+              )}
+              {/* Status effects */}
+              {(controlSlot.statusEffects || []).map((se, idx) => {
+                const icon = statusIconFor(se.type);
+                return icon ? (
+                  <img key={idx} src={icon} alt={se.type} className="status-icon" />
+                ) : null;
+              })}
+            </div>
+          </div>
+        </div>
+      )}
           {state.virideerBlessPending && (
+            <BattleModalPortal>
             <div style={turnModalBgStyle}>
               <div style={turnModalStyle}>
                 <div style={{ fontWeight: 700, marginBottom: 12 }}>{state.virideerBlessPending.guardianName} oferece +1 HP — escolha uma criatura aliada</div>
@@ -1090,6 +1244,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                             level={0}
                             allowFlip={false}
                             burn={(slot?.statusEffects || []).find(e => e.type === 'burn')?.duration || 0}
+                      immune={(slot?.statusEffects || []).find(e => e.type === 'immune')?.duration || 0}
                             freeze={(slot?.statusEffects || []).find(e => e.type === 'freeze')?.duration || 0}
                             paralyze={(slot?.statusEffects || []).find(e => e.type === 'paralyze')?.duration || 0}
                             poison={(slot?.statusEffects || []).find(e => e.type === 'poison')?.duration || 0}
@@ -1104,6 +1259,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                 <button style={turnModalBtnStyle} onClick={cancelVirideerBless}>{isEn ? 'Cancel' : 'Cancelar'}</button>
               </div>
             </div>
+            </BattleModalPortal>
           )}
     </div>
     );
@@ -1124,24 +1280,16 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
     }
   }, [state.sharedField?.id, lastFieldId]);
 
-  // Rastreia posicao do mouse para o ghost preview
+  // Rastreia posicao do mouse para o ghost preview (indicador de vantagem/desvantagem que
+  // segue o cursor). Esse indicador é renderizado dentro do GhostPreviewPortal, que fica fora
+  // do .app-viewport escalado (position: fixed direto no document.body) - por isso precisa da
+  // posição REAL do cursor na tela, não da posição convertida pro espaço escalado. Converter
+  // pra espaço escalado (dividindo por --vp-scale) e depois usar como left/top num portal que
+  // não é escalado fazia o indicador aparecer cada vez mais longe do cursor quanto mais a
+  // janela estivesse reduzida em relação à resolução nativa do jogo.
   useEffect(() => {
     const handleMouseMove = (e) => {
-      // Pega a escala e offsets do viewport
-      const appViewport = document.querySelector('.app-viewport');
-      if (appViewport) {
-        const style = getComputedStyle(appViewport);
-        const scale = parseFloat(style.getPropertyValue('--vp-scale')) || 1;
-        const offsetX = parseFloat(style.getPropertyValue('--vp-offset-x')) || 0;
-        const offsetY = parseFloat(style.getPropertyValue('--vp-offset-y')) || 0;
-
-        // Converte coordenadas do mouse para o espaço escalado
-        const x = (e.clientX - offsetX) / scale;
-        const y = (e.clientY - offsetY) / scale;
-        setMousePos({ x, y });
-      } else {
-        setMousePos({ x: e.clientX, y: e.clientY });
-      }
+      setMousePos({ x: e.clientX, y: e.clientY });
     };
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
@@ -1178,15 +1326,11 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
     const burnFl = [];
     const burnGrad = [];
     const elderox = [];
-    // Debug: dump current animations keys for diagnosis
-    try {
-      const keys = Object.keys(state.animations || {});
-      if (keys.length > 0) console.log('Current state.animations keys:', keys);
-    } catch (e) {}
     const liveIds = new Set([
       ...(state.player?.field?.slots || []),
       ...(state.ai?.field?.slots || []),
       spectralRenderCreature,
+      controlRenderCreature,
     ].filter(Boolean).map(slot => slot.id));
     Object.keys(cardVisualRefs.current || {}).forEach((id) => {
       if (!liveIds.has(id)) delete cardVisualRefs.current[id];
@@ -1209,16 +1353,21 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
           return;
         }
         const r = el.getBoundingClientRect();
+        // Status-effect icon art (Zzz letters, paralyze bolt, snowflakes) is hand-tuned
+        // in px against this reference card width. Scaling it by the *actual* rendered
+        // width keeps it proportional to the card instead of blowing up on smaller
+        // (e.g. multiplayer grid) slots or shrinking to nothing on larger ones.
+        const fxScale = Math.max(0.32, Math.min(1.4, r.width / STATUS_FX_REF_WIDTH));
         if (hasSleep) {
-          sleep.push({ id: slot.id, left: r.left + (r.width / 2), top: r.top + (r.height * 0.18), width: r.width, height: r.height });
+          sleep.push({ id: slot.id, left: r.left + (r.width / 2), top: r.top + (r.height * 0.18), width: r.width, height: r.height, scale: fxScale });
         }
         if (hasPar) {
           // four corners (small offset inside)
           const pad = Math.min(18, Math.round(Math.min(r.width, r.height) * 0.08));
-          paralyze.push({ id: slot.id + '-tl', left: r.left + pad, top: r.top + pad });
-          paralyze.push({ id: slot.id + '-tr', left: r.left + r.width - pad, top: r.top + pad });
-          paralyze.push({ id: slot.id + '-bl', left: r.left + pad, top: r.top + r.height - pad });
-          paralyze.push({ id: slot.id + '-br', left: r.left + r.width - pad, top: r.top + r.height - pad });
+          paralyze.push({ id: slot.id + '-tl', left: r.left + pad, top: r.top + pad, scale: fxScale });
+          paralyze.push({ id: slot.id + '-tr', left: r.left + r.width - pad, top: r.top + pad, scale: fxScale });
+          paralyze.push({ id: slot.id + '-bl', left: r.left + pad, top: r.top + r.height - pad, scale: fxScale });
+          paralyze.push({ id: slot.id + '-br', left: r.left + r.width - pad, top: r.top + r.height - pad, scale: fxScale });
         }
         if (hasBleed) {
           const baseLeft = r.left + (r.width / 2);
@@ -1293,12 +1442,18 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
 
         // Freeze overlay
         if (hasFreeze && !hasPar) {
-          const fWidth = Math.round(r.width * 1.04);
-          const fHeight = Math.round(r.height * 1.04);
+          // Chefe da calamidade usa uma altura um pouco menor que o resto (pedido do
+          // usuário) - a carta full-art dele mede diferente das criaturas normais. Ajuste fino
+          // adicional (também pedido do usuário): +20px de altura e -5px de largura só nela.
+          // Criaturas normais (ex: Mawthorn) também ganharam um ajuste fino pedido: +5px de
+          // altura e -5px de largura.
+          const freezeHeightMult = slot.isCalamityBoss ? 0.94 : 1.04;
+          const fWidth = Math.round(r.width * 1.04) - 5;
+          const fHeight = Math.round(r.height * freezeHeightMult) + (slot.isCalamityBoss ? 20 : 5);
           // center of slot
           const fLeft = r.left + (r.width / 2);
           const fTop = r.top + (r.height / 2);
-          freeze.push({ id: `${slot.id}-freeze`, left: fLeft, top: fTop, width: fWidth, height: fHeight });
+          freeze.push({ id: `${slot.id}-freeze`, left: fLeft, top: fTop, width: fWidth, height: fHeight, scale: fxScale });
         }
 
         // Shield overlay: center shield icon + subtle blue->transparent gradient from bottom->top
@@ -1321,6 +1476,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
       gather(state.player?.field?.slots || [], 'player');
       gather(state.ai?.field?.slots || [], 'ai');
       if (spectralRenderCreature) gather([spectralRenderCreature]);
+      if (controlRenderCreature) gather([controlRenderCreature]);
     } catch (e) {
       // ignore
     }
@@ -1333,14 +1489,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
     setBurnFlames(burnFl);
     setBurnGradients(burnGrad);
     setElderoxOverlays(elderox);
-  }, [shieldApplyIds, state.animations, state.player?.field?.slots, state.ai?.field?.slots, spectralRenderCreature, overlayFrameTick]);
-
-  // DEBUG: loga quando overlays do Elderox aparecem (temporário)
-  useEffect(() => {
-    if (elderoxOverlays && elderoxOverlays.length > 0) {
-      console.log('Elderox overlays computed:', elderoxOverlays);
-    }
-  }, [elderoxOverlays]);
+  }, [shieldApplyIds, state.animations, state.player?.field?.slots, state.ai?.field?.slots, spectralRenderCreature, controlRenderCreature, overlayFrameTick]);
 
   // Determina o background do board (novo bg calculado a partir do campo ativo)
   const boardBg = state.sharedField.active && state.sharedField.id ? (() => {
@@ -1438,6 +1587,57 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
     };
   }, [spectralAnimationState]);
 
+  // Rastreia aparecimento e desaparecimento do slot ilusório (Ilusão de Teatro sem slot livre)
+  useEffect(() => {
+    const incomingControl = state.controlAttackPending?.creature || null;
+
+    if (incomingControl) {
+      setControlRenderCreature(incomingControl);
+      if (controlAnimationState !== 'appearing' && controlAnimationState !== 'present') {
+        setControlAnimationState('appearing');
+        setTimeout(() => setControlAnimationState('present'), 800);
+      }
+      return;
+    }
+
+    if (!incomingControl && controlRenderCreature) {
+      if (controlAnimationState !== 'disappearing') {
+        setControlAnimationState('disappearing');
+        setTimeout(() => {
+          setControlAnimationState(null);
+          setControlRenderCreature(null);
+        }, 800);
+      }
+    }
+  }, [state.controlAttackPending?.creature, controlAnimationState, controlRenderCreature]);
+
+  useEffect(() => {
+    if (
+      controlAnimationState !== 'appearing'
+      && controlAnimationState !== 'present'
+      && controlAnimationState !== 'disappearing'
+    ) {
+      return undefined;
+    }
+
+    let frameId = 0;
+    let stopped = false;
+    const start = performance.now();
+    const tick = (now) => {
+      if (stopped) return;
+      setOverlayFrameTick((value) => value + 1);
+      if (now - start < 1050) {
+        frameId = requestAnimationFrame(tick);
+      }
+    };
+
+    frameId = requestAnimationFrame(tick);
+    return () => {
+      stopped = true;
+      if (frameId) cancelAnimationFrame(frameId);
+    };
+  }, [controlAnimationState]);
+
   const playerDeckCountForDraw = state.player.deck?.length || 0;
   const playerHandCountForDraw = state.player.hand?.length || 0;
   const canDrawPlayerCard = state.activePlayer === 'player' && !deckCardDrawn && playerDeckCountForDraw > 0 && playerHandCountForDraw < 7;
@@ -1454,7 +1654,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
     {sleepOverlays && sleepOverlays.length > 0 && (
       <LayeredStatusOverlayPortal zValue="var(--z-creature-effects)" idSuffix="sleep">
         {sleepOverlays.map(o => (
-          <div key={`zzz-${o.id}`} className="sleep-zzz" style={{ position: 'absolute', left: `${o.left}px`, top: `${o.top}px`, width: `${Math.round(o.width * 0.78)}px`, height: `${Math.round(o.height * 0.34)}px`, transform: 'translate(-50%,-50%)' }} aria-hidden>
+          <div key={`zzz-${o.id}`} className="sleep-zzz" style={{ position: 'absolute', left: `${o.left}px`, top: `${o.top}px`, width: `${Math.round(o.width * 0.78)}px`, height: `${Math.round(o.height * 0.34)}px`, transform: 'translate(-50%,-50%)', ['--fx-scale']: o.scale || 1 }} aria-hidden>
             <span>Z</span>
             <span>Z</span>
             <span>Z</span>
@@ -1466,7 +1666,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
     {paralyzeOverlays && paralyzeOverlays.length > 0 && (
       <LayeredStatusOverlayPortal zValue="var(--z-creature-effects)" idSuffix="paralyze">
         {paralyzeOverlays.map(o => (
-          <div key={`par-${o.id}`} className="paralyze-burst" style={{ position: 'absolute', left: `${o.left - 13}px`, top: `${o.top - 6}px`, transform: 'translate(-50%,-50%)' }} aria-hidden>⚡</div>
+          <div key={`par-${o.id}`} className="paralyze-burst" style={{ position: 'absolute', left: `${o.left - 13}px`, top: `${o.top - 6}px`, transform: `translate(-50%,-50%) scale(${o.scale || 1})` }} aria-hidden>⚡</div>
         ))}
       </LayeredStatusOverlayPortal>
     )}
@@ -1517,7 +1717,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
           <div
             key={`freeze-${f.id}`}
             className="freeze-overlay"
-            style={{ position: 'absolute', left: `${f.left}px`, top: `${f.top}px`, width: `${f.width}px`, height: `${f.height}px`, transform: 'translate(-50%,-50%)' }}
+            style={{ position: 'absolute', left: `${f.left}px`, top: `${f.top}px`, width: `${f.width}px`, height: `${f.height}px`, transform: 'translate(-50%,-50%)', ['--fx-scale']: f.scale || 1 }}
             aria-hidden
           >
             <div className="freeze-snowflake-group" aria-hidden>
@@ -1527,7 +1727,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                     className={`freeze-falling-snowflake freeze-falling-snowflake-${(snowIdx % 6) + 1}`}
                     style={{
                       ['--snow-left']: `${6 + ((snowIdx * 17) % 88)}%`,
-                      ['--snow-size']: `${5 + (snowIdx % 5) * 2}px`,
+                      ['--snow-size']: `${(5 + (snowIdx % 5) * 2) * (f.scale || 1)}px`,
                       ['--snow-delay']: `${-(snowIdx * 0.41).toFixed(2)}s`,
                       ['--snow-duration']: `${4.8 + (snowIdx % 6) * 0.52}s`,
                       ['--snow-drift']: `${((snowIdx % 2 === 0 ? 1 : -1) * (8 + (snowIdx % 4) * 4))}px`,
@@ -1642,6 +1842,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                       level={0}
                       allowFlip={false}
                       burn={(slot?.statusEffects || []).find(e => e.type === 'burn')?.duration || 0}
+                      immune={(slot?.statusEffects || []).find(e => e.type === 'immune')?.duration || 0}
                       freeze={(slot?.statusEffects || []).find(e => e.type === 'freeze')?.duration || 0}
                       paralyze={(slot?.statusEffects || []).find(e => e.type === 'paralyze')?.duration || 0}
                       poison={(slot?.statusEffects || []).find(e => e.type === 'poison')?.duration || 0}
@@ -1686,6 +1887,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                       level={0}
                       allowFlip={false}
                       burn={(slot?.statusEffects || []).find(e => e.type === 'burn')?.duration || 0}
+                      immune={(slot?.statusEffects || []).find(e => e.type === 'immune')?.duration || 0}
                       freeze={(slot?.statusEffects || []).find(e => e.type === 'freeze')?.duration || 0}
                       paralyze={(slot?.statusEffects || []).find(e => e.type === 'paralyze')?.duration || 0}
                       poison={(slot?.statusEffects || []).find(e => e.type === 'poison')?.duration || 0}
@@ -1703,39 +1905,61 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
       </BattleModalPortal>
     )}
     {state.stealCardPending && (
+      <BattleModalPortal>
       <div style={turnModalBgStyle}>
         <div style={turnModalStyle}>
-          <div style={{ fontWeight: 700, marginBottom: 12 }}>{isEn ? 'Choose a card from the opponent\'s hand' : 'Escolha uma carta da mão do oponente'}</div>
-          <div style={{ display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap' }}>
-            {(state.ai?.hand || []).map((_, idx) => (
-              <button
-                key={`steal-card-${idx}`}
-                type="button"
-                onClick={() => stealEnemyCard(idx)}
-                style={{
-                  border: 'none',
-                  background: 'transparent',
-                  cursor: 'pointer',
-                  padding: 0,
-                }}
-                aria-label={`Roubar carta ${idx + 1}`}
-              >
-                <div
-                  style={{
-                    width: 72,
-                    height: 100,
-                    backgroundImage: `url(${cardVerso})`,
-                    backgroundSize: 'cover',
-                    borderRadius: 8,
-                    boxShadow: '0 6px 18px rgba(0,0,0,0.45)',
-                    border: '1px solid rgba(255,255,255,0.2)',
+          <div style={{ fontWeight: 700, marginBottom: 12 }}>{isEn ? 'Choose a card to steal from the opponent\'s hand' : 'Escolha uma carta para roubar da mão do oponente'}</div>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap', padding: '6px 4px' }}>
+            {(state.ai?.hand || []).map((_, idx) => {
+              const isBusy = state.stealCardSelectedIndex != null;
+              const selected = state.stealCardSelectedIndex === idx;
+              const stolen = state.stealCardStolenIndex === idx;
+              return (
+                <button
+                  key={`steal-card-${idx}`}
+                  type="button"
+                  onClick={() => {
+                    if (isBusy) return;
+                    stealEnemyCard(idx);
                   }}
-                />
-              </button>
-            ))}
+                  style={{
+                    border: 'none',
+                    background: 'transparent',
+                    cursor: isBusy ? 'default' : 'pointer',
+                    padding: 0,
+                    opacity: isBusy && !selected ? 0.35 : 1,
+                    transition: 'opacity 220ms ease',
+                  }}
+                  aria-label={`Roubar carta ${idx + 1}`}
+                >
+                  <div className={`drazaq-steal-card${selected ? ' is-selected' : ''}${stolen ? ' is-stolen' : ''}`}>
+                    <div
+                      className="drazaq-steal-back"
+                      style={{
+                        width: 72,
+                        height: 100,
+                        backgroundImage: `url(${cardVerso})`,
+                        backgroundSize: 'cover',
+                        borderRadius: 8,
+                        boxShadow: '0 6px 18px rgba(0,0,0,0.45)',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                      }}
+                    />
+                  </div>
+                </button>
+              );
+            })}
           </div>
+          <button
+            style={{ ...turnModalBtnStyle, marginTop: 14, opacity: state.stealCardSelectedIndex != null ? 0.4 : 1 }}
+            onClick={cancelStealCard}
+            disabled={state.stealCardSelectedIndex != null}
+          >
+            {isEn ? 'Cancel' : 'Cancelar'}
+          </button>
         </div>
       </div>
+      </BattleModalPortal>
     )}
 
     {state.revealOpponentPending && (
@@ -1863,6 +2087,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                       level={0}
                       allowFlip={false}
                       burn={(slot?.statusEffects || []).find(e => e.type === 'burn')?.duration || 0}
+                      immune={(slot?.statusEffects || []).find(e => e.type === 'immune')?.duration || 0}
                       freeze={(slot?.statusEffects || []).find(e => e.type === 'freeze')?.duration || 0}
                       paralyze={(slot?.statusEffects || []).find(e => e.type === 'paralyze')?.duration || 0}
                       poison={(slot?.statusEffects || []).find(e => e.type === 'poison')?.duration || 0}
@@ -1906,6 +2131,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                       level={0}
                       allowFlip={false}
                       burn={(creature?.statusEffects || []).find(e => e.type === 'burn')?.duration || 0}
+                      immune={(creature?.statusEffects || []).find(e => e.type === 'immune')?.duration || 0}
                       freeze={(creature?.statusEffects || []).find(e => e.type === 'freeze')?.duration || 0}
                       paralyze={(creature?.statusEffects || []).find(e => e.type === 'paralyze')?.duration || 0}
                       poison={(creature?.statusEffects || []).find(e => e.type === 'poison')?.duration || 0}
@@ -1924,6 +2150,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
     )}
     {/* Modal para ressurreição do Ignis */}
     {state.resurrectionPending && (
+      <BattleModalPortal>
       <div style={turnModalBgStyle}>
         <div style={turnModalStyle}>
           <div style={{ fontWeight: 700, marginBottom: 12 }}>
@@ -1963,6 +2190,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                       level={0}
                       allowFlip={false}
                       burn={(creature?.statusEffects || []).find(e => e.type === 'burn')?.duration || 0}
+                      immune={(creature?.statusEffects || []).find(e => e.type === 'immune')?.duration || 0}
                       freeze={(creature?.statusEffects || []).find(e => e.type === 'freeze')?.duration || 0}
                       paralyze={(creature?.statusEffects || []).find(e => e.type === 'paralyze')?.duration || 0}
                       poison={(creature?.statusEffects || []).find(e => e.type === 'poison')?.duration || 0}
@@ -1979,6 +2207,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
           </button>
         </div>
       </div>
+      </BattleModalPortal>
     )}
     <div className="battle-root">
       <div className="battle-topbar">
@@ -2035,6 +2264,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
         </div>
       )}
 
+      {state.mode !== 'calamity' && (
       <div className="opponent-hand">
         <div className="opponent-hand-cards">
           {state.ai.hand.map((_, i) => (
@@ -2047,8 +2277,10 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
           {state.ai.hand.length === 0 && <div className="hand-empty">Sem cartas</div>}
         </div>
       </div>
+      )}
 
-      {/* Deck de compra do adversário */}
+      {/* Deck de compra do adversário (a Calamidade não tem baralho) */}
+      {state.mode !== 'calamity' && (
       <div className="opponent-deck-draw">
         <div style={{ position: 'relative', display: 'inline-block' }}>
           <div
@@ -2076,6 +2308,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
         )}
 
       </div>
+      )}
 
 
       {/* Cemitério Unificado */}
@@ -2114,6 +2347,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                         level={0}
                         allowFlip={false}
                         burn={(creature?.statusEffects || []).find(e => e.type === 'burn')?.duration || 0}
+                      immune={(creature?.statusEffects || []).find(e => e.type === 'immune')?.duration || 0}
                         freeze={(creature?.statusEffects || []).find(e => e.type === 'freeze')?.duration || 0}
                         paralyze={(creature?.statusEffects || []).find(e => e.type === 'paralyze')?.duration || 0}
                         poison={(creature?.statusEffects || []).find(e => e.type === 'poison')?.duration || 0}
@@ -2144,6 +2378,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                         level={0}
                         allowFlip={false}
                         burn={(creature?.statusEffects || []).find(e => e.type === 'burn')?.duration || 0}
+                      immune={(creature?.statusEffects || []).find(e => e.type === 'immune')?.duration || 0}
                         freeze={(creature?.statusEffects || []).find(e => e.type === 'freeze')?.duration || 0}
                         paralyze={(creature?.statusEffects || []).find(e => e.type === 'paralyze')?.duration || 0}
                         poison={(creature?.statusEffects || []).find(e => e.type === 'poison')?.duration || 0}
@@ -2168,7 +2403,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
       {/* Fim do drawer do cemitério */}
 
       <div
-        className={`board ${fieldAnimating || overlayBg ? 'field-animating' : ''}`}
+        className={`board ${fieldAnimating || overlayBg ? 'field-animating' : ''}${state.mode === 'calamity' ? ' board-calamity' : ''}`}
         style={{
           backgroundImage: baseBg || boardBg,
           backgroundRepeat: 'no-repeat',
@@ -2179,9 +2414,25 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
         }}
       >
         {(fieldAnimating || overlayBg) && <div className="field-pulse" />}
+        {/* Bênçãos de área "cinematográficas" (onda do Hipoderion, bola do Grombi, rajada do
+            Ekerion): varrem o campo inteiro, de baixo (seu lado) pra cima (lado inimigo) ou o
+            inverso, antes do "hit" aparecer em cada carta. */}
+        {Object.entries(state.animations || {}).filter(([, a]) => a?.type === 'fieldFx').map(([key, fx]) => (
+          <div
+            key={key}
+            className={`field-fx field-fx-${fx.kind} ${fx.side === 'player' ? 'field-fx-down' : 'field-fx-up'}`}
+            style={fx.elementRgb ? { '--calamity-fx-rgb': fx.elementRgb } : undefined}
+          >
+            {fx.kind === 'grombi_ball' && <div className="grombi-field-ball" />}
+            {fx.kind === 'ekerion_gust' && [0, 1, 2, 3, 4].map((n) => (
+              <div key={n} className="gust-streak" />
+            ))}
+          </div>
+        ))}
         <div className="turn-indicator">Turno {state.turn}</div>
               {/* Fim do drawer do cemitério */}
         <div className="side ai-side">
+          {state.mode !== 'calamity' && (
           <div className="side-header">
             <div className="side-left">{renderOrbs(displayedOrbs.ai, 'ai')}</div>
             <div className="side-right">
@@ -2193,13 +2444,20 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                   <span>{state.ai.essence}</span>
                 </div>
           </div>
-          {renderSlots(state.ai.field.slots, 'ai')}
+          )}
+          {renderSlots(state.mode === 'calamity' ? state.ai.field.slots.slice(0, 1) : state.ai.field.slots, 'ai')}
         </div>
 
         <div className="board-divider">
           <hr className="board-divider-line" />
-          <img src={require('../assets/img/icons/jewel.png')} alt={isEn ? 'Jewel' : 'Jóia'} className="board-divider-jewel" />
+          <img
+            src={require('../assets/img/icons/jewel.png')}
+            alt={isEn ? 'Jewel' : 'Jóia'}
+            className="board-divider-jewel"
+          />
+          <hr className="board-divider-line" />
         </div>
+        {state.mode !== 'calamity' && (
         <div className="shared-field">
           {state.sharedField.active && state.sharedField.id ? (
             (() => {
@@ -2269,15 +2527,18 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
             <div className="field-inactive">Campo Inativo</div>
           )}
         </div>
+        )}
 
         <div className="side player-side">
           {/* side-header removido */}
-          {renderSlots(state.player.field.slots, 'player', spectralRenderCreature)}
+          {renderSlots(state.player.field.slots, 'player', spectralRenderCreature, controlRenderCreature)}
         </div>
 
+        {state.mode !== 'calamity' && (
         <div className="player-orbs">
           {renderOrbs(displayedOrbs.player, 'player')}
         </div>
+        )}
 
         <div className={`player-essence ${essenceAnimating.player ? 'essence-gain' : ''}`}>
           <img src={essenceIcon} alt={isEn ? 'essence' : 'essência'} />
@@ -2285,7 +2546,9 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
         </div>
         {(() => {
           const canDraw = (state.player?.deck?.length || 0) > 0 && (state.player?.hand?.length || 0) < 7;
-          const mustDrawToEnd = state.activePlayer === 'player' && canDraw;
+          // Na Calamidade a compra é opcional - forçar comprar todo turno esvazia o baralho mais
+          // rápido, e a derrota lá já é justamente baralho+mão+campo ficarem vazios ao mesmo tempo.
+          const mustDrawToEnd = state.mode !== 'calamity' && state.activePlayer === 'player' && canDraw;
           const isBlocked = mustDrawToEnd && !deckCardDrawn;
           return (
             <div className="end-turn-container">
@@ -2519,7 +2782,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
           <GhostPreviewPortal>
             <div
               className={`battle-matchup-indicator ${hasAdvantage ? 'battle-matchup-advantage' : 'battle-matchup-disadvantage'}`}
-              style={{ left: mousePos.x + 6, top: mousePos.y + 4 }}
+              style={{ left: mousePos.x + 20, top: mousePos.y - 20 }}
             >
               {hasAdvantage ? '+' : '-'}
             </div>
@@ -2528,6 +2791,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
       })()}
     </div>
     {turnBlockModalOpen && (
+      <BattleModalPortal>
       <div style={turnModalBgStyle}>
         <div style={turnModalStyle}>
           <h2 style={{ color: '#ffe6b0', fontWeight: 700, fontSize: 20, marginBottom: 12 }}>{isEn ? 'Action blocked' : 'Ação bloqueada'}</h2>
@@ -2535,16 +2799,46 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
           <button style={turnModalBtnStyle} onClick={() => setTurnBlockModalOpen(false)}>{isEn ? 'Got it' : 'Entendi'}</button>
         </div>
       </div>
+      </BattleModalPortal>
     )}
 
     {usedAttackNoticeOpen && (
+      <BattleModalPortal>
       <div style={noticeModalBgStyle}>
-        <div style={noticeModalStyle}>esta carta ja atacou</div>
+        <div style={noticeModalStyle}>{isEn ? 'This card already attacked' : 'Esta carta já atacou'}</div>
       </div>
+      </BattleModalPortal>
     )}
 
-    {/* Modal de Habilidades da Criatura Espectral */}
-    {selectedCreature && selectedCreature.isSpectral && (() => {
+    {incapacitatedNotice && (
+      <BattleModalPortal>
+      <div style={noticeModalBgStyle}>
+        <div style={noticeModalStyle}>
+          {(() => {
+            const labels = {
+              paralyze: { pt: 'Esta carta está paralisada e não pode agir', en: 'This card is paralyzed and cannot act' },
+              sleep: { pt: 'Esta carta está dormindo e não pode agir', en: 'This card is asleep and cannot act' },
+              freeze: { pt: 'Esta carta está congelada e não pode agir', en: 'This card is frozen and cannot act' },
+              generic: { pt: 'Esta carta está incapacitada e não pode agir', en: 'This card is incapacitated and cannot act' },
+            };
+            const label = labels[incapacitatedNotice] || labels.generic;
+            return isEn ? label.en : label.pt;
+          })()}
+        </div>
+      </div>
+      </BattleModalPortal>
+    )}
+
+    {insufficientEssenceNoticeOpen && (
+      <BattleModalPortal>
+      <div style={noticeModalBgStyle}>
+        <div style={noticeModalStyle}>{isEn ? 'Not enough essence for this ability' : 'Essência insuficiente para esta habilidade'}</div>
+      </div>
+      </BattleModalPortal>
+    )}
+
+    {/* Modal de Habilidades da Criatura Espectral / Ilusória */}
+    {selectedCreature && (selectedCreature.isSpectral || selectedCreature.isControl) && (() => {
       const creature = selectedCreature.creature;
       const cardData = getCardData(creature.id);
 
@@ -2559,6 +2853,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
               allowFlip={false}
               armor={creature.shield || 0}
               burn={(creature.statusEffects || []).find(e => e.type === 'burn')?.duration || 0}
+                      immune={(creature.statusEffects || []).find(e => e.type === 'immune')?.duration || 0}
               freeze={(creature.statusEffects || []).find(e => e.type === 'freeze')?.duration || 0}
               paralyze={(creature.statusEffects || []).find(e => e.type === 'paralyze')?.duration || 0}
               poison={(creature.statusEffects || []).find(e => e.type === 'poison')?.duration || 0}
@@ -2569,11 +2864,22 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                 if (!ability) return;
                 const cost = ability.cost || 0;
                 const canAfford = (state.player.essence || 0) >= cost;
-                const isIncapacitated = (creature.statusEffects || []).some(e => ['paralyze', 'freeze', 'sleep'].includes(e.type) && e.duration > 0);
-                if (!canAfford || isIncapacitated) return;
+                const incapacitatingEffect = (creature.statusEffects || []).find(e => ['paralyze', 'freeze', 'sleep'].includes(e.type) && e.duration > 0);
+                if (incapacitatingEffect) {
+                  showIncapacitatedNotice(incapacitatingEffect.type);
+                  return;
+                }
+                if (!canAfford) {
+                  showInsufficientEssenceNotice();
+                  return;
+                }
 
-                // Seleciona a habilidade como um ataque espectral
-                selectSpectralAbility(abilityIndex);
+                // Seleciona a habilidade como um ataque espectral ou ilusório, conforme a origem
+                if (selectedCreature.isControl) {
+                  selectControlAbility(abilityIndex);
+                } else {
+                  selectSpectralAbility(abilityIndex);
+                }
                 setSelectedCreature(null);
               }}
               currentHp={creature.hp}
@@ -2603,17 +2909,41 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                 lang={lang}
                 level={level}
                 currentHp={selectedFieldCreature.creature.hp}
+                armor={selectedFieldCreature.creature.shield || 0}
+                burn={(selectedFieldCreature.creature.statusEffects || []).find(e => e.type === 'burn')?.duration || 0}
+                      immune={(selectedFieldCreature.creature.statusEffects || []).find(e => e.type === 'immune')?.duration || 0}
+                freeze={(selectedFieldCreature.creature.statusEffects || []).find(e => e.type === 'freeze')?.duration || 0}
+                paralyze={(selectedFieldCreature.creature.statusEffects || []).find(e => e.type === 'paralyze')?.duration || 0}
+                poison={(selectedFieldCreature.creature.statusEffects || []).find(e => e.type === 'poison')?.duration || 0}
+                sleep={(selectedFieldCreature.creature.statusEffects || []).find(e => e.type === 'sleep')?.duration || 0}
+                bleed={(selectedFieldCreature.creature.statusEffects || []).find(e => e.type === 'bleed')?.duration || 0}
                 onAbilityClick={(abilityIndex) => {
-                  const cost = selectedFieldCreature.creature.abilities[abilityIndex]?.cost || 0;
+                  const ability = selectedFieldCreature.creature.abilities[abilityIndex];
+                  const cost = ability?.cost || 0;
                   const canAfford = (state.player.essence || 0) >= cost;
-                  const isIncapacitated = (selectedFieldCreature.creature.statusEffects || []).some(e => ['paralyze', 'freeze', 'sleep'].includes(e.type) && e.duration > 0);
+                  const incapacitatingEffect = (selectedFieldCreature.creature.statusEffects || []).find(e => ['paralyze', 'freeze', 'sleep'].includes(e.type) && e.duration > 0);
                   const alreadyAttacked = state.creaturesWithUsedAbility && state.creaturesWithUsedAbility.has(selectedFieldCreature.creature.id);
                   if (alreadyAttacked) {
                     setSelectedFieldCreature(null);
                     showUsedAttackNotice();
                     return;
                   }
-                  if (!canAfford || isIncapacitated) return;
+                  if (incapacitatingEffect) {
+                    setSelectedFieldCreature(null);
+                    showIncapacitatedNotice(incapacitatingEffect.type);
+                    return;
+                  }
+                  if (!canAfford) {
+                    setSelectedFieldCreature(null);
+                    showInsufficientEssenceNotice();
+                    return;
+                  }
+                  if (ability && resolveAbility(ability).selfBuff) {
+                    // Habilidade de auto-buff (ex: evasão): não precisa mirar num inimigo.
+                    useAbility('player', selectedFieldCreature.slotIndex, abilityIndex, 'player', selectedFieldCreature.slotIndex);
+                    setSelectedFieldCreature(null);
+                    return;
+                  }
                   setSelectedAbility({ slotIndex: selectedFieldCreature.slotIndex, abilityIndex });
                   setSelectedFieldCreature(null);
                 }}
@@ -2626,22 +2956,39 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
               allowFlip={false}
               armor={selectedFieldCreature.creature.shield || 0}
               burn={(selectedFieldCreature.creature.statusEffects || []).find(e => e.type === 'burn')?.duration || 0}
+                      immune={(selectedFieldCreature.creature.statusEffects || []).find(e => e.type === 'immune')?.duration || 0}
               freeze={(selectedFieldCreature.creature.statusEffects || []).find(e => e.type === 'freeze')?.duration || 0}
               paralyze={(selectedFieldCreature.creature.statusEffects || []).find(e => e.type === 'paralyze')?.duration || 0}
               poison={(selectedFieldCreature.creature.statusEffects || []).find(e => e.type === 'poison')?.duration || 0}
               sleep={(selectedFieldCreature.creature.statusEffects || []).find(e => e.type === 'sleep')?.duration || 0}
               bleed={(selectedFieldCreature.creature.statusEffects || []).find(e => e.type === 'bleed')?.duration || 0}
               onAbilityClick={(abilityIndex) => {
-                const cost = selectedFieldCreature.creature.abilities[abilityIndex]?.cost || 0;
+                const ability = selectedFieldCreature.creature.abilities[abilityIndex];
+                const cost = ability?.cost || 0;
                 const canAfford = (state.player.essence || 0) >= cost;
-                const isIncapacitated = (selectedFieldCreature.creature.statusEffects || []).some(e => ['paralyze', 'freeze', 'sleep'].includes(e.type) && e.duration > 0);
+                const incapacitatingEffect = (selectedFieldCreature.creature.statusEffects || []).find(e => ['paralyze', 'freeze', 'sleep'].includes(e.type) && e.duration > 0);
                 const alreadyAttacked = state.creaturesWithUsedAbility && state.creaturesWithUsedAbility.has(selectedFieldCreature.creature.id);
                 if (alreadyAttacked) {
                   setSelectedFieldCreature(null);
                   showUsedAttackNotice();
                   return;
                 }
-                if (!canAfford || isIncapacitated) return;
+                if (incapacitatingEffect) {
+                  setSelectedFieldCreature(null);
+                  showIncapacitatedNotice(incapacitatingEffect.type);
+                  return;
+                }
+                if (!canAfford) {
+                  setSelectedFieldCreature(null);
+                  showInsufficientEssenceNotice();
+                  return;
+                }
+                if (ability && resolveAbility(ability).selfBuff) {
+                  // Habilidade de auto-buff (ex: evasão): não precisa mirar num inimigo.
+                  useAbility('player', selectedFieldCreature.slotIndex, abilityIndex, 'player', selectedFieldCreature.slotIndex);
+                  setSelectedFieldCreature(null);
+                  return;
+                }
                 setSelectedAbility({ slotIndex: selectedFieldCreature.slotIndex, abilityIndex });
                 setSelectedFieldCreature(null);
               }}
@@ -2668,15 +3015,18 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
       );
     })()}
     {state.phase === 'coinflip' && (
-      <CoinFlip
-        playerName={isEn ? 'You' : 'Você'}
-        aiName={isEn ? 'Opponent' : 'Adversário'}
-        onResult={(winner) => {
-          startPlaying(winner);
-        }}
-      />
+      <BattleModalPortal>
+        <CoinFlip
+          playerName={isEn ? 'You' : 'Você'}
+          aiName={isEn ? 'Opponent' : 'Adversário'}
+          onResult={(winner) => {
+            startPlaying(winner);
+          }}
+        />
+      </BattleModalPortal>
     )}
     {state.phase === 'ended' && state.gameResult && endSequence.active && (
+      <BattleModalPortal>
       <div
         className={`battle-finale battle-finale-${endSequence.winner === 'player' ? 'victory' : 'defeat'} battle-finale-${endSequence.stage}`}
         role="status"
@@ -2704,6 +3054,24 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
           </small>
         </div>
       </div>
+      </BattleModalPortal>
+    )}
+
+    {trophyCelebration && endSequence.showModal && (
+      <BattleModalPortal>
+        <div className="calamity-trophy-celebration" onClick={() => setTrophyCelebration(null)}>
+          <div className="calamity-trophy-panel" onClick={(event) => event.stopPropagation()}>
+            <div className="calamity-trophy-rays" aria-hidden />
+            <p>{isEn ? 'Achievement unlocked' : 'Conquista desbloqueada'}</p>
+            <img src={trophyCelebration.img} alt={trophyCelebration.name?.[isEn ? 'en' : 'pt']} />
+            <h2>{trophyCelebration.name?.[isEn ? 'en' : 'pt']}</h2>
+            <span>{trophyCelebration.desc?.[isEn ? 'en' : 'pt']}</span>
+            <button type="button" onClick={() => setTrophyCelebration(null)}>
+              {isEn ? 'Save achievement' : 'Guardar conquista'}
+            </button>
+          </div>
+        </div>
+      </BattleModalPortal>
     )}
 
     {state.phase === 'ended' && state.gameResult && endSequence.showModal && (
@@ -2713,6 +3081,8 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
         killFeed={state.killFeed}
         battleStats={state.battleStats}
         playerDeck={selectedDeck}
+        mode={state.mode}
+        calamityPlayerCount={state.calamityPlayerCount}
         onClose={() => onNavigate?.(getBattleExitRoute(battleConfig))}
       />
     )}

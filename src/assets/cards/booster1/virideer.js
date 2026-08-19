@@ -9,11 +9,11 @@ module.exports = {
   element: 'terra',
   img: require('../../img/creatures/virideer_bio.webp'),
   color: 'earth',
-  hp: 4,
+  hp: 5,
   abilities: [
     {
       name: { pt: 'Chifre Protetor', en: 'Protective Horn' },
-      cost: 3,
+      cost: 2,
       desc: {
         pt: 'Causa 3 de dano e concede escudo de 4 de vida ao aliado mais frágil.',
         en: 'Deals 3 damage and grants a 4 HP shield to the weakest ally.',
@@ -23,7 +23,7 @@ module.exports = {
     },
     {
       name: { pt: 'Orvalho Revigorante', en: 'Revitalizing Dew' },
-      cost: 2,
+      cost: 1,
       desc: {
         pt: 'Cura 2 de vida e remove 1 debuff de um aliado.',
         en: 'Heals 2 HP and removes 1 debuff from an ally.',

@@ -21,7 +21,7 @@ const getGuardianCardData = (guardianId) => {
   return null;
 };
 
-function DeckSelectModal({ visible, onClose, onSelect }) {
+function DeckSelectModal({ visible, onClose, onSelect, onCreateDeck }) {
   const { decks = {}, lang = 'ptbr' } = useContext(AppContext);
 
   if (!visible) return null;
@@ -51,24 +51,33 @@ function DeckSelectModal({ visible, onClose, onSelect }) {
         </div>
 
         <div className="deck-list">
-            {deckList.length > 0 ? (
-            <div className="deck-grid">
-              {deckList.map((deck) => (
-                <div key={deck.id} className="deck-item" onClick={() => handleDeckClick(deck)}>
-                  <div
-                    className="deck-card-preview"
-                    style={{
-                      backgroundImage: deck.guardianData && deck.guardianData.img ? `url(${deck.guardianData.img})` : 'none',
-                    }}
-                  >
-                    <div className="deck-card-overlay">
-                      <h3>{deck.name}</h3>
-                    </div>
+          <div className="deck-grid">
+            {onCreateDeck && (
+              <div className="deck-item">
+                <button type="button" className="deck-card-preview deck-card-create" onClick={onCreateDeck}>
+                  <span className="deck-card-create-plus" aria-hidden>+</span>
+                  <span className="deck-card-create-label">
+                    {lang === 'ptbr' ? 'Criar deck' : 'Create deck'}
+                  </span>
+                </button>
+              </div>
+            )}
+            {deckList.map((deck) => (
+              <div key={deck.id} className="deck-item" onClick={() => handleDeckClick(deck)}>
+                <div
+                  className="deck-card-preview"
+                  style={{
+                    backgroundImage: deck.guardianData && deck.guardianData.img ? `url(${deck.guardianData.img})` : 'none',
+                  }}
+                >
+                  <div className="deck-card-overlay">
+                    <h3>{deck.name}</h3>
                   </div>
                 </div>
-              ))}
-            </div>
-          ) : (
+              </div>
+            ))}
+          </div>
+          {deckList.length === 0 && !onCreateDeck && (
             <p className="no-decks-message">
               {lang === 'ptbr' ? 'Nenhum deck disponível' : 'No decks available'}
             </p>
@@ -141,8 +150,14 @@ function DeckSelectModal({ visible, onClose, onSelect }) {
 
         .deck-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+          grid-template-columns: repeat(2, minmax(0, 1fr));
           gap: 14px;
+        }
+
+        @media (max-width: 420px) {
+          .deck-grid {
+            grid-template-columns: 1fr;
+          }
         }
 
         .deck-item {
@@ -188,6 +203,29 @@ function DeckSelectModal({ visible, onClose, onSelect }) {
           color: #f3eada;
           font-size: 16px;
           text-shadow: 0 2px 6px rgba(0,0,0,0.8);
+        }
+
+        .deck-card-create {
+          width: 100%;
+          background: rgba(255, 255, 255, 0.02);
+          border: 2px dashed rgba(155, 125, 94, 0.55);
+          color: #cbb896;
+          font-family: inherit;
+          cursor: pointer;
+          gap: 8px;
+        }
+        .deck-card-create:hover {
+          border-color: #e8d5b7;
+          color: #f3eada;
+          background: rgba(155, 125, 94, 0.08);
+        }
+        .deck-card-create-plus {
+          font-size: 30px;
+          line-height: 1;
+          font-weight: 300;
+        }
+        .deck-card-create-label {
+          font-size: 13px;
         }
 
         .deck-card-sub {

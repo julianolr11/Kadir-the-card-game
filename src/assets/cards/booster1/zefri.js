@@ -90,10 +90,10 @@ module.exports = {
   // Bênção padrão
   defaultBlessing: {
     id: 'zefri_blessing',
-    name: { pt: 'Bênção do Vento Ágil', en: 'Blessing of the Swift Wind' },
+    name: { pt: 'Bênção do Sono Sereno', en: 'Blessing of Serene Slumber' },
     desc: {
-      pt: 'Aliados ganham evasão aumentada por 1 turno ao entrar em campo.',
-      en: 'Allies gain increased evasion for 1 turn when summoned.',
+      pt: 'Ao entrar em campo, faz um aliado aleatório dormir por 2 turnos, curando 2 de vida a cada um desses turnos.',
+      en: 'When summoned, puts a random ally to sleep for 2 turns, healing 2 HP each of those turns.',
     },
   },
 

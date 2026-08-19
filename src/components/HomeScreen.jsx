@@ -9,8 +9,10 @@ import '../styles/homescreen.css';
 import '../styles/bestiary.css';
 import { AppContext } from '../context/AppContext';
 import boosterImg from '../assets/img/card/booster.png';
+import calamityBoosterImg from '../assets/img/card/calamity_booster.png';
 import packageSound from '../assets/sounds/effects/package.MP3';
 import boosterAnimationVideo from '../assets/img/card/animacao-booster.mp4';
+import calamityBoosterAnimationVideo from '../assets/img/card/troque_a_imagem_do_booster_pel.mp4';
 import creatures from '../assets/cards';
 import BoosterResultsSlider from './BoosterResultsSlider';
 import DeckSelectModal from './DeckSelectModal';
@@ -18,7 +20,15 @@ import Bestiary from './Bestiary';
 import Shop from './Shop';
 import AchievementsRoom from './AchievementsRoom';
 import HelpCenter from './HelpCenter';
-import { getRollRarity, RARITY_TIERS, getCreaturesByRarity } from '../assets/rarityData.js';
+import { getRollRarity, getRollRarityCalamity, RARITY_TIERS, getCreaturesByRarity } from '../assets/rarityData.js';
+import { getCampaignProgress, CAMPAIGN_TOTAL_LEVELS, CAMPAIGN_TOWER_TYPES } from './CampaignTower';
+
+// Nível de progresso da campanha em que a 1ª insígnia (torre completa) é conquistada —
+// mesma fórmula usada em AchievementsRoom.jsx/PvpLobby.jsx.
+const LEVELS_PER_TOWER = CAMPAIGN_TOTAL_LEVELS / CAMPAIGN_TOWER_TYPES.length;
+
+// Duração, em segundos, do fade-out aplicado antes do fim da animação do Booster de Calamidade
+const CALAMITY_BOOSTER_FADE_SECONDS = 2;
 
 // Função para carregar dados da carta do guardião
 const getGuardianCardData = (guardianId) => {
@@ -35,7 +45,19 @@ const cogTranslations = {
   en: { settings: 'Settings', exit: 'Exit' },
 };
 
-function BoosterZone({ boosters, onOpenBooster, isOpeningBooster, effectsVolume, isEn }) {
+function BoosterZone({
+  boosters,
+  onOpenBooster,
+  isOpeningBooster,
+  effectsVolume,
+  isEn,
+  boosterImage = boosterImg,
+  variant = 'standard',
+  title = 'Booster Zone',
+  position = { bottom: 32, right: 32 },
+  emptyLabel,
+  hoverLabel,
+}) {
   // Edite este array para controlar manualmente o ângulo de cada booster (em graus)
   // Exemplo: diferença de 25 graus entre cada booster, do fundo para o topo
   const boosterAngles = [0, 25, 50, 75, 100];
@@ -64,13 +86,15 @@ function BoosterZone({ boosters, onOpenBooster, isOpeningBooster, effectsVolume,
     onOpenBooster?.();
   }
 
+  const resolvedEmptyLabel = emptyLabel ?? (isEn ? 'No boosters' : 'Nenhum booster');
+  const resolvedHoverLabel = hoverLabel ?? (isEn ? 'Open booster' : 'Abrir booster');
+
   return (
     <div
-      className={`booster-zone${boosters <= 0 ? ' booster-zone-empty' : ' booster-zone-ready'}`}
+      className={`booster-zone booster-zone-${variant}${boosters <= 0 ? ' booster-zone-empty' : ' booster-zone-ready'}`}
       style={{
         position: 'fixed',
-        bottom: 32,
-        right: 32,
+        ...position,
         zIndex: 30,
         minWidth: 159,
         minHeight: 230,
@@ -81,7 +105,7 @@ function BoosterZone({ boosters, onOpenBooster, isOpeningBooster, effectsVolume,
     >
       {/* Áudio do efeito de pacote */}
       <audio ref={packageAudioRef} src={packageSound} preload="auto" />
-      <div className="booster-zone-title">Booster Zone</div>
+      <div className="booster-zone-title">{title}</div>
       {/* Div para boosters por cima do fundo */}
       <div
         className="booster-imgs-layer"
@@ -102,7 +126,7 @@ function BoosterZone({ boosters, onOpenBooster, isOpeningBooster, effectsVolume,
             {[...Array(stackCount).keys()].map((i) => (
               <img
                 key={i}
-                src={boosterImg}
+                src={boosterImage}
                 alt="Booster"
                 className={`booster-img booster-stack booster-stack-${i}${hover ? ` booster-stack-${i}-hover` : ''}`}
                 style={{
@@ -130,13 +154,13 @@ function BoosterZone({ boosters, onOpenBooster, isOpeningBooster, effectsVolume,
           >
             x{boosters}
           </span>
-          <span className="booster-hover-label">{isEn ? 'Open booster' : 'Abrir booster'}</span>
+          <span className="booster-hover-label">{resolvedHoverLabel}</span>
         </>
       )}
       {boosters <= 0 && (
         <div className="booster-empty-state">
           <span className="booster-empty-seal" aria-hidden>✦</span>
-          <span className="booster-empty-label">{isEn ? 'No boosters' : 'Nenhum booster'}</span>
+          <span className="booster-empty-label">{resolvedEmptyLabel}</span>
           <span className="booster-empty-hint">{isEn ? 'Earn some in battles' : 'Conquiste em batalhas'}</span>
         </div>
       )}
@@ -148,9 +172,11 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
   const {
     activeGuardian,
     boosters = 0,
+    calamityBoosters = 0,
     coins = 0,
     lang = 'ptbr',
     setBoosters,
+    setCalamityBoosters,
     addCardsFromBooster,
     decks = {},
     effectsVolume,
@@ -249,6 +275,8 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
   const [showBoosterVideo, setShowBoosterVideo] = useState(false);
   const [showBoosterResults, setShowBoosterResults] = useState(false);
   const [openedBoosterCards, setOpenedBoosterCards] = useState([]);
+  const [boosterOpenKind, setBoosterOpenKind] = useState('standard'); // 'standard' | 'calamity'
+  const [isBoosterVideoFading, setIsBoosterVideoFading] = useState(false);
   const boosterVideoRef = useRef(null);
   const [cheatInput, setCheatInput] = useState('');
   const [showDeckModal, setShowDeckModal] = useState(false);
@@ -352,7 +380,10 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
   const t = cogTranslations[lang] || cogTranslations.ptbr;
   const isEn = lang === 'en';
 
-  function generateBoosterPack() {
+  // Calamidade só libera depois que o jogador vence a 1ª torre da Campanha (1ª insígnia).
+  const hasFirstBadge = getCampaignProgress() >= LEVELS_PER_TOWER;
+
+  function generateBoosterPack(rollRarityFn = getRollRarity) {
     const pool = Array.isArray(creatures) ? [...creatures] : [];
 
     // Separe por tipo (fields, effects, creatures simples)
@@ -366,6 +397,19 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
     // effectProb is remainder
 
     const pickRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+    // Sorteio ponderado: cartas sem `dropWeight` usam peso 1 (chance normal).
+    // Usado pelas cartas de efeito, onde algumas (ex: Fluido de Essência) devem ser mais raras.
+    const pickWeighted = (arr) => {
+      const weights = arr.map((c) => (typeof c?.dropWeight === 'number' ? Math.max(0, c.dropWeight) : 1));
+      const total = weights.reduce((sum, w) => sum + w, 0);
+      if (total <= 0) return pickRandom(arr);
+      let roll = Math.random() * total;
+      for (let idx = 0; idx < arr.length; idx += 1) {
+        roll -= weights[idx];
+        if (roll <= 0) return arr[idx];
+      }
+      return arr[arr.length - 1];
+    };
 
     const selected = [];
     for (let i = 0; i < 5; i += 1) {
@@ -374,7 +418,7 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
       // Decide se será criatura / campo / efeito mantendo proporções do pool
       if (r < creatureProb) {
         // Role a raridade primeiro e escolha uma criatura dessa raridade
-        const rarity = getRollRarity();
+        const rarity = rollRarityFn();
         const candidatesIds = getCreaturesByRarity(rarity) || [];
         // Tenta encontrar objetos no baseCreatures com esses ids
         const candidates = baseCreatures.filter(c => c && c.id && candidatesIds.includes(c.id));
@@ -401,7 +445,7 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
       } else {
         // Efeito
         if (effectCards.length > 0) {
-          const pick = pickRandom(effectCards);
+          const pick = pickWeighted(effectCards);
           selected.push({ ...pick, isHolo: Math.random() < 0.05, rarity: 'effect' });
           continue;
         }
@@ -410,28 +454,58 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
       // Último recurso: sorteio simples do pool restante
       if (pool.length > 0) {
         const pick = pickRandom(pool);
-        selected.push({ ...pick, isHolo: Math.random() < 0.05, rarity: getRollRarity() });
+        selected.push({ ...pick, isHolo: Math.random() < 0.05, rarity: rollRarityFn() });
       }
     }
 
     return selected;
   }
 
+  // Booster de Calamidade: mesma lógica de montagem, com odds de raridade mais altas.
+  function generateCalamityBoosterPack() {
+    return generateBoosterPack(getRollRarityCalamity);
+  }
+
   function handleOpenBooster() {
     if (boosters <= 0 || isOpeningBooster) return;
     setIsOpeningBooster(true);
     setShowBoosterResults(false);
+    setBoosterOpenKind('standard');
+    setIsBoosterVideoFading(false);
     setOpenedBoosterCards(generateBoosterPack());
     setShowBoosterVideo(true);
     setBoosters(Math.max(0, boosters - 1));
   }
 
+  function handleOpenCalamityBooster() {
+    if (calamityBoosters <= 0 || isOpeningBooster) return;
+    setIsOpeningBooster(true);
+    setShowBoosterResults(false);
+    setBoosterOpenKind('calamity');
+    setIsBoosterVideoFading(false);
+    setOpenedBoosterCards(generateCalamityBoosterPack());
+    setShowBoosterVideo(true);
+    setCalamityBoosters(Math.max(0, calamityBoosters - 1));
+  }
+
   function handleCloseBoosterAnimation() {
     setShowBoosterVideo(false);
     setShowBoosterResults(true);
+    setIsBoosterVideoFading(false);
     if (boosterVideoRef.current) {
       boosterVideoRef.current.pause();
       boosterVideoRef.current.currentTime = 0;
+    }
+  }
+
+  // Dispara o fade-out 2s antes do fim do vídeo do Booster de Calamidade.
+  function handleBoosterVideoTimeUpdate() {
+    if (boosterOpenKind !== 'calamity') return;
+    const video = boosterVideoRef.current;
+    if (!video || !Number.isFinite(video.duration)) return;
+    const remaining = video.duration - video.currentTime;
+    if (remaining <= CALAMITY_BOOSTER_FADE_SECONDS) {
+      setIsBoosterVideoFading(true);
     }
   }
 
@@ -649,6 +723,21 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
         effectsVolume={effectsVolume}
         isEn={isEn}
       />
+      {calamityBoosters > 0 && (
+        <BoosterZone
+          boosters={calamityBoosters}
+          onOpenBooster={handleOpenCalamityBooster}
+          isOpeningBooster={isOpeningBooster}
+          effectsVolume={effectsVolume}
+          isEn={isEn}
+          boosterImage={calamityBoosterImg}
+          variant="calamity"
+          title={isEn ? 'Calamity Boosters' : 'Boosters de Calamidade'}
+          position={{ bottom: 32, right: 32 + 159 + 24 }}
+          emptyLabel={isEn ? 'No calamity boosters' : 'Nenhum booster de calamidade'}
+          hoverLabel={isEn ? 'Open calamity booster' : 'Abrir booster de calamidade'}
+        />
+      )}
       <main className="home-main">
         {/* Título removido conforme solicitado */}
         <div className="deck-btn-center-group">
@@ -792,8 +881,30 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
                 </span>
                 <span className="battle-menu-option-arrow" aria-hidden>→</span>
               </button>
-              <button className="battle-menu-option battle-menu-option-muted" disabled>
+              <button
+                className={`battle-menu-option battle-menu-option-calamity${hasFirstBadge ? '' : ' battle-menu-option-muted'}`}
+                disabled={!hasFirstBadge}
+                onClick={() => {
+                  if (!hasFirstBadge) return;
+                  setShowBattleMenu(false);
+                  onNavigate('calamity-lobby');
+                }}
+              >
                 <span className="battle-menu-option-seal" aria-hidden>Ⅲ</span>
+                <span className="battle-menu-option-copy">
+                  <strong>{isEn ? 'Calamity' : 'Calamidade'}</strong>
+                  <small>
+                    {hasFirstBadge
+                      ? (isEn ? 'Face a buffed Eker solo for the biggest reward' : 'Enfrente um Eker bufado sozinho pela maior recompensa')
+                      : (isEn ? 'Win your first Guardian Tower to unlock' : 'Vença sua primeira Torre dos Guardiões para desbloquear')}
+                  </small>
+                </span>
+                {hasFirstBadge
+                  ? <span className="battle-menu-option-arrow" aria-hidden>→</span>
+                  : <span className="battle-menu-coming-soon">{isEn ? 'Locked' : 'Bloqueado'}</span>}
+              </button>
+              <button className="battle-menu-option battle-menu-option-muted" disabled>
+                <span className="battle-menu-option-seal" aria-hidden>Ⅳ</span>
                 <span className="battle-menu-option-copy">
                   <strong>{isEn ? 'Ranked' : 'Rankeada'}</strong>
                   <small>{isEn ? 'Competitive mode in development' : 'Modo competitivo em desenvolvimento'}</small>
@@ -841,15 +952,20 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
         >
           <div className="booster-animation-stage" onClick={(e) => e.stopPropagation()}>
             <div className="booster-animation-heading" aria-hidden>
-              <span>{isEn ? 'REWARD OPENING' : 'ABERTURA DE RECOMPENSA'}</span>
+              <span>
+                {boosterOpenKind === 'calamity'
+                  ? (isEn ? 'CALAMITY REWARD' : 'RECOMPENSA DE CALAMIDADE')
+                  : (isEn ? 'REWARD OPENING' : 'ABERTURA DE RECOMPENSA')}
+              </span>
               <strong>{isEn ? 'Revealing booster' : 'Revelando booster'}</strong>
             </div>
             <video
               ref={boosterVideoRef}
-              className="booster-animation-video"
-              src={boosterAnimationVideo}
+              className={`booster-animation-video${isBoosterVideoFading ? ' booster-animation-video-fading' : ''}`}
+              src={boosterOpenKind === 'calamity' ? calamityBoosterAnimationVideo : boosterAnimationVideo}
               autoPlay
               playsInline
+              onTimeUpdate={handleBoosterVideoTimeUpdate}
               onEnded={handleCloseBoosterAnimation}
             />
           </div>

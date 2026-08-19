@@ -13,6 +13,7 @@ import DeckBuilder from '../components/DeckBuilder';
 import BattleBoard from '../components/BattleBoard';
 import CampaignTower from '../components/CampaignTower';
 import PvpLobby from '../components/PvpLobby';
+import CalamityLobby from '../components/CalamityLobby';
 import KadirFullArtPreview from '../components/KadirFullArtPreview';
 import { AppProvider } from '../context/AppContext';
 import { BattleProvider } from '../context/BattleContext';
@@ -37,7 +38,9 @@ export default function App() {
   const [updateDownloading, setUpdateDownloading] = useState(false);
   const [updateProgress, setUpdateProgress] = useState(0);
   const [updateError, setUpdateError] = useState('');
-  const [lang, setLang] = useState('pt'); // TODO: integrar com contexto de idioma se houver
+  const [lang, setLang] = useState(() => (
+    typeof window !== 'undefined' && localStorage.getItem('lang') === 'en' ? 'en' : 'ptbr'
+  ));
   const [notesModalOpen, setNotesModalOpen] = useState(false);
   const [releaseNotes, setReleaseNotes] = useState('');
   const [updateVersion, setUpdateVersion] = useState('');
@@ -190,6 +193,7 @@ export default function App() {
     else if (route === 'deck') setScreen('deck');
     else if (route === 'campaign') setScreen('campaign');
     else if (route === 'pvp-lobby') setScreen('pvp-lobby');
+    else if (route === 'calamity-lobby') setScreen('calamity-lobby');
     else if (route === 'battle') {
       setBattleDeck(params?.deck || null);
       setBattleConfig(params || null);
@@ -293,6 +297,18 @@ export default function App() {
           />
         </BattleProvider>
       )}
+      {screen === 'calamity-lobby' && (
+        <CalamityLobby
+          onBack={() => setScreen('home')}
+          onNavigate={handleNavigate}
+          onStartBattle={(params: any) => handleNavigate('battle', {
+            mode: 'calamity',
+            bossId: params?.bossId,
+            deck: params?.deckCards,
+            playerCount: params?.playerCount || 1,
+          })}
+        />
+      )}
       {routeCurtain !== 'hidden' && (
         <div className={`route-black-curtain ${routeCurtain}`} aria-hidden>
           {routeCurtain === 'covering' && (
@@ -301,7 +317,7 @@ export default function App() {
               <div className="route-curtain-card" aria-hidden />
               <div className="route-curtain-copy">
                 <span className="route-curtain-kicker">KADIR</span>
-                <div className="route-curtain-text">Preparando sua jornada</div>
+                <div className="route-curtain-text">{lang === 'en' ? 'Preparing your journey' : 'Preparando sua jornada'}</div>
                 <div className="route-curtain-progress" aria-hidden>
                   <i /><i /><i />
                 </div>

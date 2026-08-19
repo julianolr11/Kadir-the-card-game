@@ -32,4 +32,32 @@ describe('resolveAbility', () => {
     expect(resolveAbility({ desc: { pt: 'Ganha um escudo que nega o próximo ataque recebido por 1 rodada.' } }).shield).toBeNull();
     expect(resolveAbility({ desc: { pt: 'Aliados recebem escudo de luz.' } }).shield).toBeNull();
   });
+
+  it('extracts cleanse count from "remove N debuff" text (Albot\'s Purifying Howl)', () => {
+    const pt = resolveAbility({ desc: { pt: 'Remove 1 debuff aliado e cura 1 de vida.' } });
+    expect(pt.cleanse).toBe(1);
+    expect(pt.heal).toBe(1);
+
+    const en = resolveAbility({ desc: { en: 'Removes 1 ally debuff and heals 1 HP.' } });
+    expect(en.cleanse).toBe(1);
+    expect(en.heal).toBe(1);
+  });
+
+  it('extracts cleanse count from "cleanses N debuff" text', () => {
+    expect(resolveAbility({
+      desc: { en: 'Deals 4 damage and cleanses 1 debuff from the most injured ally.' },
+    }).cleanse).toBe(1);
+  });
+
+  it('treats "remove all debuffs" as an unlimited cleanse', () => {
+    expect(resolveAbility({ desc: { pt: 'Remove todos os debuffs de um aliado.' } }).cleanse).toBe(Infinity);
+  });
+
+  it('honors an explicit ability.cleanse field over the text', () => {
+    expect(resolveAbility({ cleanse: 2, desc: { pt: 'Cura 2 de vida e remove 1 debuff de um aliado.' } }).cleanse).toBe(2);
+  });
+
+  it('leaves cleanse null when the ability has no debuff removal', () => {
+    expect(resolveAbility({ desc: { pt: 'Causa 3 de dano ao inimigo.' } }).cleanse).toBeNull();
+  });
 });

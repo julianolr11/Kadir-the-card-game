@@ -69,7 +69,7 @@ const electronHandler = {
     unlockSteamAchievement: (achievementId: string) =>
       ipcRenderer.invoke('steam-unlock-achievement', achievementId),
     // --- Steam PvP lobby helpers ---
-    createSteamLobby: () => ipcRenderer.invoke('steam-create-lobby'),
+    createSteamLobby: (maxMembers?: number) => ipcRenderer.invoke('steam-create-lobby', maxMembers),
     joinSteamLobby: (lobbyId: string) => ipcRenderer.invoke('steam-join-lobby', lobbyId),
     leaveSteamLobby: () => ipcRenderer.invoke('steam-leave-lobby'),
     inviteToSteamLobby: () => ipcRenderer.invoke('steam-invite-to-lobby'),

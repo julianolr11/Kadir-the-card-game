@@ -2221,7 +2221,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
             setAbandonConfirmOpen(true);
           }}
         >
-          Sair
+          {isEn ? 'Exit' : 'Sair'}
         </button>
       </div>
 
@@ -2235,7 +2235,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
             aria-describedby="battle-abandon-description"
             onMouseDown={(event) => event.stopPropagation()}
           >
-            <span className="battle-abandon-kicker">Retirada de batalha</span>
+            <span className="battle-abandon-kicker">{isEn ? 'Battle withdrawal' : 'Retirada de batalha'}</span>
             <div className="battle-abandon-emblem" aria-hidden="true">!</div>
             <h2 id="battle-abandon-title">{isEn ? 'Abandon the match?' : 'Abandonar a partida?'}</h2>
             <p id="battle-abandon-description">
@@ -2429,7 +2429,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
             ))}
           </div>
         ))}
-        <div className="turn-indicator">Turno {state.turn}</div>
+        <div className="turn-indicator">{isEn ? `Turn ${state.turn}` : `Turno ${state.turn}`}</div>
               {/* Fim do drawer do cemitério */}
         <div className="side ai-side">
           {state.mode !== 'calamity' && (

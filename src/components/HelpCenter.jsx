@@ -25,12 +25,20 @@ import deckEditorRunningScreenshot from '../assets/img/help/deck-editor-running.
 import vulcanusField from '../assets/img/scene-board/vulcanus_resultado.webp';
 import oceanField from '../assets/img/scene-board/ocean_resultado.webp';
 import desertField from '../assets/img/scene-board/desert_resultado.webp';
+import fireElementIcon from '../assets/img/elements/fogo.png';
+import waterElementIcon from '../assets/img/elements/agua.png';
+import earthElementIcon from '../assets/img/elements/terra.png';
+import airElementIcon from '../assets/img/elements/ar.png';
+import pureElementIcon from '../assets/img/elements/puro.png';
 
 const CATEGORIES = [
   ['inicio', { pt: 'Primeiros passos', en: 'Getting started' }, '✦'],
   ['navegacao', { pt: 'Navegação', en: 'Navigation' }, '⌘'],
   ['cartas', { pt: 'Cartas e deck', en: 'Cards and deck' }, '◈'],
   ['batalha', { pt: 'Batalha', en: 'Battle' }, '⚔'],
+  ['elementos', { pt: 'Elementos', en: 'Elements' }, '◐'],
+  ['pvp', { pt: 'PvP', en: 'PvP' }, '⇌'],
+  ['calamidade', { pt: 'Modo Calamidade', en: 'Calamity Mode' }, '☠'],
   ['progressao', { pt: 'Progressão', en: 'Progression' }, '↑'],
   ['colecao', { pt: 'Coleção', en: 'Collection' }, '▤'],
 ];
@@ -269,6 +277,101 @@ const GUIDES = [
     tip: { pt: 'Não ative um terreno apenas por combinar com uma criatura sua; conte também quantas cartas inimigas serão fortalecidas.', en: 'Don\'t activate a terrain just because it matches one of your creatures; also count how many enemy cards will be strengthened.' },
   },
   {
+    id: 'vantagem-elemental',
+    category: 'elementos',
+    title: { pt: 'Vantagem elemental', en: 'Elemental advantage' },
+    summary: { pt: 'Fogo, Ar, Terra e Água formam um ciclo de vantagens; Puro fica de fora.', en: 'Fire, Air, Earth and Water form an advantage cycle; Pure stands outside it.' },
+    keywords: 'elemento elementos fogo água agua terra ar puro vantagem desvantagem dano ciclo element fire water earth air pure advantage disadvantage damage cycle',
+    image: battleRunningScreenshot,
+    callout: { pt: 'Ciclo elemental', en: 'Elemental cycle' },
+    type: 'elements',
+    steps: {
+      pt: ['Fogo tem vantagem sobre Ar, e Ar tem vantagem sobre Terra.', 'Terra tem vantagem sobre Água, e Água tem vantagem sobre Fogo.', 'Atacar com vantagem soma +1 de dano; atacar em desvantagem tira 1 de dano.'],
+      en: ['Fire has the advantage over Air, and Air has the advantage over Earth.', 'Earth has the advantage over Water, and Water has the advantage over Fire.', 'Attacking with the advantage adds +1 damage; attacking at a disadvantage removes 1 damage.'],
+    },
+    more: {
+      pt: ['O elemento Puro não possui fraquezas e permanece neutro contra os outros quatro elementos.', 'Puro contra Puro é a única combinação em que ele recebe o bônus de +1 de dano.', 'A vantagem se aplica tanto a ataques normais quanto a habilidades com dano baseado em elemento.', 'Confira o elemento no rodapé da carta antes de atacar para prever se o golpe será mais forte ou mais fraco.'],
+      en: ['The Pure element has no weaknesses and stays neutral against the other four elements.', 'Pure vs. Pure is the only matchup where it gets the +1 damage bonus.', 'The advantage applies to both regular attacks and abilities with element-based damage.', 'Check the element at the bottom of the card before attacking to predict whether the hit will be stronger or weaker.'],
+    },
+    tip: { pt: 'Times bem balanceados evitam depender de um único elemento — assim sempre há uma criatura em vantagem.', en: 'Well-balanced teams avoid relying on a single element — that way there\'s always a creature with the advantage.' },
+  },
+  {
+    id: 'pvp-duelo',
+    category: 'pvp',
+    title: { pt: 'Desafie outro jogador (PvP)', en: 'Challenge another player (PvP)' },
+    summary: { pt: 'Duelo 1x1 pela Steam, cada um com seu próprio deck.', en: 'A 1v1 duel over Steam, each player with their own deck.' },
+    keywords: 'pvp versus duelo 1x1 sala convite steam código join room invite deck travar lock adversário opponent',
+    image: battleRunningScreenshot,
+    callout: { pt: 'Sala de duelo', en: 'Duel room' },
+    type: 'pvp-duel',
+    steps: {
+      pt: ['Abra PvP no menu e crie uma sala, ou entre usando um código de convite.', 'Convide um amigo pela Steam ou compartilhe o código da sala com ele.', 'Escolha e trave seu deck; a partida começa quando os dois estiverem prontos.'],
+      en: ['Open PvP from the menu and create a room, or join using an invite code.', 'Invite a friend through Steam or share the room code with them.', 'Choose and lock your deck; the match starts once both players are ready.'],
+    },
+    more: {
+      pt: ['Cada jogador usa seu próprio deck — não há cartas compartilhadas entre os dois.', 'A ordem dos turnos alterna entre os dois jogadores até o fim da partida.', 'A vitória acontece quando os corações do adversário chegam a zero.', 'Travar o deck confirma a escolha; não é possível trocá-lo depois disso.'],
+      en: ['Each player uses their own deck — no cards are shared between the two.', 'Turn order alternates between the two players until the match ends.', 'You win once the opponent\'s hearts reach zero.', 'Locking the deck confirms your choice; you can\'t swap it afterward.'],
+    },
+    tip: { pt: 'Revise a formação completa antes de travar o deck — depois disso não dá para ajustar.', en: 'Review your full lineup before locking the deck — you can\'t adjust it afterward.' },
+  },
+  {
+    id: 'pvp-timer',
+    category: 'pvp',
+    title: { pt: 'Tempo por turno e desistência', en: 'Turn timer and forfeiting' },
+    summary: { pt: 'Cada turno tem um limite de tempo — não fique parado demais.', en: 'Every turn has a time limit — don\'t stall for too long.' },
+    keywords: 'tempo turno timer cronometro cronômetro contagem regressiva afk desistir cancelar moeda compensação coin timeout 60 segundos',
+    image: battleRunningScreenshot,
+    callout: { pt: 'Cronômetro do turno', en: 'Turn timer' },
+    type: 'pvp-timer',
+    steps: {
+      pt: ['Você tem até 1 minuto para agir no seu turno.', 'Faltando 10 segundos, uma contagem regressiva aparece na tela.', 'Se o tempo acabar, o turno passa automaticamente para o adversário.'],
+      en: ['You have up to 1 minute to act on your turn.', 'A countdown appears on screen once 10 seconds are left.', 'If time runs out, the turn automatically passes to your opponent.'],
+    },
+    more: {
+      pt: ['Tempo esgotado conta como uma falta; jogar dentro do prazo reinicia essa contagem no turno seguinte.', 'Se você deixar o tempo acabar 3 vezes seguidas, a partida é cancelada e o adversário vence.', 'Quem continuou jogando recebe uma compensação em moedas pela partida interrompida.', 'O cronômetro só é ativado em partidas PvP e no modo Calamidade em equipe — no solo não há limite de tempo.'],
+      en: ['A timeout counts as a miss; playing within the limit resets that streak on the next turn.', 'If you let time run out 3 times in a row, the match is cancelled and your opponent wins.', 'Whoever kept playing gets a coin compensation for the interrupted match.', 'The timer only runs in PvP matches and team Calamity runs — solo play has no time limit.'],
+    },
+    tip: { pt: 'Resolva ataques e habilidades assim que puder: o cronômetro continua correndo enquanto você pensa.', en: 'Resolve attacks and abilities as soon as you can: the timer keeps running while you think.' },
+  },
+  {
+    id: 'calamidade-intro',
+    category: 'calamidade',
+    title: { pt: 'O que é a Calamidade', en: 'What is a Calamity' },
+    summary: { pt: 'Um chefe poderoso que ameaça o reino — sozinho ou em equipe.', en: 'A powerful boss threatening the realm — solo or with a team.' },
+    keywords: 'calamidade calamity chefe boss cooldown recompensa xp cura heal esquiva sacrifício sacrifice dodge campo vazio vida hp cem',
+    image: battleRunningScreenshot,
+    callout: { pt: 'Confronto contra a Calamidade', en: 'Calamity showdown' },
+    type: 'calamity',
+    steps: {
+      pt: ['Abra Calamidade no menu e escolha (ou vote) qual chefe enfrentar.', 'Monte seu deck normalmente e entre na batalha.', 'Ataque o chefe a cada turno até zerar sua vida antes que suas cartas acabem.'],
+      en: ['Open Calamity from the menu and choose (or vote on) which boss to face.', 'Build your deck normally and enter the battle.', 'Attack the boss every turn until its HP hits zero before you run out of cards.'],
+    },
+    more: {
+      pt: ['Cada chefe tem sua própria vida e elemento, e entra em cooldown de 60 minutos após ser enfrentado.', 'Esvaziar o campo de propósito (sacrificando criaturas ou deixando de invocar) para escapar do ataque do chefe faz ele recuperar parte da vida perdida — não dá para simplesmente se esconder.', 'Toda criatura que ataca o chefe também ganha XP, então vale revezar quem golpeia.', 'Se seu deck, mão e campo ficarem vazios ao mesmo tempo, você perde a batalha — planeje o ritmo das invocações.'],
+      en: ['Each boss has its own HP and element, and goes on a 60-minute cooldown after being fought.', 'Deliberately emptying your field (sacrificing creatures or skipping summons) to dodge the boss\'s attack makes it heal back part of the HP it lost — you can\'t just hide from it.', 'Every creature that attacks the boss also earns XP, so it\'s worth rotating who strikes.', 'If your deck, hand and field are all empty at the same time, you lose the battle — plan the pace of your summons.'],
+    },
+    tip: { pt: 'Guarde uma criatura de reserva para não ficar sem opções de ataque perto do fim do deck.', en: 'Keep a creature in reserve so you don\'t run out of attack options near the end of your deck.' },
+  },
+  {
+    id: 'calamidade-coop',
+    category: 'calamidade',
+    title: { pt: 'Enfrente em equipe (co-op)', en: 'Team up (co-op)' },
+    summary: { pt: 'Até 4 jogadores, cada um com seu próprio deck, na mesma sala Steam.', en: 'Up to 4 players, each with their own deck, in the same Steam room.' },
+    keywords: 'coop cooperativo equipe time 4 jogadores steam convite sala anfitrião host hospedar turno timer tempo timeline afk cancelar',
+    image: battleRunningScreenshot,
+    callout: { pt: 'Sala cooperativa', en: 'Co-op room' },
+    type: 'calamity-coop',
+    steps: {
+      pt: ['Um jogador hospeda a sala e convida até 3 amigos pela Steam.', 'Cada jogador escolhe seu próprio deck; ninguém compartilha cartas.', 'Os turnos passam em sequência: Jogador 1 → Jogador 2 → ... → chefe → Jogador 1 de novo.'],
+      en: ['One player hosts the room and invites up to 3 friends via Steam.', 'Each player picks their own deck; nobody shares cards.', 'Turns pass in sequence: Player 1 → Player 2 → ... → boss → Player 1 again.'],
+    },
+    more: {
+      pt: ['A timeline lateral mostra de quem é a vez, com o avatar Steam de cada jogador.', 'Efeitos como queimadura e congelamento duram 3 rodadas completas (todos os jogadores + o chefe), não 3 turnos individuais.', 'Cada jogador tem até 1 minuto por turno; faltando 10 segundos aparece uma contagem regressiva na tela.', 'Se alguém não agir 3 vezes seguidas, a batalha é cancelada e o cooldown do chefe começa a contar normalmente — sem recompensa nem penalidade para ninguém.'],
+      en: ['The sidebar timeline shows whose turn it is, with each player\'s Steam avatar.', 'Effects like burn and freeze last 3 full rounds (every player + the boss), not 3 individual turns.', 'Each player has up to 1 minute per turn; a countdown appears on screen once 10 seconds are left.', 'If someone fails to act 3 times in a row, the battle is cancelled and the boss\'s cooldown starts counting normally — no reward and no penalty for anyone.'],
+    },
+    tip: { pt: 'Combine com o time quem ataca em qual turno para não desperdiçar essência em alvos já quase derrotados.', en: 'Coordinate with your team who attacks on which turn so you don\'t waste essence on targets that are already nearly defeated.' },
+  },
+  {
     id: 'upgrade',
     category: 'progressao',
     title: { pt: 'Normal → Holo → Full Art', en: 'Normal → Holo → Full Art' },
@@ -402,6 +505,83 @@ function GuideVisual({ guide, isEn }) {
             })}
           </div>
           <small className="help-field-shared">{isEn ? '⚔ The bonus can also benefit compatible enemy creatures.' : '⚔ O bônus também pode beneficiar criaturas adversárias compatíveis.'}</small>
+        </div>
+      )}
+      {guide.type === 'elements' && (
+        <div className="help-element-example">
+          <div className="help-element-cycle">
+            {[
+              [fireElementIcon, { pt: 'Fogo', en: 'Fire' }],
+              [airElementIcon, { pt: 'Ar', en: 'Air' }],
+              [earthElementIcon, { pt: 'Terra', en: 'Earth' }],
+              [waterElementIcon, { pt: 'Água', en: 'Water' }],
+              [fireElementIcon, { pt: 'Fogo', en: 'Fire' }],
+            ].map(([icon, label], index) => (
+              <React.Fragment key={`${label.pt}-${index}`}>
+                {index > 0 && <i aria-hidden>→</i>}
+                <span className="help-element-node"><img src={icon} alt={label[key]} /><b>{label[key]}</b></span>
+              </React.Fragment>
+            ))}
+          </div>
+          <div className="help-element-pure">
+            <img src={pureElementIcon} alt={isEn ? 'Pure' : 'Puro'} />
+            <p>{isEn ? 'Pure is neutral against all four — except Pure vs. Pure, where it gets +1 damage.' : 'Puro é neutro contra os outros quatro — exceto Puro vs. Puro, onde ganha +1 de dano.'}</p>
+          </div>
+        </div>
+      )}
+      {guide.type === 'pvp-duel' && (
+        <div className="help-pvp-example">
+          <div className="help-pvp-duel">
+            <div className="help-pvp-side">
+              <b>{isEn ? 'You' : 'Você'}</b>
+              <span><img src={heartIcon} alt="" /> 3</span>
+            </div>
+            <i aria-hidden>VS</i>
+            <div className="help-pvp-side">
+              <b>{isEn ? 'Opponent' : 'Oponente'}</b>
+              <span><img src={heartIcon} alt="" /> 3</span>
+            </div>
+          </div>
+          <div className="help-calamity-note"><span aria-hidden>⇌</span><p>{isEn ? 'Steam invite or room code — no shared deck.' : 'Convite Steam ou código da sala — sem deck compartilhado.'}</p></div>
+        </div>
+      )}
+      {guide.type === 'pvp-timer' && (
+        <div className="help-pvp-example">
+          <div className="help-pvp-clock">
+            <b>0:10</b>
+            <small>{isEn ? 'Time left' : 'Tempo restante'}</small>
+          </div>
+          <div className="help-calamity-note"><span aria-hidden>⚠</span><p>{isEn ? '3 timeouts in a row cancels the match.' : '3 tempos esgotados seguidos cancela a partida.'}</p></div>
+          <div className="help-calamity-note"><span aria-hidden><img src={coinIcon} alt="" style={{ width: 14, height: 14 }} /></span><p>{isEn ? 'The player who kept playing gets a coin compensation.' : 'Quem continuou jogando recebe uma compensação em moedas.'}</p></div>
+        </div>
+      )}
+      {guide.type === 'calamity' && (
+        <div className="help-calamity-example">
+          <div className="help-calamity-boss">
+            <b>{isEn ? 'Boss' : 'Chefe'}</b>
+            <div className="help-calamity-hp-bar"><span style={{ width: '62%' }} /></div>
+            <small>62 / 100 HP</small>
+          </div>
+          <div className="help-calamity-note"><span aria-hidden>⚠</span><p>{isEn ? 'Emptying your field on purpose to dodge an attack heals the boss back.' : 'Esvaziar o campo de propósito para esquivar do ataque cura o chefe.'}</p></div>
+          <div className="help-calamity-note"><span aria-hidden>⏱</span><p>{isEn ? '60-minute cooldown per boss after each attempt.' : 'Cooldown de 60 minutos por chefe após cada tentativa.'}</p></div>
+        </div>
+      )}
+      {guide.type === 'calamity-coop' && (
+        <div className="help-coop-example">
+          <div className="help-coop-timeline">
+            {[
+              { pt: 'Jogador 1', en: 'Player 1' },
+              { pt: 'Jogador 2', en: 'Player 2' },
+              { pt: 'Jogador 3', en: 'Player 3' },
+              { pt: 'Chefe', en: 'Boss' },
+            ].map((label, index) => (
+              <div key={label.pt} className={`help-coop-slot${index === 1 ? ' active' : ''}`}>
+                <span className="help-coop-avatar" aria-hidden />
+                <b>{label[key]}</b>
+              </div>
+            ))}
+          </div>
+          <div className="help-calamity-note"><span aria-hidden>⏱</span><p>{isEn ? '60s per turn, with a countdown in the last 10s — 3 misses cancels the match.' : '60s por turno, com contagem regressiva nos últimos 10s — 3 faltas cancela a partida.'}</p></div>
         </div>
       )}
       {guide.type === 'comparison' && (

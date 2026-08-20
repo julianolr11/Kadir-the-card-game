@@ -1038,27 +1038,6 @@ html, body, #root {
   display: flex;
   gap: 45px;
 }
-/* Estilo básico para o menu da HomeScreen */
-.home-btn {
-  margin: 12px 0;
-  padding: 16px 32px;
-  font-size: 1.2rem;
-  border: none;
-  border-radius: 12px;
-  background: #18121e;
-  color: #fff;
-  font-weight: 700;
-  box-shadow: 0 2px 12px #000a;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
-}
-.home-btn:hover {
-  color: #fff;
-  background: #2d1a1a;
-  box-shadow: 0 0 24px 6px #ff6a00, 0 2px 12px #000a;
-}
 /* Brilho natural e suave com degradê centralizado */
 .deck-btn::after {
   content: "";
@@ -1080,17 +1059,6 @@ html, body, #root {
   opacity: 0.38;
   filter: blur(1.2px) brightness(1.08);
 }
-.home-btn:hover::after {
-  width: 180%;
-  height: 400%;
-  opacity: 0.25;
-  animation: fire-glow 0.7s linear infinite alternate;
-}
-@keyframes fire-glow {
-  0% { filter: blur(2px) brightness(1.1); }
-  100% { filter: blur(6px) brightness(1.4); }
-}
-
 .home-title {
   color: #fff;
   text-shadow: 0 2px 12px #ff6a00, 0 2px 8px #000a;
@@ -1108,28 +1076,55 @@ html, body, #root {
 
 
 .home-btn {
-    min-width: 150px;
-    padding: 8px 0;
-    font-size: 1.1rem;
+    min-width: 190px;
+    padding: 14px 34px;
+    border: 1px solid rgba(239, 208, 146, 0.5);
+    border-radius: 11px;
+    background: linear-gradient(180deg, rgba(46, 30, 26, 0.95), rgba(18, 11, 21, 0.97));
+    color: #f7e8c2;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.15rem;
     font-weight: 700;
-    color: #fff6b0;
-    background: linear-gradient(120deg, #2d1a1a 0%, #18121e 100%);
-    border: none;
-    border-radius: 14px;
-    box-shadow: 0 2px 16px rgba(255, 179, 71, 0.27), 0 0 0 2px rgba(255, 179, 71, 0.27);
+    letter-spacing: 0.03em;
     cursor: pointer;
     margin-bottom: 6px;
-    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background 180ms ease, color 180ms ease;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.42), inset 0 1px rgba(255, 238, 201, 0.09);
     gap: 13px;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    align-items: center;
     justify-content: center;
 }
 
 .home-btn:hover {
-    background: linear-gradient(120deg, #ffb347 0%, #ff6a00 80%, #ff3c00 100%);
+    transform: translateY(-3px);
+    border-color: rgba(239, 204, 137, 0.85);
+    background: linear-gradient(180deg, rgba(64, 40, 34, 0.98), rgba(24, 15, 27, 0.98));
     color: #fff6b0;
-    box-shadow: 0 0 24px 4px #ffb347cc, 0 0 0 2px #ffb347cc;
+    box-shadow: 0 16px 34px rgba(0, 0, 0, 0.48), 0 0 22px rgba(205, 153, 65, 0.22), inset 0 1px rgba(255, 241, 211, 0.14);
+}
+
+.home-btn-icon {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    flex: 0 0 auto;
+    border: 1px solid rgba(220, 181, 108, 0.28);
+    border-radius: 50%;
+    background: rgba(11, 8, 15, 0.4);
+    transition: border-color 180ms ease;
+}
+
+.home-btn-icon img {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+}
+
+.home-btn:hover .home-btn-icon {
+    border-color: rgba(239, 204, 137, 0.6);
 }
 
 .booster-zone {

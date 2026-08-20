@@ -50,6 +50,20 @@ const shuffle = (arr) => {
   return a;
 };
 
+// Temporizador de turno (PvP e coop da Calamidade, 2026-08-19): 1min por turno, com 3 turnos
+// perdidos seguidos (AFK) cancelando a partida. Só se aplica a partidas com outro humano
+// esperando - solo (Calamidade sem outros jogadores) e Campanha não têm ninguém pra deixar
+// esperando, então não usam nada disso.
+const TURN_TIMER_MS = 60 * 1000;
+const MAX_AFK_TIMEOUTS = 3;
+// No PvP os dois lados são humanos (host e convidado); na Calamidade só o lado 'player' tem
+// jogador(es) de verdade - o chefe ('ai') nunca precisa de temporizador.
+const shouldTimeSide = (s, side) => {
+  if (s.mode === 'pvp') return true;
+  if (s.mode === 'calamity' && (s.calamityPlayerCount || 1) > 1) return side === 'player';
+  return false;
+};
+
 const sampleDeckFromPool = (size = 20) => {
   const pool = Array.isArray(creaturesPool) ? creaturesPool : [];
   const shuffled = shuffle(pool);
@@ -1394,6 +1408,8 @@ export function BattleProvider({ children }) {
         mode: 'pvp',
         isHost: false,
         peerSteamId64: battleSetup.peerSteamId64 || null,
+        turnTimerDeadline: null,
+        timeoutStreak: { player: 0, ai: 0 },
         creaturesInvokedThisTurn: { player: 0, ai: 0 },
         creaturesWithUsedAbility: new Set(),
         resurrectionPending: null,
@@ -1406,6 +1422,54 @@ export function BattleProvider({ children }) {
         virideerBlessPending: null,
         player: { orbs: 5, essence: 0, deck: [], hand: [], field: { slots: [null, null, null], effects: [null, null, null] }, graveyard: [], fieldGraveyard: [] },
         ai: { orbs: 5, essence: 0, deck: [], hand: [], field: { slots: [null, null, null], effects: [null, null, null] }, graveyard: [], fieldGraveyard: [] },
+        sharedField: { active: false, id: null },
+        log: ['Aguardando o anfitrião iniciar a partida...'],
+        gameResult: null,
+        killFeed: [],
+        animations: {},
+        battleStats: {
+          player: { cardsDrawn: [], cardsSummoned: [], cardsKilled: [], cardsAssisted: [], cardsAttacked: [] },
+          ai: { cardsDrawn: [], cardsSummoned: [], cardsKilled: [], cardsAssisted: [], cardsAttacked: [] },
+        },
+      });
+      return;
+    }
+
+    // Coop da Calamidade (Stage 3): mesmo esquema do convidado do PvP acima - o convidado nunca
+    // simula localmente, só espera o primeiro broadcast do anfitrião (useEffect de recebimento
+    // de estado, mais abaixo). calamityMySlotIndex é só informativo (qual slot é "meu" pra UI -
+    // Stage 4); o roteamento em si já funciona sem isso, porque o anfitrião valida o remetente
+    // contra calamityPeers/calamityCoop.activeIndex antes de aplicar qualquer ação recebida.
+    const isCalamityGuest = isCalamityBattle && battleSetup.isHost === false;
+    if (isCalamityGuest) {
+      const guestPlayerCount = Math.max(1, Number(battleSetup.playerCount) || 1);
+      setState({
+        phase: 'coinflip',
+        turn: 1,
+        activePlayer: 'player',
+        mode: 'calamity',
+        isHost: false,
+        peerSteamId64: battleSetup.hostSteamId64 || null,
+        calamityMySlotIndex: Number.isInteger(battleSetup.mySlotIndex) ? battleSetup.mySlotIndex : 0,
+        turnTimerDeadline: null,
+        calamityBossId: battleSetup.bossId || null,
+        calamityPlayerCount: guestPlayerCount,
+        calamityAttackKind: 'single',
+        calamityBossHealPending: false,
+        calamitySacrificedThisTurn: false,
+        calamityCoop: null,
+        creaturesInvokedThisTurn: { player: 0, ai: 0 },
+        creaturesWithUsedAbility: new Set(),
+        resurrectionPending: null,
+        returnCardPending: null,
+        poisonPending: null,
+        stealCardPending: null,
+        swapCardPending: null,
+        freezePending: null,
+        healPending: null,
+        virideerBlessPending: null,
+        player: { orbs: 999, essence: 0, deck: [], hand: [], field: { slots: Array.from({ length: guestPlayerCount }, () => null), effects: Array.from({ length: guestPlayerCount }, () => null) }, graveyard: [], fieldGraveyard: [] },
+        ai: { orbs: 1, essence: 0, deck: [], hand: [], field: { slots: [null, null, null], effects: [null, null, null] }, graveyard: [], fieldGraveyard: [] },
         sharedField: { active: false, id: null },
         log: ['Aguardando o anfitrião iniciar a partida...'],
         gameResult: null,
@@ -1514,6 +1578,37 @@ export function BattleProvider({ children }) {
     // fora do modo Calamidade continua 3 como sempre.
     const playerSlotCount = isCalamityBattle ? calamityPlayerCount : 3;
 
+    // Coop da Calamidade (2-4 jogadores): estrutura ADITIVA e isolada - state.player.hand/deck/
+    // essence/graveyard (acima) continuam intocados e são o que TODO o resto do motor já lê, então
+    // o solo (calamityPlayerCount === 1) e todos os outros modos seguem 100% como antes. Isso só
+    // existe pra alimentar as próximas etapas (motor de sub-turno por jogador, depois roteamento
+    // de rede) sem arriscar regressão no que já funciona. Cada jogador traz o próprio baralho
+    // (battleSetup.playerDecks[i]); sem isso (lobby de coop ainda não montado), duplica o baralho
+    // único de hoje pra manter startBattle utilizável enquanto o Stage 4 (UI do lobby) não existe.
+    const calamityPlayerDecks = isCalamityBattle
+      ? (Array.isArray(battleSetup.playerDecks) && battleSetup.playerDecks.length > 0
+        ? battleSetup.playerDecks
+        : Array.from({ length: calamityPlayerCount }, () => playerDeck))
+      : [];
+    const calamityCoopSlots = isCalamityBattle
+      ? calamityPlayerDecks.slice(0, calamityPlayerCount).map((deckForSlot) => {
+        let slotDeck = shuffle(deckForSlot);
+        const slotHand = [];
+        for (let i = 0; i < 4; i += 1) {
+          const draw = drawFromDeck(slotDeck);
+          slotDeck = draw.nextDeck;
+          if (draw.card) slotHand.push(draw.card);
+        }
+        return {
+          hand: slotHand,
+          deck: slotDeck,
+          essence: 0,
+          graveyard: [],
+          timeoutStreak: 0, // temporizador de turno - turnos perdidos por AFK seguidos, ver endTurn
+        };
+      })
+      : [];
+
     // Nova partida começando: garante que a trava de reentrância do turno da calamidade
     // (calamityTurnRunningRef) não fique presa em "true" por causa de uma partida anterior
     // encerrada no meio de uma cadeia de setTimeout (crash, abandono, etc.).
@@ -1524,13 +1619,29 @@ export function BattleProvider({ children }) {
       turn: 1,
       activePlayer: 'player',
       mode: isCalamityBattle ? 'calamity' : (isPvpBattle ? 'pvp' : (isCampaignBattle ? 'campaign' : 'normal')),
-      isHost: isPvpBattle ? (battleSetup.isHost !== false) : null,
+      isHost: isPvpBattle
+        ? (battleSetup.isHost !== false)
+        : (isCalamityBattle && battleSetup.isHost === true ? true : null),
       peerSteamId64: isPvpBattle ? (battleSetup.peerSteamId64 || null) : null,
+      // Temporizador de turno: só a primeira chamada de startPlaying define o prazo de verdade
+      // (ela já sabe quem age primeiro); aqui fica null até lá.
+      turnTimerDeadline: null,
+      timeoutStreak: { player: 0, ai: 0 },
       calamityBossId: isCalamityBattle ? calamityBossId : null,
       calamityPlayerCount,
+      // Stage 3 (rede, coop de 2-4): topologia estrela - só o anfitrião fala com N convidados
+      // (calamityPeers, um por convidado conectado). Convidado nunca chega aqui (early return em
+      // isCalamityGuest, acima) - ele só conhece o próprio slot (calamityMySlotIndex) e o
+      // anfitrião (peerSteamId64). battleSetup.peers vem do handshake de lobby (Stage 4).
+      calamityPeers: (isCalamityBattle && battleSetup.isHost === true) ? (battleSetup.peers || []) : [],
+      calamityMySlotIndex: isCalamityBattle ? 0 : null, // Anfitrião é sempre o slot 0.
       calamityAttackKind: 'single',
       calamityBossHealPending: false,
       calamitySacrificedThisTurn: false,
+      // Stage 1 do coop (ver comentário acima, perto de calamityCoopSlots): dado isolado, ainda
+      // não lido por nenhuma função de jogo. activeIndex vai virar o cursor de sub-turno entre
+      // os jogadores (P1 -> P2 -> ... -> PN -> chefe -> P1) quando o Stage 2 ligar isso.
+      calamityCoop: isCalamityBattle ? { activeIndex: 0, slots: calamityCoopSlots } : null,
       creaturesInvokedThisTurn: { player: 0, ai: 0 },
       resurrectionPending: null,
       returnCardPending: null,
@@ -1545,11 +1656,15 @@ export function BattleProvider({ children }) {
         // esgotados (ver useEffect de checagem logo abaixo do startBattle). Orbe bem alto aqui
         // só evita que o caminho de derrota por orbes do motor padrão dispare por engano.
         orbs: isCalamityBattle ? 999 : 5,
-        essence: 0,
-        deck: pDeck,
-        hand: pHand,
+        // Coop (Stage 2): quem começa jogando é sempre o slot 0 (calamityCoop.activeIndex
+        // começa em 0) - usa o baralho/mão PRÓPRIOS dele, não o pDeck/pHand genérico (que hoje
+        // só reflete o primeiro battleSetup.deck, sem noção de "de qual jogador"). Solo
+        // (calamityCoopSlots vazio fora de coop) continua igual: pDeck/pHand de sempre.
+        essence: calamityCoopSlots[0]?.essence ?? 0,
+        deck: calamityCoopSlots[0]?.deck ?? pDeck,
+        hand: calamityCoopSlots[0]?.hand ?? pHand,
         field: { slots: Array.from({ length: playerSlotCount }, () => null), effects: Array.from({ length: playerSlotCount }, () => null) },
-        graveyard: [],
+        graveyard: calamityCoopSlots[0]?.graveyard ?? [],
         fieldGraveyard: [],
       },
       ai: {
@@ -1578,7 +1693,7 @@ export function BattleProvider({ children }) {
       killFeed: [],
       battleStats: {
         player: {
-          cardsDrawn: [...pHand], // Mão inicial
+          cardsDrawn: [...(calamityCoopSlots[0]?.hand ?? pHand)], // Mão inicial
           cardsSummoned: [],
           cardsKilled: [],
           cardsAssisted: [],
@@ -1595,16 +1710,164 @@ export function BattleProvider({ children }) {
     });
   }, [pickFirstUserDeck]);
 
-  const endTurn = useCallback(() => {
+  const endTurn = useCallback((options = {}) => {
+    // options.isTimeout: chamada pelo efeito de temporizador (host, ver mais abaixo) quando o
+    // prazo de 1min do turno estourou sem o jogador agir - diferencia de uma chamada normal
+    // (clique em "Fim do turno", com ou sem ter jogado algo antes) pra decidir se o contador de
+    // turnos perdidos seguidos incrementa (timeout) ou zera (jogou dentro do prazo).
+    const isTimeout = options.isTimeout === true;
     setState((s) => {
-      // No PvP, o convidado não roda o motor localmente: envia a jogada pro anfitrião simular.
-      if (s.mode === 'pvp' && s.isHost === false) {
+      // No PvP e no coop da Calamidade, quem não é anfitrião não roda o motor localmente: envia
+      // a jogada pro anfitrião simular. peerSteamId64 é sempre "quem eu falo" - pro convidado, em
+      // ambos os modos, isso é o anfitrião (1 conexão só, mesmo em coop de 4 - ver estrela em
+      // calamityPeers/mensagem de broadcast do host, mais abaixo).
+      if ((s.mode === 'pvp' || s.mode === 'calamity') && s.isHost === false) {
         window.electron?.ipcRenderer?.sendP2PMessage?.(s.peerSteamId64, { type: 'action', action: 'endTurn' });
         return s;
       }
+      // Diferente de summonFromHand/useAbility/sacrificeCreature (que já checam isso), endTurn
+      // nunca travava em phase!=='playing'. Isso deixava a cadeia de setTimeout do turno da
+      // calamidade (windup->resolve->limpeza->endTurn) livre pra chamar endTurn() de novo DEPOIS
+      // do jogo já ter acabado (derrota detectada por baralho+mão+campo vazios) - incrementava
+      // turn no meio da animação de 4.6s de vitória/derrota em BattleBoard.jsx, cujo useEffect
+      // reagenda os timers sempre que turn muda, cancelando os pendentes sem recriar novos (a
+      // sequenceKey já bate, então ele só retorna sem reagendar) - travava a tela escurecida pra
+      // sempre, sem nunca mostrar "Derrota" (reportado 2026-08-19, depois de ~44 turnos solo).
+      if (s.phase !== 'playing') return s;
+
+      // Coop da Calamidade (2-4 jogadores, Stage 2): cada sub-turno de jogador usa as MESMAS
+      // funções de sempre (summonFromHand, useAbility, sacrificeCreature...) porque
+      // state.player.{hand,deck,essence,graveyard} sempre reflete "quem está jogando agora" - a
+      // troca de identidade acontece só aqui: salva os dados de quem está saindo em
+      // calamityCoop.slots[i] e carrega os de quem entra. O resto do motor (UI incluída) nunca
+      // precisa saber que existe mais de um jogador (ver comentário em calamityCoopSlots, no
+      // startBattle). Efeitos com duração (escudo/status/buff) só decaem 1x por RODADA completa
+      // (todos os jogadores + o chefe agiram - decisão do usuário, 2026-08-19), não por
+      // sub-turno - por isso a passagem de bastão ENTRE jogadores (não-último) é tratada à parte
+      // aqui em cima, sem cair no resto da função (que é quem faz esse decaimento).
+      const isCalamityCoop = s.mode === 'calamity' && (s.calamityPlayerCount || 1) > 1;
+      if (isCalamityCoop && s.activePlayer === 'player') {
+        const coop = s.calamityCoop || { activeIndex: 0, slots: [] };
+        const outgoingIndex = coop.activeIndex;
+        const isLastPlayer = outgoingIndex >= (s.calamityPlayerCount - 1);
+
+        // Temporizador de turno: zera se o jogador agiu dentro do prazo, incrementa se essa
+        // chamada veio do timeout. 3 seguidos cancela a partida pra todo o grupo (ver
+        // shouldTimeSide/MAX_AFK_TIMEOUTS, lá no topo do arquivo).
+        const outgoingStreak = isTimeout ? ((coop.slots[outgoingIndex]?.timeoutStreak || 0) + 1) : 0;
+
+        // Salva os dados de quem terminou o sub-turno de volta no slot dele.
+        const savedOutgoingSlot = {
+          hand: s.player.hand,
+          deck: s.player.deck,
+          essence: s.player.essence,
+          graveyard: s.player.graveyard,
+          timeoutStreak: outgoingStreak,
+        };
+        const updatedSlots = coop.slots.map((slot, idx) => (idx === outgoingIndex ? savedOutgoingSlot : slot));
+
+        if (outgoingStreak >= MAX_AFK_TIMEOUTS) {
+          // Cancela a partida pra todo o grupo - sem prêmio nem punição pra ninguém (o cooldown
+          // do chefe já começou a contar lá no lobby, no momento em que a partida começou, então
+          // não precisa fazer nada extra com ele aqui - ver handleReady em CalamityLobby.jsx).
+          return {
+            ...s,
+            phase: 'ended',
+            turnTimerDeadline: null,
+            calamityCoop: { activeIndex: outgoingIndex, slots: updatedSlots },
+            gameResult: {
+              winner: null,
+              loser: null,
+              abandonReason: 'afk-timeout',
+              afkSlotIndex: outgoingIndex,
+              kills: s.killFeed,
+              turns: s.turn,
+              stats: s.battleStats,
+            },
+            log: [...s.log, `Jogador ${outgoingIndex + 1} ficou ausente por ${MAX_AFK_TIMEOUTS} turnos seguidos. Partida cancelada.`],
+          };
+        }
+
+        // Penalidade/gatilho de cura por campo vazio de propósito (ver comentário mais abaixo,
+        // perto de calamityBossHealPending) - avalia só o slot DESSE jogador, não o campo
+        // inteiro, já que cada jogador tem seu próprio slot e sua própria escolha. Acumula com OR
+        // ao longo da rodada: se qualquer um dos N jogadores jogou de propósito de campo vazio, a
+        // calamidade cura quando não achar ninguém pra atacar no turno dela.
+        const outgoingHasCreature = !!s.player.field.slots[outgoingIndex];
+        const outgoingInvokedCount = (s.creaturesInvokedThisTurn && s.creaturesInvokedThisTurn.player) || 0;
+        const outgoingDeliberateEmptySlot = !outgoingHasCreature && (
+          !!s.calamitySacrificedThisTurn
+          || (outgoingInvokedCount === 0 && (savedOutgoingSlot.hand || []).length > 0)
+        );
+        const roundHealPending = !!s.calamityBossHealPending || outgoingDeliberateEmptySlot;
+
+        if (!isLastPlayer) {
+          // Passa pro próximo jogador da rodada: carrega os dados dele, reseta o limite de
+          // invocação (cada jogador tem sua própria invocação por sub-turno) e dá a essência do
+          // turno dele (mesma regra do solo/pvp: +1 por turno, teto 10). Não mexe em turn/
+          // activePlayer/decaimento - a rodada continua a mesma até o último jogador passar a
+          // vez pro chefe.
+          const incomingIndex = outgoingIndex + 1;
+          const incomingSlot = updatedSlots[incomingIndex] || { hand: [], deck: [], essence: 0, graveyard: [], timeoutStreak: 0 };
+          return {
+            ...s,
+            calamityCoop: { activeIndex: incomingIndex, slots: updatedSlots },
+            calamityBossHealPending: roundHealPending,
+            creaturesInvokedThisTurn: { player: 0, ai: 0 },
+            turnTimerDeadline: Date.now() + TURN_TIMER_MS,
+            player: {
+              ...s.player,
+              hand: incomingSlot.hand,
+              deck: incomingSlot.deck,
+              essence: Math.min(10, (incomingSlot.essence || 0) + 1),
+              graveyard: incomingSlot.graveyard,
+            },
+            log: [...s.log, `Fim do turno do Jogador ${outgoingIndex + 1}.`],
+          };
+        }
+
+        // Último jogador da rodada: deixa o resto da função rodar como já roda hoje pro solo
+        // (decaimento de escudo/status/buff, transição pro turno da calamidade etc.) - só
+        // persiste os dados dele acima e atualiza a flag de cura acumulada da rodada antes de
+        // continuar. `s` é reatribuído (é só um parâmetro local, reatribuir não afeta quem
+        // chamou) pra todo o resto da função enxergar isso sem precisar saber que é coop.
+        s = {
+          ...s,
+          calamityCoop: { activeIndex: outgoingIndex, slots: updatedSlots },
+          calamityBossHealPending: roundHealPending,
+          turnTimerDeadline: null, // chefe vai agir agora - sem temporizador de jogador
+          log: [...s.log, `Fim do turno do Jogador ${outgoingIndex + 1}.`],
+        };
+      }
+
       const currentSide = s.activePlayer;
       const nextActive = s.activePlayer === 'player' ? 'ai' : 'player';
       const nextTurn = s.turn + (nextActive === 'player' ? 1 : 0);
+
+      // Temporizador de turno (PvP): 3 turnos perdidos por AFK seguidos cancela a partida - quem
+      // não ficou ausente recebe uma compensação em moedas (ver awardXpToCards/coinsEarned em
+      // BattleResultModal.jsx, que checa abandonReason). Mesma ideia do bloco de coop lá em cima,
+      // só que aqui os dois lados ('player' e 'ai') são sempre humanos.
+      if (s.mode === 'pvp') {
+        const pvpOutgoingStreak = isTimeout ? ((s.timeoutStreak?.[currentSide] || 0) + 1) : 0;
+        if (pvpOutgoingStreak >= MAX_AFK_TIMEOUTS) {
+          const winner = currentSide === 'player' ? 'ai' : 'player';
+          return {
+            ...s,
+            phase: 'ended',
+            turnTimerDeadline: null,
+            gameResult: {
+              winner,
+              loser: currentSide,
+              abandonReason: 'afk-timeout',
+              afkSide: currentSide,
+              kills: s.killFeed,
+              turns: s.turn,
+            },
+            log: [...s.log, `${currentSide === 'player' ? 'Você ficou' : 'O adversário ficou'} ausente por ${MAX_AFK_TIMEOUTS} turnos seguidos. Partida cancelada.`],
+          };
+        }
+      }
 
       let logEntries = [...s.log];
 
@@ -1643,17 +1906,31 @@ export function BattleProvider({ children }) {
       // não jogou nenhuma - aqui sim exige invokedThisTurnCount === 0, senão puniria quem summonou
       // e teve a criatura morta em combate no mesmo turno (mesma guarda do -1 orbe acima). Marca a
       // intenção pro turno da calamidade consumir (ver runCalamityBossTurn).
-      const calamityBossHealPending = s.mode === 'calamity'
-        && currentSide === 'player'
-        && !hasCreatures
-        && (
-          !!s.calamitySacrificedThisTurn
-          || (invokedThisTurnCount === 0 && (currentSnapshot.hand || []).length > 0)
-        );
+      // Coop: já foi calculado (acumulado por OR ao longo da rodada, um slot por jogador) lá em
+      // cima antes de cair aqui - recalcular usando hasCreatures/invokedThisTurnCount olharia pro
+      // campo inteiro (todos os N jogadores) em vez de só o slot de quem está de fato terminando
+      // a rodada agora (o último jogador).
+      const calamityBossHealPending = isCalamityCoop
+        ? !!s.calamityBossHealPending
+        : (s.mode === 'calamity'
+          && currentSide === 'player'
+          && !hasCreatures
+          && (
+            !!s.calamitySacrificedThisTurn
+            || (invokedThisTurnCount === 0 && (currentSnapshot.hand || []).length > 0)
+          ));
 
       // compra 1 carta (limite de 7; overflow: volta para o deck e embaralha)
       const side = nextActive;
       const sideData = { ...(s[side]) };
+      // Coop: o turno da calamidade acabou e a rodada volta pro Jogador 1 - s.player ainda tem os
+      // dados do ÚLTIMO jogador da rodada anterior (ninguém mexeu em hand/deck/essence durante o
+      // turno do chefe), então troca pelos dados persistidos do slot 0 antes do resto da função
+      // aplicar o +1 de essência do turno novo.
+      if (isCalamityCoop && side === 'player') {
+        const incomingSlot = (s.calamityCoop?.slots || [])[0] || { hand: [], deck: [], essence: 0, graveyard: [] };
+        Object.assign(sideData, incomingSlot);
+      }
       let { deck, hand, essence, field, orbs } = sideData;
 
       // +1 ess├¬ncia por turno, limite 10 padr├úo
@@ -2139,6 +2416,22 @@ export function BattleProvider({ children }) {
         aiTurnEnding: false,
         calamityBossHealPending,
         calamitySacrificedThisTurn: false, // Reseta para o turno que está começando agora
+        // Coop: o turno da calamidade acabou de terminar (side === 'player' = a rodada volta pro
+        // Jogador 1) - reseta o cursor. Nas outras passagens (chefe ainda vai agir), mantém o que
+        // já estava em finalState (setado lá em cima, no início da função).
+        calamityCoop: (isCalamityCoop && side === 'player')
+          ? { ...finalState.calamityCoop, activeIndex: 0 }
+          : finalState.calamityCoop,
+        // Temporizador de turno pro lado que está começando a jogar agora (side). null quando
+        // esse lado não tem jogador de verdade esperando (chefe, solo, campanha) - ver
+        // shouldTimeSide, topo do arquivo.
+        turnTimerDeadline: shouldTimeSide(s, side) ? Date.now() + TURN_TIMER_MS : null,
+        // PvP: persiste o contador de turnos perdidos seguidos de quem acabou de jogar (zerado se
+        // não foi timeout, incrementado se foi - calculado lá em cima, antes da checagem de
+        // cancelamento). Fora do PvP isso não é usado, mas não faz mal manter o objeto.
+        timeoutStreak: s.mode === 'pvp'
+          ? { ...(s.timeoutStreak || { player: 0, ai: 0 }), [currentSide]: isTimeout ? ((s.timeoutStreak?.[currentSide] || 0) + 1) : 0 }
+          : s.timeoutStreak,
         log: mergedLog.length > 300 ? mergedLog.slice(-300) : mergedLog,
       };
     });
@@ -2147,8 +2440,16 @@ export function BattleProvider({ children }) {
   const drawPlayerCard = useCallback(() => {
     playFlipCardSound();
     setState((s) => {
-      // No PvP, o convidado compra automaticamente pelo motor do anfitrião (endTurn) — nada a fazer aqui.
+      // No PvP, o convidado compra automaticamente pelo motor do anfitrião (endTurn) — nada a
+      // fazer aqui, porque o anfitrião trata o convidado como o lado 'ai' (que já compra sozinho
+      // no endTurn). No coop da Calamidade isso NÃO vale: todo mundo (incluindo o anfitrião) está
+      // do lado 'player', com N slots - cada jogador compra manualmente a própria carta, então o
+      // convidado precisa mesmo encaminhar essa ação pro anfitrião simular.
       if (s.mode === 'pvp' && s.isHost === false) return s;
+      if (s.mode === 'calamity' && s.isHost === false) {
+        window.electron?.ipcRenderer?.sendP2PMessage?.(s.peerSteamId64, { type: 'action', action: 'draw' });
+        return s;
+      }
       if (s.phase !== 'playing') return s;
       if (s.activePlayer !== 'player') return s;
 
@@ -2181,8 +2482,9 @@ export function BattleProvider({ children }) {
   const summonFromHand = useCallback((index, slotIndex) => {
     playFlipCardSound();
     setState((s) => {
-      // No PvP, o convidado não roda o motor localmente: envia a jogada pro anfitrião simular.
-      if (s.mode === 'pvp' && s.isHost === false) {
+      // No PvP e no coop da Calamidade, quem não é anfitrião não roda o motor localmente: envia
+      // a jogada pro anfitrião simular (ver comentário igual em endTurn, acima).
+      if ((s.mode === 'pvp' || s.mode === 'calamity') && s.isHost === false) {
         window.electron?.ipcRenderer?.sendP2PMessage?.(s.peerSteamId64, { type: 'action', action: 'summon', index, slotIndex });
         return s;
       }
@@ -4153,8 +4455,9 @@ export function BattleProvider({ children }) {
     };
 
     setState((s) => {
-      // No PvP, o convidado não roda o motor localmente: envia a jogada pro anfitrião simular.
-      if (s.mode === 'pvp' && s.isHost === false) {
+      // No PvP e no coop da Calamidade, quem não é anfitrião não roda o motor localmente: envia
+      // a jogada pro anfitrião simular (ver comentário igual em endTurn, acima).
+      if ((s.mode === 'pvp' || s.mode === 'calamity') && s.isHost === false) {
         window.electron?.ipcRenderer?.sendP2PMessage?.(s.peerSteamId64, {
           type: 'action', action: 'attack', attackerSlot: slotIndex, abilityIndex, targetSlot: targetSlotIndex,
         });
@@ -4748,8 +5051,9 @@ export function BattleProvider({ children }) {
   // Funções para gerenciar cartas de efeito
   const sacrificeCreature = useCallback((side, slotIndex) => {
     setState((s) => {
-      // No PvP, o convidado não roda o motor localmente: envia a jogada pro anfitrião simular.
-      if (s.mode === 'pvp' && s.isHost === false) {
+      // No PvP e no coop da Calamidade, quem não é anfitrião não roda o motor localmente: envia
+      // a jogada pro anfitrião simular (ver comentário igual em endTurn, acima).
+      if ((s.mode === 'pvp' || s.mode === 'calamity') && s.isHost === false) {
         window.electron?.ipcRenderer?.sendP2PMessage?.(s.peerSteamId64, { type: 'action', action: 'sacrifice', slotIndex });
         return s;
       }
@@ -5663,10 +5967,12 @@ export function BattleProvider({ children }) {
         // No PvP, quem decide o primeiro a jogar é o anfitrião — o convidado só espera o
         // broadcast real (evita que os dois lados sorteiem vencedores diferentes do coinflip).
         if (s.mode === 'pvp' && s.isHost === false) return s;
+        const nextActivePlayer = firstPlayer === 'player' ? 'player' : 'ai';
         return {
           ...s,
           phase: 'playing',
-          activePlayer: firstPlayer === 'player' ? 'player' : 'ai',
+          activePlayer: nextActivePlayer,
+          turnTimerDeadline: shouldTimeSide(s, nextActivePlayer) ? Date.now() + TURN_TIMER_MS : null,
         };
       });
     },
@@ -7430,6 +7736,104 @@ export function BattleProvider({ children }) {
       }
       console.log(`[PvP] Estado recebido do anfitrião: phase=${message.state?.phase} turn=${message.state?.turn} activePlayer=${message.state?.activePlayer}`);
       setState((s) => swapPerspective({ ...message.state, mode: s.mode, isHost: s.isHost, peerSteamId64: s.peerSteamId64 }));
+    });
+    return () => unsubscribe?.();
+  }, [state.mode, state.isHost, state.peerSteamId64]);
+
+  // --- Temporizador de turno (PvP e coop da Calamidade): só o anfitrião dispara o auto-skip -
+  // ele é quem simula de verdade, então basta ELE checar o relógio, mesmo que o convidado feche
+  // o cliente ou perca a conexão. Reagenda sempre que turnTimerDeadline muda (nova rodada, novo
+  // prazo). O convidado só usa turnTimerDeadline pra mostrar a contagem regressiva na UI (dado já
+  // vem no broadcast de estado normal), nunca decide sozinho que o tempo acabou.
+  useEffect(() => {
+    // isHost é sempre true/false explícito em partidas com temporizador (pvp, ou calamity com
+    // calamityPlayerCount>1) - solo/campanha (sem outro jogador esperando) ficam de fora só por
+    // não bater isTimedMatch, então não precisa tratar isHost===null aqui.
+    const isTimedMatch = state.mode === 'pvp' || (state.mode === 'calamity' && (state.calamityPlayerCount || 1) > 1);
+    if (!isTimedMatch || state.isHost !== true || state.phase !== 'playing' || !state.turnTimerDeadline) return undefined;
+    const msLeft = state.turnTimerDeadline - Date.now();
+    const timer = window.setTimeout(() => {
+      endTurn({ isTimeout: true });
+    }, Math.max(0, msLeft));
+    return () => window.clearTimeout(timer);
+  }, [state.mode, state.isHost, state.calamityPlayerCount, state.phase, state.turnTimerDeadline, endTurn]);
+
+  // --- Coop da Calamidade (Stage 3, 2-4 jogadores): lado do anfitrião - aplica ações recebidas
+  // de qualquer um dos até 3 convidados (topologia estrela, ver calamityPeers) e transmite o
+  // estado pra todos eles. Ao contrário do PvP, NÃO precisa de funções "ForOpponent" separadas:
+  // todo jogador (anfitrião incluso) usa exatamente summonFromHand/useAbility/sacrificeCreature/
+  // endTurn/drawPlayerCard, porque state.player já reflete "quem está jogando agora" (troca de
+  // identidade feita em endTurn, ver comentário lá) - não existe uma distinção "meu lado vs lado
+  // do oponente" como no PvP, é sempre o mesmo lado 'player' pra todo mundo.
+  useEffect(() => {
+    if (state.mode !== 'calamity' || !state.isHost) return undefined;
+    const unsubscribe = window.electron?.ipcRenderer?.onP2PMessage?.(({ fromSteamId64, message }) => {
+      if (!message || message.type !== 'action') return;
+      const peer = (state.calamityPeers || []).find((p) => p.steamId64 === fromSteamId64);
+      if (!peer) {
+        console.warn(`[Calamity] Ação de ${fromSteamId64} ignorada: não é um jogador desta sala.`);
+        return;
+      }
+      if (state.phase !== 'playing' || state.activePlayer !== 'player') {
+        console.warn(`[Calamity] Ação "${message.action}" ignorada: phase=${state.phase} activePlayer=${state.activePlayer} (esperado: playing/player).`);
+        return;
+      }
+      if ((state.calamityCoop?.activeIndex ?? -1) !== peer.slotIndex) {
+        console.warn(`[Calamity] Ação de ${fromSteamId64} (slot ${peer.slotIndex}) ignorada: não é a vez dele (vez do slot ${state.calamityCoop?.activeIndex}).`);
+        return;
+      }
+      console.log(`[Calamity] Aplicando ação do jogador (slot ${peer.slotIndex}): ${message.action}`, message);
+
+      if (message.action === 'summon') {
+        summonFromHand(message.index, message.slotIndex);
+      } else if (message.action === 'attack') {
+        useAbility('player', message.attackerSlot, message.abilityIndex, 'ai', message.targetSlot);
+      } else if (message.action === 'endTurn') {
+        endTurn();
+      } else if (message.action === 'sacrifice') {
+        sacrificeCreature('player', message.slotIndex);
+      } else if (message.action === 'draw') {
+        drawPlayerCard();
+      }
+    });
+    return () => unsubscribe?.();
+  }, [state.mode, state.isHost, state.calamityPeers, state.phase, state.activePlayer, state.calamityCoop, summonFromHand, useAbility, endTurn, sacrificeCreature, drawPlayerCard]);
+
+  useEffect(() => {
+    if (state.mode !== 'calamity' || !state.isHost || !((state.calamityPeers || []).length > 0)) return;
+    // Diferente do PvP (que esconde a mão do oponente - jogo competitivo), aqui não redige nada:
+    // é coop contra um chefe compartilhado, então os jogadores já veem a mão uns dos outros
+    // via calamityCoop.slots (dado simplificador aceito - ver decisão de design da sessão).
+    const redactedState = {
+      ...state,
+      creaturesWithUsedAbility: Array.from(state.creaturesWithUsedAbility || []),
+    };
+    state.calamityPeers.forEach((peer) => {
+      window.electron?.ipcRenderer?.sendP2PMessage?.(peer.steamId64, { type: 'state', state: redactedState });
+    });
+  }, [state]);
+
+  // --- Coop da Calamidade: lado do convidado - recebe o estado transmitido pelo anfitrião e o
+  // adota como verdade local (thin-client, igual ao PvP). Sem swapPerspective aqui: não existe
+  // relabeling de lado (todo mundo é 'player', só o chefe é 'ai' - a visão do convidado já é
+  // idêntica à do anfitrião, ele só ainda não sabe qual slot é "seu" pra UI, ver
+  // calamityMySlotIndex).
+  useEffect(() => {
+    if (state.mode !== 'calamity' || state.isHost !== false) return undefined;
+    const unsubscribe = window.electron?.ipcRenderer?.onP2PMessage?.(({ fromSteamId64, message }) => {
+      if (!message || message.type !== 'state') return;
+      if (state.peerSteamId64 && fromSteamId64 !== state.peerSteamId64) {
+        console.warn(`[Calamity] Estado de ${fromSteamId64} ignorado: não é o anfitrião esperado (${state.peerSteamId64}).`);
+        return;
+      }
+      setState((s) => ({
+        ...message.state,
+        mode: s.mode,
+        isHost: s.isHost,
+        peerSteamId64: s.peerSteamId64,
+        calamityMySlotIndex: s.calamityMySlotIndex,
+        creaturesWithUsedAbility: new Set(Array.isArray(message.state.creaturesWithUsedAbility) ? message.state.creaturesWithUsedAbility : []),
+      }));
     });
     return () => unsubscribe?.();
   }, [state.mode, state.isHost, state.peerSteamId64]);

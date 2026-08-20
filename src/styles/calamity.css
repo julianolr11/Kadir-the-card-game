@@ -509,6 +509,124 @@
 
 .calamity-player-side { align-items: center; }
 
+/* Timeline de ordem de turno (Player 1..N + o chefe) - ocupa o espaço que a carta de campo
+   compartilhada (.shared-field em battle.css) usaria fora do modo Calamidade, já que ela não
+   existe aqui (ver comentário "state.mode === 'calamity'" em BattleBoard.jsx). */
+.calamity-turn-timeline {
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 168px;
+  z-index: 110;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 10px;
+  border-radius: 12px;
+  background: rgba(20, 10, 30, 0.55);
+  border: 1px solid rgba(200, 160, 255, 0.28);
+  box-shadow: 0 0 18px rgba(105, 63, 154, 0.4) inset;
+  backdrop-filter: blur(4px);
+}
+
+.calamity-turn-timeline-label {
+  font-family: Georgia, serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(230, 210, 255, 0.68);
+  text-align: center;
+  margin-bottom: 2px;
+}
+
+.calamity-turn-entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.04);
+  transition: background 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+}
+
+.calamity-turn-entry-active {
+  background: rgba(200, 160, 255, 0.16);
+  border-color: rgba(200, 160, 255, 0.62);
+  box-shadow: 0 0 14px rgba(200, 160, 255, 0.35);
+}
+
+.calamity-turn-entry-empty {
+  opacity: 0.5;
+}
+
+.calamity-turn-entry-boss {
+  margin-top: 4px;
+  border-top: 1px solid rgba(200, 160, 255, 0.22);
+  padding-top: 10px;
+}
+
+.calamity-turn-entry-boss.calamity-turn-entry-active {
+  background: rgba(220, 70, 60, 0.18);
+  border-color: rgba(255, 120, 90, 0.6);
+  box-shadow: 0 0 14px rgba(255, 90, 60, 0.4);
+}
+
+.calamity-turn-avatar {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(230, 210, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calamity-turn-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.calamity-turn-avatar-boss {
+  border-color: rgba(255, 140, 100, 0.4);
+}
+
+.calamity-turn-avatar-fallback {
+  font-family: Georgia, serif;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: rgba(230, 210, 255, 0.75);
+}
+
+.calamity-turn-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.15;
+}
+
+.calamity-turn-info strong {
+  font-size: 0.74rem;
+  color: #fff6d8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.calamity-turn-info span {
+  font-size: 0.66rem;
+  color: rgba(230, 210, 255, 0.62);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* Popup de conquista ao derrotar um chefe de Calamidade - mesmo visual da insígnia de torre da
    Campanha (.campaign-badge-* em campaign-tower.css, reaproveita as keyframes de lá), só que
    aparece na hora, junto com o modal de resultado da batalha, em vez de só na próxima vez que o

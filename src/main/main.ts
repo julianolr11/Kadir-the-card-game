@@ -149,12 +149,19 @@ ipcMain.handle('steam-get-player-avatars', async (_event, steamId64s: string[]) 
     }
     const data: any = await response.json();
     const avatars: Record<string, string> = {};
+    // Nomes de outros membros também vêm daqui - steamworks.js 0.4.0 não expõe nome de quem não
+    // é o jogador local (ver serializeMember acima), então a Web API é a única forma de mostrar
+    // o nome de todo mundo na timeline de turnos da Calamidade (Player 1/2/3/4).
+    const names: Record<string, string> = {};
     (data?.response?.players || []).forEach((player: any) => {
       if (player?.steamid && player?.avatarfull) {
         avatars[player.steamid] = player.avatarfull;
       }
+      if (player?.steamid && player?.personaname) {
+        names[player.steamid] = player.personaname;
+      }
     });
-    return { ok: true, avatars };
+    return { ok: true, avatars, names };
   } catch (err: any) {
     log.warn(`Falha ao buscar avatares via Steam Web API: ${err?.message || err}`);
     return { ok: false, error: err?.message || 'Falha ao buscar avatares' };

@@ -459,36 +459,38 @@
   left: 32px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 20px;
-  background: rgba(30, 22, 40, 0.9);
-  border: 2px solid #ffe6b0;
-  border-radius: 12px;
-  color: #ffe6b0;
-  font-family: 'Poppins', sans-serif;
-  font-size: 1.1rem;
+  gap: 11px;
+  min-width: 124px;
+  padding: 12px 18px;
+  border: 1px solid rgba(239, 208, 146, 0.42);
+  border-radius: 11px;
+  background: linear-gradient(180deg, rgba(38, 27, 42, 0.94), rgba(16, 11, 21, 0.96));
+  color: #f7e8c2;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
   z-index: 100;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 9px 22px rgba(0, 0, 0, 0.38), inset 0 1px rgba(255, 238, 201, 0.08);
 }
 
 .bestiary-back-btn:hover {
-  background: rgba(40, 32, 50, 0.95);
-  border-color: #fff6b0;
-  box-shadow: 0 6px 24px rgba(255, 230, 176, 0.4);
-  transform: translateX(-4px);
+  transform: translateX(-3px);
+  border-color: rgba(239, 204, 137, 0.74);
+  background: linear-gradient(180deg, rgba(58, 39, 48, 0.98), rgba(23, 15, 27, 0.98));
+  box-shadow: 0 12px 27px rgba(0, 0, 0, 0.44), 0 0 16px rgba(205, 153, 65, 0.1);
 }
 
 .bestiary-back-arrow {
-  font-size: 1.8rem;
-  font-weight: bold;
-  transition: transform 0.3s ease;
+  font-size: 21px;
+  color: #e2af48;
+  font-weight: normal;
+  transition: transform 180ms ease;
 }
 
 .bestiary-back-btn:hover .bestiary-back-arrow {
-  transform: translateX(-4px);
+  transform: translateX(-3px);
 }
 
 /* Animações de slide */

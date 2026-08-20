@@ -96,6 +96,11 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
   const { cardCollection, effectsVolume, lang = 'ptbr', coins, spendCoins, unlockAchievement, unlockedAchievements } = React.useContext(AppContext);
   const isEn = lang?.startsWith('en');
   const [trophyCelebration, setTrophyCelebration] = React.useState(null);
+  const [turnTimerSecondsLeft, setTurnTimerSecondsLeft] = React.useState(null);
+  // Timeline de turnos da Calamidade (Player 1..N + o chefe) - foto/nome vêm da Steam, mesmo
+  // padrão de PvpLobby.jsx (steamworks.js não expõe nome/foto de terceiros, só a Web API).
+  const [calamitySteamStatus, setCalamitySteamStatus] = React.useState(null);
+  const [calamityAvatars, setCalamityAvatars] = React.useState({});
   const [activeCardIndex, setActiveCardIndex] = React.useState(null);
   const [deckCardDrawn, setDeckCardDrawn] = React.useState(false);
   const [opponentDeckCardDrawn, setOpponentDeckCardDrawn] = React.useState(false);
@@ -383,6 +388,23 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
     }
   }, [state.activePlayer, state.turn]); // Adiciona state.turn para resetar a cada turno
 
+  // Cronômetro de turno: só liga um interval quando há um prazo ativo, e só expõe o número
+  // pros últimos 10s (o design pede aviso apenas no fim, não o tempo todo).
+  useEffect(() => {
+    const deadline = state.turnTimerDeadline;
+    if (!deadline || state.phase !== 'playing') {
+      setTurnTimerSecondsLeft(null);
+      return undefined;
+    }
+    const tick = () => {
+      const msLeft = deadline - Date.now();
+      setTurnTimerSecondsLeft(msLeft > 0 ? Math.ceil(msLeft / 1000) : 0);
+    };
+    tick();
+    const interval = window.setInterval(tick, 250);
+    return () => window.clearInterval(interval);
+  }, [state.turnTimerDeadline, state.phase]);
+
   const triggerEssenceGain = React.useCallback((side) => {
     if (side !== 'player' && side !== 'ai') return;
 
@@ -461,14 +483,18 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
   }, [playResultSound, state.gameResult, state.turn]);
 
   useEffect(() => {
+    // Um resultado sem winner ainda é um resultado válido (ex.: partida cancelada por AFK no
+    // coop, onde ninguém vence nem perde) - por isso o gate é a existência de gameResult, não
+    // a presença de winner, senão o modal nunca aparece e a tela trava (mesma classe de bug já
+    // corrigida no endTurn desta sessão).
     const winner = state.gameResult?.winner;
-    if (state.phase !== 'ended' || !winner) {
+    if (state.phase !== 'ended' || !state.gameResult) {
       endSequenceKeyRef.current = null;
       setEndSequence({ active: false, stage: 'idle', winner: null, showModal: false });
       return undefined;
     }
 
-    const sequenceKey = `${winner}:${state.gameResult?.turns || state.turn}`;
+    const sequenceKey = `${winner || state.gameResult?.abandonReason || 'ended'}:${state.gameResult?.turns || state.turn}`;
     if (endSequenceKeyRef.current === sequenceKey) return undefined;
     endSequenceKeyRef.current = sequenceKey;
 
@@ -517,6 +543,23 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
     }
     unlockAchievement?.(achievementId);
   }, [state.mode, state.phase, state.gameResult, state.calamityBossId, unlockAchievement, unlockedAchievements]);
+
+  // Busca identidade Steam (nome/foto) do jogador local pra timeline de turnos da Calamidade.
+  // Só cobre "você" por enquanto - o coop com 2-4 jogadores ainda não sincroniza quem é quem
+  // (ver plano do modo Calamidade); os demais slots aparecem como "Aguardando jogador" até lá.
+  useEffect(() => {
+    if (state.mode !== 'calamity') return;
+    let cancelled = false;
+    (async () => {
+      const status = await window.electron?.ipcRenderer?.getSteamStatus?.();
+      if (cancelled || !status?.connected) return;
+      setCalamitySteamStatus(status);
+      const result = await window.electron?.ipcRenderer?.getSteamPlayerAvatars?.([status.steamId64]);
+      if (cancelled || !result?.ok) return;
+      setCalamityAvatars(result.avatars || {});
+    })();
+    return () => { cancelled = true; };
+  }, [state.mode]);
 
   // Portais de status vivem fora do tabuleiro. Limpa as animações assim que a
   // batalha termina para que nenhum buff/debuff atravesse o modal de resultado.
@@ -796,7 +839,21 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
       return (
         <div className="card-slot-preview full-art-battle-card calamity-boss-slot">
           <div className="full-art-slot-scale">
-            <FullArtCard card={data} lang={lang} currentHp={bossHp} maxHp={bossMaxHp} healing={isBossHealing} onlyBlessing className={bossPhase >= 2 ? `calamity-boss-slot-phase${bossPhase}` : ''} />
+            <FullArtCard
+              card={data}
+              lang={lang}
+              currentHp={bossHp}
+              maxHp={bossMaxHp}
+              healing={isBossHealing}
+              onlyBlessing
+              className={bossPhase >= 2 ? `calamity-boss-slot-phase${bossPhase}` : ''}
+              burn={(slotData?.statusEffects || []).find(e => e.type === 'burn')?.duration || 0}
+              freeze={(slotData?.statusEffects || []).find(e => e.type === 'freeze')?.duration || 0}
+              paralyze={(slotData?.statusEffects || []).find(e => e.type === 'paralyze')?.duration || 0}
+              poison={(slotData?.statusEffects || []).find(e => e.type === 'poison')?.duration || 0}
+              sleep={(slotData?.statusEffects || []).find(e => e.type === 'sleep')?.duration || 0}
+              bleed={(slotData?.statusEffects || []).find(e => e.type === 'bleed')?.duration || 0}
+            />
             {isBossHealing && (
               <div className="calamity-boss-heal-flash">
                 <span className="calamity-boss-heal-amount">+{bossHealAnim.amount} HP</span>
@@ -2430,6 +2487,11 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
           </div>
         ))}
         <div className="turn-indicator">{isEn ? `Turn ${state.turn}` : `Turno ${state.turn}`}</div>
+        {turnTimerSecondsLeft !== null && turnTimerSecondsLeft <= 10 && (
+          <div className={`turn-timer-countdown${turnTimerSecondsLeft <= 3 ? ' turn-timer-countdown-critical' : ''}`}>
+            {turnTimerSecondsLeft}
+          </div>
+        )}
               {/* Fim do drawer do cemitério */}
         <div className="side ai-side">
           {state.mode !== 'calamity' && (
@@ -2457,6 +2519,55 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
           />
           <hr className="board-divider-line" />
         </div>
+        {state.mode === 'calamity' && (
+          <div className="calamity-turn-timeline">
+            <span className="calamity-turn-timeline-label">{isEn ? 'Turn order' : 'Ordem de turno'}</span>
+            {Array.from({ length: state.calamityPlayerCount || 1 }).map((_, idx) => {
+              // Só o slot 0 (host/você) tem identidade real hoje - o coop com 2-4 jogadores
+              // ainda não sincroniza quem ocupa cada slot (ver plano do modo Calamidade).
+              const isYou = idx === 0;
+              const isActive = isYou && state.activePlayer === 'player';
+              const avatarUrl = isYou ? calamityAvatars[calamitySteamStatus?.steamId64] : null;
+              const name = isYou
+                ? (calamitySteamStatus?.username || (isEn ? 'You' : 'Você'))
+                : (isEn ? 'Waiting for player' : 'Aguardando jogador');
+              return (
+                <div
+                  key={`calamity-turn-player-${idx}`}
+                  className={`calamity-turn-entry${isActive ? ' calamity-turn-entry-active' : ''}${!isYou ? ' calamity-turn-entry-empty' : ''}`}
+                >
+                  <div className="calamity-turn-avatar">
+                    {avatarUrl ? <img src={avatarUrl} alt="" /> : <span className="calamity-turn-avatar-fallback">{idx + 1}</span>}
+                  </div>
+                  <div className="calamity-turn-info">
+                    <strong>{isEn ? `Player ${idx + 1}` : `Jogador ${idx + 1}`}</strong>
+                    <span>{name}</span>
+                  </div>
+                </div>
+              );
+            })}
+            {(() => {
+              const bossData = getCardData(state.calamityBossId);
+              if (!bossData) return null;
+              const bossImg = typeof bossData.img === 'string' ? bossData.img : bossData.img?.default;
+              const bossName = typeof bossData.name === 'object'
+                ? (bossData.name[isEn ? 'en' : 'pt'] || bossData.name.pt)
+                : (bossData.name || state.calamityBossId);
+              const isBossActive = state.activePlayer === 'ai';
+              return (
+                <div className={`calamity-turn-entry calamity-turn-entry-boss${isBossActive ? ' calamity-turn-entry-active' : ''}`}>
+                  <div className="calamity-turn-avatar calamity-turn-avatar-boss">
+                    {bossImg && <img src={bossImg} alt="" />}
+                  </div>
+                  <div className="calamity-turn-info">
+                    <strong>{bossName}</strong>
+                    <span>{isEn ? 'Calamity' : 'Calamidade'}</span>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        )}
         {state.mode !== 'calamity' && (
         <div className="shared-field">
           {state.sharedField.active && state.sharedField.id ? (
@@ -3028,7 +3139,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
     {state.phase === 'ended' && state.gameResult && endSequence.active && (
       <BattleModalPortal>
       <div
-        className={`battle-finale battle-finale-${endSequence.winner === 'player' ? 'victory' : 'defeat'} battle-finale-${endSequence.stage}`}
+        className={`battle-finale battle-finale-${endSequence.winner === 'player' ? 'victory' : (endSequence.winner === 'ai' ? 'defeat' : 'neutral')} battle-finale-${endSequence.stage}`}
         role="status"
         aria-live="assertive"
       >
@@ -3041,17 +3152,27 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
           ))}
         </div>
         <div className="battle-finale-copy">
-          <span>
-            {endSequence.winner === 'player'
-              ? (isEn ? 'The last heart has broken' : 'O último coração se partiu')
-              : (isEn ? 'Your last flame has gone out' : 'Sua última chama se apagou')}
-          </span>
-          <strong>{endSequence.winner === 'player' ? (isEn ? 'Decisive victory' : 'Vitória decisiva') : (isEn ? 'Defeat' : 'Derrota')}</strong>
-          <small>
-            {endSequence.winner === 'player'
-              ? (isEn ? 'The field belongs to you' : 'O campo pertence a você')
-              : (isEn ? 'Every legend rises again from a fall' : 'Toda lenda renasce de uma queda')}
-          </small>
+          {endSequence.winner === 'player' && (
+            <>
+              <span>{isEn ? 'The last heart has broken' : 'O último coração se partiu'}</span>
+              <strong>{isEn ? 'Decisive victory' : 'Vitória decisiva'}</strong>
+              <small>{isEn ? 'The field belongs to you' : 'O campo pertence a você'}</small>
+            </>
+          )}
+          {endSequence.winner === 'ai' && (
+            <>
+              <span>{isEn ? 'Your last flame has gone out' : 'Sua última chama se apagou'}</span>
+              <strong>{isEn ? 'Defeat' : 'Derrota'}</strong>
+              <small>{isEn ? 'Every legend rises again from a fall' : 'Toda lenda renasce de uma queda'}</small>
+            </>
+          )}
+          {!endSequence.winner && (
+            <>
+              <span>{isEn ? 'Too much time has passed' : 'O tempo se esgotou demais'}</span>
+              <strong>{isEn ? 'Battle cancelled' : 'Batalha cancelada'}</strong>
+              <small>{isEn ? 'The Calamity will wait for your return' : 'A Calamidade vai esperar sua volta'}</small>
+            </>
+          )}
         </div>
       </div>
       </BattleModalPortal>

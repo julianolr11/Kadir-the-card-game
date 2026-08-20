@@ -9,6 +9,7 @@ import '../styles/homescreen.css';
 import '../styles/bestiary.css';
 import { AppContext } from '../context/AppContext';
 import boosterImg from '../assets/img/card/booster.png';
+import swordIcon from '../assets/img/icons/sword.png';
 import calamityBoosterImg from '../assets/img/card/calamity_booster.png';
 import packageSound from '../assets/sounds/effects/package.MP3';
 import boosterAnimationVideo from '../assets/img/card/animacao-booster.mp4';
@@ -785,7 +786,10 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
         </div>
         <div className="home-btn-group home-btn-group-bottom">
           <button className="home-btn" onClick={() => setShowBattleMenu(true)}>
-            {isEn ? 'Battle' : 'Batalhar'}
+            <span className="home-btn-icon" aria-hidden>
+              <img src={swordIcon} alt="" />
+            </span>
+            <span>{isEn ? 'Battle' : 'Batalhar'}</span>
           </button>
         </div>
 

@@ -633,24 +633,6 @@
   text-shadow: 0 2px 14px rgba(0, 0, 0, 0.86), 0 0 20px rgba(208, 161, 75, 0.14);
 }
 
-.route-curtain-text::after {
-  content: '';
-  position: absolute;
-  inset: -6px -14px;
-  pointer-events: none;
-  background: linear-gradient(100deg, transparent 30%, rgba(255, 238, 190, 0.55) 48%, rgba(255, 220, 143, 0.16) 56%, transparent 70%);
-  background-size: 220% 220%;
-  mix-blend-mode: screen;
-  animation: routeCurtainTextShimmer 3000ms ease forwards;
-}
-
-@keyframes routeCurtainTextShimmer {
-  0%, 24% { background-position: 140% 0%; opacity: 0; }
-  40% { opacity: 1; }
-  64% { opacity: 0.75; }
-  100% { background-position: -40% 0%; opacity: 0; }
-}
-
 .route-curtain-progress {
   display: flex;
   align-items: center;

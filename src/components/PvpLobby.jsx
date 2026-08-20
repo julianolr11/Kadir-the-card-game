@@ -456,11 +456,6 @@ export default function PvpLobby({ onBack, onStartBattle }) {
               )}
             </div>
 
-            <p className="pvp-lobby-message" style={{ fontSize: '0.82rem', fontWeight: 500 }}>
-              {isEn
-                ? "The Steam invite below works, but since the game isn't published yet, Steam can't auto-launch it for your friend — they need to already have it open (any screen). If they don't, share the room code above instead."
-                : 'O convite da Steam abaixo funciona, mas como o jogo ainda não está publicado, a Steam não consegue abrir ele sozinha do lado do seu amigo — ele precisa já estar com o jogo aberto (qualquer tela). Se não estiver, use o código da sala acima.'}
-            </p>
             <div className="pvp-lobby-actions">
               <button type="button" className="pvp-lobby-primary-btn" onClick={handleInvite}>
                 {isEn ? 'Invite friend' : 'Convidar amigo'}

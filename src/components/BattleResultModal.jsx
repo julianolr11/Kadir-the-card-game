@@ -23,17 +23,31 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
   const playerCards = Array.isArray(playerDeck) ? playerDeck : [];
   const [expandedCards, setExpandedCards] = useState({});
 
+  // Partida cancelada por 3 timeouts seguidos de alguém (ver plano do cronômetro de turno):
+  // no coop ninguém vence nem perde (gameResult.winner fica null) e ninguém recebe nada; no PvP
+  // quem continuou jogando já é declarado vencedor e ganha só uma compensação fixa, sem o bônus
+  // por abates - o adversário AFK não recebe nada.
+  const isAfkAbandon = gameResult?.abandonReason === 'afk-timeout';
+  const isMutualAbandon = isAfkAbandon && !gameResult?.winner;
+  const isAbandonWinner = isAfkAbandon && !isMutualAbandon && isPlayerWon;
+  const isAbandonLoser = isAfkAbandon && !isMutualAbandon && !isPlayerWon;
+
   // Valores de moedas por resultado (ajustados)
   const COINS_DEFEAT = 20;
   const COINS_VICTORY_BASE = 50;
   const COIN_PER_KILL = 5;
+  const COINS_AFK_COMPENSATION = 30;
 
   // Conta quantos abates o jogador efetuou nesta batalha.
   const playerKills = (battleStats && battleStats.player && Array.isArray(battleStats.player.cardsKilled))
     ? battleStats.player.cardsKilled.length
     : (killFeed ? killFeed.filter(k => battleStats?.player?.cardsSummoned?.includes(k.attacker)).length : 0);
 
-  const coinsEarned = isPlayerWon ? (COINS_VICTORY_BASE + COIN_PER_KILL * playerKills) : COINS_DEFEAT;
+  const coinsEarned = isMutualAbandon || isAbandonLoser
+    ? 0
+    : isAbandonWinner
+      ? COINS_AFK_COMPENSATION
+      : (isPlayerWon ? (COINS_VICTORY_BASE + COIN_PER_KILL * playerKills) : COINS_DEFEAT);
 
   // Award moedas quando o modal monta (apenas uma vez)
   useEffect(() => {
@@ -51,6 +65,7 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
 
   // Calcula XP total que será distribuído
   const calculateTotalXp = () => {
+    if (isAfkAbandon) return 0; // partida cancelada não conta como jogada completa
     if (!battleStats?.player) return 0;
 
     const allParticipants = new Set([
@@ -175,6 +190,7 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
 
   // Distribui XP entre cartas que participaram
   const awardXpToCards = () => {
+    if (isAfkAbandon) return; // partida cancelada não distribui XP
     if (!battleStats?.player) return; // Só precisa checar se tem stats
 
     // Pega todas as cartas que participaram (união de todas as ações)
@@ -372,7 +388,7 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
   const handleContinue = () => {
     awardXpToCards();
 
-    if (isPlayerWon) {
+    if (isPlayerWon && !isAfkAbandon) {
       if (isCalamity) {
         // Calamidade dá Calamity Boosters em vez do booster padrão — 1 por jogador participante.
         addCalamityBoosters?.(calamityBoostersEarned);
@@ -393,15 +409,25 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
       <div className="battle-result-modal">
         <div className="battle-result-scroll-content">
         {/* Cabeçalho com resultado */}
-        <div className={`battle-result-header ${isPlayerWon ? 'victory' : 'defeat'}`}>
-          <div className="battle-result-emblem" aria-hidden="true">{isPlayerWon ? '♛' : '⚔'}</div>
+        <div className={`battle-result-header ${isMutualAbandon ? 'neutral' : (isPlayerWon ? 'victory' : 'defeat')}`}>
+          <div className="battle-result-emblem" aria-hidden="true">{isMutualAbandon ? '⏱' : (isPlayerWon ? '♛' : '⚔')}</div>
           <div className="battle-result-heading-copy">
             <span className="battle-result-eyebrow">{isEn ? 'Battle result' : 'Resultado da batalha'}</span>
-            <h1 className="battle-result-title">{isPlayerWon ? (isEn ? 'Victory' : 'Vitória') : (isEn ? 'Defeat' : 'Derrota')}</h1>
+            <h1 className="battle-result-title">
+              {isMutualAbandon
+                ? (isEn ? 'Match cancelled' : 'Partida cancelada')
+                : (isPlayerWon ? (isEn ? 'Victory' : 'Vitória') : (isEn ? 'Defeat' : 'Derrota'))}
+            </h1>
             <p className="battle-result-subtitle">
-              {isPlayerWon
-                ? (isEn ? 'The field belongs to you.' : 'O campo pertence a você.')
-                : (isEn ? 'The battle is over, but the war goes on.' : 'A batalha terminou, mas a guerra continua.')}
+              {isMutualAbandon
+                ? (isEn ? 'Someone was away too long, so the match was called off — no rewards, no penalties.' : 'Alguém ficou ausente por tempo demais e a partida foi encerrada — sem recompensas nem penalidades.')
+                : isAbandonWinner
+                  ? (isEn ? 'Your opponent didn\'t act in time. You win by forfeit and get a coin compensation.' : 'Seu oponente não agiu a tempo. Você venceu por desistência e recebeu uma compensação em moedas.')
+                  : isAbandonLoser
+                    ? (isEn ? 'You didn\'t act in time too many turns in a row, so the match was forfeited.' : 'Você não agiu a tempo em turnos demais seguidos, então a partida foi dada como perdida.')
+                    : isPlayerWon
+                      ? (isEn ? 'The field belongs to you.' : 'O campo pertence a você.')
+                      : (isEn ? 'The battle is over, but the war goes on.' : 'A batalha terminou, mas a guerra continua.')}
             </p>
           </div>
         </div>
@@ -434,7 +460,7 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
             </div>
 
             {/* Booster (apenas vitória) */}
-            {isPlayerWon && isCalamity && (
+            {isPlayerWon && !isAfkAbandon && isCalamity && (
               <div className="battle-result-booster-panel">
                 <img src={calamityBoosterImg} alt={isEn ? 'Calamity Booster earned' : 'Booster de Calamidade adquirido'} className="battle-result-booster-img" />
                 <span className="battle-result-booster-label">
@@ -443,7 +469,7 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
                 </span>
               </div>
             )}
-            {isPlayerWon && !isCalamity && (
+            {isPlayerWon && !isAfkAbandon && !isCalamity && (
               <div className="battle-result-booster-panel">
                 <img src={require('../assets/img/card/booster.png')} alt={isEn ? 'Booster earned' : 'Booster adquirido'} className="battle-result-booster-img" />
                 <span className="battle-result-booster-label"><small>{isEn ? 'Special reward' : 'Recompensa especial'}</small>1 booster</span>

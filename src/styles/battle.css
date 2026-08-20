@@ -751,6 +751,38 @@
   z-index: 10;
 }
 
+.turn-timer-countdown {
+  position: absolute;
+  right: 32px;
+  top: calc(50% + 34px);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid #e2726c;
+  background: rgba(40, 12, 14, 0.82);
+  color: #ffb3ae;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 800;
+  font-size: 1rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  animation: turn-timer-pulse 1s ease-in-out infinite;
+}
+
+.turn-timer-countdown-critical {
+  border-color: #ff4d45;
+  color: #ffe0dc;
+  background: rgba(64, 10, 10, 0.88);
+}
+
+@keyframes turn-timer-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+}
+
 .battle-topbar button,
 .custom-btn {
   background: #2f1e3f;
@@ -3632,6 +3664,13 @@ body.is-fullscreen .graveyard-container {
   --finale-bright: #f4c6c8;
   --finale-glow: rgba(133, 30, 49, .8);
   --finale-shadow: rgba(113, 19, 37, .48);
+}
+
+.battle-finale-neutral {
+  --finale-accent: #b9ac8f;
+  --finale-bright: #ede2c4;
+  --finale-glow: rgba(120, 108, 80, .68);
+  --finale-shadow: rgba(90, 80, 58, .4);
 }
 
 .battle-finale-ring {

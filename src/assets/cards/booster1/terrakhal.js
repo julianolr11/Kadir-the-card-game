@@ -9,6 +9,7 @@ module.exports = {
   type: { pt: 'Ave', en: 'Bird' },
   element: 'terra',
   img: require('../../img/creatures/terrakhal_bio.webp'),
+  altImg: require('../../img/creatures/alternative/terrakhal_alternative.png'),
   color: 'earth',
   hp: 5,
   abilities: [

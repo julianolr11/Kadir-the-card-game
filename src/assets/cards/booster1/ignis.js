@@ -8,6 +8,7 @@ module.exports = {
   type: { pt: 'Ave', en: 'Bird' },
   element: 'fogo',
   img: require('../../img/creatures/ignis_bio.webp'),
+  altImg: require('../../img/creatures/alternative/ignis_alternative.png'),
   color: 'fire',
   hp: 3,
   abilities: [

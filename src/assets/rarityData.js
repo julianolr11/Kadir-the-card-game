@@ -93,7 +93,7 @@ export const creatureRarities = {
   beoxyr: { rarity: RARITY_TIERS.UNCOMMON, value: 45 },
   igrazar: { rarity: RARITY_TIERS.UNCOMMON, value: 35 },
 
-  // RARE (11) - 40 a 70 moedas
+  // RARE (15) - 40 a 70 moedas
   draak: { rarity: RARITY_TIERS.RARE, value: 50 },
   kael: { rarity: RARITY_TIERS.RARE, value: 45 },
   ignis: { rarity: RARITY_TIERS.RARE, value: 55 },
@@ -105,6 +105,10 @@ export const creatureRarities = {
   aldanor: { rarity: RARITY_TIERS.RARE, value: 55 },
   hipoderion: { rarity: RARITY_TIERS.RARE, value: 60 },
   arvel: { rarity: RARITY_TIERS.RARE, value: 65 },
+  droor: { rarity: RARITY_TIERS.RARE, value: 55 },
+  drash: { rarity: RARITY_TIERS.RARE, value: 50 },
+  draer: { rarity: RARITY_TIERS.RARE, value: 50 },
+  druun: { rarity: RARITY_TIERS.RARE, value: 50 },
 
   // EPIC (9) - 60 a 90 moedas
   ekeranth: { rarity: RARITY_TIERS.EPIC, value: 70 },

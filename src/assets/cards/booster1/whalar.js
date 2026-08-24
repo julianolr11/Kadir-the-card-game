@@ -74,10 +74,10 @@ module.exports = {
   ],
   defaultBlessing: {
     id: 'whalar_blessing',
-    name: { pt: 'Friagem Abissal', en: 'Abyssal Cold' },
+    name: { pt: 'Onda Abissal', en: 'Abyssal Wave' },
     desc: {
-      pt: 'Criaturas de água ganham +1 velocidade enquanto Whalar estiver em campo.',
-      en: 'Water creatures gain +1 speed while Whalar is on the field.',
+      pt: 'Ao ser invocado, cria uma onda que causa 1 de dano a todas as criaturas adversárias.',
+      en: 'When summoned, creates a wave that deals 1 damage to all enemy creatures.',
     },
   },
   unlockTable: [

@@ -9,6 +9,7 @@ module.exports = {
   type: { pt: 'Fera', en: 'Beast' },
   element: 'terra',
   img: require('../../img/creatures/leoracal_bio.webp'),
+  altImg: require('../../img/creatures/alternative/leoracal_alternative.png'),
   color: 'earth',
   hp: 6,
   abilities: [

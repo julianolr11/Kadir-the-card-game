@@ -313,13 +313,21 @@ export default function App() {
         <div className={`route-black-curtain ${routeCurtain}`} aria-hidden>
           {routeCurtain === 'covering' && (
             <div className="route-curtain-content">
-              <div className="route-curtain-rune" />
-              <div className="route-curtain-card" aria-hidden />
+              <div className="route-curtain-rune" aria-hidden>
+                <i /><i /><i /><i />
+              </div>
+              <div className="route-curtain-card-aura" aria-hidden />
+              <div className="route-curtain-card" aria-hidden>
+                <span />
+              </div>
               <div className="route-curtain-copy">
                 <span className="route-curtain-kicker">KADIR</span>
                 <div className="route-curtain-text">{lang === 'en' ? 'Preparing your journey' : 'Preparando sua jornada'}</div>
+                <span className="route-curtain-status">
+                  {lang === 'en' ? 'Gathering your cards' : 'Reunindo suas cartas'}
+                </span>
                 <div className="route-curtain-progress" aria-hidden>
-                  <i /><i /><i />
+                  <span />
                 </div>
               </div>
             </div>

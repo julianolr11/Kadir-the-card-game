@@ -1,5 +1,5 @@
 {
-  "version": "0.7.0",
+  "version": "0.7.2",
   "name": "electron-react-boilerplate",
   "description": "A foundation for scalable desktop apps",
   "keywords": [
@@ -50,7 +50,10 @@
     "start:main": "concurrently -k -P \"cross-env NODE_ENV=development TS_NODE_TRANSPILE_ONLY=true webpack --watch --config ./.erb/configs/webpack.config.main.dev.ts\" \"electronmon . -- {@}\" --",
     "start:preload": "cross-env NODE_ENV=development TS_NODE_TRANSPILE_ONLY=true NODE_OPTIONS=\"-r ts-node/register --no-warnings\" webpack --config ./.erb/configs/webpack.config.preload.dev.ts",
     "start:renderer": "cross-env NODE_ENV=development TS_NODE_TRANSPILE_ONLY=true NODE_OPTIONS=\"-r ts-node/register --no-warnings\" webpack serve --config ./.erb/configs/webpack.config.renderer.dev.ts",
-    "test": "jest"
+    "test": "jest",
+    "simulate:ai": "node scripts/simulate-ai.js",
+    "simulate:campaign": "node scripts/simulate-campaign-ai.js",
+    "validate:new-cards": "npm test -- --runInBand src/assets/cards/cardAudit.test.js src/logic/aiDecisionEngine.test.js src/logic/aiBattleSimulator.test.js src/logic/campaignDifficulty.test.js && npm run simulate:campaign"
   },
   "browserslist": [
     "last 2 Electron versions"

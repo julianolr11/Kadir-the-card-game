@@ -28,6 +28,14 @@ const CALAMITY_COOLDOWN_MS = 60 * 60 * 1000;
 const INVITE_SLOT_COUNT = 3;
 const CALAMITY_LOBBY_MAX_MEMBERS = INVITE_SLOT_COUNT + 1;
 
+const ELEMENT_LABELS = {
+  fogo: { ptbr: 'Fogo', en: 'Fire' },
+  agua: { ptbr: 'Água', en: 'Water' },
+  terra: { ptbr: 'Terra', en: 'Earth' },
+  ar: { ptbr: 'Ar', en: 'Air' },
+  puro: { ptbr: 'Puro', en: 'Pure' },
+};
+
 const formatCooldown = (ms) => {
   const totalSeconds = Math.ceil(ms / 1000);
   const minutes = Math.floor(totalSeconds / 60);
@@ -202,7 +210,8 @@ function CalamityLobby({ onBack, onNavigate, onStartBattle }) {
         <button className="calamity-back-btn" onClick={handleBack}>
           {isEn ? '← Back' : '← Voltar'}
         </button>
-        <p className="calamity-lobby-kicker">{isEn ? 'Calamity Mode' : 'Modo Calamidade'}</p>
+        <div className="calamity-lobby-crest" aria-hidden>✦</div>
+        <p className="calamity-lobby-kicker">{isEn ? 'Calamity Mode • Expedition' : 'Modo Calamidade • Expedição'}</p>
         <h1 className="calamity-lobby-title">{isEn ? 'Calamity lobby' : 'Lobby da Calamidade'}</h1>
         <p className="calamity-lobby-sub">
           {isEn
@@ -211,8 +220,23 @@ function CalamityLobby({ onBack, onNavigate, onStartBattle }) {
         </p>
       </div>
 
+      <div className="calamity-preparation-rail" aria-label={isEn ? 'Expedition preparation' : 'Preparação da expedição'}>
+        <div className={`calamity-preparation-step${myVote ? ' is-complete' : ' is-active'}`}>
+          <span>01</span><strong>{isEn ? 'Choose the threat' : 'Escolha a ameaça'}</strong>
+        </div>
+        <i aria-hidden />
+        <div className={`calamity-preparation-step${selectedDeck ? ' is-complete' : (myVote ? ' is-active' : '')}`}>
+          <span>02</span><strong>{isEn ? 'Assemble squad' : 'Monte o esquadrão'}</strong>
+        </div>
+        <i aria-hidden />
+        <div className={`calamity-preparation-step${selectedDeck && myVote ? ' is-active' : ''}`}>
+          <span>03</span><strong>{isEn ? 'Begin hunt' : 'Inicie a caçada'}</strong>
+        </div>
+      </div>
+
       <div className="calamity-section calamity-section-primary">
         <div className="calamity-section-heading">
+          <span className="calamity-section-number">I</span>
           <span className="calamity-section-eyebrow">{isEn ? 'Choose your calamity' : 'Escolha sua calamidade'}</span>
         </div>
         <div className="calamity-boss-grid">
@@ -230,7 +254,9 @@ function CalamityLobby({ onBack, onNavigate, onStartBattle }) {
                 {isVoted && <span className="calamity-vote-badge">{isEn ? '✓ Your vote' : '✓ Seu voto'}</span>}
                 <img className="calamity-boss-img" src={boss.img} alt={boss.name?.[lang] || boss.name?.pt} />
                 <div className="calamity-boss-info">
-                  <span className="calamity-boss-element">{boss.element}</span>
+                  <span className="calamity-boss-element">
+                    {ELEMENT_LABELS[boss.element]?.[isEn ? 'en' : 'ptbr'] || boss.element}
+                  </span>
                   <strong className="calamity-boss-name">{boss.name?.[lang] || boss.name?.pt}</strong>
                   {onCooldown ? (
                     <span className="calamity-boss-cooldown">
@@ -250,6 +276,7 @@ function CalamityLobby({ onBack, onNavigate, onStartBattle }) {
 
       <div className="calamity-section calamity-section-secondary">
         <div className="calamity-section-heading">
+          <span className="calamity-section-number">II</span>
           <span className="calamity-section-eyebrow">{isEn ? 'Your squad' : 'Seu esquadrão'}</span>
         </div>
         <div className="calamity-party-row">
@@ -329,12 +356,14 @@ function CalamityLobby({ onBack, onNavigate, onStartBattle }) {
         disabled={!selectedDeck || !myVote}
         onClick={handleReady}
       >
-        {isEn ? 'Ready' : 'Pronto'}
+        <span className="calamity-ready-icon" aria-hidden>⚔</span>
+        {isEn ? 'Ready for the hunt' : 'Pronto para a caçada'}
         {votedBoss ? ` — ${votedBoss.name?.[lang] || votedBoss.name?.pt}` : ''}
       </button>
 
       <DeckSelectModal
         visible={showDeckModal}
+        deckType="calamity"
         onClose={() => setShowDeckModal(false)}
         onSelect={handleDeckSelected}
         onCreateDeck={onNavigate ? () => {

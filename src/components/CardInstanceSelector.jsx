@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { getCardValue } from '../assets/rarityData.js';
 import '../styles/card-instance-selector.css';
 import lvlIcon from '../assets/img/icons/lvlicon.png';
@@ -59,6 +59,19 @@ function CardInstanceSelector({
       return b.xp - a.xp;
     });
   }, [instances]);
+
+  // Garante que sempre tem uma cópia pré-selecionada ao abrir (ou quando a carta/lista muda,
+  // ex.: trocou de carta sem desmontar o modal, ou uma cópia foi sacrificada num adorno) - a
+  // inicialização via useState só roda 1x no mount e podia deixar a seleção vazia.
+  useEffect(() => {
+    if (sortedInstances.length === 0) {
+      if (selectedInstanceId !== null) setSelectedInstanceId(null);
+      return;
+    }
+    if (!sortedInstances.some((inst) => inst.instanceId === selectedInstanceId)) {
+      setSelectedInstanceId(sortedInstances[0].instanceId);
+    }
+  }, [sortedInstances, selectedInstanceId]);
 
   const selectedInstance = sortedInstances.find(
     (inst) => inst.instanceId === selectedInstanceId
@@ -245,21 +258,25 @@ function CardInstanceSelector({
                         e.stopPropagation();
                         onEdit(cardId, instance.instanceId);
                       }}
+                      title={isEn ? 'Edit card' : 'Editar carta'}
                     >
-                      {isEn ? 'Edit card' : 'Editar carta'}
+                      ✎
                     </button>
                   )}
 
-                  {/* Selection indicator */}
-                  <div className="instance-checkbox">
-                    <input
-                      type="radio"
-                      name="instance-selection"
-                      checked={selectedInstanceId === instance.instanceId}
-                      onChange={() => handleSelectInstance(instance.instanceId)}
-                      aria-label={isEn ? `Select copy ${index + 1}` : `Selecionar cópia ${index + 1}`}
-                    />
-                  </div>
+                  {onSelect && (
+                    <button
+                      type="button"
+                      className="instance-quick-add-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSelect(instance.instanceId);
+                      }}
+                      title={isEn ? `Add copy ${index + 1} now` : `Adicionar cópia #${index + 1} agora`}
+                    >
+                      +
+                    </button>
+                  )}
                 </li>
               ))}
             </ul>
@@ -269,12 +286,12 @@ function CardInstanceSelector({
         <aside className="instance-card-preview-panel">
           <div className="instance-card-preview-title">
             <span>{lang === 'en' ? 'Selected Card' : 'Carta selecionada'}</span>
-            {selectedInstance?.isFullArt ? <strong>Full Art</strong> : selectedInstance?.isHolo && <strong>Holo</strong>}
+            {selectedInstance?.isFullArt ? <strong>{selectedInstance.isAltArt ? 'Full Art Alternativa' : 'Full Art'}</strong> : selectedInstance?.isHolo && <strong>Holo</strong>}
           </div>
           {selectedInstance && cardData ? (
             <>
               <div className={`instance-card-preview-scale ${selectedInstance.isFullArt ? 'full-art-preview' : ''} ${adorningInstanceId === selectedInstance.instanceId ? 'adorning' : ''}`}>
-                {selectedInstance.isFullArt ? <FullArtCard card={cardData} lang={lang} /> : <CreatureCardPreview
+                {selectedInstance.isFullArt ? <FullArtCard card={cardData} lang={lang} isAltArt={Boolean(selectedInstance.isAltArt)} /> : <CreatureCardPreview
                   creature={cardData}
                   onClose={null}
                   level={selectedInstance.level || 0}

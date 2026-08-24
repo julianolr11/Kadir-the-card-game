@@ -133,6 +133,14 @@
   transform: scale(0.85) translateY(6px) translateZ(-30px);
 }
 
+/* Full art (e full art alternativa) puxadas do booster de Calamidade usam largura própria
+   (kadir-full-art.css) maior que o card-preview padrão — alinha ao slot do slider. */
+.slider-card-wrapper .kadir-full-art-card {
+  width: 369px;
+  min-width: 369px;
+  max-width: 369px;
+}
+
 /* Holo indicator inline with name */
 .holo-indicator {
   font-size: 14px;

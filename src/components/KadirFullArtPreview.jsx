@@ -21,6 +21,7 @@ import StatusText from './StatusText';
 
 const COMMAND = 'kadirart';
 const ADD_COMMAND = 'artadd';
+const ALT_COMMAND = 'kadiralt';
 
 const getText = (value, langKey = 'pt') => {
   if (!value) return '';
@@ -33,8 +34,12 @@ const stripHtml = (value, langKey = 'pt') => getText(value, langKey)
   .replace(/\s+/g, ' ')
   .trim();
 
-const resolveImage = (card) => {
+const resolveImage = (card, preferAlt = false) => {
   if (!card) return '';
+  if (preferAlt && card.altImg) {
+    if (typeof card.altImg === 'string') return card.altImg;
+    if (typeof card.altImg === 'object') return card.altImg.default || Object.values(card.altImg)[0] || '';
+  }
   if (typeof card.img === 'string') return card.img;
   if (card.img && typeof card.img === 'object') {
     return card.img.default || Object.values(card.img)[0] || '';
@@ -95,6 +100,17 @@ const fullArtFocus = {
   zephyron: { position: '50% 263%', scale: 1.01 },
 };
 
+// Enquadramento das artes alternativas (altImg) - imagens com composição diferente da bio
+// principal, então precisam de foco próprio (ver altImg em booster1/*.js).
+const fullArtFocusAlt = {
+  digitama: { position: '67% 1109%', scale: 1.03 },
+  draak: { position: '36% 344%', scale: 1.03 },
+  faskel: { position: '50% 235%', scale: 1.10 },
+  griffor: { position: '51% 605%', scale: 1.01 },
+  sunburst: { position: '63% 800%', scale: 1.03 },
+  zephyron: { position: '40% -517%', scale: 1.01 },
+};
+
 export function FullArtCard({
   card,
   lang = 'ptbr',
@@ -113,9 +129,10 @@ export function FullArtCard({
   sleep = 0,
   bleed = 0,
   onlyBlessing = false,
+  isAltArt = false,
 }) {
   const langKey = lang === 'en' ? 'en' : 'pt';
-  const imageSrc = resolveImage(card);
+  const imageSrc = resolveImage(card, isAltArt);
   const name = getText(card?.name, langKey);
   const title = getText(card?.title, langKey);
   const type = getText(card?.type, langKey);
@@ -123,7 +140,7 @@ export function FullArtCard({
   const blessingName = getText(card?.defaultBlessing?.name, langKey);
   const blessingDesc = getText(card?.defaultBlessing?.desc, langKey);
   const visibleSkills = [card?.defaultSkills?.[0] || card?.abilities?.[0], card?.defaultSkills?.[1] || card?.abilities?.[1]].filter(Boolean);
-  const focus = fullArtFocus[card?.id] || { position: '50% 44%', scale: 1.04 };
+  const focus = (isAltArt && fullArtFocusAlt[card?.id]) || fullArtFocus[card?.id] || { position: '50% 44%', scale: 1.04 };
   // Barra de vida grande dentro da carta (chefe de Calamidade) - só aparece quando maxHp é
   // passado explicitamente, senão o HP normal continua só no selo pequeno do footer.
   const hpValue = Math.max(0, currentHp ?? card?.hp ?? 0);
@@ -220,12 +237,16 @@ function KadirFullArtPreview() {
   const [open, setOpen] = useState(false);
   const [selectedCard, setSelectedCard] = useState(null);
   const [obtained, setObtained] = useState(false);
+  const [isAltArt, setIsAltArt] = useState(false);
   const langKey = lang === 'en' ? 'en' : 'pt';
 
   const creaturePool = useMemo(() => (
     (Array.isArray(allCards) ? allCards : [])
       .filter((card) => card && card.id && card.type !== 'field' && card.type !== 'effect')
   ), []);
+
+  // Só as criaturas que já têm arte alternativa cadastrada (ver altImg em booster1/*.js).
+  const altArtPool = useMemo(() => creaturePool.filter((c) => c?.altImg), [creaturePool]);
 
   const card = selectedCard || creaturePool[0];
 
@@ -245,6 +266,7 @@ function KadirFullArtPreview() {
     if (creaturePool.length === 0) return;
     const nextIndex = Math.floor(Math.random() * creaturePool.length);
     setSelectedCard(creaturePool[nextIndex]);
+    setIsAltArt(false);
     setObtained(false);
     setOpen(true);
   };
@@ -254,6 +276,17 @@ function KadirFullArtPreview() {
     const nextCard = creaturePool[Math.floor(Math.random() * creaturePool.length)];
     addCardsFromBooster?.([{ id: nextCard.id, isHolo: true, isFullArt: true }]);
     setSelectedCard(nextCard);
+    setIsAltArt(false);
+    setObtained(true);
+    setOpen(true);
+  };
+
+  const addRandomAltArt = () => {
+    if (altArtPool.length === 0) return;
+    const nextCard = altArtPool[Math.floor(Math.random() * altArtPool.length)];
+    addCardsFromBooster?.([{ id: nextCard.id, isHolo: true, isFullArt: true, isAltArt: true }]);
+    setSelectedCard(nextCard);
+    setIsAltArt(true);
     setObtained(true);
     setOpen(true);
   };
@@ -268,7 +301,11 @@ function KadirFullArtPreview() {
       }
       if (event.key.length !== 1) return;
       setTyped((current) => {
-        const next = `${current}${event.key}`.toLowerCase().slice(-Math.max(COMMAND.length, ADD_COMMAND.length));
+        const next = `${current}${event.key}`.toLowerCase().slice(-Math.max(COMMAND.length, ADD_COMMAND.length, ALT_COMMAND.length));
+        if (next.endsWith(ALT_COMMAND)) {
+          addRandomAltArt();
+          return '';
+        }
         if (next.endsWith(ADD_COMMAND)) {
           addRandomFullArt();
           return '';
@@ -283,14 +320,14 @@ function KadirFullArtPreview() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [creaturePool, addCardsFromBooster]);
+  }, [creaturePool, altArtPool, addCardsFromBooster]);
 
   if (!open || !card) return null;
 
   return (
     <div className={`kadir-full-art-overlay ${obtained ? 'kadir-full-art-obtained' : ''}`} onClick={() => setOpen(false)}>
       <div className="kadir-full-art-stage" onClick={(event) => event.stopPropagation()}>
-        {obtained && <div className="kadir-full-art-obtained-copy"><span>{langKey === 'en' ? 'Relic discovered' : 'Relíquia descoberta'}</span><strong>{langKey === 'en' ? 'You obtained' : 'Você obteve'}</strong><b>FULL ART</b></div>}
+        {obtained && <div className="kadir-full-art-obtained-copy"><span>{langKey === 'en' ? 'Relic discovered' : 'Relíquia descoberta'}</span><strong>{langKey === 'en' ? 'You obtained' : 'Você obteve'}</strong><b>{isAltArt ? (langKey === 'en' ? 'ALT ART' : 'ARTE ALTERNATIVA') : 'FULL ART'}</b></div>}
         <button
           type="button"
           className="kadir-full-art-close"
@@ -300,7 +337,7 @@ function KadirFullArtPreview() {
           x
         </button>
 
-        <FullArtCard card={card} lang={lang} className={obtained ? 'is-obtained' : ''} />
+        <FullArtCard card={card} lang={lang} className={obtained ? 'is-obtained' : ''} isAltArt={isAltArt} />
         {/*
         <article className={`kadir-full-art-card kadir-full-art-${card.element || 'puro'}`}>
           <div

@@ -9,6 +9,7 @@ module.exports = {
   type: { pt: 'Fera', en: 'Beast' },
   element: 'ar',
   img: require('../../img/creatures/zephyron_bio.webp'),
+  altImg: require('../../img/creatures/alternative/zephyron_alternative.png'),
   color: 'air',
   hp: 7,
   abilities: [

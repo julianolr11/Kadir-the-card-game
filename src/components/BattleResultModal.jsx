@@ -359,6 +359,7 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
           instanceId: instance.instanceId,
           isHolo: Boolean(instance.isHolo),
           isFullArt: Boolean(instance.isFullArt),
+          isAltArt: Boolean(instance.isAltArt),
           name: (cardData?.name && (isEn ? (cardData.name.en || cardData.name.pt) : (cardData.name.pt || cardData.name.en)) || cardData.name) || baseId,
           image: imagePath,
           xpGained: finalXpGain,
@@ -543,12 +544,12 @@ export default function BattleResultModal({ gameResult, killFeed, playerDeck, on
                   <div key={idx} className="xp-card-item xp-card-full" style={{ animationDelay: `${idx * 0.15}s` }}>
                     {(card.isFullArt || card.isHolo) && (
                       <div className={`xp-card-variant-badge ${card.isFullArt ? 'full-art' : 'holo'}`}>
-                        {card.isFullArt ? 'Full Art' : 'Holo'}
+                        {card.isFullArt ? (card.isAltArt ? 'Full Art Alternativa' : 'Full Art') : 'Holo'}
                       </div>
                     )}
                     <div className="xp-card-preview-full">
                       {card.isFullArt
-                        ? <FullArtCard card={creatureData} level={card.newLevel} />
+                        ? <FullArtCard card={creatureData} level={card.newLevel} isAltArt={Boolean(card.isAltArt)} />
                         : <CreatureCardPreview creature={creatureData} level={card.newLevel} isHolo={card.isHolo} allowFlip={false} />}
                       <div className="xp-card-xp-panel">
                         <div className="xp-card-name-mini">{card.name}</div>

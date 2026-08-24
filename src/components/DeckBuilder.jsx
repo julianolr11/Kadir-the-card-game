@@ -1,9 +1,5 @@
 import React, { useContext, useMemo, useState } from 'react';
 import { AppContext } from '../context/AppContext';
-import CreatureCardPreview from './CreatureCardPreview';
-import DeckEditor from './DeckEditor';
-import GuardianSelectModal from './GuardianSelectModal';
-import CardRecycler from './CardRecycler';
 import lvlIcon from '../assets/img/icons/lvlicon.png';
 import soulEssence from '../assets/img/icons/soul-essence.png';
 import burnIcon from '../assets/img/icons/burn.png';
@@ -15,6 +11,26 @@ import bleedIcon from '../assets/img/icons/bleed.png';
 import shieldIcon from '../assets/img/icons/shield.png';
 import '../styles/deckbuilder.css';
 import StatusText from './StatusText';
+import DeckSelectModal from './DeckSelectModal';
+
+const loadCreatureCardPreview = () => import('./CreatureCardPreview');
+const loadDeckEditor = () => import('./DeckEditor');
+const loadGuardianSelectModal = () => import('./GuardianSelectModal');
+const loadCardRecycler = () => import('./CardRecycler');
+
+const CreatureCardPreview = React.lazy(loadCreatureCardPreview);
+const DeckEditor = React.lazy(loadDeckEditor);
+const GuardianSelectModal = React.lazy(loadGuardianSelectModal);
+const CardRecycler = React.lazy(loadCardRecycler);
+
+function DeckModuleFallback({ modal = false, label }) {
+  return (
+    <div className={modal ? 'deck-module-loading deck-module-loading-modal' : 'deck-module-loading'} role="status">
+      <span className="deck-module-loading-rune" aria-hidden>◆</span>
+      <strong>{label}</strong>
+    </div>
+  );
+}
 
 const GUARDIANS_DATA = require('../assets/guardiansData');
 
@@ -347,11 +363,13 @@ function DeckBuilder({ onNavigate }) {
   const [showNamePrompt, setShowNamePrompt] = useState(false);
   const [promptSlotIndex, setPromptSlotIndex] = useState(null);
   const [deckNameInput, setDeckNameInput] = useState('');
+  const [newDeckMode, setNewDeckMode] = useState('standard');
   const [showGuardianSelectModal, setShowGuardianSelectModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [showRecycler, setShowRecycler] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteIndex, setDeleteIndex] = useState(null);
+  const [showTrainingDeckSelect, setShowTrainingDeckSelect] = useState(false);
 
   // Calcular quantidade total de cartas
   const totalCards = useMemo(() => {
@@ -377,7 +395,7 @@ function DeckBuilder({ onNavigate }) {
         const id = `deck-${i + 1}`;
         const d = decks && decks[id];
         if (d) {
-          initial[i] = { id, name: d.name || `Deck ${i + 1}` };
+          initial[i] = { id, name: d.name || `Deck ${i + 1}`, deckType: d.deckType || 'standard' };
         }
       }
       // Caso não existam IDs canonicos, preencher por ordem de chaves
@@ -385,7 +403,7 @@ function DeckBuilder({ onNavigate }) {
         const entries = Object.entries(decks);
         for (let i = 0; i < Math.min(MAX_DECKS, entries.length); i += 1) {
           const [id, d] = entries[i];
-          initial[i] = { id, name: d?.name || `Deck ${i + 1}` };
+          initial[i] = { id, name: d?.name || `Deck ${i + 1}`, deckType: d?.deckType || 'standard' };
         }
       }
       setSlots(initial);
@@ -451,6 +469,7 @@ function DeckBuilder({ onNavigate }) {
 
     setPromptSlotIndex(idx);
     setDeckNameInput(`Deck ${idx + 1}`);
+    setNewDeckMode('standard');
     setShowNamePrompt(true);
   }
 
@@ -464,8 +483,18 @@ function DeckBuilder({ onNavigate }) {
       return;
     }
     const deckId = `deck-${idx + 1}`;
+    const initialCards = Array(20).fill(null);
+    const guardianCardId = activeGuardian?.id || activeGuardian?.name || null;
+    if (guardianCardId && getCardInstances) {
+      const guardianInstances = getCardInstances(guardianCardId) || [];
+      const initialGuardian = guardianInstances.find((instance) => instance.isHolo) || guardianInstances[0];
+      if (initialGuardian?.instanceId) initialCards[0] = initialGuardian.instanceId;
+    }
+    if (saveDeck) {
+      saveDeck({ id: deckId, name, deckType: newDeckMode, guardianId: guardianCardId, cards: initialCards });
+    }
     const next = [...slots];
-    next[idx] = { id: deckId, name };
+    next[idx] = { id: deckId, name, deckType: newDeckMode };
     console.log('✅ Novo slot criado:', next[idx]);
     setSlots(next);
     triggerOpen(idx);
@@ -479,13 +508,23 @@ function DeckBuilder({ onNavigate }) {
     const current = slots[idx];
     if (!current) return handleCreate(idx);
     // Abrir editor de deck
+    loadDeckEditor();
     setEditingDeckIndex(idx);
   }
 
-  function handleTraining(idx) {
-    const current = slots[idx];
-    const deckData = current ? getDeck(current.id) : null;
-    const cardCount = Array.isArray(deckData?.cards) ? deckData.cards.length : 0;
+  function handleTrainingDeckSelected(cards, deckId) {
+    const deckData = getDeck(deckId);
+    const cardCount = Array.isArray(deckData?.cards) ? deckData.cards.filter(Boolean).length : 0;
+
+    if ((deckData?.deckType || 'standard') === 'calamity') {
+      setErrorMessage(
+        lang === 'en'
+          ? 'Calamity decks cannot be used in training.'
+          : 'Decks de Calamidade não podem ser usados no treino.',
+      );
+      setTimeout(() => setErrorMessage(''), 3500);
+      return;
+    }
 
     if (!deckData?.guardianId || cardCount !== 20) {
       setErrorMessage(
@@ -497,8 +536,9 @@ function DeckBuilder({ onNavigate }) {
       return;
     }
 
+    setShowTrainingDeckSelect(false);
     onNavigate('battle', {
-      deck: { ...deckData, id: current.id, name: current.name },
+      deck: { ...deckData, id: deckId, name: deckData.name || deckId },
       mode: 'training',
     });
   }
@@ -548,6 +588,7 @@ function DeckBuilder({ onNavigate }) {
       });
     }
     // Abrir modal de seleção de guardião
+    loadGuardianSelectModal();
     setShowGuardianSelectModal(true);
   }
 
@@ -831,9 +872,25 @@ function DeckBuilder({ onNavigate }) {
           </div>
         )}
 
+        {!showRecycler && (
+          <button
+            type="button"
+            className="deckbuilder-training-btn"
+            onClick={() => setShowTrainingDeckSelect(true)}
+          >
+            <span className="deck-training-icon" aria-hidden>⚔</span>
+            <span>
+              <strong>{isEn ? 'Train vs AI' : 'Treinar vs IA'}</strong>
+              <small>{isEn ? 'Choose a standard deck' : 'Escolha um deck dos demais modos'}</small>
+            </span>
+          </button>
+        )}
+
         <button
           className="recycler-toggle-btn"
-          onClick={() => setShowRecycler(!showRecycler)}
+          onMouseEnter={() => { if (!showRecycler) loadCardRecycler(); }}
+          onFocus={() => { if (!showRecycler) loadCardRecycler(); }}
+          onClick={() => { if (!showRecycler) loadCardRecycler(); setShowRecycler(!showRecycler); }}
           title={showRecycler ? (isEn ? 'View decks' : 'Ver decks') : (isEn ? 'Recycle cards' : 'Reciclar cartas')}
         >
           {showRecycler ? (isEn ? '← Back' : '← Voltar') : (isEn ? 'Recycle 🪙' : 'Reciclar 🪙')}
@@ -864,7 +921,9 @@ function DeckBuilder({ onNavigate }) {
 
       <div className="deckbuilder-body">
         {showRecycler ? (
-          <CardRecycler lang={lang} />
+          <React.Suspense fallback={<DeckModuleFallback label={isEn ? 'Loading collection…' : 'Carregando coleção…'} />}>
+            <CardRecycler lang={lang} />
+          </React.Suspense>
         ) : (
           <div className="deckbuilder-slots">
             {Array.from({ length: MAX_DECKS }).map((_, idx) => {
@@ -874,9 +933,20 @@ function DeckBuilder({ onNavigate }) {
                           const deckData = slot ? getDeck(slot.id) : null;
                           const guardianId = deckData?.guardianId;
                           const guardianData = guardianId ? getGuardianData(guardianId) : null;
-                          const guardianImageUrl = guardianData?.img ? guardianData.img : null;
+                          // A carta guardiã "de fato" (com holo/full art/arte alternativa) fica salva
+                          // dentro de deckData.cards - o cardId sozinho só dá a arte base genérica.
+                          const guardianInstances = guardianId ? (cardCollection?.[guardianId] || []) : [];
+                          const guardianInstanceId = Array.isArray(deckData?.cards)
+                            ? deckData.cards.find((id) => id && guardianInstances.some((inst) => inst.instanceId === id))
+                            : null;
+                          const guardianInstance = guardianInstanceId
+                            ? guardianInstances.find((inst) => inst.instanceId === guardianInstanceId)
+                            : null;
+                          const guardianImageUrl = (guardianInstance?.isFullArt && guardianInstance?.isAltArt && guardianData?.altImg)
+                            ? guardianData.altImg
+                            : (guardianData?.img || null);
                           const guardianName = getName(guardianData?.name) || (isEn ? 'Guardian' : 'Guardião');
-                          const cardCount = Array.isArray(deckData?.cards) ? deckData.cards.length : 0;
+                          const cardCount = Array.isArray(deckData?.cards) ? deckData.cards.filter(Boolean).length : 0;
 
             return (
               <div
@@ -923,19 +993,9 @@ function DeckBuilder({ onNavigate }) {
                     </div>
                     <div className="deck-slot-actions">
                       <button
-                        className="deck-slot-btn training"
-                        onClick={() => handleTraining(idx)}
-                        disabled={!guardianId || cardCount !== 20}
-                        title={!guardianId || cardCount !== 20
-                          ? (isEn ? 'Complete the deck to unlock training' : 'Complete o deck para liberar o treino')
-                          : (isEn ? `Train with ${slot.name}` : `Treinar com ${slot.name}`)}
-                      >
-                        <span className="deck-training-icon" aria-hidden>⚔</span>
-                        {isEn ? 'Train vs AI' : 'Treinar vs IA'}
-                        <small>{isEn ? 'Test your strategy against an opponent' : 'Teste sua estratégia contra um oponente'}</small>
-                      </button>
-                      <button
                         className="deck-slot-btn"
+                        onMouseEnter={loadDeckEditor}
+                        onFocus={loadDeckEditor}
                         onClick={() => handleEdit(idx)}
                       >
                         {isEn ? 'Edit deck' : 'Editar deck'} <span aria-hidden="true">→</span>
@@ -958,6 +1018,13 @@ function DeckBuilder({ onNavigate }) {
       </div>
 
       {/* Modal de Loadout */}
+      <DeckSelectModal
+        visible={showTrainingDeckSelect}
+        deckType="standard"
+        onClose={() => setShowTrainingDeckSelect(false)}
+        onSelect={handleTrainingDeckSelected}
+      />
+
       {showLoadoutModal && (
         <div
           className="loadout-modal-overlay"
@@ -1169,6 +1236,7 @@ function DeckBuilder({ onNavigate }) {
             <button
               className="loadout-modal-close"
               onClick={() => setShowNamePrompt(false)}
+              aria-label={isEn ? 'Close' : 'Fechar'}
             >
               ✕
             </button>
@@ -1183,11 +1251,12 @@ function DeckBuilder({ onNavigate }) {
                 textAlign: 'center',
               }}
             >
-              Criar Novo Deck
+              {isEn ? 'Create New Deck' : 'Criar Novo Deck'}
             </h2>
 
             <div style={{ marginBottom: '28px' }}>
               <label
+                htmlFor="new-deck-name"
                 style={{
                   display: 'block',
                   color: '#cbb9f2',
@@ -1196,9 +1265,10 @@ function DeckBuilder({ onNavigate }) {
                   fontWeight: '500',
                 }}
               >
-                Nome do Deck:
+                {isEn ? 'Deck name:' : 'Nome do Deck:'}
               </label>
               <input
+                id="new-deck-name"
                 type="text"
                 value={deckNameInput}
                 onChange={(e) => setDeckNameInput(e.target.value)}
@@ -1226,6 +1296,22 @@ function DeckBuilder({ onNavigate }) {
               />
             </div>
 
+            <div className="deck-create-mode-field">
+              <span className="deck-create-mode-label">{isEn ? 'Deck type' : 'Tipo do deck'}</span>
+              <div className="deck-create-mode-options">
+                <button type="button" className={`deck-create-mode-option${newDeckMode === 'standard' ? ' active' : ''}`} onClick={() => setNewDeckMode('standard')}>
+                  <span className="deck-create-mode-icon">⚔</span>
+                  <strong>{isEn ? 'Other modes' : 'Demais modos'}</strong>
+                  <small>{isEn ? 'Campaign, PvP and training' : 'Campanha, PvP e treino'}</small>
+                </button>
+                <button type="button" className={`deck-create-mode-option calamity${newDeckMode === 'calamity' ? ' active' : ''}`} onClick={() => setNewDeckMode('calamity')}>
+                  <span className="deck-create-mode-icon">♜</span>
+                  <strong>{isEn ? 'Calamity' : 'Calamidade'}</strong>
+                  <small>{isEn ? 'Creatures only' : 'Somente criaturas'}</small>
+                </button>
+              </div>
+            </div>
+
             <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
               <button
                 onClick={() => setShowNamePrompt(false)}
@@ -1248,7 +1334,7 @@ function DeckBuilder({ onNavigate }) {
                   (e.target.style.background = 'rgba(255, 255, 255, 0.08)')
                 }
               >
-                Cancelar
+                {isEn ? 'Cancel' : 'Cancelar'}
               </button>
               <button
                 onClick={confirmCreateDeck}
@@ -1276,7 +1362,7 @@ function DeckBuilder({ onNavigate }) {
                   e.target.style.transform = 'translateY(0)';
                 }}
               >
-                Criar
+                {isEn ? 'Create' : 'Criar'}
               </button>
             </div>
           </div>
@@ -1380,9 +1466,11 @@ function DeckBuilder({ onNavigate }) {
 
       {/* Deck Editor */}
       {editingDeckIndex !== null && slots[editingDeckIndex] && (
-        <DeckEditor
+        <React.Suspense fallback={<DeckModuleFallback modal label={isEn ? 'Opening deck…' : 'Abrindo deck…'} />}>
+          <DeckEditor
           deckId={slots[editingDeckIndex].id}
           deckName={slots[editingDeckIndex].name}
+          deckType={getDeck?.(slots[editingDeckIndex].id)?.deckType || slots[editingDeckIndex].deckType || 'standard'}
           guardianId={getDeck?.(slots[editingDeckIndex].id)?.guardianId || activeGuardian?.id || activeGuardian?.name}
           initialCards={
             getDeck?.(slots[editingDeckIndex].id)?.cards || (() => {
@@ -1414,15 +1502,18 @@ function DeckBuilder({ onNavigate }) {
               setSlots(next);
             }
           }}
-        />
+          />
+        </React.Suspense>
       )}
 
       {/* Guardian Select Modal */}
       {showGuardianSelectModal && (
-        <GuardianSelectModal
-          onSelectGuardian={handleSelectGuardian}
-          onClose={() => setShowGuardianSelectModal(false)}
-        />
+        <React.Suspense fallback={<DeckModuleFallback modal label={isEn ? 'Loading guardians…' : 'Carregando guardiões…'} />}>
+          <GuardianSelectModal
+            onSelectGuardian={handleSelectGuardian}
+            onClose={() => setShowGuardianSelectModal(false)}
+          />
+        </React.Suspense>
       )}
     </div>
   );

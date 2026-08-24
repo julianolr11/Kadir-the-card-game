@@ -267,7 +267,7 @@ export function AppProvider({ children }) {
   };
 
   // Criar nova instância de carta
-  const createCardInstance = (cardId, isHolo = false, isFullArt = false) => {
+  const createCardInstance = (cardId, isHolo = false, isFullArt = false, isAltArt = false) => {
     return {
       instanceId: generateInstanceId(),
       cardId,
@@ -275,37 +275,10 @@ export function AppProvider({ children }) {
       level: 0,
       isHolo,
       isFullArt,
+      isAltArt: isFullArt && isAltArt,
       fullArtAt: isFullArt ? new Date().toISOString() : null,
       acquiredAt: new Date().toISOString(),
     };
-  };
-
-  // Adicionar cartas de um booster aberto (cria instâncias individuais)
-  // Pode receber: array de cardIds (string) ou array de objetos {id, isHolo}
-  const addCardsFromBooster = (cards) => {
-    const newCollection = { ...cardCollection };
-    cards.forEach((card) => {
-      const cardId = typeof card === 'string' ? card : card.id;
-      const isHolo = typeof card === 'string' ? (Math.random() < 0.02) : (card.isHolo || false);
-      const isFullArt = typeof card === 'object' && Boolean(card.isFullArt);
-      const instance = createCardInstance(cardId, isHolo || isFullArt, isFullArt);
-
-      if (!newCollection[cardId]) {
-        newCollection[cardId] = [];
-      }
-      newCollection[cardId].push(instance);
-    });
-    updateCardCollection(newCollection);
-  };
-
-  // Pegar quantidade de uma carta na coleção
-  const getCardCount = (cardId) => {
-    return (cardCollection[cardId]?.length || 0);
-  };
-
-  // Pegar todas as instâncias de uma carta
-  const getCardInstances = (cardId) => {
-    return cardCollection[cardId] || [];
   };
 
   // Calcula XP necessário para subir de nível (progressão exponencial)
@@ -325,29 +298,89 @@ export function AppProvider({ children }) {
     return Math.floor(baseXp * Math.pow(multiplier, level));
   };
 
+  // Aplica XP a uma instância (mutando o objeto), com levelup progressivo até 10.
+  const applyXpGain = (instance, xpGain) => {
+    instance.xp = (instance.xp || 0) + xpGain;
+    while (instance.level < 10) {
+      const xpNeeded = getXpForLevel(instance.level);
+      if (instance.xp >= xpNeeded) {
+        instance.level += 1;
+        instance.xp -= xpNeeded;
+      } else {
+        break;
+      }
+    }
+    if (instance.level >= 10) {
+      instance.xp = 0;
+    }
+  };
+
+  // Escolhe qual cópia recebe o XP de uma duplicata excedente (ver MAX_DUPLICATES em
+  // addCardsFromBooster): prioriza a cópia já equipada em algum deck - é a que o jogador
+  // está de fato treinando, mesmo critério do XP ganho em batalha (ver BattleResultModal.jsx).
+  // Sem nenhuma equipada, cai pra maior nível, pra não desperdiçar em uma cópia zerada.
+  const pickXpTarget = (cardId, instances) => {
+    if (!instances || instances.length === 0) return null;
+    const equippedIds = new Set(
+      Object.values(decks || {}).flatMap((d) => (Array.isArray(d?.cards) ? d.cards.filter(Boolean) : [])),
+    );
+    const equipped = instances.find((inst) => equippedIds.has(inst.instanceId));
+    if (equipped) return equipped;
+    return [...instances].sort((a, b) => (b.level || 0) - (a.level || 0))[0];
+  };
+
+  // Adicionar cartas de um booster aberto (cria instâncias individuais)
+  // Pode receber: array de cardIds (string) ou array de objetos {id, isHolo}
+  // Cada carta (não-holo e holo contam separado) trava em MAX_DUPLICATES cópias por carta -
+  // excedente não vira uma nova cópia parada na coleção, converte na hora em XP pra cópia que
+  // o jogador está treinando (ver pickXpTarget). Full art nunca conta pro teto: é o "prêmio"
+  // final da carta, não uma duplicata comum.
+  const addCardsFromBooster = (cards) => {
+    const MAX_DUPLICATES = 10;
+    const newCollection = { ...cardCollection };
+    cards.forEach((card) => {
+      const cardId = typeof card === 'string' ? card : card.id;
+      const isHolo = typeof card === 'string' ? (Math.random() < 0.02) : (card.isHolo || false);
+      const isFullArt = typeof card === 'object' && Boolean(card.isFullArt);
+      const isAltArt = typeof card === 'object' && Boolean(card.isAltArt);
+
+      const currentInstances = newCollection[cardId] || [];
+      if (!isFullArt) {
+        const sameVariantCount = currentInstances.filter((inst) => Boolean(inst.isHolo) === isHolo && !inst.isFullArt).length;
+        if (sameVariantCount >= MAX_DUPLICATES) {
+          const target = pickXpTarget(cardId, currentInstances);
+          if (target) {
+            const xpGain = getCardValue(cardId, { level: target.level, isHolo: Boolean(target.isHolo) }, null);
+            applyXpGain(target, xpGain);
+          }
+          return;
+        }
+      }
+
+      const instance = createCardInstance(cardId, isHolo || isFullArt, isFullArt, isAltArt);
+      if (!newCollection[cardId]) {
+        newCollection[cardId] = [];
+      }
+      newCollection[cardId].push(instance);
+    });
+    updateCardCollection(newCollection);
+  };
+
+  // Pegar quantidade de uma carta na coleção
+  const getCardCount = (cardId) => {
+    return (cardCollection[cardId]?.length || 0);
+  };
+
+  // Pegar todas as instâncias de uma carta
+  const getCardInstances = (cardId) => {
+    return cardCollection[cardId] || [];
+  };
+
   // Atualizar XP de uma instância específica
   const updateCardInstanceXp = (cardId, instanceId, xpGain) => {
     const newCollection = { ...cardCollection };
-    if (newCollection[cardId]) {
-      const instance = newCollection[cardId].find((inst) => inst.instanceId === instanceId);
-      if (instance) {
-        instance.xp += xpGain;
-        // Levelup progressivo baseado no nível atual
-        while (instance.level < 10) {
-          const xpNeeded = getXpForLevel(instance.level);
-          if (instance.xp >= xpNeeded) {
-            instance.level += 1;
-            instance.xp -= xpNeeded;
-          } else {
-            break;
-          }
-        }
-        // Se chegou no nível máximo (10), limita o XP
-        if (instance.level >= 10) {
-          instance.xp = 0;
-        }
-      }
-    }
+    const instance = newCollection[cardId]?.find((inst) => inst.instanceId === instanceId);
+    if (instance) applyXpGain(instance, xpGain);
     updateCardCollection(newCollection);
   };
 
@@ -444,6 +477,7 @@ export function AppProvider({ children }) {
       ...decks,
       [deckData.id]: {
         name: deckData.name,
+        deckType: deckData.deckType || 'standard',
         guardianId: deckData.guardianId,
         cards: deckData.cards,
       },

@@ -8,6 +8,7 @@ module.exports = {
   type: { pt: 'Reptiloide', en: 'Reptiloid' },
   element: 'agua',
   img: require('../../img/creatures/viborom_bio.webp'),
+  altImg: require('../../img/creatures/alternative/viborom_alternative.png'),
   color: 'water',
   hp: 5,
   abilities: [

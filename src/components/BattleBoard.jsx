@@ -1,5 +1,8 @@
 import React, { useEffect, useMemo } from 'react';
 import { BattleProvider, useBattle } from '../context/BattleContext';
+import BattleOwnPlayerHud from './BattleOwnPlayerHud';
+import BattleOpponentPlayerHud from './BattleOpponentPlayerHud';
+import { BATTLE_REACTIONS_BY_ID } from '../constants/battleReactions';
 import { AppContext } from '../context/AppContext';
 import { resolveAbility } from '../logic/abilityResolver';
 import CreatureCardPreview from './CreatureCardPreview.jsx';
@@ -15,6 +18,7 @@ import '../styles/battle-result.css';
 import '../styles/effects.css';
 import '../styles/effect-cards.css';
 import '../styles/calamity.css';
+import '../styles/battle-reactions.css';
 import shieldIcon from '../assets/img/icons/shield.png';
 import bleedIcon from '../assets/img/icons/bleed.png';
 import burnIcon from '../assets/img/icons/burn.png';
@@ -36,6 +40,10 @@ import { unlockNextCampaignEnemy, CAMPAIGN_TOTAL_LEVELS } from './CampaignTower.
 import StatusText from './StatusText.jsx';
 import ACHIEVEMENTS from '../assets/achievementsData.js';
 import { getElementModifier } from '../utils/effectRegistry';
+import CogIcon from './CogIcon';
+import OptionsModal from './OptionsModal';
+import HelpCenter from './HelpCenter';
+import cogSound from '../assets/sounds/effects/cog.MP3';
 
 // Reference card width (px) the status-effect icon art (Zzz letters, paralyze
 // bolt, freeze snowflakes) was hand-tuned against. Slots render at very
@@ -92,15 +100,21 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
     cancelDrawOpponent,
     applyVirideerBless,
     cancelVirideerBless,
+    battleReactions,
+    playCreatureSummonSound,
   } = useBattle();
   const { cardCollection, effectsVolume, lang = 'ptbr', coins, spendCoins, unlockAchievement, unlockedAchievements } = React.useContext(AppContext);
   const isEn = lang?.startsWith('en');
   const [trophyCelebration, setTrophyCelebration] = React.useState(null);
   const [turnTimerSecondsLeft, setTurnTimerSecondsLeft] = React.useState(null);
-  // Timeline de turnos da Calamidade (Player 1..N + o chefe) - foto/nome vêm da Steam, mesmo
-  // padrão de PvpLobby.jsx (steamworks.js não expõe nome/foto de terceiros, só a Web API).
-  const [calamitySteamStatus, setCalamitySteamStatus] = React.useState(null);
-  const [calamityAvatars, setCalamityAvatars] = React.useState({});
+  // Identidade Steam do próprio jogador (nome/foto) - usada na timeline de turnos da Calamidade
+  // e no cartão de jogador (BattleOwnPlayerHud) em PvP/Calamidade. Mesmo padrão de PvpLobby.jsx
+  // (steamworks.js não expõe nome/foto de terceiros, só a Web API).
+  const [mySteamStatus, setMySteamStatus] = React.useState(null);
+  const [myAvatars, setMyAvatars] = React.useState({});
+  // Identidade Steam do adversário no PvP (nome vem da sala Steam, que continua ativa durante a
+  // partida - só é fechada quando alguém sai da tela de lobby, ver PvpLobby.jsx/handleLeave).
+  const [pvpOpponent, setPvpOpponent] = React.useState({ name: null, avatar: null });
   const [activeCardIndex, setActiveCardIndex] = React.useState(null);
   const [deckCardDrawn, setDeckCardDrawn] = React.useState(false);
   const [opponentDeckCardDrawn, setOpponentDeckCardDrawn] = React.useState(false);
@@ -133,6 +147,21 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
   const [incapacitatedNotice, setIncapacitatedNotice] = React.useState(null); // 'paralyze' | 'sleep' | 'freeze' | null
   const [insufficientEssenceNoticeOpen, setInsufficientEssenceNoticeOpen] = React.useState(false);
   const [abandonConfirmOpen, setAbandonConfirmOpen] = React.useState(false);
+  // Menu de engrenagem (Settings/Help/Exit) no topo direito - padrão compartilhado por todos os
+  // modos de batalha (ver HomeScreen.jsx, mesmo padrão). O Exit daqui dentro da partida continua
+  // chamando o fluxo de abandono existente (abandonConfirmOpen/confirmAbandonBattle) - só a
+  // entrada trocou de um botão "Sair" solto pra um item deste menu.
+  const [battleMenuOpen, setBattleMenuOpen] = React.useState(false);
+  const [showBattleOptions, setShowBattleOptions] = React.useState(false);
+  const [showBattleHelp, setShowBattleHelp] = React.useState(false);
+  const battleCogAudioRef = React.useRef(null);
+  const handleBattleCogMouseEnter = () => {
+    if (battleCogAudioRef.current) {
+      battleCogAudioRef.current.currentTime = 0;
+      battleCogAudioRef.current.volume = (effectsVolume ?? 50) / 100;
+      battleCogAudioRef.current.play().catch(() => {});
+    }
+  };
   const [spectralAnimationState, setSpectralAnimationState] = React.useState(null); // 'appearing', 'present', 'disappearing', null
   const [overlayFrameTick, setOverlayFrameTick] = React.useState(0);
   const [spectralRenderCreature, setSpectralRenderCreature] = React.useState(null); // mantém criatura para animar saída
@@ -166,6 +195,52 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
   });
   const abandonPenalty = Math.min(50, Math.max(0, Number(coins) || 0));
 
+  // Portal effects use viewport coordinates. Keep those coordinates in sync with the board
+  // whenever its fixed canvas is rescaled, scrolled or changes dimensions.
+  useEffect(() => {
+    let frameId = 0;
+    const refreshOverlayGeometry = () => {
+      if (frameId) cancelAnimationFrame(frameId);
+      frameId = requestAnimationFrame(() => setOverlayFrameTick((value) => value + 1));
+    };
+    window.addEventListener('resize', refreshOverlayGeometry);
+    window.addEventListener('scroll', refreshOverlayGeometry, true);
+    window.visualViewport?.addEventListener('resize', refreshOverlayGeometry);
+    window.visualViewport?.addEventListener('scroll', refreshOverlayGeometry);
+    const boardElement = document.querySelector('.board');
+    const resizeObserver = boardElement && typeof ResizeObserver !== 'undefined'
+      ? new ResizeObserver(refreshOverlayGeometry)
+      : null;
+    if (boardElement && resizeObserver) resizeObserver.observe(boardElement);
+    return () => {
+      if (frameId) cancelAnimationFrame(frameId);
+      window.removeEventListener('resize', refreshOverlayGeometry);
+      window.removeEventListener('scroll', refreshOverlayGeometry, true);
+      window.visualViewport?.removeEventListener('resize', refreshOverlayGeometry);
+      window.visualViewport?.removeEventListener('scroll', refreshOverlayGeometry);
+      resizeObserver?.disconnect();
+    };
+  }, []);
+
+  // Attacks, summons and status applications move/scale cards without necessarily resizing
+  // them. Follow that movement briefly so portal effects never retain an intermediate rect.
+  useEffect(() => {
+    if (!state.animations || Object.keys(state.animations).length === 0) return undefined;
+    let frameId = 0;
+    let stopped = false;
+    const startedAt = performance.now();
+    const followMotion = (now) => {
+      if (stopped) return;
+      setOverlayFrameTick((value) => value + 1);
+      if (now - startedAt < 1100) frameId = requestAnimationFrame(followMotion);
+    };
+    frameId = requestAnimationFrame(followMotion);
+    return () => {
+      stopped = true;
+      if (frameId) cancelAnimationFrame(frameId);
+    };
+  }, [state.animations]);
+
   const confirmAbandonBattle = React.useCallback(() => {
     if (abandonPenalty > 0) spendCoins(abandonPenalty);
 
@@ -183,6 +258,22 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
   }, [abandonConfirmOpen]);
+
+  // Fecha o menu de engrenagem ao clicar fora (mesmo padrão do home-cog-dropdown em
+  // HomeScreen.jsx).
+  useEffect(() => {
+    if (!battleMenuOpen) return undefined;
+    const handleClickOutside = (event) => {
+      if (
+        !event.target.closest('.battle-cog-btn') &&
+        !event.target.closest('.battle-cog-dropdown')
+      ) {
+        setBattleMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [battleMenuOpen]);
 
   const showUsedAttackNotice = React.useCallback(() => {
     setUsedAttackNoticeOpen(true);
@@ -548,18 +639,38 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
   // Só cobre "você" por enquanto - o coop com 2-4 jogadores ainda não sincroniza quem é quem
   // (ver plano do modo Calamidade); os demais slots aparecem como "Aguardando jogador" até lá.
   useEffect(() => {
-    if (state.mode !== 'calamity') return;
+    // Roda em qualquer modo (campanha/treino inclusos) - o cartão do próprio jogador
+    // (BattleOwnPlayerHud) mostra foto/nome/insígnias sempre, não só em PvP/Calamidade.
     let cancelled = false;
     (async () => {
       const status = await window.electron?.ipcRenderer?.getSteamStatus?.();
       if (cancelled || !status?.connected) return;
-      setCalamitySteamStatus(status);
+      setMySteamStatus(status);
       const result = await window.electron?.ipcRenderer?.getSteamPlayerAvatars?.([status.steamId64]);
       if (cancelled || !result?.ok) return;
-      setCalamityAvatars(result.avatars || {});
+      setMyAvatars(result.avatars || {});
     })();
     return () => { cancelled = true; };
-  }, [state.mode]);
+  }, []);
+
+  // Foto e nome do adversário no PvP - vêm da sala Steam (avatar via Web API, nome via os
+  // membros da sala), não do estado de batalha (o handshake de início não carrega perfil, ver
+  // PvpLobby.jsx/handleStartBattle).
+  useEffect(() => {
+    if (state.mode !== 'pvp' || !state.peerSteamId64) return;
+    let cancelled = false;
+    (async () => {
+      const [avatarResult, lobbyResult] = await Promise.all([
+        window.electron?.ipcRenderer?.getSteamPlayerAvatars?.([state.peerSteamId64]),
+        window.electron?.ipcRenderer?.getSteamLobby?.(),
+      ]);
+      if (cancelled) return;
+      const avatar = avatarResult?.ok ? (avatarResult.avatars || {})[state.peerSteamId64] || null : null;
+      const member = lobbyResult?.lobby?.members?.find((m) => m.steamId64 === state.peerSteamId64);
+      setPvpOpponent({ name: member?.name || null, avatar });
+    })();
+    return () => { cancelled = true; };
+  }, [state.mode, state.peerSteamId64]);
 
   // Portais de status vivem fora do tabuleiro. Limpa as animações assim que a
   // batalha termina para que nenhum buff/debuff atravesse o modal de resultado.
@@ -776,7 +887,10 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
     const type = typeof data?.type === 'object' ? data?.type?.pt || data?.type?.en : data?.type;
     const height = data?.height;
     const weakness = data?.weakness;
-    const bg = data?.img ? { backgroundImage: `url(${data.img})` } : {};
+    const bg = data?.img ? {
+      backgroundImage: `url(${data.img})`,
+      ...(data.imgPosition ? { backgroundPosition: data.imgPosition } : {}),
+    } : {};
     let elementIcon = null;
     if (element) {
       try {
@@ -807,7 +921,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
         <div className={`card-chip card-chip-${variant}`}>
           <div style={{ transform: 'scale(0.464)', transformOrigin: 'left top', pointerEvents: 'none' }}>
             {instance?.isFullArt
-              ? <FullArtCard card={data} lang={lang} level={level} />
+              ? <FullArtCard card={data} lang={lang} level={level} isAltArt={Boolean(instance?.isAltArt)} />
               : <CreatureCardPreview creature={data} onClose={null} level={level} isHolo={isHolo} allowFlip={false} />}
           </div>
         </div>
@@ -818,10 +932,9 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
     const level = instance?.level || 1;
     const isHolo = Boolean(slotData?.isHolo ?? instance?.isHolo);
     const isFullArt = Boolean(slotData?.isFullArt ?? instance?.isFullArt);
+    const isAltArt = Boolean(slotData?.isAltArt ?? instance?.isAltArt);
     // Modo Calamidade: o chefe ocupa um slot normal, mas é exibido como carta full-art
     // maior, com uma barra de vida própria (em vez do ícone+número usado pelas criaturas comuns).
-    // Isso vale só pro lado do oponente (o chefe) — as criaturas dos players continuam com o
-    // visual normal (com os golpes visíveis), mesmo em modo calamidade.
     const isCalamityMode = state.mode === 'calamity';
     if (isCalamityMode && data?.calamity?.isCalamity && owner === 'ai') {
       const bossMaxHp = slotData?.maxHp || data.calamity.baseHp || 1;
@@ -863,11 +976,16 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
         </div>
       );
     }
-    if (isFullArt && (!isCalamityMode || owner === 'ai')) {
+    // Mesmo motivo do displayCardData no modal de detalhe (selectedFieldCreature, mais abaixo):
+    // slotData.abilities é o que a criatura tem REALMENTE equipado (resolvido no summon), não o
+    // defaultSkills estático da carta - sem isso a prévia no slot mostraria uma habilidade
+    // diferente da que de fato será usada/validada.
+    const slotDisplayData = slotData?.abilities ? { ...data, abilities: slotData.abilities, defaultSkills: null } : data;
+    if (isFullArt) {
       return (
         <div className="card-slot-preview full-art-battle-card">
           <div className="full-art-slot-scale">
-            <FullArtCard card={data} lang={lang} level={level} currentHp={slotData?.hp} />
+            <FullArtCard card={slotDisplayData} lang={lang} level={level} currentHp={slotData?.hp} isAltArt={isAltArt} />
           </div>
         </div>
       );
@@ -875,7 +993,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
     return (
       <div className="card-slot-preview">
         <CreatureCardPreview
-          creature={data}
+          creature={slotDisplayData}
           onClose={null}
           level={level}
           isHolo={isHolo}
@@ -1055,8 +1173,15 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                 return;
               }
               if (isTargetable && selectedAbility) {
-                // Executa habilidade normal no alvo
-                useAbility('player', selectedAbility.slotIndex, selectedAbility.abilityIndex, 'ai', i);
+                // Toca o som da criatura na hora, e só executa o ataque depois de um delay
+                // (mesmo padrão do ataque da IA em aiPendingAttack, ver BattleContext.jsx) - dá
+                // a sensação de "a criatura reage, DEPOIS golpeia" em vez de instantâneo.
+                const attacker = state.player.field.slots[selectedAbility.slotIndex];
+                if (attacker) playCreatureSummonSound(getCardData(attacker.id));
+                const pendingAbility = selectedAbility;
+                setTimeout(() => {
+                  useAbility('player', pendingAbility.slotIndex, pendingAbility.abilityIndex, 'ai', i);
+                }, 500);
                 setSelectedAbility(null);
                 setSelectedCreature(null);
               } else if (isSpectralTargetable && state.spectralAttackPending?.selectedAbility !== undefined) {
@@ -1074,6 +1199,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
           >
             {slot ? (
             <div
+              className="slot-card-visual"
               ref={el => {
                 if (slot && el) cardVisualRefs.current[slot.id] = el;
                 else if (slot) delete cardVisualRefs.current[slot.id];
@@ -1104,10 +1230,16 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                       {/** Meteor falling onto the card, then exploding on impact */}
                       {anim.attackerId === 'effect_final_meteor' && (
                         <div className="meteor-strike">
-                          <div className="meteor-rock" />
+                          <div className="meteor-atmosphere" />
                           <div className="meteor-trail-glow" />
+                          <div className="meteor-smoke-trail" />
+                          <div className="meteor-rock"><span /></div>
+                          <div className="meteor-contact-flash" />
                           <div className="meteor-blast" />
                           <div className="meteor-blast-ring" />
+                          <div className="meteor-debris" aria-hidden>
+                            {[0, 1, 2, 3, 4, 5, 6, 7].map((n) => <i key={n} style={{ '--debris-index': n }} />)}
+                          </div>
                         </div>
                       )}
                       {/* Final Meteor: o meteoro cai primeiro (acima); número/flash de dano só
@@ -1161,7 +1293,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                 if (anim.type === 'elderoxDouble') {
                   return (
                     <>
-                      <div className="elderox-badge"><span className="elderox-arrow">▲</span> Dano x2</div>
+                      <div className="elderox-badge"><span className="elderox-arrow">▲</span> {isEn ? 'Damage x2' : 'Dano x2'}</div>
                       <div className="elderox-arc" />
                       <div className="elderox-spark" />
                     </>
@@ -1205,6 +1337,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
           style={{ cursor: 'pointer' }}
         >
           <div
+            className="slot-card-visual"
             ref={el => {
               if (spectralSlot && el) cardVisualRefs.current[spectralSlot.id] = el;
               else if (spectralSlot) delete cardVisualRefs.current[spectralSlot.id];
@@ -1246,6 +1379,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
           style={{ cursor: 'pointer' }}
         >
           <div
+            className="slot-card-visual"
             ref={el => {
               if (controlSlot && el) cardVisualRefs.current[controlSlot.id] = el;
               else if (controlSlot) delete cardVisualRefs.current[controlSlot.id];
@@ -1420,7 +1554,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
         }
         if (hasPar) {
           // four corners (small offset inside)
-          const pad = Math.min(18, Math.round(Math.min(r.width, r.height) * 0.08));
+          const pad = Math.round(Math.min(r.width, r.height) * 0.085);
           paralyze.push({ id: slot.id + '-tl', left: r.left + pad, top: r.top + pad, scale: fxScale });
           paralyze.push({ id: slot.id + '-tr', left: r.left + r.width - pad, top: r.top + pad, scale: fxScale });
           paralyze.push({ id: slot.id + '-bl', left: r.left + pad, top: r.top + r.height - pad, scale: fxScale });
@@ -1429,21 +1563,20 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
         if (hasBleed) {
           const baseLeft = r.left + (r.width / 2);
           const baseTop = r.top + (r.height * 0.28); // moved further down
-          const offsets = [-18, 0, 18];
+          const offsets = [-0.1, 0, 0.1].map((offset) => Math.round(r.width * offset));
           for (let i = 0; i < offsets.length; i++) {
-            bleed.push({ id: `${slot.id}-bleed-${i}`, left: baseLeft + offsets[i], top: baseTop, idx: i });
+            bleed.push({ id: `${slot.id}-bleed-${i}`, left: baseLeft + offsets[i], top: baseTop, idx: i, scale: fxScale });
           }
         }
 
         if ((slot.statusEffects || []).some(e => e.type === 'poison' && e.duration > 0) || (anim && anim.type === 'poison')) {
-          // Create poison bubble particles rising from lower-left to upper area of card
-          // shift bubbles right by ~55px and up by 110px (additional -20px upward)
-          const baseLeft = r.left + (r.width * 0.28) + 55;
-          const baseTop = r.top + (r.height * 0.68) - 110;
+          // Proportional anchors keep bubbles attached across canvas and multiplayer scales.
+          const baseLeft = r.left + (r.width * 0.53);
+          const baseTop = r.top + (r.height * 0.37);
           // Arrange bubbles: index0 = medium-left, index1 = small-middle, index2 = large-right
-          const bubbleOffsets = [-34, -12, 10, 32];
-          const bubbleSizes = [16, 10, 24, 14];
-          const bubbleRises = [-64, -44, -104, -74];
+          const bubbleOffsets = [-0.15, -0.05, 0.05, 0.15].map((offset) => Math.round(r.width * offset));
+          const bubbleSizes = [16, 10, 24, 14].map((size) => Math.round(size * fxScale));
+          const bubbleRises = [-0.18, -0.13, -0.3, -0.21].map((rise) => Math.round(r.height * rise));
           const bubbleDur = [3400, 2900, 4100, 3600];
           for (let i = 0; i < 4; i++) {
             poison.push({ id: `${slot.id}-poison-${i}`, left: baseLeft + bubbleOffsets[i], top: baseTop, size: bubbleSizes[i], delay: i * 320, rise: bubbleRises[i], dur: bubbleDur[i] });
@@ -1455,16 +1588,14 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
           // No lado do adversário (fileira de cima, mais perto dos modais) o burn desce mais
           // 5px pra não ficar espiando por cima da área onde os modais de batalha aparecem.
           const opponentExtraDown = owner === 'ai' ? 5 : 0;
-          const gradWidth = Math.round(r.width * 1.01);
-          const gradHeight = Math.round(r.height * 0.38);
+          const gradWidth = Math.round(r.width * 1.08);
+          const gradHeight = Math.round(r.height * 0.44);
           const gradLeft = r.left + (r.width / 2);
-          const burnYOffset = 36;
-          const burnTopNudge = 6;
-          const gradTop = r.top + (r.height * 0.88) + burnYOffset + burnTopNudge + opponentExtraDown;
+          const gradTop = r.top + (r.height * 0.995) + opponentExtraDown;
           burnGrad.push({ id: slot.id + '-burn-grad', left: gradLeft, top: gradTop, width: gradWidth, height: gradHeight });
 
           const flameBaseLeft = r.left + (r.width / 2);
-          const flameBaseTop = r.top + (r.height * 0.76) + burnYOffset - 20 + burnTopNudge + opponentExtraDown;
+          const flameBaseTop = r.top + (r.height * 0.82) + opponentExtraDown;
           const flameOffsets = [-0.34, -0.22, -0.08, 0.09, 0.23, 0.34].map(offset => Math.round(r.width * offset));
           const baseFlameSize = Math.max(18, Math.min(34, Math.round(r.width * 0.145)));
           const flameSizes = [
@@ -1498,30 +1629,37 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
         }
 
         // Freeze overlay
-        if (hasFreeze && !hasPar) {
-          // Chefe da calamidade usa uma altura um pouco menor que o resto (pedido do
-          // usuário) - a carta full-art dele mede diferente das criaturas normais. Ajuste fino
-          // adicional (também pedido do usuário): +20px de altura e -5px de largura só nela.
-          // Criaturas normais (ex: Mawthorn) também ganharam um ajuste fino pedido: +5px de
-          // altura e -5px de largura.
-          const freezeHeightMult = slot.isCalamityBoss ? 0.94 : 1.04;
-          const fWidth = Math.round(r.width * 1.04) - 5;
-          const fHeight = Math.round(r.height * freezeHeightMult) + (slot.isCalamityBoss ? 20 : 5);
+        if (hasFreeze) {
+          // Cartas full-art (chefe da calamidade, e agora também criaturas normais quando a
+          // instância é full-art - ver isFullArt em BattleBoard.jsx) usam uma altura um pouco
+          // menor que o resto (pedido do usuário) - o layout do FullArtCard mede diferente do
+          // CreatureCardPreview. Ajuste fino adicional (também pedido do usuário): +20px de
+          // altura só nelas. Criaturas normais (ex: Mawthorn) também ganharam um ajuste fino
+          // pedido: +5px de altura. Largura (ambas) alargada pra 1.1x (pedido do usuário: "o
+          // freeze precisa ser mais largo").
+          const isFullArtSlot = slot.isCalamityBoss || slot.isFullArt;
+          const freezeHeightMult = isFullArtSlot ? 0.94 : 1.04;
+          const fWidth = Math.round(r.width * 1.1);
+          const fHeight = Math.round(r.height * freezeHeightMult) + (isFullArtSlot ? 20 : 5);
           // center of slot
           const fLeft = r.left + (r.width / 2);
           const fTop = r.top + (r.height / 2);
           freeze.push({ id: `${slot.id}-freeze`, left: fLeft, top: fTop, width: fWidth, height: fHeight, scale: fxScale });
         }
 
-        // Shield overlay: center shield icon + subtle blue->transparent gradient from bottom->top
+        // Shield overlay: center shield icon + subtle blue->transparent gradient from bottom->top.
+        // O box aqui é o próprio bounding box do gradiente (.shield-gradient usa inset:0), então
+        // alargar/descer o gradiente (pedido do usuário) é alargar/descer este box mesmo.
         if ((slot.shield || 0) > 0) {
-          // posição original: centro do slot
+          const sWidth = Math.round(r.width * 1.1);
+          const sTop = r.top + (r.height * 0.54);
           shield.push({
             id: slot.id,
             left: r.left + (r.width / 2),
-            top: r.top + (r.height / 2),
-            width: r.width,
+            top: sTop,
+            width: sWidth,
             height: r.height,
+            scale: fxScale,
             amount: slot.shield,
             isApplying: !!shieldApplyIds[slot.id],
           });
@@ -1723,7 +1861,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
     {paralyzeOverlays && paralyzeOverlays.length > 0 && (
       <LayeredStatusOverlayPortal zValue="var(--z-creature-effects)" idSuffix="paralyze">
         {paralyzeOverlays.map(o => (
-          <div key={`par-${o.id}`} className="paralyze-burst" style={{ position: 'absolute', left: `${o.left - 13}px`, top: `${o.top - 6}px`, transform: `translate(-50%,-50%) scale(${o.scale || 1})` }} aria-hidden>⚡</div>
+          <div key={`par-${o.id}`} className="paralyze-burst" style={{ position: 'absolute', left: `${o.left}px`, top: `${o.top}px`, transform: `translate(-50%,-50%) scale(${o.scale || 1})` }} aria-hidden>⚡</div>
         ))}
       </LayeredStatusOverlayPortal>
     )}
@@ -1731,7 +1869,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
     {shieldOverlays && shieldOverlays.length > 0 && (
       <LayeredStatusOverlayPortal zValue="var(--z-shield)" idSuffix="shield">
         {shieldOverlays.map(o => (
-          <div key={`shield-${o.id}`} className={`shield-overlay${o.isApplying ? ' shield-apply' : ''}`} style={{ position: 'absolute', left: `${o.left}px`, top: `${o.top}px`, width: `${o.width}px`, height: `${o.height}px`, transform: 'translate(-50%,-50%)' }} aria-hidden>
+          <div key={`shield-${o.id}`} className={`shield-overlay${o.isApplying ? ' shield-apply' : ''}`} style={{ position: 'absolute', left: `${o.left}px`, top: `${o.top}px`, width: `${o.width}px`, height: `${o.height}px`, transform: 'translate(-50%,-50%)', ['--fx-scale']: o.scale || 1 }} aria-hidden>
             <div className="shield-gradient" />
             {o.isApplying && (
               <>
@@ -1750,7 +1888,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
     {bleedOverlays && bleedOverlays.length > 0 && (
       <LayeredStatusOverlayPortal zValue="calc(var(--z-effects-base) - 50)" idSuffix="bleed">
         {bleedOverlays.map(o => (
-          <div key={`bleed-${o.id}`} className="bleed-emoji" style={{ position: 'absolute', left: `${o.left}px`, top: `${o.top}px`, transform: 'translate(-50%,-50%)', fontSize: `${14 + (o.idx*2)}px`, animationDelay: `${o.idx * 0.18}s` }} aria-hidden>
+          <div key={`bleed-${o.id}`} className="bleed-emoji" style={{ position: 'absolute', left: `${o.left}px`, top: `${o.top}px`, transform: 'translate(-50%,-50%)', fontSize: `${(14 + (o.idx*2)) * (o.scale || 1)}px`, animationDelay: `${o.idx * 0.18}s`, ['--fx-scale']: o.scale || 1 }} aria-hidden>
             🩸
           </div>
         ))}
@@ -1864,7 +2002,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
         {elderoxOverlays.map(o => (
           <React.Fragment key={`elderox-${o.id}`}>
             <div className="elderox-badge" style={{ position: 'absolute', left: `${o.left}px`, top: `${o.topBadge}px`, transform: 'translate(-50%,-50%)' }} aria-hidden>
-              <span className="elderox-arrow">▲</span> Dano x2
+              <span className="elderox-arrow">▲</span> {isEn ? 'Damage x2' : 'Dano x2'}
             </div>
             <div className="elderox-shimmer-portal" style={{ position: 'absolute', left: `${o.left}px`, top: `${o.topGrad}px`, width: `${o.width}px`, height: `${o.height}px`, transform: 'translate(-50%,-50%)' }} aria-hidden />
           </React.Fragment>
@@ -2021,10 +2159,19 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
 
     {state.revealOpponentPending && (
       <BattleModalPortal>
-      <div style={turnModalBgStyle}>
-        <div style={{ ...turnModalStyle, maxHeight: 'none', overflowY: 'visible' }} ref={revealModalRef}>
-          <div style={{ fontWeight: 700, marginBottom: 8 }}>{state.revealOpponentPending.guardianName} revelou uma carta - escolha para ver</div>
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap', padding: '6px 4px' }}>
+      <div className="leoracal-modal-overlay">
+        <div className="leoracal-modal" ref={revealModalRef}>
+          <div className="leoracal-modal-sigil" aria-hidden>◈</div>
+          <div className="leoracal-modal-heading">
+            <span>{isEn ? 'GUARDIAN BLESSING' : 'BÊNÇÃO DO GUARDIÃO'}</span>
+            <h2>{isEn ? 'Vision Beyond Reach' : 'Visão Além do Alcance'}</h2>
+            <p>
+              <strong>{state.revealOpponentPending.guardianName}</strong>
+              {' '}
+              {isEn ? 'pierces the veil. Choose a card to reveal.' : 'atravessa o véu. Escolha uma carta para revelar.'}
+            </p>
+          </div>
+          <div className="leoracal-reveal-grid">
             {((state.revealOpponentPending && state.revealOpponentPending.owner === 'ai') ? (state.player?.hand || []) : (state.ai?.hand || [])).map((cardId, idx) => {
               const revealed = state.revealedOpponentIndex === idx;
               const selectedForReveal = state.revealOpponentSelectedIndex === idx;
@@ -2032,6 +2179,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                 <button
                   key={`reveal-card-${idx}`}
                   type="button"
+                  className="leoracal-reveal-choice"
                   onClick={() => {
                     // if AI initiated the reveal, player should not be able to pick (it's automatic)
                     if (state.revealOpponentPending && state.revealOpponentPending.owner === 'ai') return;
@@ -2055,11 +2203,11 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                   <div
                     ref={revealContainerRef}
                     className={`leoracal-reveal-card${selectedForReveal ? ' is-selected' : ''}${revealed ? ' is-revealed' : ''}`}
-                    style={{ width: 160, height: 240, transform: 'none', transformOrigin: 'top center', display: 'inline-block' }}
+                    style={{ width: 160, height: 240, transform: 'none', transformOrigin: 'center', display: 'inline-block' }}
                   >
                     {revealed ? (
-                      <div className="leoracal-reveal-front" style={{ width: 160, height: 240, display: 'inline-block', overflow: 'visible', position: 'relative' }}>
-                        <div style={{ width: 369, position: 'absolute', left: '50%', top: 0, transform: 'translateX(-50%) scale(0.434)', transformOrigin: 'top center', pointerEvents: 'none', fontSize: '12px', lineHeight: 1.25 }}>
+                      <div className="leoracal-reveal-front">
+                        <div className="leoracal-reveal-preview-scale">
                           {(() => {
                             try {
                               const cardData = getCardData(cardId);
@@ -2111,7 +2259,9 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
               );
             })}
           </div>
-          <button style={turnModalBtnStyle} onClick={cancelRevealEnemy}>{isEn ? 'Close' : 'Fechar'}</button>
+          <button type="button" className="leoracal-modal-close" onClick={cancelRevealEnemy}>
+            {isEn ? 'Close vision' : 'Fechar visão'}
+          </button>
         </div>
       </div>
       </BattleModalPortal>
@@ -2266,23 +2416,76 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
       </div>
       </BattleModalPortal>
     )}
-    <div className="battle-root">
+    <div className={`battle-root${state.mode === 'calamity' ? ' battle-root-calamity' : ''}`}>
       <div className="battle-topbar">
-        <button
-          className="battle-exit"
-          onClick={() => {
-            if (state.phase === 'ended') {
-              onNavigate?.(getBattleExitRoute(battleConfig));
-              return;
-            }
-            setAbandonConfirmOpen(true);
-          }}
-        >
-          {isEn ? 'Exit' : 'Sair'}
-        </button>
+        <div className="battle-cog-anchor">
+          <audio ref={battleCogAudioRef} src={cogSound} preload="auto" />
+          <button
+            className="battle-cog-btn"
+            onMouseEnter={handleBattleCogMouseEnter}
+            onClick={() => setBattleMenuOpen((v) => !v)}
+            aria-label={isEn ? 'Open options menu' : 'Abrir menu de opções'}
+          >
+            <CogIcon size={26} color="#ffe6b0" />
+          </button>
+          {battleMenuOpen && (
+            <div className="battle-cog-dropdown">
+              <button
+                className="battle-cog-menu-item"
+                onClick={() => {
+                  setBattleMenuOpen(false);
+                  setShowBattleOptions(true);
+                }}
+              >
+                <span className="battle-cog-menu-icon" aria-hidden>◇</span>
+                <span>{isEn ? 'Settings' : 'Configurações'}</span>
+              </button>
+              <button
+                className="battle-cog-menu-item"
+                onClick={() => {
+                  setBattleMenuOpen(false);
+                  setShowBattleHelp(true);
+                }}
+              >
+                <span className="battle-cog-menu-icon" aria-hidden>?</span>
+                <span>{isEn ? 'Help' : 'Ajuda'}</span>
+              </button>
+              <button
+                className="battle-cog-menu-item battle-cog-menu-exit"
+                onClick={() => {
+                  setBattleMenuOpen(false);
+                  if (state.phase === 'ended') {
+                    onNavigate?.(getBattleExitRoute(battleConfig));
+                    return;
+                  }
+                  setAbandonConfirmOpen(true);
+                }}
+              >
+                <span className="battle-cog-menu-icon" aria-hidden>×</span>
+                <span>{isEn ? 'Exit' : 'Sair'}</span>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
+      {showBattleOptions && (
+        <OptionsModal visible={showBattleOptions} onClose={() => setShowBattleOptions(false)} />
+      )}
+      {showBattleHelp && <HelpCenter onClose={() => setShowBattleHelp(false)} />}
+      {/* Fora de .board (que tem overflow:hidden) - .player-orbs (vida) some no pé do board com
+          só ~20px de folga antes da borda cortada, então os cartões ficam aqui em .battle-root,
+          alinhados à mesma coluna esquerda do cartão próprio / coluna direita espelhada pro
+          cartão do adversário, sem risco de serem cortados. */}
+      <BattleOwnPlayerHud
+        isEn={isEn}
+        avatarUrl={myAvatars[mySteamStatus?.steamId64]}
+        name={mySteamStatus?.username}
+        unlockedAchievements={unlockedAchievements}
+      />
+      <BattleOpponentPlayerHud isEn={isEn} avatarUrl={pvpOpponent.avatar} name={pvpOpponent.name} />
 
       {abandonConfirmOpen && (
+        <BattleModalPortal>
         <div className="battle-abandon-overlay" role="presentation" onMouseDown={() => setAbandonConfirmOpen(false)}>
           <section
             className="battle-abandon-dialog"
@@ -2319,6 +2522,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
             <small className="battle-abandon-hint">{isEn ? 'Press Esc to return to the battle' : 'Pressione Esc para voltar à batalha'}</small>
           </section>
         </div>
+        </BattleModalPortal>
       )}
 
       {state.mode !== 'calamity' && (
@@ -2354,13 +2558,13 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
               playEffectCard(state.drawOpponentPending.handIndex);
             }}
           />
-          <div className="deck-count-pill deck-count-enemy">Cartas: {state.ai.deck.length}</div>
+          <div className="deck-count-pill deck-count-enemy">{isEn ? `Cards: ${state.ai.deck.length}` : `Cartas: ${state.ai.deck.length}`}</div>
         </div>
 
         {state.drawOpponentPending && (
           <div className="deck-draw-indicator" style={{ marginTop: 6 }}>
             <div className="deck-draw-indicator-arrow">&uarr;</div>
-            <div className="deck-draw-indicator-text">Roubar</div>
+            <div className="deck-draw-indicator-text">{isEn ? 'Steal' : 'Roubar'}</div>
           </div>
         )}
 
@@ -2481,6 +2685,16 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
             style={fx.elementRgb ? { '--calamity-fx-rgb': fx.elementRgb } : undefined}
           >
             {fx.kind === 'grombi_ball' && <div className="grombi-field-ball" />}
+            {fx.kind === 'calamity_wave' && (
+              <>
+                <div className="calamity-wave-core" />
+                <div className="calamity-wave-ripple calamity-wave-ripple-a" />
+                <div className="calamity-wave-ripple calamity-wave-ripple-b" />
+                <div className="calamity-wave-particles" aria-hidden>
+                  {[0, 1, 2, 3, 4, 5, 6, 7].map((n) => <i key={n} style={{ '--particle-index': n }} />)}
+                </div>
+              </>
+            )}
             {fx.kind === 'ekerion_gust' && [0, 1, 2, 3, 4].map((n) => (
               <div key={n} className="gust-streak" />
             ))}
@@ -2522,30 +2736,49 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
         {state.mode === 'calamity' && (
           <div className="calamity-turn-timeline">
             <span className="calamity-turn-timeline-label">{isEn ? 'Turn order' : 'Ordem de turno'}</span>
-            {Array.from({ length: state.calamityPlayerCount || 1 }).map((_, idx) => {
-              // Só o slot 0 (host/você) tem identidade real hoje - o coop com 2-4 jogadores
-              // ainda não sincroniza quem ocupa cada slot (ver plano do modo Calamidade).
-              const isYou = idx === 0;
-              const isActive = isYou && state.activePlayer === 'player';
-              const avatarUrl = isYou ? calamityAvatars[calamitySteamStatus?.steamId64] : null;
-              const name = isYou
-                ? (calamitySteamStatus?.username || (isEn ? 'You' : 'Você'))
-                : (isEn ? 'Waiting for player' : 'Aguardando jogador');
-              return (
-                <div
-                  key={`calamity-turn-player-${idx}`}
-                  className={`calamity-turn-entry${isActive ? ' calamity-turn-entry-active' : ''}${!isYou ? ' calamity-turn-entry-empty' : ''}`}
-                >
-                  <div className="calamity-turn-avatar">
-                    {avatarUrl ? <img src={avatarUrl} alt="" /> : <span className="calamity-turn-avatar-fallback">{idx + 1}</span>}
-                  </div>
-                  <div className="calamity-turn-info">
-                    <strong>{isEn ? `Player ${idx + 1}` : `Jogador ${idx + 1}`}</strong>
-                    <span>{name}</span>
-                  </div>
-                </div>
+            {(() => {
+              // Cap de 5 bolhas de reação simultâneas na timeline (jogadores + chefe): mais
+              // antigas somem primeiro pra não empilhar insígnias indefinidamente.
+              const recentReactionSlots = new Set(
+                Object.entries(battleReactions || {})
+                  .sort((a, b) => (b[1]?.receivedAt || 0) - (a[1]?.receivedAt || 0))
+                  .slice(0, 5)
+                  .map(([slot]) => Number(slot))
               );
-            })}
+              return Array.from({ length: state.calamityPlayerCount || 1 }).map((_, idx) => {
+                // Só o slot 0 (host/você) tem identidade real hoje - o coop com 2-4 jogadores
+                // ainda não sincroniza quem ocupa cada slot (ver plano do modo Calamidade).
+                const isYou = idx === 0;
+                const isActive = isYou && state.activePlayer === 'player';
+                const avatarUrl = isYou ? myAvatars[mySteamStatus?.steamId64] : null;
+                const name = isYou
+                  ? (mySteamStatus?.username || (isEn ? 'You' : 'Você'))
+                  : (isEn ? 'Waiting for player' : 'Aguardando jogador');
+                const reactionEntry = (battleReactions || {})[idx];
+                const reaction = (reactionEntry && recentReactionSlots.has(idx))
+                  ? BATTLE_REACTIONS_BY_ID[reactionEntry.reactionId]
+                  : null;
+                return (
+                  <div
+                    key={`calamity-turn-player-${idx}`}
+                    className={`calamity-turn-entry${isActive ? ' calamity-turn-entry-active' : ''}${!isYou ? ' calamity-turn-entry-empty' : ''}`}
+                  >
+                    <div className="calamity-turn-avatar">
+                      {avatarUrl ? <img src={avatarUrl} alt="" /> : <span className="calamity-turn-avatar-fallback">{idx + 1}</span>}
+                    </div>
+                    <div className="calamity-turn-info">
+                      <strong>{isEn ? `Player ${idx + 1}` : `Jogador ${idx + 1}`}</strong>
+                      <span>{name}</span>
+                    </div>
+                    {reaction && (
+                      <div key={reactionEntry.receivedAt} className="calamity-turn-reaction battle-reaction-bubble">
+                        <img src={reaction.icon} alt="" />
+                      </div>
+                    )}
+                  </div>
+                );
+              });
+            })()}
             {(() => {
               const bossData = getCardData(state.calamityBossId);
               if (!bossData) return null;
@@ -2697,11 +2930,11 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
               drawPlayerCard();
             }}
           />
-          <div className="deck-count-pill deck-count-player">Cartas: {state.player.deck.length}</div>
+          <div className="deck-count-pill deck-count-player">{isEn ? `Cards: ${state.player.deck.length}` : `Cartas: ${state.player.deck.length}`}</div>
         </div>
         {canDrawPlayerCard && (
           <div className="deck-draw-indicator">
-            <div className="deck-draw-indicator-text">Comprar</div>
+            <div className="deck-draw-indicator-text">{isEn ? 'Draw' : 'Comprar'}</div>
             <div className="deck-draw-indicator-arrow">&darr;</div>
           </div>
         )}
@@ -2808,7 +3041,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
               */
               // Preview padrão para outras cartas
               if (instance?.isFullArt) {
-                return <FullArtCard card={cardData} lang={lang} level={level} />;
+                return <FullArtCard card={cardData} lang={lang} level={level} isAltArt={Boolean(instance?.isAltArt)} />;
               }
               return (
                 <CreatureCardPreview
@@ -2836,7 +3069,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                       }}
                       disabled={state.activePlayer !== 'player'}
                     >
-                      Usar Efeito
+                      {isEn ? 'Use Effect' : 'Usar Efeito'}
                     </button>
                   </div>
                 );
@@ -2853,7 +3086,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                         setActiveCardIndex(null);
                       }}
                     >
-                      Invocar
+                      {isEn ? 'Summon' : 'Invocar'}
                     </button>
                   </div>
                 );
@@ -2870,7 +3103,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                         setActiveCardIndex(null);
                       }}
                     >
-                      Invocar
+                      {isEn ? 'Summon' : 'Invocar'}
                     </button>
                   </div>
                 );
@@ -3009,6 +3242,14 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
       const level = instance?.level || 1;
       const isHolo = instance?.isHolo || false;
       const isFullArt = Boolean(selectedFieldCreature.creature.isFullArt ?? instance?.isFullArt);
+      const isAltArt = Boolean(selectedFieldCreature.creature.isAltArt ?? instance?.isAltArt);
+      // A criatura em campo já tem as habilidades REALMENTE equipadas resolvidas no summon (ver
+      // buildCreatureInstance em BattleContext.jsx) - usamos elas aqui em vez das habilidades
+      // estáticas da carta, senão pra Guardiões o painel sempre mostra os defaultSkills (ver
+      // visibleSkills em KadirFullArtPreview.jsx) mesmo quando o loadout equipado é outro,
+      // fazendo o clique cobrar/validar um custo de essência diferente do que está sendo exibido.
+      const liveAbilities = selectedFieldCreature.creature.abilities;
+      const displayCardData = liveAbilities ? { ...cardData, abilities: liveAbilities, defaultSkills: null } : cardData;
 
       return (
         <BattleModalPortal>
@@ -3016,9 +3257,10 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
           <div className="card-preview-container field-preview-container" onClick={(e) => e.stopPropagation()}>
             {isFullArt ? (
               <FullArtCard
-                card={cardData}
+                card={displayCardData}
                 lang={lang}
                 level={level}
+                isAltArt={isAltArt}
                 currentHp={selectedFieldCreature.creature.hp}
                 armor={selectedFieldCreature.creature.shield || 0}
                 burn={(selectedFieldCreature.creature.statusEffects || []).find(e => e.type === 'burn')?.duration || 0}
@@ -3050,8 +3292,13 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                     return;
                   }
                   if (ability && resolveAbility(ability).selfBuff) {
-                    // Habilidade de auto-buff (ex: evasão): não precisa mirar num inimigo.
-                    useAbility('player', selectedFieldCreature.slotIndex, abilityIndex, 'player', selectedFieldCreature.slotIndex);
+                    // Habilidade de auto-buff (ex: evasão): não precisa mirar num inimigo. Mesmo
+                    // padrão de som+delay do ataque normal (ver onClick do slot-alvo acima).
+                    playCreatureSummonSound(getCardData(selectedFieldCreature.creature.id));
+                    const buffSlotIndex = selectedFieldCreature.slotIndex;
+                    setTimeout(() => {
+                      useAbility('player', buffSlotIndex, abilityIndex, 'player', buffSlotIndex);
+                    }, 500);
                     setSelectedFieldCreature(null);
                     return;
                   }
@@ -3060,7 +3307,7 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                 }}
               />
             ) : <CreatureCardPreview
-              creature={cardData}
+              creature={displayCardData}
               onClose={() => setSelectedFieldCreature(null)}
               level={level}
               isHolo={isHolo}
@@ -3095,8 +3342,13 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                   return;
                 }
                 if (ability && resolveAbility(ability).selfBuff) {
-                  // Habilidade de auto-buff (ex: evasão): não precisa mirar num inimigo.
-                  useAbility('player', selectedFieldCreature.slotIndex, abilityIndex, 'player', selectedFieldCreature.slotIndex);
+                  // Habilidade de auto-buff (ex: evasão): não precisa mirar num inimigo. Mesmo
+                  // padrão de som+delay do ataque normal (ver onClick do slot-alvo acima).
+                  playCreatureSummonSound(getCardData(selectedFieldCreature.creature.id));
+                  const buffSlotIndex = selectedFieldCreature.slotIndex;
+                  setTimeout(() => {
+                    useAbility('player', buffSlotIndex, abilityIndex, 'player', buffSlotIndex);
+                  }, 500);
                   setSelectedFieldCreature(null);
                   return;
                 }
@@ -3213,7 +3465,19 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
       <BattleModalPortal>
       <div className="effect-target-modal" onClick={cancelEffectCard}>
         <div className="effect-target-container" onClick={(e) => e.stopPropagation()}>
-          <div className="effect-target-title">{isEn ? 'Select a target' : 'Selecione um alvo'}</div>
+          <button
+            type="button"
+            className="effect-target-close"
+            onClick={cancelEffectCard}
+            aria-label={isEn ? 'Close target selection' : 'Fechar seleção de alvo'}
+          >
+            ×
+          </button>
+          <div className="effect-target-header">
+            <span className="effect-target-kicker">{isEn ? 'Effect card' : 'Carta de efeito'}</span>
+            <div className="effect-target-title">{isEn ? 'Choose your target' : 'Escolha seu alvo'}</div>
+            <p>{isEn ? 'Select a card on the battlefield to continue.' : 'Selecione uma carta no campo para continuar.'}</p>
+          </div>
 
           {state.effectCardPending.targetType === 'allyMonster' && (
             <div className="effect-target-options">
@@ -3338,8 +3602,18 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
           )}
 
           {state.effectCardPending.targetType === 'dual' && (
-            <div style={{ padding: '16px' }}>
-              <div style={{ marginBottom: '12px', color: '#c896ff' }}>{isEn ? 'Your monsters:' : 'Seus monstros:'}</div>
+            <div className="effect-target-dual">
+              <section className="effect-target-group">
+                <div className="effect-target-group-heading">
+                  <span className="effect-target-step">1</span>
+                  <div>
+                    <strong>{isEn ? 'Choose your creature' : 'Escolha sua criatura'}</strong>
+                    <small>{isEn ? 'This card will leave your side.' : 'Esta carta sairá do seu lado.'}</small>
+                  </div>
+                  <span className="effect-target-count">
+                    {(state.player?.field?.slots || []).filter(Boolean).length}
+                  </span>
+                </div>
               <div className="effect-target-options">
                 {(state.player?.field?.slots || []).filter(slot => slot !== null).length === 0 ? (
                   <div style={{
@@ -3357,20 +3631,31 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                     return (
                       <div
                         key={`target-self-${idx}`}
-                        className="effect-target-option"
+                        className={`effect-target-option effect-target-option-ally${state.effectCardPending.selectedAllyIndex === idx ? ' is-selected' : ''}`}
                         onClick={() => updateEffectCardTarget(idx)}
                       >
                         <img src={getCardData(creature?.id)?.img} alt={creature?.name} />
-                        <div style={{ fontSize: '12px' }}>{creature?.name}</div>
+                        <div className="effect-target-option-name">{creature?.name}</div>
+                        <span className="effect-target-selected-mark">✓</span>
                       </div>
                     );
                   })
                 )}
               </div>
+              </section>
 
               {state.effectCardPending.selectedAllyIndex !== undefined && (
-                <>
-                  <div style={{ marginTop: '16px', marginBottom: '12px', color: '#c896ff' }}>{isEn ? 'Opponent\'s monsters:' : 'Monstros do adversário:'}</div>
+                <section className="effect-target-group effect-target-group-enemy">
+                  <div className="effect-target-group-heading">
+                    <span className="effect-target-step">2</span>
+                    <div>
+                      <strong>{isEn ? 'Choose the opponent\'s creature' : 'Escolha a criatura adversária'}</strong>
+                      <small>{isEn ? 'This card will switch sides.' : 'Esta carta trocará de lado.'}</small>
+                    </div>
+                    <span className="effect-target-count">
+                      {(state.ai?.field?.slots || []).filter(Boolean).length}
+                    </span>
+                  </div>
                   <div className="effect-target-options">
                     {(state.ai?.field?.slots || []).filter(slot => slot !== null).length === 0 ? (
                       <div style={{
@@ -3395,13 +3680,13 @@ function BoardInner({ onNavigate, selectedDeck, battleConfig, menuMusicRef }) {
                             })}
                           >
                             <img src={getCardData(creature?.id)?.img} alt={creature?.name} />
-                            <div style={{ fontSize: '12px' }}>{creature?.name}</div>
+                            <div className="effect-target-option-name">{creature?.name}</div>
                           </div>
                         );
                       })
                     )}
                   </div>
-                </>
+                </section>
               )}
             </div>
           )}

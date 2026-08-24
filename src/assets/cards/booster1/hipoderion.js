@@ -8,6 +8,7 @@ module.exports = {
   type: { pt: 'Mística', en: 'Mystic' },
   element: 'agua',
   img: require('../../img/creatures/hipoderion_bio.webp'),
+  altImg: require('../../img/creatures/alternative/hipoderion_alternative.png'),
   color: 'water',
   hp: 8,
   abilities: [

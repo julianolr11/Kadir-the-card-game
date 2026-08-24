@@ -9,6 +9,7 @@ module.exports = {
   type: { pt: 'Monstro', en: 'Monster' },
   element: 'puro',
   img: require('../../img/creatures/nihil_bio.webp'),
+  altImg: require('../../img/creatures/alternative/nihil_alternative.png'),
   color: 'pure',
   hp: 6,
   abilities: [

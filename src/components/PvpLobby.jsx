@@ -9,11 +9,11 @@ import '../styles/pvp-lobby.css';
 const LEVELS_PER_TOWER = CAMPAIGN_TOTAL_LEVELS / CAMPAIGN_TOWER_TYPES.length;
 
 const pickFirstDeckEntry = (decks) => {
-  const ids = Object.keys(decks || {});
+  const ids = Object.keys(decks || {}).filter((id) => (decks[id]?.deckType || 'standard') === 'standard');
   if (ids.length === 0) return null;
   const id = ids[0];
   const deck = decks[id];
-  if (!deck || !Array.isArray(deck.cards) || deck.cards.length === 0) return null;
+  if (!deck || !Array.isArray(deck.cards) || deck.cards.filter(Boolean).length === 0) return null;
   return { id, deck };
 };
 
@@ -326,7 +326,8 @@ export default function PvpLobby({ onBack, onStartBattle }) {
     const badges = [...towerBadges, ...milestoneBadges];
 
     return (
-      <div className="pvp-lobby-player-card" key={member.steamId64}>
+      <div className={`pvp-lobby-player-card${isMe ? ' pvp-lobby-player-card-me' : ' pvp-lobby-player-card-rival'}`} key={member.steamId64}>
+        <span className="pvp-lobby-player-role">{isMe ? (isEn ? 'Your champion' : 'Seu campeão') : (isEn ? 'Challenger' : 'Desafiante')}</span>
         <div className="pvp-lobby-player-header">
           {avatars[member.steamId64] ? (
             <img className="pvp-lobby-player-avatar" src={avatars[member.steamId64]} alt="" />
@@ -390,8 +391,10 @@ export default function PvpLobby({ onBack, onStartBattle }) {
     <section className="pvp-lobby">
       <div className="pvp-lobby-vignette" />
       <header className="pvp-lobby-header">
-        <p>{isEn ? 'Casual PvP' : 'PvP Casual'}</p>
+        <div className="pvp-lobby-header-crest" aria-hidden>⚔</div>
+        <p>{isEn ? 'Casual PvP • Steam' : 'PvP Casual • Steam'}</p>
         <h1>{isEn ? 'Challenge Room' : 'Sala de Desafio'}</h1>
+        <span>{isEn ? 'Choose your guardian. Face another Kadir.' : 'Escolha seu guardião. Enfrente outro Kadir.'}</span>
       </header>
 
       <main className={`pvp-lobby-panel ${lobby ? 'pvp-lobby-panel-room' : ''}`}>
@@ -409,6 +412,8 @@ export default function PvpLobby({ onBack, onStartBattle }) {
 
         {steamConnected && !lobby && (
           <div className="pvp-lobby-empty">
+            <div className="pvp-lobby-empty-seal" aria-hidden>◆</div>
+            <h2>{isEn ? 'Open a challenge' : 'Abra um desafio'}</h2>
             <p>
               {isEn
                 ? 'Create a room and invite a friend through Steam.'
@@ -440,15 +445,19 @@ export default function PvpLobby({ onBack, onStartBattle }) {
         {steamConnected && lobby && (
           <div className="pvp-lobby-room">
             <p className="pvp-lobby-room-id">
+              <span className="pvp-lobby-live-dot" aria-hidden />
               {isEn ? 'Room' : 'Sala'} #{lobby.lobbyId}
             </p>
 
             <div className="pvp-lobby-players">
               {myMember && renderPlayerCard(myMember, true)}
+              <div className="pvp-lobby-versus" aria-hidden><span>VS</span></div>
               {opponent ? (
                 renderPlayerCard(opponent, false)
               ) : (
                 <div className="pvp-lobby-player-card pvp-lobby-player-card-waiting">
+                  <span className="pvp-lobby-player-role">{isEn ? 'Open seat' : 'Vaga aberta'}</span>
+                  <div className="pvp-lobby-waiting-sigil" aria-hidden>◇</div>
                   <p className="pvp-lobby-message pvp-lobby-member-waiting">
                     {isEn ? 'Waiting for opponent…' : 'Esperando adversário…'}
                   </p>
@@ -486,6 +495,13 @@ export default function PvpLobby({ onBack, onStartBattle }) {
                 )
               )}
             </div>
+            <p className="pvp-lobby-room-hint">
+              {opponent
+                ? (deckLocked
+                  ? (isEn ? 'Your deck is sealed. The duel may begin.' : 'Seu baralho está selado. O duelo pode começar.')
+                  : (isEn ? 'Seal your deck to become battle-ready.' : 'Sele seu baralho para ficar pronto para a batalha.'))
+                : (isEn ? 'Share the room code or invite a friend through Steam.' : 'Compartilhe o código da sala ou convide um amigo pela Steam.')}
+            </p>
             {error && <p className="pvp-lobby-message pvp-lobby-message-warning">{error}</p>}
           </div>
         )}
@@ -495,7 +511,7 @@ export default function PvpLobby({ onBack, onStartBattle }) {
         <span aria-hidden>←</span> {isEn ? 'Back to main menu' : 'Voltar ao menu principal'}
       </button>
 
-      <DeckSelectModal visible={deckPickerOpen} onClose={() => setDeckPickerOpen(false)} onSelect={handleDeckPicked} />
+      <DeckSelectModal visible={deckPickerOpen} deckType="standard" onClose={() => setDeckPickerOpen(false)} onSelect={handleDeckPicked} />
     </section>
   );
 }

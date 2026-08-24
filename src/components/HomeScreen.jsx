@@ -23,6 +23,8 @@ import AchievementsRoom from './AchievementsRoom';
 import HelpCenter from './HelpCenter';
 import { getRollRarity, getRollRarityCalamity, RARITY_TIERS, getCreaturesByRarity } from '../assets/rarityData.js';
 import { getCampaignProgress, CAMPAIGN_TOTAL_LEVELS, CAMPAIGN_TOWER_TYPES } from './CampaignTower';
+import PlayerIdentityCard from './PlayerIdentityCard';
+import '../styles/battle-reactions.css';
 
 // Nível de progresso da campanha em que a 1ª insígnia (torre completa) é conquistada —
 // mesma fórmula usada em AchievementsRoom.jsx/PvpLobby.jsx.
@@ -181,8 +183,27 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
     addCardsFromBooster,
     decks = {},
     effectsVolume,
+    unlockedAchievements,
+    cardCollection,
   } = useContext(AppContext);
   const cogAudioRef = React.useRef(null);
+  const [mySteamStatus, setMySteamStatus] = useState(null);
+  const [myAvatar, setMyAvatar] = useState(null);
+
+  // Foto + nome da Steam do próprio jogador pro cartão de identidade no menu principal - mesmo
+  // padrão de BattleBoard.jsx (steamworks.js não expõe isso, só a Web API via getSteamPlayerAvatars).
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const status = await window.electron?.ipcRenderer?.getSteamStatus?.();
+      if (cancelled || !status?.connected) return;
+      setMySteamStatus(status);
+      const result = await window.electron?.ipcRenderer?.getSteamPlayerAvatars?.([status.steamId64]);
+      if (cancelled || !result?.ok) return;
+      setMyAvatar((result.avatars || {})[status.steamId64] || null);
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   function handleCogMouseEnter() {
     if (cogAudioRef.current) {
@@ -384,7 +405,7 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
   // Calamidade só libera depois que o jogador vence a 1ª torre da Campanha (1ª insígnia).
   const hasFirstBadge = getCampaignProgress() >= LEVELS_PER_TOWER;
 
-  function generateBoosterPack(rollRarityFn = getRollRarity) {
+  function generateBoosterPack(rollRarityFn = getRollRarity, { fullArtChance = 0, altArtChance = 0 } = {}) {
     const pool = Array.isArray(creatures) ? [...creatures] : [];
 
     // Separe por tipo (fields, effects, creatures simples)
@@ -433,7 +454,17 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
         }
 
         if (pick) {
-          selected.push({ ...pick, isHolo: Math.random() < 0.05, rarity });
+          let isHolo = Math.random() < 0.05;
+          let isFullArt = false;
+          let isAltArt = false;
+          if (fullArtChance > 0 && Math.random() < fullArtChance) {
+            isFullArt = true;
+            isHolo = true;
+            if (altArtChance > 0 && pick.altImg && Math.random() < altArtChance) {
+              isAltArt = true;
+            }
+          }
+          selected.push({ ...pick, isHolo, isFullArt, isAltArt, rarity });
           continue;
         }
       } else if (r < creatureProb + fieldProb) {
@@ -464,7 +495,9 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
 
   // Booster de Calamidade: mesma lógica de montagem, com odds de raridade mais altas.
   function generateCalamityBoosterPack() {
-    return generateBoosterPack(getRollRarityCalamity);
+    // 10% de chance de vir full art; desses, 33% de ser a arte alternativa (quando a
+    // criatura sorteada já tem altImg cadastrado — senão cai na full art normal).
+    return generateBoosterPack(getRollRarityCalamity, { fullArtChance: 0.10, altArtChance: 0.33 });
   }
 
   function handleOpenBooster() {
@@ -591,6 +624,18 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
           <small>{isEn ? 'Balance' : 'Saldo'}</small>
           <strong className="home-coin-amount">{coins?.toLocaleString() || 0}</strong>
         </span>
+      </div>
+
+      {/* Identidade do jogador (foto Steam + nome + insígnias), logo abaixo do saldo de moedas */}
+      <div className="battle-player-hud home-player-identity">
+        <PlayerIdentityCard
+          isEn={isEn}
+          avatarUrl={myAvatar}
+          name={mySteamStatus?.username}
+          fallbackName={isEn ? 'Guardian' : 'Guardião'}
+          unlockedAchievements={unlockedAchievements}
+          maxBadges={8}
+        />
       </div>
 
       {/* Efeitos de vela animada dentro de container responsivo */}
@@ -752,40 +797,45 @@ function HomeScreen({ onNavigate, menuMusicRef }) {
             const guardianCardData = deckGuardianData || activeGuardianData;
             const guardianElement = guardianCardData?.element || activeGuardian?.element;
 
+            // A carta guardiã "de fato" (com holo/full art/arte alternativa) fica salva
+            // dentro de deckList[0].cards - o cardId sozinho só dá a arte base genérica
+            // (mesmo problema corrigido em DeckBuilder.jsx).
+            const guardianCardId = deckGuardianId || activeGuardian?.id || activeGuardian?.name;
+            const guardianInstances = guardianCardId ? (cardCollection?.[guardianCardId] || []) : [];
+            const guardianInstanceId = deckGuardianId && Array.isArray(deckList[0]?.cards)
+              ? deckList[0].cards.find((id) => id && guardianInstances.some((inst) => inst.instanceId === id))
+              : activeGuardian?.selectedInstanceId;
+            const guardianInstance = guardianInstanceId
+              ? guardianInstances.find((inst) => inst.instanceId === guardianInstanceId)
+              : null;
+            const guardianImageUrl = (guardianInstance?.isFullArt && guardianInstance?.isAltArt && guardianCardData?.altImg)
+              ? guardianCardData.altImg
+              : (guardianCardData?.img || activeGuardian?.img || null);
+
             return (
+              <>
               <button
                 className={`deck-btn${guardianElement ? ` deck-btn-${guardianElement}` : ''}`}
                 onClick={() => onNavigate('deck')}
                 onMouseEnter={handleDeckBtnMouseEnter}
                 style={{
-                  backgroundImage: guardianCardData?.img
-                    ? `url(${guardianCardData.img})`
-                    : activeGuardian?.img
-                      ? `url(${activeGuardian.img})`
-                      : undefined,
+                  backgroundImage: guardianImageUrl ? `url(${guardianImageUrl})` : undefined,
                   backgroundSize: 'cover',
                   backgroundPosition: 'center',
-                  boxShadow:
-                    guardianElement === 'agua'
-                      ? '0 0 48px 16px #00cfff, 0 0 32px 8px #00eaff inset, 0 0 0 8px #00eaff80, 0 0 32px 16px #00cfff80, 0 0 64px 24px 8px #00eaff, 0 0 0 12px #00cfff, 0 0 0 0px #00eaff, 0 0 0 0px #00cfff, 0 0 0 0px #00eaff, 0 0 0 0px #00cfff'
-                      : guardianElement === 'terra'
-                        ? '0 0 48px 16px #4caf50, 0 0 32px 8px #e2c290 inset, 0 0 0 8px #e2c29080, 0 0 32px 16px #4caf5080, 0 0 64px 24px 8px #e2c290, 0 0 0 12px #4caf50, 0 0 0 0px #e2c290, 0 0 0 0px #4caf50, 0 0 0 0px #e2c290, 0 0 0 0px #4caf50'
-                        : guardianElement === 'fogo'
-                          ? '0 0 48px 16px #ff3c00, 0 0 32px 8px #ffb347 inset, 0 0 0 8px #ffb34780, 0 0 32px 16px #ff3c0080, 0 0 64px 24px 8px #ffb347, 0 0 0 12px #ff3c00, 0 0 0 0px #ffb347, 0 0 0 0px #ff3c00, 0 0 0 0px #ffb347, 0 0 0 0px #ff3c00'
-                          : guardianElement === 'ar'
-                            ? '0 0 48px 16px #b388ff, 0 0 32px 8px #b0e6ff inset, 0 0 0 8px #b388ff80, 0 0 32px 16px #b0e6ff80, 0 0 64px 24px 8px #b388ff, 0 0 0 12px #b0e6ff, 0 0 0 0px #b388ff, 0 0 0 0px #b0e6ff, 0 0 0 0px #b388ff, 0 0 0 0px #b0e6ff'
-                            : guardianElement === 'puro'
-                              ? '0 0 48px 16px #fff6b0, 0 0 32px 8px #fff6b0 inset, 0 0 0 8px #fff6b080, 0 0 32px 16px #fff6b080, 0 0 64px 24px 8px #fff6b0, 0 0 0 12px #fffde4, 0 0 0 0px #fff6b0, 0 0 0 0px #fffde4, 0 0 0 0px #fff6b0, 0 0 0 0px #fffde4'
-                              : undefined,
                 }}
               >
-                <span className="deck-btn-label">Deck</span>
+                <span className="deck-btn-label">◆</span>
               </button>
+              <span className="deck-btn-caption">
+                <strong>{isEn ? 'My decks' : 'Meus decks'}</strong>
+                <small>{isEn ? 'Build and manage' : 'Montar e gerenciar'}</small>
+              </span>
+              </>
             );
           })()}
         </div>
         <div className="home-btn-group home-btn-group-bottom">
-          <button className="home-btn" onClick={() => setShowBattleMenu(true)}>
+          <button className="home-btn home-battle-btn" onClick={() => setShowBattleMenu(true)}>
             <span className="home-btn-icon" aria-hidden>
               <img src={swordIcon} alt="" />
             </span>

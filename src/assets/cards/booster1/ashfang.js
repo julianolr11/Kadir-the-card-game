@@ -10,7 +10,7 @@ module.exports = {
   element: 'fogo',
   img: require('../../img/creatures/ashfang_bio.webp'),
   color: 'fire',
-  hp: 4,
+  hp: 6,
   abilities: [
     {
       name: { pt: 'Mordida Vulcânica', en: 'Volcanic Bite' },

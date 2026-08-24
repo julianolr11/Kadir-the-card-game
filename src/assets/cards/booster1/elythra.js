@@ -31,8 +31,8 @@ module.exports = {
   ],
   field: { pt: 'Trono dos Altos Ventos', en: 'Highwinds Throne' },
   fielddesc: {
-    pt: 'Aliados de ar ganham +1 velocidade e +1 dano se a moeda der cara enquanto Elythra estiver em campo.',
-    en: 'Air allies gain +1 speed and +1 damage on heads while Elythra is on the field.',
+    pt: 'Aliados do elemento ar ganham +1 de vida e +1 de esquiva.',
+    en: 'Air-element allies gain +1 HP and +1 evasion.',
   },
   storyTitle: { pt: 'Lenda de Elythra', en: 'Legend of Elythra' },
   story: [
@@ -78,8 +78,8 @@ module.exports = {
     id: 'elythra_blessing',
     name: { pt: 'Juramento dos Ventos Gêmeos', en: 'Twin Winds Oath' },
     desc: {
-      pt: 'Aliados de ar ganham +1 velocidade e +1 esquiva no primeiro turno em campo.',
-      en: 'Air allies gain +1 speed and +1 evasion on their first turn on the field.',
+      pt: 'Ao ser invocada, aliados do elemento ar ganham +1 de vida e +1 de esquiva.',
+      en: 'When summoned, air-element allies gain +1 HP and +1 evasion.',
     },
   },
   unlockTable: [

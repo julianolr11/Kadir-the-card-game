@@ -8,6 +8,7 @@ module.exports = {
   type: { pt: 'Draconídeo', en: 'Draconid' },
   element: 'puro',
   img: require('../../img/creatures/drazraq_bio.webp'),
+  altImg: require('../../img/creatures/alternative/drazraq_alternative.png'),
   color: 'pure',
   hp: 5,
   abilities: [

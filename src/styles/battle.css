@@ -225,15 +225,60 @@
 }
 
 .leoracal-reveal-card {
+  position: relative;
+  width: 160px;
+  height: 240px;
   perspective: 900px;
   transform-style: preserve-3d;
 }
 
 .leoracal-reveal-back,
 .leoracal-reveal-front {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 160px !important;
+  height: 240px !important;
+  box-sizing: border-box;
+  overflow: hidden;
   backface-visibility: hidden;
   transform-style: preserve-3d;
   transition: transform 220ms ease, box-shadow 220ms ease, filter 220ms ease;
+}
+
+.leoracal-reveal-preview-scale {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 369px;
+  height: 553px;
+  overflow: hidden;
+  transform: translateX(-50%) scale(0.434);
+  transform-origin: top center;
+  pointer-events: none;
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+/* O preview completo tem conteúdo de altura variável. Dentro da visão ele precisa ocupar
+   exatamente a mesma moldura 160x240 do verso, sem criar rolagem durante o flip. */
+.leoracal-reveal-preview-scale > .card-preview {
+  width: 369px !important;
+  height: 553px !important;
+  min-height: 553px !important;
+  max-height: 553px !important;
+  box-sizing: border-box;
+  overflow: hidden !important;
+}
+
+.leoracal-reveal-preview-scale .card-body,
+.leoracal-reveal-preview-scale .card-preview-field-desc {
+  scrollbar-width: none;
+}
+
+.leoracal-reveal-preview-scale .card-body::-webkit-scrollbar,
+.leoracal-reveal-preview-scale .card-preview-field-desc::-webkit-scrollbar {
+  display: none;
 }
 
 .leoracal-reveal-card:not(.is-selected):not(.is-revealed):hover .leoracal-reveal-back {
@@ -248,7 +293,6 @@
 
 .leoracal-reveal-card.is-revealed .leoracal-reveal-front {
   animation: leoracalCardFlipIn 620ms cubic-bezier(.2,.82,.22,1) both;
-  position: relative;
 }
 
 .leoracal-reveal-card.is-revealed .leoracal-reveal-front::after {
@@ -304,6 +348,132 @@
   15% { opacity: 1; }
   100% { background-position: -30% 40%; opacity: 0; }
 }
+
+/* Bênção do Leoracal — câmara de visão dedicada. */
+.leoracal-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-card-modal);
+  display: grid;
+  place-items: center;
+  padding: 34px;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(105, 202, 225, .13), transparent 32%),
+    radial-gradient(circle at 50% 50%, rgba(117, 65, 148, .2), transparent 54%),
+    rgba(5, 3, 9, .8);
+  backdrop-filter: blur(11px);
+  animation: leoracalOverlayIn 240ms ease-out both;
+}
+
+.leoracal-modal {
+  position: relative;
+  width: min(1040px, 92vw);
+  max-height: 86vh;
+  padding: 34px 38px 28px;
+  overflow: visible;
+  border: 1px solid rgba(119, 213, 226, .5);
+  border-radius: 7px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(91, 184, 208, .14), transparent 42%),
+    linear-gradient(155deg, rgba(32, 25, 45, .985), rgba(8, 6, 13, .99));
+  color: #f2e7ce;
+  text-align: center;
+  box-shadow: 0 34px 110px rgba(0,0,0,.72), 0 0 45px rgba(86,181,205,.12), 0 0 0 6px rgba(5,3,8,.5), inset 0 1px rgba(210,248,255,.1);
+  animation: leoracalModalIn 420ms cubic-bezier(.16,.88,.18,1.08) both;
+}
+
+.leoracal-modal::before {
+  content: '';
+  position: absolute;
+  inset: 9px;
+  border: 1px solid rgba(119,213,226,.1);
+  pointer-events: none;
+}
+
+.leoracal-modal-sigil {
+  position: absolute;
+  top: -21px;
+  left: 50%;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  transform: translateX(-50%) rotate(45deg);
+  border: 1px solid rgba(119,213,226,.72);
+  background: radial-gradient(circle, #294a5e, #120d1a 70%);
+  color: #b9eff5;
+  font-size: 17px;
+  box-shadow: 0 0 22px rgba(119,213,226,.26);
+}
+
+.leoracal-modal-heading { margin-bottom: 22px; }
+.leoracal-modal-heading > span { color: #79d5e2; font-size: .58rem; font-weight: 900; letter-spacing: .24em; }
+.leoracal-modal-heading h2 { margin: 4px 0 7px; color: #f1ddb1; font: 600 1.85rem Georgia, serif; letter-spacing: .02em; text-shadow: 0 3px 16px rgba(0,0,0,.62); }
+.leoracal-modal-heading p { margin: 0; color: rgba(220,211,228,.6); font-size: .76rem; }
+.leoracal-modal-heading p strong { color: #b8eaf0; font-family: Georgia, serif; }
+
+.leoracal-reveal-grid {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 18px;
+  min-height: 270px;
+  padding: 18px 22px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  border-block: 1px solid rgba(119,213,226,.12);
+  background: linear-gradient(90deg, transparent, rgba(80,143,164,.055) 18%, rgba(80,143,164,.055) 82%, transparent);
+}
+
+.leoracal-reveal-grid::-webkit-scrollbar { display: none; }
+
+.leoracal-reveal-choice { flex: 0 0 160px; position: relative; }
+.leoracal-reveal-choice::after {
+  content: 'ESCOLHER';
+  position: absolute;
+  bottom: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(121,213,226,.52);
+  font-size: .48rem;
+  font-weight: 900;
+  letter-spacing: .16em;
+  opacity: 0;
+  transition: opacity 180ms ease, bottom 180ms ease;
+}
+.leoracal-reveal-choice:hover::after { bottom: -13px; opacity: 1; }
+
+.leoracal-reveal-back,
+.leoracal-reveal-front {
+  border-radius: 12px !important;
+  box-shadow: 0 15px 34px rgba(0,0,0,.52), 0 0 0 1px rgba(119,213,226,.18) !important;
+}
+.leoracal-reveal-card:not(.is-selected):not(.is-revealed):hover .leoracal-reveal-back {
+  transform: translateY(-10px) scale(1.035);
+  filter: brightness(1.15) saturate(1.12);
+  box-shadow: 0 24px 44px rgba(0,0,0,.58), 0 0 28px rgba(119,213,226,.24) !important;
+}
+
+.leoracal-modal-close {
+  min-width: 170px;
+  margin-top: 22px;
+  padding: 10px 22px;
+  border: 1px solid rgba(119,213,226,.44);
+  border-radius: 4px;
+  background: linear-gradient(180deg, rgba(47,61,77,.96), rgba(18,22,32,.98));
+  color: #d9f2f3;
+  font: 700 .78rem Georgia, serif;
+  letter-spacing: .04em;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(0,0,0,.36), inset 0 1px rgba(219,251,255,.08);
+  transition: transform 170ms ease, border-color 170ms ease, box-shadow 170ms ease;
+}
+.leoracal-modal-close:hover { transform: translateY(-2px); border-color: rgba(154,231,239,.78); box-shadow: 0 13px 28px rgba(0,0,0,.42), 0 0 18px rgba(119,213,226,.14); }
+
+@keyframes leoracalOverlayIn { from { opacity: 0; } }
+@keyframes leoracalModalIn { from { opacity: 0; transform: translateY(18px) scale(.98); } }
 
 /* Bênção do Drazraq: roubo de carta da mão do oponente */
 .drazaq-steal-card {
@@ -411,18 +581,81 @@
   box-shadow: 0 12px 28px #000c;
 }
 
-/* Indicador de compra animado */
+/* Indicador de compra animado - agora um balãozinho (mesmo acabamento dos botões da topbar:
+   fundo #2f1e3f, borda dourada, cantos levemente arredondados, ver .battle-topbar button/
+   .custom-btn) com um "bico" apontando pro baralho, em vez de texto solto flutuando. Halo
+   dourado "respirando" atrás (mesma linguagem de brilho a vela do resto do jogo, ver
+   .candle-glow em homescreen.css) sincronizado com o mesmo ciclo de 1.5s do indicator-pulse. */
 .deck-draw-indicator {
   position: absolute;
-  bottom: 75px;
-  right: 51px;
+  bottom: 88px;
+  /* Centralizado sobre o baralho (left:50%/translateX em vez do antigo right:51px fixo) - o
+     balão precisa se centralizar sozinho independente da largura, já que .deck-draw usa
+     align-items:flex-end (ver mais abaixo) e não centraliza os filhos por padrão. */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
+  min-width: 86px;
+  padding: 9px 14px 8px;
+  background: linear-gradient(180deg, rgba(57, 36, 72, 0.98), rgba(26, 15, 36, 0.98));
+  border: 1px solid rgba(232, 194, 111, 0.7);
+  border-radius: 9px;
+  box-shadow: 0 9px 22px rgba(0, 0, 0, 0.58), 0 0 0 1px rgba(103, 62, 126, 0.38), inset 0 1px rgba(255, 245, 218, 0.14);
+  backdrop-filter: blur(8px);
   pointer-events: none;
-  animation: indicator-pulse 1.5s ease-in-out infinite;
+  animation: indicator-pulse-centered 1.5s ease-in-out infinite;
   transition: opacity 0.2s ease 0.5s, transform 0.2s ease 0.5s;
+}
+
+/* Variante de indicator-pulse (usada pelo indicador do adversário, sem centralização) com o
+   translateX(-50%) embutido em cada frame - a animação substitui o transform inteiro a cada
+   frame, então sem isso o translateX(-50%) da centralização acima sumia assim que a animação
+   começava (ela nunca ficava realmente centralizada, só no instante antes do primeiro frame). */
+@keyframes indicator-pulse-centered {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  50% {
+    opacity: 0.84;
+    transform: translateX(-50%) translateY(-5px);
+  }
+}
+
+/* Bico do balão, apontando pro baralho logo abaixo. */
+.deck-draw-indicator::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  width: 11px;
+  height: 11px;
+  transform: translateX(-50%) rotate(45deg);
+  background: #1a0f24;
+  border-right: 1px solid rgba(232, 194, 111, 0.7);
+  border-bottom: 1px solid rgba(232, 194, 111, 0.7);
+}
+
+.deck-draw-indicator::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 110px;
+  height: 72px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(ellipse, rgba(209, 151, 75, 0.2), transparent 68%);
+  filter: blur(7px);
+  pointer-events: none;
+  z-index: -1;
+  animation: indicator-glow-breathe 1.5s ease-in-out infinite;
 }
 
 @keyframes indicator-pulse {
@@ -439,10 +672,50 @@
   }
 }
 
+@keyframes indicator-glow-breathe {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 0.85; }
+}
+
+/* Texto com preenchimento em gradiente metálico (ouro batido, não cor chapada) - mesma
+   linguagem visual do filete dourado que já borda o verso da carta logo abaixo (ver
+   .deck-card-back / cardVerso), pra ler como parte do mesmo objeto entalhado em vez de um
+   tooltip solto flutuando por cima. text-shadow continua funcionando por cima de
+   background-clip:text porque a sombra segue o contorno do glifo, não o preenchimento. */
+.deck-draw-indicator-text {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, #fff9e9 0%, #f4d28a 48%, #c9923f 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+}
+
+/* Selo de runa: pequeno losango dourado sob o texto, ecoando a gema roxa entalhada no verso da
+   carta (mesma forma, cor diferente - "a luz que a runa puxa pra dentro da gema") em vez de um
+   simples divisor decorativo genérico. */
+.deck-draw-indicator-text::after {
+  content: none;
+}
+
+@keyframes draw-sigil-pulse {
+  0%, 100% { transform: rotate(45deg) scale(0.85); opacity: 0.75; }
+  50% { transform: rotate(45deg) scale(1.35); opacity: 1; }
+}
+
 .deck-draw-indicator-arrow {
-  font-size: 18px;
-  color: rgba(255, 230, 176, 0.85);
-  text-shadow: 0 1px 2px #000;
+  height: 12px;
+  font-size: 16px;
+  line-height: 10px;
+  background: linear-gradient(180deg, #fff6de, #d3a55a 55%, #9c7134);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 4px rgba(255, 200, 110, 0.48)) drop-shadow(0 1px 1px #000);
   animation: arrow-pulse 1.5s ease-in-out infinite;
 }
 
@@ -455,8 +728,8 @@
   }
 
   50% {
-    opacity: 0.6;
-    transform: translateY(-8px);
+    opacity: 0.72;
+    transform: translateY(3px);
   }
 }
 
@@ -688,30 +961,22 @@
   pointer-events: none;
 }
 
-.deck-draw-indicator {
-  position: absolute;
-  bottom: 75px;
-  right: 51px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  pointer-events: none;
-  animation: indicator-pulse 1.5s ease-in-out infinite;
-  transition: opacity 0.2s ease 0.5s, transform 0.2s ease 0.5s;
-  transition-delay: 0s;
-}
+/* (Duplicata antiga de .deck-draw-indicator removida daqui - tinha right:51px, que brigava
+   com o left:50%/transform:translateX(-50%) da regra principal acima e forçava o balão a
+   esticar largura pra satisfazer os dois ao mesmo tempo em vez de centralizar.) */
 
 /* Botões customizados */
 /* Topbar layout para alinhar o turn-indicator à direita */
 .battle-topbar {
   /* layout restaurado: sem flexbox, centralização horizontal apenas */
 
-  /* Fixar botão Sair no canto superior esquerdo */
-  .battle-exit {
+  /* Menu de engrenagem (Settings/Help/Exit) no canto superior direito, do lado do contador de
+     cartas do baralho (.deck-count-enemy) - padrão compartilhado por todos os modos de batalha,
+     substitui o antigo botão "Sair" solto no canto esquerdo. */
+  .battle-cog-anchor {
     position: absolute;
-    top: 12px;
-    left: 12px;
+    top: 22px;
+    right: 28px;
     z-index: 200;
   }
 
@@ -729,6 +994,104 @@
   padding: 0 24px 0 8px;
   box-sizing: border-box;
   top: 5px;
+}
+
+/* Selector prefixado com .battle-topbar (em vez de .battle-cog-btn sozinho) pra ganhar de
+   ".battle-topbar button" (mais específico por incluir o elemento) - senão o botão herdava o
+   background/padding/margin genérico dos outros botões da topbar. */
+.battle-topbar .battle-cog-btn {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin-left: 0;
+  padding: 0;
+  border: 1px solid rgba(229, 196, 132, 0.24);
+  border-radius: 10px;
+  background: rgba(20, 14, 25, 0.55);
+  box-shadow: 0 9px 22px rgba(0, 0, 0, 0.28), inset 0 1px rgba(255, 238, 200, 0.07);
+  backdrop-filter: blur(5px);
+  cursor: pointer;
+  transition: border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+}
+
+.battle-topbar .battle-cog-btn:hover {
+  border-color: rgba(235, 203, 141, 0.56);
+  background: rgba(36, 24, 42, 0.7);
+  box-shadow: 0 11px 26px rgba(0, 0, 0, 0.34), 0 0 15px rgba(209, 162, 72, 0.1);
+}
+
+.battle-topbar .battle-cog-btn:hover svg {
+  filter: drop-shadow(0 0 8px #ffe6b0cc) brightness(1.2);
+  transform: rotate(30deg) scale(1.08);
+  transition: filter 0.2s, transform 0.3s;
+}
+
+.battle-cog-dropdown {
+  position: absolute;
+  top: 48px;
+  right: 0;
+  box-sizing: border-box;
+  width: 200px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border: 1px solid rgba(224, 190, 124, 0.34);
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(117, 69, 131, 0.18), transparent 48%),
+    linear-gradient(155deg, rgba(38, 27, 44, 0.985), rgba(17, 12, 22, 0.99));
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.58), inset 0 1px rgba(255, 239, 204, 0.09);
+  animation: battleCogMenuIn 180ms ease-out both;
+}
+
+.battle-cog-dropdown .battle-cog-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 40px;
+  margin-left: 0;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  color: #dfcfaa;
+  background: transparent;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.18s, color 0.18s;
+}
+
+.battle-cog-menu-icon {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid rgba(216, 177, 104, 0.2);
+  border-radius: 50%;
+  color: #d1a655;
+  background: rgba(10, 7, 14, 0.34);
+  font-size: 0.72rem;
+}
+
+.battle-cog-dropdown .battle-cog-menu-item:hover {
+  border-color: rgba(225, 187, 116, 0.16);
+  color: #f4e6c3;
+  background: rgba(98, 60, 105, 0.16);
+}
+
+.battle-cog-dropdown .battle-cog-menu-exit:hover {
+  color: #eab9b1;
+  background: rgba(130, 57, 64, 0.13);
+}
+
+@keyframes battleCogMenuIn {
+  from { opacity: 0; transform: translateY(-6px) scale(.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .turn-indicator {
@@ -1366,11 +1729,12 @@
 .board-divider {
   display: flex;
   align-items: center;
-  gap: 0;
+  gap: 12px;
   /* Largura total original da linha (810px), agora no container em vez da <hr> - sem isso
      o flex:1 das duas metades esticava até embaixo da caixa de campo e do Turno/End Turn
      nas laterais. */
   max-width: 810px;
+  width: min(810px, 68vw);
   margin: 0 auto;
 }
 
@@ -1799,29 +2163,29 @@
   position: absolute;
   left: 50%;
   top: 44%;
-  width: 8px;
-  height: 34px;
+  width: calc(8px * var(--fx-scale, 1));
+  height: calc(34px * var(--fx-scale, 1));
   border-radius: 999px;
   background: linear-gradient(to bottom, rgba(255,255,255,0.95), rgba(100,210,255,0.5), transparent);
   filter: blur(0.2px) drop-shadow(0 0 8px rgba(90, 210, 255, 0.62));
   opacity: 0;
-  transform-origin: center 74px;
+  transform-origin: center calc(74px * var(--fx-scale, 1));
   pointer-events: none;
   mix-blend-mode: screen;
   animation: shield-apply-spark 980ms ease-out forwards;
 }
 
-.shield-apply-spark-1 { transform: translate(-50%, -50%) rotate(-38deg) translateY(-62px); animation-delay: 80ms; }
-.shield-apply-spark-2 { transform: translate(-50%, -50%) rotate(0deg) translateY(-68px); animation-delay: 140ms; }
-.shield-apply-spark-3 { transform: translate(-50%, -50%) rotate(38deg) translateY(-62px); animation-delay: 200ms; }
+.shield-apply-spark-1 { transform: translate(-50%, -50%) rotate(-38deg) translateY(calc(-62px * var(--fx-scale, 1))); animation-delay: 80ms; }
+.shield-apply-spark-2 { transform: translate(-50%, -50%) rotate(0deg) translateY(calc(-68px * var(--fx-scale, 1))); animation-delay: 140ms; }
+.shield-apply-spark-3 { transform: translate(-50%, -50%) rotate(38deg) translateY(calc(-62px * var(--fx-scale, 1))); animation-delay: 200ms; }
 
 .shield-overlay .shield-center {
   position: absolute;
   left: 50%;
   top: 40%;
   transform: translate(-50%, -50%);
-  width: 52px;
-  height: 52px;
+  width: calc(46px * var(--fx-scale, 1));
+  height: calc(46px * var(--fx-scale, 1));
   filter: drop-shadow(0 6px 18px rgba(20,60,150,0.45));
   opacity: 0.98;
   animation: shield-pulse 1.6s ease-in-out infinite;
@@ -2288,73 +2652,22 @@
   }
 }
 
-.deck-draw-indicator {
-  position: absolute;
-  top: 95px;
-  right: 36px;
-  z-index: 80;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border-radius: 10px;
-  box-shadow: 0 0 14px rgba(0, 0, 0, 0.5333333333);
-  color: #e4f7ff;
-  font-weight: 700;
-}
-
-@keyframes text-pulse {
-
-  0%,
-  100% {
-    opacity: 1;
-  }
-
-  50% {
-    opacity: 0.6;
-  }
-}
+/* Havia uma segunda declaração de .deck-draw-indicator aqui (top:95px/right:36px, sem
+   background, com padding/box-shadow incompletos) de um redesign abandonado - como CSS aplica
+   por propriedade (não por bloco), ela ficava conflitando com a posição original
+   (bottom:75px/right:51px, ver acima) e misturando gap/gap-direction inconsistentes, deixando o
+   indicador quebrado visualmente (usuário reportou "ficou feio"). @keyframes text-pulse,
+   arrow-bounce e text-fade desse mesmo redesign nunca chegaram a ser usadas por nenhuma
+   `animation:` - removidas junto por serem código morto. Restaura o visual original com
+   indicator-pulse/arrow-pulse (topo deste arquivo).*/
 
 .deck-draw:hover .deck-draw-indicator {
   animation: none;
   opacity: 0;
-  transform: translateY(-4px);
+  /* translateX(-50%) preservado (ver centralização acima) - senão o balão pula pra esquerda
+     no instante do hover, antes de sumir. */
+  transform: translateX(-50%) translateY(-4px);
   transition-delay: 0s;
-}
-
-@keyframes arrow-bounce {
-  0% {
-    transform: translateY(0) scaleY(1);
-    opacity: 1;
-  }
-
-  50% {
-    transform: translateY(-20px) scaleY(1);
-    opacity: 1;
-  }
-
-  100% {
-    transform: translateY(-40px) scaleY(0.8);
-    opacity: 0;
-  }
-}
-
-@keyframes text-fade {
-  0% {
-    opacity: 0;
-  }
-
-  20% {
-    opacity: 1;
-  }
-
-  80% {
-    opacity: 1;
-  }
-
-  100% {
-    opacity: 0;
-  }
 }
 
 .hand {
@@ -3539,7 +3852,7 @@ body.is-fullscreen .graveyard-container {
 }
 
 .board-divider-line {
-  height: 1px;
+  height: 2px;
   border: 0;
   box-shadow: 0 0 8px rgba(246, 218, 138, 0.48), 0 0 22px rgba(137, 85, 174, 0.22);
 }
@@ -3548,14 +3861,54 @@ body.is-fullscreen .graveyard-container {
    encosta na joia e apagar pra transparente na ponta externa, senão as duas iam apagar bem no
    meio (onde a joia fica) e deixar um buraco escuro em volta dela. */
 .board-divider .board-divider-line:first-of-type {
-  background: linear-gradient(90deg, transparent, rgba(221, 185, 100, 0.42) 8%, #f1d98f 100%);
+  background: linear-gradient(90deg, transparent 0%, rgba(221, 185, 100, 0.2) 18%, rgba(221, 185, 100, 0.58) 66%, #f1d98f 100%);
 }
 .board-divider .board-divider-line:last-of-type {
-  background: linear-gradient(270deg, transparent, rgba(221, 185, 100, 0.42) 8%, #f1d98f 100%);
+  background: linear-gradient(270deg, transparent 0%, rgba(221, 185, 100, 0.2) 18%, rgba(221, 185, 100, 0.58) 66%, #f1d98f 100%);
 }
 
 .board-divider-jewel {
   filter: drop-shadow(0 0 7px rgba(241, 210, 119, 0.72)) drop-shadow(0 0 14px rgba(128, 67, 171, 0.5));
+}
+
+/* Stable battlefield geometry
+   Card previews are 369x580 and visually scaled to fit a 230x355 slot. Transforms do not
+   change layout dimensions, so leaving that preview in normal flow could enlarge a grid row
+   during mount/unmount. Reserve the final slot size and remove the preview from row sizing. */
+.slots {
+  grid-auto-rows: 355px;
+  min-height: 355px;
+  height: 355px;
+  align-items: stretch;
+}
+
+.slots .slot {
+  box-sizing: border-box;
+  width: 230px;
+  min-width: 230px;
+  max-width: 230px;
+  height: 355px;
+  min-height: 355px;
+  max-height: 355px;
+  contain: layout;
+}
+
+.slots .slot > .slot-card-visual {
+  position: absolute !important;
+  left: 50%;
+  top: 50%;
+  width: 369px;
+  height: 580px;
+  margin: 0;
+  transform: translate(-50%, -50%) scale(0.6) !important;
+  transform-origin: center center !important;
+}
+
+.slots .slot > .slot-label {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
 }
 
 .turn-indicator {

@@ -7,10 +7,25 @@ import flipCardSfx from '../assets/sounds/effects/flipcard.MP3';
 import airSfx from '../assets/sounds/effects/elements/air.MP3';
 import waterSfx from '../assets/sounds/effects/elements/water.MP3';
 import earthSfx from '../assets/sounds/effects/elements/earth.MP3';
+import birdSummonSfx from '../assets/sounds/effects/creatures/ave.mp3';
+import draconidSummonSfx from '../assets/sounds/effects/creatures/draconideo.mp3';
+import beastSummonSfx from '../assets/sounds/effects/creatures/fera.mp3';
+import mysticSummonSfx from '../assets/sounds/effects/creatures/mistica.mp3';
+import monsterSummonSfx from '../assets/sounds/effects/creatures/monstro.mp3';
+import reptiloidSummonSfx from '../assets/sounds/effects/creatures/reptiloide.mp3';
+import shadowSummonSfx from '../assets/sounds/effects/creatures/sombria.mp3';
 import battleMusic from '../assets/sounds/music/battle-music.mp3';
 import * as effectRegistry from '../utils/effectRegistry';
 import { creatureRarities, RARITY_TIERS } from '../assets/rarityData';
 import { resolveAbility } from '../logic/abilityResolver';
+import { chooseActionFromState } from '../logic/aiDecisionEngine';
+import { getCampaignFloorDifficulty, CAMPAIGN_FLOOR_CURVE } from '../logic/campaignDifficulty';
+import {
+  isValidBattleReactionId,
+  BATTLE_REACTION_SEND_COOLDOWN_MS,
+  BATTLE_REACTION_RECEIVE_MIN_INTERVAL_MS,
+  BATTLE_REACTION_DISPLAY_MS,
+} from '../constants/battleReactions';
 
 export const BattleContext = createContext(null);
 
@@ -22,6 +37,34 @@ const CALAMITY_FIELD_SCENES = {
   terra: require('../assets/img/scene-board/mountain.png'),
   ar: require('../assets/img/scene-board/aerial.png'),
 };
+
+const CREATURE_SUMMON_SOUNDS = {
+  ave: birdSummonSfx,
+  bird: birdSummonSfx,
+  draconideo: draconidSummonSfx,
+  draconid: draconidSummonSfx,
+  fera: beastSummonSfx,
+  beast: beastSummonSfx,
+  mistica: mysticSummonSfx,
+  mystic: mysticSummonSfx,
+  monstro: monsterSummonSfx,
+  monster: monsterSummonSfx,
+  reptiloide: reptiloidSummonSfx,
+  reptiloid: reptiloidSummonSfx,
+  sombria: shadowSummonSfx,
+  shadow: shadowSummonSfx,
+};
+
+const CREATURE_SUMMON_SOUND_OVERRIDES = {
+  moar: beastSummonSfx,
+  owlberoth: birdSummonSfx,
+};
+
+const normalizeCreatureType = (value) => String(value || '')
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .trim()
+  .toLowerCase();
 
 // Zera buffs, debuffs, status effects e escudo ao enviar uma criatura para o cemitério -
 // esses efeitos são só de combate e não devem persistir na carta morta.
@@ -96,7 +139,24 @@ const CAMPAIGN_BUILD_STAGES = [
   { maxRarity: RARITY_TIERS.LEGENDARY, maxValue: 150, buildLevel: 10, deckSize: 20 },
 ];
 
-const getCampaignStage = (index = 0) => CAMPAIGN_BUILD_STAGES[Math.max(0, Math.min(CAMPAIGN_BUILD_STAGES.length - 1, index))];
+const getCampaignStage = (floorIndex = 0) => {
+  const difficulty = getCampaignFloorDifficulty(floorIndex);
+  return {
+    ...CAMPAIGN_BUILD_STAGES[difficulty.deckTier],
+    buildLevel: difficulty.deckTier,
+    aiDifficulty: difficulty.aiLevel,
+    targetPlayerWinRate: difficulty.targetPlayerWinRate,
+  };
+};
+
+// O chefe final de cada torre (guardianId do último andar, ver CAMPAIGN_TOWER_TYPES em
+// CampaignTower.jsx) deve entrar em campo com a arte full art - reforça que aquela é a luta
+// de encerramento da torre.
+const isCampaignFinalBossSummon = (battleState, cardId) => {
+  const opponent = battleState?.ai?.campaignOpponent;
+  if (!opponent || !cardId) return false;
+  return opponent.guardianId === cardId && opponent.levelIndex === CAMPAIGN_FLOOR_CURVE.length - 1;
+};
 
 const normalizeCampaignType = (value) => {
   const text = typeof value === 'string' ? value : (value?.pt || value?.en || '');
@@ -827,6 +887,8 @@ export function BattleProvider({ children }) {
     let hasKaelBlessing = false;
     let hasAshfangBlessing = false;
     let hasZephyronBlessing = false;
+    let hasWhalarBlessing = false;
+    let hasElythraBlessing = false;
     let hasArigusBlessing = false;
     let hasRoenhellBlessing = false;
     let hasMoarBlessing = false;
@@ -927,6 +989,13 @@ export function BattleProvider({ children }) {
       if (blessing.id === 'zephyron_blessing') {
         hasZephyronBlessing = true;
       }
+      // Para o Whalar: onda de 1 de dano em todas as criaturas adversárias
+      if (blessing.id === 'whalar_blessing') {
+        hasWhalarBlessing = true;
+      }
+      if (blessing.id === 'elythra_blessing') {
+        hasElythraBlessing = true;
+      }
       // Para o Arigus: retorna criatura adversária aleatória para a mão
       if (blessing.id === 'arigus_blessing') {
         hasArigusBlessing = true;
@@ -1022,7 +1091,7 @@ export function BattleProvider({ children }) {
 
     const hp = baseHp + hpBoost;
     const maxHp = hp;
-    return { atk, def, hp, maxHp, abilities: selectedAbilities, perkEffects: { shieldOnSummon, firstAttackNegated, dragonAllyAttackBonus, ...(galgarElementImmunity ? { immuneToShadowOrFire: true } : {}), ...combatPerkEffects }, hasIgnisBlessing, hasVirideerBlessing, hasEkerenthBlessing, hasOwlberothBlessing, hasNihilBlessing, hasDrazraqBlessing, hasLeoracalBlessing, hasSeractBlessing, hasNoctyraBlessing, hasMawthornBlessing, hasAlatoyBlessing, hasPawferionBlessing, hasEkonosBlessing, hasBeoxyrBlessing, hasArguíliaBlessing, hasKaelBlessing, hasAshfangBlessing, hasZephyronBlessing, hasArigusBlessing, hasRoenhellBlessing, hasMoarBlessing, hasElderoxBlessing, hasGravhyrBlessing, hasDraakBlessing, hasZefriBlessing, hasEkerathBlessing, hasAldanorBlessing, hasGrombiBlessing, hasEkerionBlessing, hasIgrazarBlessing, hasHipoderionBlessing, hasCrogalBlessing, hasAlbotBlessing };
+    return { atk, def, hp, maxHp, abilities: selectedAbilities, perkEffects: { shieldOnSummon, firstAttackNegated, dragonAllyAttackBonus, ...(galgarElementImmunity ? { immuneToShadowOrFire: true } : {}), ...combatPerkEffects }, hasIgnisBlessing, hasVirideerBlessing, hasEkerenthBlessing, hasOwlberothBlessing, hasNihilBlessing, hasDrazraqBlessing, hasLeoracalBlessing, hasSeractBlessing, hasNoctyraBlessing, hasMawthornBlessing, hasAlatoyBlessing, hasPawferionBlessing, hasEkonosBlessing, hasBeoxyrBlessing, hasArguíliaBlessing, hasKaelBlessing, hasAshfangBlessing, hasZephyronBlessing, hasWhalarBlessing, hasElythraBlessing, hasArigusBlessing, hasRoenhellBlessing, hasMoarBlessing, hasElderoxBlessing, hasGravhyrBlessing, hasDraakBlessing, hasZefriBlessing, hasEkerathBlessing, hasAldanorBlessing, hasGrombiBlessing, hasEkerionBlessing, hasIgrazarBlessing, hasHipoderionBlessing, hasCrogalBlessing, hasAlbotBlessing };
   }, [loadGuardianLoadout, cardCollection]);
 
   const playFieldChangeSound = useCallback(() => {
@@ -1055,6 +1124,26 @@ export function BattleProvider({ children }) {
       audio.play().catch(() => {});
     } catch (e) {
       console.warn('Erro ao tocar som de carta:', e);
+    }
+  }, [effectsVolume]);
+
+  // Guarda a REFERÊNCIA do último aiPendingAttack pro qual já tocamos o som de ataque - ver uso
+  // no useEffect de "Processa ataque pendente da IA" mais abaixo.
+  const aiAttackSoundPlayedForRef = useRef(null);
+
+  const playCreatureSummonSound = useCallback((creatureData) => {
+    try {
+      const type = creatureData?.type?.pt || creatureData?.type?.en || creatureData?.type;
+      const creatureId = String(creatureData?.id || '').trim().toLowerCase();
+      const sfx = CREATURE_SUMMON_SOUND_OVERRIDES[creatureId]
+        || CREATURE_SUMMON_SOUNDS[normalizeCreatureType(type)];
+      if (!sfx || (effectsVolume ?? 50) <= 0) return;
+      const audio = new Audio(sfx);
+      audio.volume = Math.min(1, ((effectsVolume ?? 50) / 100) * 0.82);
+      audio.playbackRate = 0.97 + Math.random() * 0.06;
+      audio.play().catch(() => {});
+    } catch (e) {
+      console.warn('Erro ao tocar som de invocação:', e);
     }
   }, [effectsVolume]);
 
@@ -1383,6 +1472,66 @@ export function BattleProvider({ children }) {
     });
   }, []);
 
+  // --- Reações de batalha: estado efêmero e puramente local, propositalmente FORA de `state`
+  // (nunca deve entrar nos broadcasts completos de `state` do PvP/Calamidade - ver spec em
+  // .claude/tasks/battle-reactions.md). Chave = senderSlot (número), valor = { reactionId,
+  // receivedAt }. `receivedAt` funciona como identidade da entrada: o timeout de remoção só
+  // apaga se ainda for a MESMA reação (evita apagar uma reação nova que substituiu a antiga
+  // no mesmo slot antes do timeout da antiga disparar).
+  const [battleReactions, setBattleReactions] = useState({});
+  const lastReactionSentAtRef = useRef(0);
+  const lastReceivedReactionAtRef = useRef({});
+  const reactionTimeoutsRef = useRef({});
+
+  const showLocalBattleReaction = useCallback((senderSlot, reactionId) => {
+    if (!isValidBattleReactionId(reactionId) || !Number.isInteger(senderSlot)) return;
+    const key = String(senderSlot);
+    const receivedAt = Date.now();
+    window.clearTimeout(reactionTimeoutsRef.current[key]);
+    setBattleReactions((prev) => ({ ...prev, [key]: { reactionId, receivedAt } }));
+    reactionTimeoutsRef.current[key] = window.setTimeout(() => {
+      setBattleReactions((prev) => {
+        if (!prev[key] || prev[key].receivedAt !== receivedAt) return prev;
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+    }, BATTLE_REACTION_DISPLAY_MS);
+  }, []);
+
+  React.useEffect(() => () => {
+    Object.values(reactionTimeoutsRef.current).forEach((id) => window.clearTimeout(id));
+  }, []);
+
+  // Envio: mostra a reação localmente na hora (sem esperar round-trip) e, se houver alguém pra
+  // receber (PvP/Calamidade), despacha por P2P. Em campanha/treino (sem adversário humano) a
+  // reação só aparece localmente pro próprio jogador - sem rede, é puro auto-expressão.
+  // PvP fala direto com o adversário; na Calamidade o anfitrião fala direto com cada convidado
+  // e o convidado fala só com o anfitrião (que retransmite, ver useEffects de recepção abaixo).
+  const sendBattleReaction = useCallback((reactionId) => {
+    if (!isValidBattleReactionId(reactionId)) return;
+    const now = Date.now();
+    if (now - lastReactionSentAtRef.current < BATTLE_REACTION_SEND_COOLDOWN_MS) return;
+    lastReactionSentAtRef.current = now;
+
+    const senderSlot = state.mode === 'calamity' ? (state.calamityMySlotIndex ?? 0) : (state.isHost ? 0 : 1);
+    showLocalBattleReaction(senderSlot, reactionId);
+
+    if (state.mode !== 'pvp' && state.mode !== 'calamity') return;
+    const payload = { type: 'reaction', reactionId, senderSlot, sentAt: now };
+    if (state.mode === 'pvp') {
+      if (state.peerSteamId64) window.electron?.ipcRenderer?.sendP2PMessage?.(state.peerSteamId64, payload);
+    } else if (state.mode === 'calamity') {
+      if (state.isHost === true) {
+        (state.calamityPeers || []).forEach((peer) => {
+          window.electron?.ipcRenderer?.sendP2PMessage?.(peer.steamId64, payload);
+        });
+      } else if (state.isHost === false && state.peerSteamId64) {
+        window.electron?.ipcRenderer?.sendP2PMessage?.(state.peerSteamId64, payload);
+      }
+    }
+  }, [state.mode, state.isHost, state.peerSteamId64, state.calamityPeers, state.calamityMySlotIndex, showLocalBattleReaction]);
+
   const pickFirstUserDeck = useCallback(() => {
     const ids = Object.keys(decks || {});
     if (ids.length === 0) return null;
@@ -1680,6 +1829,7 @@ export function BattleProvider({ children }) {
         fieldGraveyard: [],
         campaignOpponent: opponent || null,
         campaignBuildLevel: isCampaignBattle ? campaignStage.buildLevel : 0,
+        campaignAiDifficulty: isCampaignBattle ? campaignStage.aiDifficulty : 7,
       },
       sharedField: isCalamityBattle
         ? { active: true, id: calamityBossId, cardData: calamityFieldData, isHolo: false }
@@ -2215,6 +2365,10 @@ export function BattleProvider({ children }) {
         ...stateAfterResurrect,
         activePlayer: nextActive,
         turn: nextTurn,
+        // Flags internas valem apenas para a cadeia do turno anterior da IA.
+        aiPendingAttack: null,
+        aiTurnEnding: false,
+        aiSacrificedThisTurn: false,
         player: { ...stateAfterResurrect.player, field: { ...stateAfterResurrect.player.field, slots: playerSlotsAfterResurrect } },
         ai: { ...stateAfterResurrect.ai, field: { ...stateAfterResurrect.ai.field, slots: aiSlotsAfterResurrect } },
         [currentSide]: { ...currentSnapshot },
@@ -2546,6 +2700,7 @@ export function BattleProvider({ children }) {
         console.warn(`Criatura ${baseId} não encontrada no pool`);
         return s;
       }
+      playCreatureSummonSound(creatureData);
 
       // Resolve build com perks e loadout
       const build = resolveCreatureBuild(creatureData);
@@ -2561,6 +2716,7 @@ export function BattleProvider({ children }) {
         // Preserva a variante visual no estado da batalha para campo e previews.
         isHolo: Boolean(sourceInstance?.isHolo),
         isFullArt: Boolean(sourceInstance?.isFullArt),
+        isAltArt: Boolean(sourceInstance?.isAltArt),
         name: creatureData.name?.pt || creatureData.name?.en || baseId,
         type: creatureData.type?.pt || creatureData.type?.en,
         element: creatureData.element || 'puro',
@@ -2578,6 +2734,9 @@ export function BattleProvider({ children }) {
         perkEffects: build.perkEffects || {},
         hasGravhyrBlessing: !!build.hasGravhyrBlessing,
         hasDraakBlessing: !!build.hasDraakBlessing,
+        bonusAbilityUses: build.hasRoenhellBlessing ? 1 : 0,
+        freeAbilityUses: build.hasRoenhellBlessing ? 2 : 0,
+        abilityUseBuffTurns: build.hasRoenhellBlessing ? 1 : 0,
       };
 
       const activeFieldData = s.sharedField?.active ? s.sharedField.cardData : null;
@@ -3116,6 +3275,32 @@ export function BattleProvider({ children }) {
         }
       }
 
+      // Elythra: aliados do elemento ar recebem +1 de vida máxima e +1 de esquiva.
+      if (build.hasElythraBlessing || creatureData.defaultBlessing?.id === 'elythra_blessing') {
+        const buffedIds = [];
+        const updatedPlayerSlots = (newState.player?.field?.slots || []).map((slot) => {
+          if (!slot || slot.element !== 'ar') return slot;
+          buffedIds.push(slot.id);
+          return {
+            ...slot,
+            hp: (slot.hp || 0) + 1,
+            maxHp: (slot.maxHp || slot.hp || 0) + 1,
+            buffs: [
+              ...(slot.buffs || []),
+              { id: `elythra_dodge_${creature.id}_${slot.id}`, name: 'Juramento dos Ventos Gêmeos', stat: 'dodge', value: 0.15, duration: 999, type: 'flat' },
+            ],
+          };
+        });
+        newState.player = { ...newState.player, field: { ...newState.player.field, slots: updatedPlayerSlots } };
+        if (buffedIds.length > 0) {
+          newState.log.push(`${creature.name} concedeu +1 de vida e +1 de esquiva para ${buffedIds.length} aliado(s) de ar!`);
+          newState.animations = {
+            ...(newState.animations || {}),
+            ...buffedIds.reduce((acc, id) => ({ ...acc, [id]: { type: 'heal', amount: 1, icon: 'heart' } }), {}),
+          };
+        }
+      }
+
       // Se for Ekerath, todos os aliados em campo ganham +1 de escudo e +1 de vida
       if (build.hasEkerathBlessing) {
         const playerSlots = [...(newState.player?.field?.slots || [])];
@@ -3231,8 +3416,10 @@ export function BattleProvider({ children }) {
         }
       }
 
-      // Se for Hipoderion, uma onda varre o campo adversário e depois causa 1 de dano a cada carta
-      if (build.hasHipoderionBlessing) {
+      // Hipoderion e Whalar: uma onda varre o campo adversário e causa 1 de dano a cada carta.
+      // O fallback pelo ID garante o efeito mesmo em invocações PvP que não carreguem a flag do build.
+      if (build.hasHipoderionBlessing || build.hasWhalarBlessing || creatureData.defaultBlessing?.id === 'whalar_blessing') {
+        const waveSource = creatureData.defaultBlessing?.id === 'whalar_blessing' ? 'Whalar' : 'Hipoderion';
         const aiSlots = [...(newState.ai?.field?.slots || [])];
         const hitIds = [];
         const updatedAiSlots = aiSlots.map(slot => {
@@ -3266,7 +3453,7 @@ export function BattleProvider({ children }) {
                     killerSide: 'player',
                     killerId: creature.id,
                     killerName: creature.name,
-                    by: 'Hipoderion',
+                    by: waveSource,
                   });
                 }
               });
@@ -3410,7 +3597,7 @@ export function BattleProvider({ children }) {
       }
 
       // Se for Zephyron, paralisa todas as criaturas adversárias por 2 turnos
-      if (build.hasZephyronBlessing) {
+      if (build.hasZephyronBlessing || creatureData.defaultBlessing?.id === 'zephyron_blessing') {
         const aiSlots = newState.ai?.field?.slots || [];
         const updatedAiSlots = aiSlots.map(slot => {
           if (!slot) return slot;
@@ -3514,15 +3701,12 @@ export function BattleProvider({ children }) {
 
       // Se for Roenhell, permite atacar 2 vezes neste turno sem gastar mana
       if (build.hasRoenhellBlessing) {
-        creature.bonusAbilityUses = 1;
-        creature.freeAbilityUses = 2;
-        creature.abilityUseBuffTurns = 1;
         newState.log.push(`${creature.name} pode atacar 2 vezes neste turno sem consumir mana!`);
       }
 
       return newState;
     });
-  }, [resolveCreatureBuild, cardCollection, settleDefeatedCreature]);
+  }, [resolveCreatureBuild, cardCollection, settleDefeatedCreature, playCreatureSummonSound]);
 
   // Invocação equivalente a summonFromHand, mas para o lado 'ai' (usada no modo PvP para
   // aplicar a jogada de invocação recebida do jogador convidado pela rede).
@@ -3573,6 +3757,7 @@ export function BattleProvider({ children }) {
         console.warn(`Criatura ${baseId} não encontrada no pool`);
         return s;
       }
+      playCreatureSummonSound(creatureData);
 
       const build = resolveCreatureBuild(creatureData);
       const summonAtk = build.atk + (
@@ -3584,6 +3769,7 @@ export function BattleProvider({ children }) {
         baseId,
         isHolo: Boolean(sourceInstance?.isHolo),
         isFullArt: Boolean(sourceInstance?.isFullArt),
+        isAltArt: Boolean(sourceInstance?.isAltArt),
         name: creatureData.name?.pt || creatureData.name?.en || baseId,
         type: creatureData.type?.pt || creatureData.type?.en,
         element: creatureData.element || 'puro',
@@ -3601,6 +3787,9 @@ export function BattleProvider({ children }) {
         perkEffects: build.perkEffects || {},
         hasGravhyrBlessing: !!build.hasGravhyrBlessing,
         hasDraakBlessing: !!build.hasDraakBlessing,
+        bonusAbilityUses: build.hasRoenhellBlessing ? 1 : 0,
+        freeAbilityUses: build.hasRoenhellBlessing ? 2 : 0,
+        abilityUseBuffTurns: build.hasRoenhellBlessing ? 1 : 0,
       };
 
       const activeFieldData = s.sharedField?.active ? s.sharedField.cardData : null;
@@ -3710,7 +3899,7 @@ export function BattleProvider({ children }) {
   // usada por vários pontos), então não pode entrar aqui como dependência — o array de deps do
   // useCallback é avaliado na hora, e a referenciaria antes da inicialização (TDZ). O corpo da
   // função ainda a chama normalmente, já que só executa depois que o componente termina de montar.
-  }, [resolveCreatureBuild, cardCollection]);
+  }, [resolveCreatureBuild, cardCollection, playCreatureSummonSound]);
 
   // Ressuscita uma criatura do cemitério (benção do Ignis)
   const resurrectCreature = useCallback((graveyardIndex, targetSlotIndex) => {
@@ -4472,6 +4661,7 @@ export function BattleProvider({ children }) {
       // Verifica se a criatura já usou uma habilidade este turno
       const alreadyUsedAbility = s.creaturesWithUsedAbility && s.creaturesWithUsedAbility.has(attacker.id);
       const hasBonus = (attacker.bonusAbilityUses || 0) > 0;
+      const isUsingBonusAttack = alreadyUsedAbility && hasBonus;
 
       if (alreadyUsedAbility && !hasBonus) {
         return {
@@ -4568,7 +4758,7 @@ export function BattleProvider({ children }) {
         if (hasFree) {
           attackerDelta.freeAbilityUses = (attacker.freeAbilityUses || 2) - 1;
         }
-        if (hasBonus) {
+        if (isUsingBonusAttack) {
           attackerDelta.bonusAbilityUses = (attacker.bonusAbilityUses || 1) - 1;
         }
         const updatedUsedAbilities = new Set(s.creaturesWithUsedAbility || []);
@@ -4735,7 +4925,7 @@ export function BattleProvider({ children }) {
       if (hasFree) {
         attackerDelta.freeAbilityUses = (attacker.freeAbilityUses || 2) - 1;
       }
-      if (hasBonus) {
+      if (isUsingBonusAttack) {
         attackerDelta.bonusAbilityUses = (attacker.bonusAbilityUses || 1) - 1;
       }
       const updatedAttacker = { ...attacker, ...attackerDelta };
@@ -5962,6 +6152,9 @@ export function BattleProvider({ children }) {
     executeControlAttack,
     cancelControlAttack,
     triggerAnimation,
+    battleReactions,
+    sendBattleReaction,
+    playCreatureSummonSound,
     startPlaying: (firstPlayer) => {
       setState(s => {
         // No PvP, quem decide o primeiro a jogar é o anfitrião — o convidado só espera o
@@ -5976,7 +6169,7 @@ export function BattleProvider({ children }) {
         };
       });
     },
-  }), [state, startBattle, endTurn, drawPlayerCard, summonFromHand, invokeFieldCard, invokeFieldCardAI, useAbility, sacrificeCreature, resurrectCreature, cancelResurrection, returnEnemyCard, cancelReturnCard, poisonEnemyCard, cancelPoisonCard, stealEnemyCard, revealEnemyCard, cancelStealCard, cancelRevealEnemy, selectFieldCardForSwap, completeSwap, cancelSwap, freezeEnemyCard, cancelFreezeCard, healAllyCard, cancelHealCard, applyVirideerBless, cancelVirideerBless, log, playEffectCard, selectEffectCardTarget, updateEffectCardTarget, cancelEffectCard, cancelDrawOpponent, selectSpectralAbility, executeSpectralAttack, cancelSpectralAttack, selectControlAbility, executeControlAttack, cancelControlAttack]);
+  }), [state, startBattle, endTurn, drawPlayerCard, summonFromHand, invokeFieldCard, invokeFieldCardAI, useAbility, sacrificeCreature, resurrectCreature, cancelResurrection, returnEnemyCard, cancelReturnCard, poisonEnemyCard, cancelPoisonCard, stealEnemyCard, revealEnemyCard, cancelStealCard, cancelRevealEnemy, selectFieldCardForSwap, completeSwap, cancelSwap, freezeEnemyCard, cancelFreezeCard, healAllyCard, cancelHealCard, applyVirideerBless, cancelVirideerBless, log, playEffectCard, selectEffectCardTarget, updateEffectCardTarget, cancelEffectCard, cancelDrawOpponent, selectSpectralAbility, executeSpectralAttack, cancelSpectralAttack, selectControlAbility, executeControlAttack, cancelControlAttack, battleReactions, sendBattleReaction, playCreatureSummonSound]);
 
   // Expose a debug helper on window to trigger the Owlberoth return animation from the console
   React.useEffect(() => {
@@ -6283,12 +6476,18 @@ export function BattleProvider({ children }) {
     }
 
     // Roenhell (IA): permite atacar 2 vezes sem gastar mana
-    if (build.hasRoenhellBlessing) {
-      // A criatura já foi criada, apenas marca para ter bônus
-      const creature = creatureData;
-      creature.bonusAbilityUses = 1;
-      creature.freeAbilityUses = 2;
-      creature.abilityUseBuffTurns = 1;
+    if (build.hasRoenhellBlessing || creatureData.defaultBlessing?.id === 'roenhell_blessing') {
+      // Marca a instância que está no campo; nunca altera o cadastro global da carta.
+      const summoned = aiSlots?.[summonSlotIndex];
+      if (summoned) {
+        aiSlots[summonSlotIndex] = {
+          ...summoned,
+          bonusAbilityUses: 1,
+          freeAbilityUses: 2,
+          abilityUseBuffTurns: 1,
+        };
+        s.ai = { ...s.ai, field: { ...s.ai.field, slots: aiSlots } };
+      }
       nextLog = [...nextLog, `${creatureName} pode atacar 2 vezes neste turno sem consumir mana!`];
     }
 
@@ -6465,6 +6664,33 @@ export function BattleProvider({ children }) {
       }
     }
 
+    // Elythra (IA/PvP): aliados de ar recebem +1 de vida máxima e +1 de esquiva.
+    if (build.hasElythraBlessing || creatureData.defaultBlessing?.id === 'elythra_blessing') {
+      const buffedIds = [];
+      const updated = aiSlots.map((slot) => {
+        if (!slot || slot.element !== 'ar') return slot;
+        buffedIds.push(slot.id);
+        return {
+          ...slot,
+          hp: (slot.hp || 0) + 1,
+          maxHp: (slot.maxHp || slot.hp || 0) + 1,
+          buffs: [
+            ...(slot.buffs || []),
+            { id: `elythra_dodge_${aiSlots?.[summonSlotIndex]?.id}_${slot.id}`, name: 'Juramento dos Ventos Gêmeos', stat: 'dodge', value: 0.15, duration: 999, type: 'flat' },
+          ],
+        };
+      });
+      aiSlots.splice(0, aiSlots.length, ...updated);
+      s.ai = { ...s.ai, field: { ...s.ai.field, slots: aiSlots } };
+      if (buffedIds.length > 0) {
+        nextLog = [...nextLog, `${creatureName} concedeu +1 de vida e +1 de esquiva para ${buffedIds.length} aliado(s) de ar!`];
+        s.animations = {
+          ...(s.animations || {}),
+          ...buffedIds.reduce((acc, id) => ({ ...acc, [id]: { type: 'heal', amount: 1, icon: 'heart' } }), {}),
+        };
+      }
+    }
+
     // Ekerath: todos os aliados da IA ganham +1 de escudo e +1 de vida
     if (build.hasEkerathBlessing) {
       const buffedIds = [];
@@ -6571,8 +6797,10 @@ export function BattleProvider({ children }) {
       }
     }
 
-    // Hipoderion (IA): uma onda varre o campo do jogador e depois causa 1 de dano a cada carta
-    if (build.hasHipoderionBlessing) {
+    // Hipoderion e Whalar (IA/PvP): uma onda varre o campo do jogador e causa 1 de dano a cada carta.
+    // O fallback pelo ID evita perder a bênção quando a invocação remota não traz a flag do build.
+    if (build.hasHipoderionBlessing || build.hasWhalarBlessing || creatureData.defaultBlessing?.id === 'whalar_blessing') {
+      const waveSource = creatureData.defaultBlessing?.id === 'whalar_blessing' ? 'Whalar' : 'Hipoderion';
       const playerSlots = [...(s.player?.field?.slots || [])];
       const hitIds = [];
       const updated = playerSlots.map((slot) => {
@@ -6607,7 +6835,7 @@ export function BattleProvider({ children }) {
                   killerSide: 'ai',
                   killerId,
                   killerName: creatureName,
-                  by: 'Hipoderion',
+                  by: waveSource,
                 });
               }
             });
@@ -6706,7 +6934,7 @@ export function BattleProvider({ children }) {
     }
 
     // Zephyron: paralisa todas as criaturas do jogador por 2 turnos
-    if (build.hasZephyronBlessing) {
+    if (build.hasZephyronBlessing || creatureData.defaultBlessing?.id === 'zephyron_blessing') {
       const playerSlots = [...(s.player?.field?.slots || [])];
       const updated = playerSlots.map((slot) => {
         if (!slot) return slot;
@@ -6813,82 +7041,86 @@ export function BattleProvider({ children }) {
   }, [settleDefeatedCreature, damageAllOnField, playFxSound]);
 
   const getAiAttackOption = useCallback((s) => {
-    const aiSlots = s.ai?.field?.slots || [];
-    const playerSlots = s.player?.field?.slots || [];
-    const usedAbilities = s.creaturesWithUsedAbility || new Set();
-    const currentEssence = s.ai?.essence || 0;
     const difficulty = resolveAiDifficulty(s);
-
-    const possibleTargets = playerSlots
-      .map((slot, idx) => (slot && slot.hp > 0 ? { slotIndex: idx, creature: slot } : null))
-      .filter(Boolean);
-
-    if (possibleTargets.length === 0) return null;
-
-    // Monta toda combinação válida (atacante + habilidade + alvo) em vez de travar cedo na
-    // "melhor habilidade" contra o alvo com menos vida - assim dá pra pesar vantagem/desvantagem
-    // elemental, priorizar finalizar um alvo (kill) e neutralizar a ameaça mais perigosa em campo.
-    const combos = [];
-    aiSlots.forEach((attackerSlot, attackerIndex) => {
-      if (!attackerSlot || attackerSlot.hp <= 0) return;
-
-      const incapacitating = (attackerSlot.statusEffects || []).some(e => ['paralyze', 'freeze', 'sleep'].includes(e.type) && e.duration > 0);
-      if (incapacitating) return;
-
-      const alreadyUsedAbility = usedAbilities.has(attackerSlot.id);
-      const hasBonus = (attackerSlot.bonusAbilityUses || 0) > 0;
-      if (alreadyUsedAbility && !hasBonus) return;
-
-      const hasFree = (attackerSlot.freeAbilityUses || 0) > 0;
-
-      (attackerSlot.abilities || []).forEach((ability, abilityIndex) => {
-        const cost = hasFree ? 0 : (ability.cost || 0);
-        if (cost > currentEssence) return;
-        const baseDamage = typeof ability.damage === 'number' ? ability.damage : (cost * 2 + 1);
-
-        possibleTargets.forEach(({ slotIndex: targetIndex, creature: targetCreature }) => {
-          const { modifier, hasAdvantage, hasDisadvantage } = effectRegistry.getElementModifier(attackerSlot.element, targetCreature.element);
-          const effectiveDamage = Math.max(0, baseDamage + modifier);
-          const isLethal = effectiveDamage >= targetCreature.hp;
-
-          let score = effectiveDamage * 10;
-          if (hasAdvantage) score += 18;
-          if (hasDisadvantage) score -= 22;
-          if (isLethal) score += 120 + (targetCreature.atk || 0) * 4 + (targetCreature.hp || 0) * 1.5;
-          // Neutralizar quem bate mais forte vale mais que só encostar em qualquer um.
-          score += (targetCreature.atk || 0) * 1.4;
-          // Prioriza finalizar alvos que já estão fracos, mesmo sem matar nesta ação.
-          score += Math.max(0, 8 - targetCreature.hp) * 1.2;
-
-          combos.push({
-            attackerSlot: attackerIndex,
-            targetSlot: targetIndex,
-            abilityIndex,
-            attackerName: attackerSlot.name,
-            score,
-          });
-        });
-      });
+    const chosen = chooseActionFromState(s, {
+      side: 'ai',
+      level: difficulty,
+      cardPool: creaturesPool,
+      allowedTypes: ['attack'],
     });
-
-    if (combos.length === 0) return null;
-
-    combos.sort((a, b) => b.score - a.score);
-
-    // Dificuldade baixa (níveis iniciais da torre) = maior chance de a IA "errar" a jogada ótima
-    // e escolher uma combinação aleatória entre as válidas; no topo da torre (10) ela quase
-    // sempre acerta a melhor jogada disponível.
-    const mistakeChance = Math.max(0, 0.55 - difficulty * 0.055);
-    const chosen = Math.random() < mistakeChance
-      ? combos[Math.floor(Math.random() * combos.length)]
-      : combos[0];
+    if (!chosen) return null;
 
     return {
       attackerSlot: chosen.attackerSlot,
       targetSlot: chosen.targetSlot,
       abilityIndex: chosen.abilityIndex,
-      attackerName: chosen.attackerName,
+      attackerName: s.ai?.field?.slots?.[chosen.attackerSlot]?.name,
     };
+  }, []);
+
+  // Sacrifício tático da IA: troca uma criatura pouco útil por +1 essência somente quando isso
+  // libera imediatamente uma habilidade de outra criatura. A escolha considera função da carta,
+  // vida, status, uso no turno e preserva Guardiões/última criatura do campo.
+  const getAiSacrificeOption = useCallback((s) => {
+    if (s.aiSacrificedThisTurn) return null;
+    const difficulty = resolveAiDifficulty(s);
+    if (difficulty < 4) return null;
+
+    const slots = s.ai?.field?.slots || [];
+    const living = slots
+      .map((creature, slotIndex) => (creature && creature.hp > 0 ? { creature, slotIndex } : null))
+      .filter(Boolean);
+    if (living.length < 2 || !(s.player?.field?.slots || []).some(c => c && c.hp > 0)) return null;
+
+    const essence = s.ai?.essence || 0;
+    if (essence >= 10) return null;
+    const used = s.creaturesWithUsedAbility || new Set();
+    const abilityDamage = (ability) => {
+      if (typeof ability?.damage === 'number') return ability.damage;
+      const text = ability?.desc?.pt || ability?.desc?.en || '';
+      const parsed = text.match(/(?:causa|deals?)\s+(\d+)/i);
+      return parsed ? Number(parsed[1]) : ((ability?.cost || 0) * 2 + 1);
+    };
+
+    let best = null;
+    living.forEach(({ creature: sacrifice, slotIndex }) => {
+      const def = creaturesPool.find(c => c.id === sacrifice.baseId || c.id === sacrifice.id) || {};
+      if (def.isGuardian) return;
+
+      const otherCreatures = living.filter(entry => entry.slotIndex !== slotIndex);
+      let unlockedValue = 0;
+      otherCreatures.forEach(({ creature }) => {
+        if (used.has(creature.id)) return;
+        const incapacitated = (creature.statusEffects || []).some(e => ['paralyze', 'freeze', 'sleep'].includes(e.type) && e.duration > 0);
+        if (incapacitated) return;
+        (creature.abilities || []).forEach((ability) => {
+          const cost = ability.cost || 0;
+          if (cost > essence && cost <= essence + 1) {
+            unlockedValue = Math.max(unlockedValue, abilityDamage(ability));
+          }
+        });
+      });
+      if (unlockedValue <= 0) return;
+
+      const hpRatio = (sacrifice.hp || 0) / Math.max(1, sacrifice.maxHp || sacrifice.hp || 1);
+      const incapacitated = (sacrifice.statusEffects || []).some(e => ['paralyze', 'freeze', 'sleep'].includes(e.type) && e.duration > 0);
+      const alreadyActed = used.has(sacrifice.id);
+      const ownBestDamage = Math.max(0, ...(sacrifice.abilities || []).map(abilityDamage));
+      const typeText = `${sacrifice.type || ''} ${def.type?.pt || ''} ${def.type?.en || ''}`.toLowerCase();
+      const durableTypePenalty = /dracon|dragon|monstro|monster/.test(typeText) ? 2 : 0;
+      const score = unlockedValue * 3
+        + (1 - hpRatio) * 7
+        + (incapacitated ? 4 : 0)
+        + (alreadyActed ? 3 : 0)
+        - ownBestDamage * 0.65
+        - durableTypePenalty;
+
+      const threshold = Math.max(5, 10 - difficulty * 0.45);
+      if (score >= threshold && (!best || score > best.score)) {
+        best = { slotIndex, creature: sacrifice, score, unlockedValue };
+      }
+    });
+    return best;
   }, []);
 
   const continueAiCombat = useCallback((delayMs = 900) => {
@@ -6898,6 +7130,37 @@ export function BattleProvider({ children }) {
       setState((s) => {
         if (s.phase !== 'playing' || s.activePlayer !== 'ai') return s;
         if (s.aiPendingAttack || s.aiTurnEnding) return s;
+
+        const sacrifice = getAiSacrificeOption(s);
+        if (sacrifice) {
+          const slots = [...(s.ai?.field?.slots || [])];
+          slots[sacrifice.slotIndex] = null;
+          const sacrificedState = {
+            ...s,
+            aiSacrificedThisTurn: true,
+            ai: {
+              ...s.ai,
+              essence: Math.min(10, (s.ai.essence || 0) + 1),
+              field: { ...s.ai.field, slots },
+              graveyard: [...(s.ai.graveyard || []), resetCombatStateForGraveyard(sacrifice.creature)],
+            },
+            essenceRewardPulse: { side: 'ai', id: `ai-sacrifice-${sacrifice.creature.id}-${Date.now()}` },
+            log: [...(s.log || []), `IA sacrificou ${sacrifice.creature.name} para ganhar +1 essência e preparar um golpe mais forte.`],
+          };
+          const attackAfterSacrifice = getAiAttackOption(sacrificedState);
+          if (attackAfterSacrifice) {
+            return {
+              ...sacrificedState,
+              aiPendingAttack: {
+                attackerSlot: attackAfterSacrifice.attackerSlot,
+                targetSlot: attackAfterSacrifice.targetSlot,
+                abilityIndex: attackAfterSacrifice.abilityIndex,
+              },
+              log: [...sacrificedState.log, `IA está preparando um ataque com ${attackAfterSacrifice.attackerName}!`],
+            };
+          }
+          return sacrificedState;
+        }
 
         const nextAttack = getAiAttackOption(s);
         if (nextAttack) {
@@ -6922,7 +7185,7 @@ export function BattleProvider({ children }) {
         }, 350);
       }
     }, delayMs);
-  }, [endTurn, getAiAttackOption]);
+  }, [endTurn, getAiAttackOption, getAiSacrificeOption]);
 
   // Turno da Calamidade (modo "calamity"): substitui performAiTurn/continueAiCombat inteiramente —
   // o chefe não decide nada, só alterna entre um ataque individual (na primeira criatura viva do
@@ -7319,14 +7582,18 @@ export function BattleProvider({ children }) {
         if (cardToInvoke && emptySlotIndex >= 0) {
           hand.splice(cardIndex, 1);
           const creatureData = creaturesPool.find(c => c.id === cardToInvoke) || {};
+          playCreatureSummonSound(creatureData);
           const build = resolveCreatureBuild(creatureData, getAiBuildOptions(s, creatureData));
           const instanceId = `${cardToInvoke}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
           const summonAtk = build.atk + (
             build.perkEffects?.dragonAllyAttackBonus && slots.some(slot => isDragonCreature(slot)) ? 1 : 0
           );
+          const isFinalBossSummon = isCampaignFinalBossSummon(s, cardToInvoke);
           const summonedCreature = {
             id: instanceId,
             baseId: cardToInvoke,
+            isHolo: isFinalBossSummon,
+            isFullArt: isFinalBossSummon,
             name: creatureData.name?.pt || creatureData.name?.en || cardToInvoke,
             type: creatureData.type?.pt || creatureData.type?.en,
             element: creatureData.element || 'puro',
@@ -7344,6 +7611,9 @@ export function BattleProvider({ children }) {
             perkEffects: build.perkEffects || {},
             hasGravhyrBlessing: !!build.hasGravhyrBlessing,
             hasDraakBlessing: !!build.hasDraakBlessing,
+            bonusAbilityUses: build.hasRoenhellBlessing ? 1 : 0,
+            freeAbilityUses: build.hasRoenhellBlessing ? 2 : 0,
+            abilityUseBuffTurns: build.hasRoenhellBlessing ? 1 : 0,
           };
           const activeFieldData = s.sharedField?.active ? s.sharedField.cardData : null;
           slots[emptySlotIndex] = effectRegistry.applyFieldHpBonusToCreature(summonedCreature, activeFieldData);
@@ -7383,8 +7653,9 @@ export function BattleProvider({ children }) {
             }
           }, 300);
 
-          // Retorna estado atualizado imediatamente, priorizando a invocação
-          return {
+          // Retorna a invocação já encadeada com um ataque válido. Antes, o ataque dependia de
+          // um timer separado que podia observar o estado anterior e encerrar o primeiro turno.
+          const nextState = {
             ...s,
             creaturesInvokedThisTurn: {
               ...(s.creaturesInvokedThisTurn || { player: 0, ai: 0 }),
@@ -7396,6 +7667,17 @@ export function BattleProvider({ children }) {
               field: { ...s.ai.field, slots },
             },
             log: logEntries,
+          };
+          const nextAttack = getAiAttackOption(nextState);
+          if (!nextAttack) return nextState;
+          return {
+            ...nextState,
+            aiPendingAttack: {
+              attackerSlot: nextAttack.attackerSlot,
+              targetSlot: nextAttack.targetSlot,
+              abilityIndex: nextAttack.abilityIndex,
+            },
+            log: [...nextState.log, `IA está preparando um ataque com ${nextAttack.attackerName}!`],
           };
         }
       }
@@ -7511,18 +7793,27 @@ export function BattleProvider({ children }) {
 
       if (canInvokeCreature && action?.type === 'summon' && typeof action.handIndex === 'number' && typeof action.slotIndex === 'number') {
         const { handIndex, slotIndex } = action;
-        if (hand[handIndex] && !slots[slotIndex]) {
+        // Defesa extra contra slotIndex inválido (ex: -1): `slots[-1]` é undefined em JS, então
+        // `!slots[slotIndex]` sozinho passava como "vazio" pra qualquer índice fora do array,
+        // deixando a criatura ser escrita numa chave fantasma fora dos 3 slots renderizados (ver
+        // fix em src/logic/ai.js, que é a fonte real do -1, mas isso aqui evita a mesma classe de
+        // bug se qualquer outra fonte de action.slotIndex tiver o mesmo problema no futuro).
+        if (slotIndex >= 0 && slotIndex < slots.length && hand[handIndex] && !slots[slotIndex]) {
           const cardId = hand[handIndex];
           hand.splice(handIndex, 1);
             const creatureData = creaturesPool.find(c => c.id === cardId) || {};
+            playCreatureSummonSound(creatureData);
             const build = resolveCreatureBuild(creatureData, getAiBuildOptions(s, creatureData));
             const instanceId = `${cardId}-${Date.now()}-${Math.floor(Math.random()*1000)}`;
             const summonAtk = build.atk + (
               build.perkEffects?.dragonAllyAttackBonus && slots.some(slot => isDragonCreature(slot)) ? 1 : 0
             );
+            const isFinalBossSummon = isCampaignFinalBossSummon(s, cardId);
             const summonedCreature = {
             id: instanceId,
             baseId: cardId,
+            isHolo: isFinalBossSummon,
+            isFullArt: isFinalBossSummon,
             name: creatureData.name?.pt || creatureData.name?.en || cardId,
             type: creatureData.type?.pt || creatureData.type?.en,
             element: creatureData.element || 'puro',
@@ -7540,6 +7831,9 @@ export function BattleProvider({ children }) {
             perkEffects: build.perkEffects || {},
             hasGravhyrBlessing: !!build.hasGravhyrBlessing,
             hasDraakBlessing: !!build.hasDraakBlessing,
+            bonusAbilityUses: build.hasRoenhellBlessing ? 1 : 0,
+            freeAbilityUses: build.hasRoenhellBlessing ? 2 : 0,
+            abilityUseBuffTurns: build.hasRoenhellBlessing ? 1 : 0,
           };
             const activeFieldData = s.sharedField?.active ? s.sharedField.cardData : null;
             slots[slotIndex] = effectRegistry.applyFieldHpBonusToCreature(summonedCreature, activeFieldData);
@@ -7569,14 +7863,18 @@ export function BattleProvider({ children }) {
         if (cardToInvoke) {
           hand.splice(cardIndex, 1);
           const creatureData = creaturesPool.find(c => c.id === cardToInvoke) || {};
+          playCreatureSummonSound(creatureData);
           const build = resolveCreatureBuild(creatureData, getAiBuildOptions(s, creatureData));
           const instanceId = `${cardToInvoke}-${Date.now()}-${Math.floor(Math.random()*1000)}`;
           const summonAtk = build.atk + (
             build.perkEffects?.dragonAllyAttackBonus && slots.some(slot => isDragonCreature(slot)) ? 1 : 0
           );
+          const isFinalBossSummon = isCampaignFinalBossSummon(s, cardToInvoke);
           const summonedCreature = {
             id: instanceId,
             baseId: cardToInvoke,
+            isHolo: isFinalBossSummon,
+            isFullArt: isFinalBossSummon,
             name: creatureData.name?.pt || creatureData.name?.en || cardToInvoke,
             type: creatureData.type?.pt || creatureData.type?.en,
             element: creatureData.element || 'puro',
@@ -7594,6 +7892,9 @@ export function BattleProvider({ children }) {
           perkEffects: build.perkEffects || {},
           hasGravhyrBlessing: !!build.hasGravhyrBlessing,
           hasDraakBlessing: !!build.hasDraakBlessing,
+          bonusAbilityUses: build.hasRoenhellBlessing ? 1 : 0,
+          freeAbilityUses: build.hasRoenhellBlessing ? 2 : 0,
+          abilityUseBuffTurns: build.hasRoenhellBlessing ? 1 : 0,
         };
         const activeFieldData = s.sharedField?.active ? s.sharedField.cardData : null;
         slots[emptyIndex] = effectRegistry.applyFieldHpBonusToCreature(summonedCreature, activeFieldData);
@@ -7628,7 +7929,7 @@ export function BattleProvider({ children }) {
     });
 
     continueAiCombat(850);
-  }, [applyAiSummonBlessings, applyAiEffectCard, continueAiCombat]);
+  }, [applyAiSummonBlessings, applyAiEffectCard, continueAiCombat, getAiAttackOption, playCreatureSummonSound]);
 
   useEffect(() => {
     if (state.mode === 'pvp') return; // No PvP, o lado "ai" é o convidado humano — não roda ai.js
@@ -7650,6 +7951,21 @@ export function BattleProvider({ children }) {
   useEffect(() => {
     if (state.mode === 'pvp' || state.mode === 'calamity') return;
     if (state.aiPendingAttack && state.phase === 'playing' && state.activePlayer === 'ai') {
+      // Toca o rugido/som da criatura assim que o ataque é decidido, e só executa o dano depois
+      // do delay de 500ms já existente abaixo - dá a sensação de "a criatura reage, DEPOIS golpeia"
+      // em vez de tudo acontecer no mesmo instante (pedido do usuário).
+      // Guard por referência: este efeito reroda toda vez que useAbility/continueAiCombat trocam
+      // de identidade (deps enormes, mudam quase a cada render) mesmo com aiPendingAttack
+      // inalterado - sem o guard, o som tocava de novo a cada rerun mesmo sem ataque nenhum
+      // acontecer (só o timer sendo cancelado/reagendado pelo cleanup abaixo).
+      if (aiAttackSoundPlayedForRef.current !== state.aiPendingAttack) {
+        aiAttackSoundPlayedForRef.current = state.aiPendingAttack;
+        const attacker = state.ai.field.slots[state.aiPendingAttack.attackerSlot];
+        if (attacker) {
+          const creatureData = creaturesPool.find(c => c.id === attacker.baseId) || {};
+          playCreatureSummonSound(creatureData);
+        }
+      }
       const attackTimer = setTimeout(() => {
         useAbility('ai', state.aiPendingAttack.attackerSlot, state.aiPendingAttack.abilityIndex, 'player', state.aiPendingAttack.targetSlot);
         setState(s => ({
@@ -7660,7 +7976,7 @@ export function BattleProvider({ children }) {
       }, 500);
       return () => clearTimeout(attackTimer);
     }
-  }, [state.mode, state.aiPendingAttack, state.phase, state.activePlayer, useAbility, continueAiCombat]);
+  }, [state.mode, state.aiPendingAttack, state.phase, state.activePlayer, useAbility, continueAiCombat, playCreatureSummonSound]);
 
   // Modo Calamidade: não há vida/orbes de jogador — a derrota é só quando baralho, mão e campo
   // ficam todos vazios ao mesmo tempo (sem mais criaturas pra invocar).
@@ -7739,6 +8055,74 @@ export function BattleProvider({ children }) {
     });
     return () => unsubscribe?.();
   }, [state.mode, state.isHost, state.peerSteamId64]);
+
+  // --- Reações de batalha: PvP fala direto com o adversário nos dois sentidos (não há
+  // relatório host/convidado aqui - é 1 pra 1), então um único listener cobre host e convidado.
+  // Reação nunca exige "vez do remetente" nem toca phase/activePlayer/estado autoritativo -
+  // fica deliberadamente separado dos listeners de message.type === 'action'/'state' acima.
+  useEffect(() => {
+    if (state.mode !== 'pvp' || !state.peerSteamId64) return undefined;
+    const unsubscribe = window.electron?.ipcRenderer?.onP2PMessage?.(({ fromSteamId64, message }) => {
+      if (!message || message.type !== 'reaction') return;
+      if (fromSteamId64 !== state.peerSteamId64) return;
+      if (!isValidBattleReactionId(message.reactionId)) return;
+      const now = Date.now();
+      const last = lastReceivedReactionAtRef.current[fromSteamId64] || 0;
+      if (now - last < BATTLE_REACTION_RECEIVE_MIN_INTERVAL_MS) return;
+      lastReceivedReactionAtRef.current[fromSteamId64] = now;
+      // Só existem dois lados no PvP: o remetente é sempre "o outro slot", fixo por papel
+      // (host=0/convidado=1) - não depende de swapPerspective, que só troca 'player'/'ai'.
+      const senderSlot = state.isHost ? 1 : 0;
+      showLocalBattleReaction(senderSlot, message.reactionId);
+    });
+    return () => unsubscribe?.();
+  }, [state.mode, state.isHost, state.peerSteamId64, showLocalBattleReaction]);
+
+  // --- Reações de batalha: Calamidade convidado - recebe só do anfitrião (retransmissor), nunca
+  // diretamente de outro convidado (topologia estrela). O senderSlot vem no payload porque, ao
+  // contrário das ações, o convidado não tem como resolver "de qual jogador" via calamityPeers.
+  useEffect(() => {
+    if (state.mode !== 'calamity' || state.isHost !== false || !state.peerSteamId64) return undefined;
+    const unsubscribe = window.electron?.ipcRenderer?.onP2PMessage?.(({ fromSteamId64, message }) => {
+      if (!message || message.type !== 'reaction') return;
+      if (fromSteamId64 !== state.peerSteamId64) return;
+      if (!isValidBattleReactionId(message.reactionId) || !Number.isInteger(message.senderSlot)) return;
+      const now = Date.now();
+      const last = lastReceivedReactionAtRef.current[message.senderSlot] || 0;
+      if (now - last < BATTLE_REACTION_RECEIVE_MIN_INTERVAL_MS) return;
+      lastReceivedReactionAtRef.current[message.senderSlot] = now;
+      showLocalBattleReaction(message.senderSlot, message.reactionId);
+    });
+    return () => unsubscribe?.();
+  }, [state.mode, state.isHost, state.peerSteamId64, showLocalBattleReaction]);
+
+  // --- Reações de batalha: Calamidade anfitrião - só aceita de quem está de fato na sala
+  // (calamityPeers, mesma checagem de identidade usada pras ações), mostra localmente e
+  // retransmite pros demais convidados sem ecoar de volta pro remetente. O senderSlot usado na
+  // retransmissão vem de calamityPeers (autoritativo), nunca do payload do remetente.
+  useEffect(() => {
+    if (state.mode !== 'calamity' || !state.isHost) return undefined;
+    const unsubscribe = window.electron?.ipcRenderer?.onP2PMessage?.(({ fromSteamId64, message }) => {
+      if (!message || message.type !== 'reaction') return;
+      if (!isValidBattleReactionId(message.reactionId)) return;
+      const peer = (state.calamityPeers || []).find((p) => p.steamId64 === fromSteamId64);
+      if (!peer) return;
+      const now = Date.now();
+      const last = lastReceivedReactionAtRef.current[fromSteamId64] || 0;
+      if (now - last < BATTLE_REACTION_RECEIVE_MIN_INTERVAL_MS) return;
+      lastReceivedReactionAtRef.current[fromSteamId64] = now;
+
+      const senderSlot = Number.isInteger(peer.slotIndex) ? peer.slotIndex : 0;
+      showLocalBattleReaction(senderSlot, message.reactionId);
+
+      const relayPayload = { type: 'reaction', reactionId: message.reactionId, senderSlot, sentAt: Date.now() };
+      state.calamityPeers.forEach((otherPeer) => {
+        if (otherPeer.steamId64 === fromSteamId64) return;
+        window.electron?.ipcRenderer?.sendP2PMessage?.(otherPeer.steamId64, relayPayload);
+      });
+    });
+    return () => unsubscribe?.();
+  }, [state.mode, state.isHost, state.calamityPeers, showLocalBattleReaction]);
 
   // --- Temporizador de turno (PvP e coop da Calamidade): só o anfitrião dispara o auto-skip -
   // ele é quem simula de verdade, então basta ELE checar o relógio, mesmo que o convidado feche

@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useMemo, useState } from 'react';
 import cardsPool from '../assets/cards';
 import { AppContext } from '../context/AppContext';
 import '../styles/campaign-tower.css';
+import { getCampaignFloorDifficulty } from '../logic/campaignDifficulty';
 import reptiloideBadge from '../assets/img/badge/reptiloide.png';
 import aveBadge from '../assets/img/badge/ave.png';
 import monstroBadge from '../assets/img/badge/monstro.png';
@@ -13,32 +14,29 @@ import draconideoBadge from '../assets/img/badge/draconideo.png';
 const CAMPAIGN_PROGRESS_KEY = 'kadirCampaignTowerProgress';
 const CAMPAIGN_BADGE_CELEBRATION_KEY = 'kadirCampaignLastBadgeCelebrated';
 
+// `finalBossId` é o guardião que sempre aparece no último andar (chefe final) de cada torre -
+// o mais raro daquele tipo. Ele é fixado aqui (em vez de calculado por raridade) porque o desempate
+// entre criaturas de mesma raridade é uma escolha de design, não uma regra derivável dos dados
+// (ex: Ekeranth foi escolhido como chefe Draconídeo mesmo a Lunethal tendo `value` levemente maior).
 export const CAMPAIGN_TOWER_TYPES = [
-  { key: 'reptiloide', label: { pt: 'Reptiloide', en: 'Reptiloid' }, guardianFallback: 'viborom', rank: 'I', badge: reptiloideBadge },
-  { key: 'ave', label: { pt: 'Ave', en: 'Bird' }, guardianFallback: 'griffor', rank: 'II', badge: aveBadge },
-  { key: 'monstro', label: { pt: 'Monstro', en: 'Monster' }, guardianFallback: 'gravhyr', rank: 'III', badge: monstroBadge },
-  { key: 'fera', label: { pt: 'Fera', en: 'Beast' }, guardianFallback: 'roenhell', rank: 'IV', badge: feraBadge },
-  { key: 'mistica', label: { pt: 'Mistica', en: 'Mystic' }, guardianFallback: 'faskel', rank: 'V', badge: misticaBadge },
-  { key: 'sombria', label: { pt: 'Sombria', en: 'Shadow' }, guardianFallback: 'noctyra', rank: 'VI', badge: sombriaBadge },
-  { key: 'draconideo', label: { pt: 'Draconideo', en: 'Draconid' }, guardianFallback: 'draak', rank: 'VII', badge: draconideoBadge },
+  { key: 'reptiloide', label: { pt: 'Reptiloide', en: 'Reptiloid' }, guardianFallback: 'viborom', finalBossId: 'ekerion', rank: 'I', badge: reptiloideBadge },
+  { key: 'ave', label: { pt: 'Ave', en: 'Bird' }, guardianFallback: 'griffor', finalBossId: 'ekonos', rank: 'II', badge: aveBadge },
+  { key: 'monstro', label: { pt: 'Monstro', en: 'Monster' }, guardianFallback: 'gravhyr', finalBossId: 'arigus', rank: 'III', badge: monstroBadge },
+  { key: 'fera', label: { pt: 'Fera', en: 'Beast' }, guardianFallback: 'roenhell', finalBossId: 'zephyron', rank: 'IV', badge: feraBadge },
+  { key: 'mistica', label: { pt: 'Mistica', en: 'Mystic' }, guardianFallback: 'faskel', finalBossId: 'moar', rank: 'V', badge: misticaBadge },
+  { key: 'sombria', label: { pt: 'Sombria', en: 'Shadow' }, guardianFallback: 'noctyra', finalBossId: 'pawferion', rank: 'VI', badge: sombriaBadge },
+  { key: 'draconideo', label: { pt: 'Draconideo', en: 'Draconid' }, guardianFallback: 'draak', finalBossId: 'ekeranth', rank: 'VII', badge: draconideoBadge },
 ];
 
 const CAMPAIGN_LEVELS_PER_TOWER = 11;
 export const CAMPAIGN_TOTAL_LEVELS = CAMPAIGN_TOWER_TYPES.length * CAMPAIGN_LEVELS_PER_TOWER;
 
-const DIFFICULTY_LABELS = [
-  { pt: 'Iniciante', en: 'Beginner' },
-  { pt: 'Iniciante', en: 'Beginner' },
-  { pt: 'Aprendiz', en: 'Apprentice' },
-  { pt: 'Aprendiz', en: 'Apprentice' },
-  { pt: 'Adepto', en: 'Adept' },
-  { pt: 'Ameaca', en: 'Threat' },
-  { pt: 'Guardiao', en: 'Guardian' },
-  { pt: 'Guardiao', en: 'Guardian' },
-  { pt: 'Campeao', en: 'Champion' },
-  { pt: 'Campeao', en: 'Champion' },
-  { pt: 'Lenda', en: 'Legend' },
-];
+const DIFFICULTY_LABELS = {
+  Iniciante: { pt: 'Iniciante', en: 'Beginner' }, Aprendiz: { pt: 'Aprendiz', en: 'Apprentice' },
+  Adepto: { pt: 'Adepto', en: 'Adept' }, Ameaça: { pt: 'Ameaça', en: 'Threat' },
+  Guardião: { pt: 'Guardião', en: 'Guardian' }, Campeão: { pt: 'Campeão', en: 'Champion' },
+  Lenda: { pt: 'Lenda', en: 'Legend' },
+};
 
 const getGuardianCardData = (guardianId) => {
   try {
@@ -85,17 +83,24 @@ function buildTowerLevels(tower, towerIndex, isEn) {
   const cards = typeCards.length > 0
     ? typeCards
     : [getGuardianCardData(tower.guardianFallback)].filter(Boolean);
+  const finalBossCard = tower.finalBossId
+    ? (cards.find((c) => c?.id === tower.finalBossId) || getGuardianCardData(tower.finalBossId))
+    : null;
 
   return Array.from({ length: CAMPAIGN_LEVELS_PER_TOWER }, (_, levelIndex) => {
     // Primeira volta: cada guardião único aparece uma vez, na ordem em que foi adicionado ao jogo.
     // Quando os slots restantes precisam repetir alguém, prioriza os guardiões mais recentes
     // (fim do array) em vez de repetir logo os mais antigos - assim as cartas novas aparecem
     // com mais frequência que as antigas nas torres com poucos guardiões daquele tipo.
-    const guardianCard = (levelIndex < cards.length
+    // O último andar é sempre o chefe final da torre (o guardião mais raro daquele tipo),
+    // independente de onde a rotação normal cairia.
+    const isFinalFloor = levelIndex === CAMPAIGN_LEVELS_PER_TOWER - 1;
+    const guardianCard = (isFinalFloor && finalBossCard) ? finalBossCard : ((levelIndex < cards.length
       ? cards[levelIndex]
       : cards[cards.length - 1 - ((levelIndex - cards.length) % cards.length)]
-    ) || getGuardianCardData(tower.guardianFallback);
+    ) || getGuardianCardData(tower.guardianFallback));
     const index = towerIndex * CAMPAIGN_LEVELS_PER_TOWER + levelIndex;
+    const floorDifficulty = getCampaignFloorDifficulty(levelIndex);
 
     return {
       id: `${tower.key}-${levelIndex + 1}`,
@@ -109,7 +114,10 @@ function buildTowerLevels(tower, towerIndex, isEn) {
       name: getCardName(guardianCard, tower.label[key]),
       subtitle: getCardSubtitle(guardianCard, tower.label[key]),
       img: guardianCard?.img,
-      difficulty: (DIFFICULTY_LABELS[levelIndex] || DIFFICULTY_LABELS[DIFFICULTY_LABELS.length - 1])[key],
+      aiDifficulty: floorDifficulty.aiLevel,
+      deckTier: floorDifficulty.deckTier,
+      targetPlayerWinRate: floorDifficulty.targetPlayerWinRate,
+      difficulty: (DIFFICULTY_LABELS[floorDifficulty.profile.label] || DIFFICULTY_LABELS.Lenda)[key],
     };
   });
 }
@@ -241,7 +249,10 @@ export default function CampaignTower({ onBack, onStartBattle }) {
               <img className="campaign-type-badge" src={tower.badge} alt="" aria-hidden />
               <span className="campaign-type-rank">{tower.rank}</span>
               <span className="campaign-type-name">{tower.label}</span>
-              <span className="campaign-type-progress">{tower.completedCount}/{CAMPAIGN_LEVELS_PER_TOWER}</span>
+              <span className="campaign-type-progress">
+                <b>{tower.completedCount}/{CAMPAIGN_LEVELS_PER_TOWER}</b>
+                <i aria-hidden><em style={{ width: `${(tower.completedCount / CAMPAIGN_LEVELS_PER_TOWER) * 100}%` }} /></i>
+              </span>
             </button>
           ))}
         </nav>
@@ -269,6 +280,9 @@ export default function CampaignTower({ onBack, onStartBattle }) {
               <span className="campaign-floor-line" />
               <span className="campaign-floor-name">{enemy.name}</span>
               <span className="campaign-floor-difficulty">{enemy.completed ? (isEn ? 'Won' : 'Vencido') : enemy.difficulty}</span>
+              <span className="campaign-floor-state" aria-hidden>
+                {enemy.completed ? '✓' : (activeEnemy?.id === enemy.id ? '◆' : (enemy.unlocked ? '·' : '×'))}
+              </span>
             </button>
           ))}
         </section>
@@ -277,6 +291,10 @@ export default function CampaignTower({ onBack, onStartBattle }) {
           <div className="campaign-preview-card">
             {activeEnemy?.img && <img src={activeEnemy.img} alt={activeEnemy.name} />}
             <div className="campaign-preview-shade" />
+            <div className="campaign-preview-index">
+              <span>{isEn ? 'Floor' : 'Andar'}</span>
+              <strong>{String((activeEnemy?.levelIndex || 0) + 1).padStart(2, '0')}</strong>
+            </div>
             <div className="campaign-preview-text">
               <span>{isEn ? 'Next battle' : 'Próximo combate'}</span>
               <strong>{activeEnemy?.name}</strong>

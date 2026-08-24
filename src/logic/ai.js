@@ -24,6 +24,9 @@ const { getElementModifier } = require('../utils/effectRegistry');
  */
 export function resolveAiDifficulty(battleState) {
   if (battleState?.ai?.campaignOpponent) {
+    if (Number.isFinite(battleState.ai.campaignAiDifficulty)) {
+      return Math.max(0, Math.min(10, battleState.ai.campaignAiDifficulty));
+    }
     const level = Number.isFinite(battleState.ai.campaignBuildLevel) ? battleState.ai.campaignBuildLevel : 0;
     return Math.max(0, Math.min(10, level));
   }
@@ -126,8 +129,12 @@ export function chooseAction(battleState) {
           if (!slots[strongestIdx]) preferredSlot = strongestIdx;
         }
 
-        // ensure preferredSlot valid
-        if (preferredSlot === -1) preferredSlot = slots.findIndex(s => !s) || 0;
+        // Campo cheio (nenhum slot vazio) - não retorna 'summon' com slotIndex -1: performAiTurn
+        // faz `slots[slotIndex] = criatura`, e como -1 não é um índice válido de array em JS
+        // isso criava uma propriedade "-1" na criatura (invisível nos 3 slots renderizados) em
+        // vez de bloquear a invocação - a criatura "fantasma" ainda disparava som e bênção de
+        // invocação mesmo com o campo visivelmente cheio (bug reportado pelo usuário).
+        if (preferredSlot === -1) return { type: 'pass' };
 
         return { type: 'summon', handIndex: best.handIndex, slotIndex: preferredSlot };
       }
@@ -154,14 +161,20 @@ export function chooseAction(battleState) {
       // Decision rules for timing
       // - If AI has fewer creatures than enemy, prefer to summon
       if (enemyCreatures.length > aiCreatureCount) {
-        const preferredSlot = slots.findIndex(s => !s) || 0;
-        return { type: 'summon', handIndex: best.handIndex, slotIndex: preferredSlot };
+        // Mesmo bug do bloco acima: `findIndex(...) || 0` trocava -1 (campo cheio) por 0
+        // incorretamente (-1 é truthy em JS, então `|| 0` nunca disparava).
+        const preferredSlot = slots.findIndex(s => !s);
+        if (preferredSlot !== -1) {
+          return { type: 'summon', handIndex: best.handIndex, slotIndex: preferredSlot };
+        }
       }
 
       // - If the best candidate has positive score (favorable matchup), summon
       if (best.score > 0.5) {
-        const preferredSlot = slots.findIndex(s => !s) || 0;
-        return { type: 'summon', handIndex: best.handIndex, slotIndex: preferredSlot };
+        const preferredSlot = slots.findIndex(s => !s);
+        if (preferredSlot !== -1) {
+          return { type: 'summon', handIndex: best.handIndex, slotIndex: preferredSlot };
+        }
       }
 
       // - If there is a useful field card in hand and situation not favorable, prefer invoking field
@@ -639,4 +652,3 @@ export function processActiveEffects(state) {
 
   return newState;
 }
-

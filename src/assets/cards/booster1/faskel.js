@@ -9,6 +9,7 @@ module.exports = {
   type: { pt: 'Mística', en: 'Mystic' },
   element: 'ar',
   img: require('../../img/creatures/faskel_bio.webp'),
+  altImg: require('../../img/creatures/alternative/faskel_alternative.png'),
   color: 'air',
   hp: 5,
   abilities: [

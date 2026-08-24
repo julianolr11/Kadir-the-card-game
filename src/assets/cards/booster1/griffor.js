@@ -8,6 +8,7 @@ module.exports = {
   type: { pt: 'Ave', en: 'Bird' },
   element: 'puro',
   img: require('../../img/creatures/griffor_bio.webp'),
+  altImg: require('../../img/creatures/alternative/griffor-alternative.png'),
   color: 'pure',
   hp: 5,
   abilities: [

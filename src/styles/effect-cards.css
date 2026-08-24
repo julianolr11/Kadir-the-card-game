@@ -110,74 +110,259 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background:
+    radial-gradient(circle at 50% 42%, rgba(83, 42, 116, 0.2), transparent 38%),
+    rgba(3, 5, 9, 0.82);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: var(--z-card-modal, 12000);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(12px) saturate(0.72);
+  -webkit-backdrop-filter: blur(12px) saturate(0.72);
 }
 
 .effect-target-container {
-  background: rgba(44, 38, 60, 0.9);
-  border: 2px solid rgba(180, 120, 255, 0.4);
-  border-radius: 16px;
-  padding: 24px;
-  min-width: 600px;
-  max-height: 80vh;
+  --target-accent: #d9a7ff;
+  position: relative;
+  width: min(760px, calc(100vw - 32px));
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.035), transparent 28%),
+    linear-gradient(165deg, rgba(28, 25, 39, 0.98), rgba(13, 14, 21, 0.98));
+  border: 1px solid rgba(209, 154, 255, 0.5);
+  border-radius: 22px;
+  padding: 0 28px 24px;
+  max-height: min(84vh, 720px);
   overflow-y: auto;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  box-shadow:
+    0 32px 90px rgba(0, 0, 0, 0.72),
+    0 0 0 1px rgba(255, 255, 255, 0.035) inset,
+    0 -1px 34px rgba(170, 93, 226, 0.11) inset;
+  animation: effectTargetEnter 260ms cubic-bezier(.2, .85, .25, 1) both;
+}
+
+.effect-target-container::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 18%;
+  width: 64%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #e2b5ff, transparent);
+  box-shadow: 0 0 18px rgba(211, 150, 255, 0.7);
+}
+
+@keyframes effectTargetEnter {
+  from { opacity: 0; transform: translateY(16px) scale(0.975); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.effect-target-header {
+  padding: 25px 60px 20px;
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.effect-target-kicker {
+  color: #a997b9;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
 }
 
 .effect-target-title {
-  color: #c896ff;
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 20px;
+  color: #f7efff;
+  font-family: 'Cinzel', 'Georgia', serif;
+  font-size: clamp(22px, 3vw, 29px);
+  font-weight: 700;
+  letter-spacing: 0.015em;
+  margin: 4px 0 3px;
+  text-shadow: 0 0 22px rgba(197, 125, 255, 0.26);
+}
+
+.effect-target-header p {
+  margin: 0;
+  color: #9f98aa;
+  font-size: 12px;
+}
+
+.effect-target-close {
+  position: absolute;
+  z-index: 2;
+  top: 17px;
+  right: 18px;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.035);
+  color: #a9a2b1;
+  font: 300 23px/1 sans-serif;
+  cursor: pointer;
+  transition: 160ms ease;
+}
+
+.effect-target-close:hover {
+  color: #fff;
+  border-color: rgba(220, 172, 255, 0.55);
+  background: rgba(187, 112, 242, 0.12);
+  transform: rotate(8deg);
+}
+
+.effect-target-dual {
+  padding-top: 20px;
+}
+
+.effect-target-group + .effect-target-group {
+  margin-top: 18px;
+}
+
+.effect-target-group-enemy {
+  animation: effectTargetReveal 260ms ease-out both;
+}
+
+@keyframes effectTargetReveal {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.effect-target-group-heading {
+  display: grid;
+  grid-template-columns: 31px 1fr auto;
+  align-items: center;
+  gap: 11px;
+  margin: 0 2px 11px;
+}
+
+.effect-target-step {
+  display: grid;
+  place-items: center;
+  width: 29px;
+  height: 29px;
+  border: 1px solid rgba(210, 158, 250, 0.48);
+  border-radius: 9px;
+  color: #e4baff;
+  background: rgba(177, 98, 229, 0.1);
+  font: 700 12px/1 sans-serif;
+}
+
+.effect-target-group-heading strong,
+.effect-target-group-heading small {
+  display: block;
+}
+
+.effect-target-group-heading strong {
+  color: #eee9f2;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+}
+
+.effect-target-group-heading small {
+  color: #817b89;
+  font-size: 10px;
+  margin-top: 2px;
+}
+
+.effect-target-count {
+  min-width: 26px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.055);
+  color: #aaa3b2;
+  font-size: 10px;
   text-align: center;
 }
 
 .effect-target-options {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-bottom: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+  gap: 11px;
+  margin-bottom: 4px;
 }
 
 .effect-target-option {
-  border: 2px solid rgba(180, 120, 255, 0.3);
-  border-radius: 8px;
-  padding: 12px;
+  position: relative;
+  min-width: 0;
+  border: 1px solid rgba(198, 158, 224, 0.24);
+  border-radius: 12px;
+  padding: 7px 7px 9px;
   text-align: center;
   cursor: pointer;
-  background: rgba(100, 50, 150, 0.1);
-  transition: all 0.2s ease;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.015));
+  transition: transform 170ms ease, border-color 170ms ease, box-shadow 170ms ease, background 170ms ease;
   color: #f5f5fa;
+  overflow: hidden;
 }
 
 .effect-target-option:hover {
-  border-color: rgba(180, 120, 255, 0.8);
-  background: rgba(100, 50, 150, 0.3);
-  transform: scale(1.05);
-  box-shadow: 0 0 15px rgba(180, 120, 255, 0.4);
+  border-color: rgba(216, 166, 255, 0.72);
+  background: linear-gradient(160deg, rgba(190, 112, 241, 0.13), rgba(255, 255, 255, 0.025));
+  transform: translateY(-3px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.34), 0 0 18px rgba(180, 109, 230, 0.13);
+}
+
+.effect-target-option.is-selected {
+  border-color: #daa6ff;
+  background: linear-gradient(160deg, rgba(183, 104, 235, 0.22), rgba(121, 65, 164, 0.08));
+  box-shadow: 0 0 0 1px rgba(218, 166, 255, 0.3), 0 0 24px rgba(177, 97, 233, 0.24);
 }
 
 .effect-target-option img {
   width: 100%;
-  height: 100px;
+  height: 104px;
   object-fit: cover;
-  border-radius: 4px;
-  margin-bottom: 8px;
+  border-radius: 8px;
+  margin-bottom: 7px;
+  filter: saturate(0.92) contrast(1.05);
+  transition: filter 170ms ease, transform 220ms ease;
+}
+
+.effect-target-option:hover img,
+.effect-target-option.is-selected img {
+  filter: saturate(1.12) contrast(1.08) brightness(1.04);
+  transform: scale(1.018);
+}
+
+.effect-target-option-name {
+  overflow: hidden;
+  color: #e8e3eb;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.effect-target-selected-mark {
+  position: absolute;
+  top: 13px;
+  right: 13px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #d9a4ff;
+  color: #25142e;
+  font: 900 12px/1 sans-serif;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.5), 0 0 13px rgba(217, 164, 255, 0.65);
+  opacity: 0;
+  transform: scale(0.6);
+  transition: 160ms ease;
+}
+
+.effect-target-option.is-selected .effect-target-selected-mark {
+  opacity: 1;
+  transform: scale(1);
 }
 
 .effect-target-buttons {
   display: flex;
   gap: 12px;
   justify-content: center;
-  margin-top: 20px;
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.065);
 }
 
 .effect-target-btn {
@@ -201,14 +386,33 @@
 }
 
 .effect-target-btn-cancel {
-  background: transparent;
-  color: rgba(245, 245, 250, 0.7);
-  border: 2px solid rgba(245, 245, 250, 0.3);
+  min-width: 118px;
+  background: rgba(255, 255, 255, 0.035);
+  color: rgba(232, 226, 237, 0.72);
+  border: 1px solid rgba(232, 226, 237, 0.2);
+  border-radius: 9px;
 }
 
 .effect-target-btn-cancel:hover {
-  border-color: rgba(245, 245, 250, 0.7);
+  border-color: rgba(218, 166, 255, 0.58);
   color: #f5f5fa;
+  background: rgba(181, 107, 232, 0.09);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 620px) {
+  .effect-target-container { padding-inline: 16px; border-radius: 16px; }
+  .effect-target-header { padding-inline: 36px; }
+  .effect-target-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .effect-target-option img { height: 92px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .effect-target-container,
+  .effect-target-group-enemy { animation: none; }
+  .effect-target-option,
+  .effect-target-option img,
+  .effect-target-close { transition: none; }
 }
 
 /* Indicador de sem custo */

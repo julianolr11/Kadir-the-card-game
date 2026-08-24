@@ -350,12 +350,45 @@
 }
 
 .product-card.rarity-card {
-  border-width: 3px;
+  isolation: isolate;
+  border-width: 1px;
+  border-color: rgba(220, 193, 143, .22);
+  background:
+    radial-gradient(
+      ellipse 76% 54% at 50% 27%,
+      color-mix(in srgb, var(--rarity-color) 36%, transparent) 0%,
+      color-mix(in srgb, var(--rarity-color) 14%, transparent) 42%,
+      transparent 74%
+    ),
+    linear-gradient(160deg, rgba(43, 30, 51, .92), rgba(21, 16, 28, .94));
+  box-shadow: inset 0 1px rgba(255,255,255,.045);
 }
 
 .product-card.rarity-card:hover {
-  box-shadow: 0 8px 32px currentColor;
+  border-color: color-mix(in srgb, var(--rarity-color) 38%, rgba(220,193,143,.22));
+  box-shadow:
+    0 12px 28px rgba(0,0,0,.42),
+    inset 0 0 34px color-mix(in srgb, var(--rarity-color) 11%, transparent);
 }
+.product-card.rarity-card .product-card-image::before {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  inset: 7% 8% -2%;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    color-mix(in srgb, var(--rarity-color) 42%, transparent),
+    color-mix(in srgb, var(--rarity-color) 13%, transparent) 48%,
+    transparent 72%
+  );
+  filter: blur(9px);
+  opacity: .72;
+  pointer-events: none;
+  transition: opacity .25s ease, transform .25s ease;
+}
+.product-card.rarity-card .product-card-image img { position: relative; z-index: 1; }
+.product-card.rarity-card:hover .product-card-image::before { opacity: 1; transform: scale(1.08); }
 
 /* Badge de Raridade no Preview */
 .preview-rarity-badge {
@@ -1058,4 +1091,135 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .preview-product-image, .product-card, .product-card-image img, .purchase-button-arrow { transition: none; }
+}
+
+/* Royal bazaar — cohesive shop presentation */
+.shop-shell {
+  border-radius: 8px;
+  border: 1px solid rgba(219, 178, 99, .48);
+  background:
+    radial-gradient(ellipse at 17% 25%, rgba(116, 55, 83, .2), transparent 34%),
+    linear-gradient(112deg, rgba(32, 20, 32, .985), rgba(8, 7, 12, .99) 44%, rgba(13, 9, 17, .985));
+  box-shadow: 0 35px 85px rgba(0, 0, 0, .7), inset 0 0 0 4px rgba(5, 4, 8, .55), inset 0 0 0 5px rgba(215, 169, 82, .1);
+}
+.shop-shell::before {
+  content: ''; position: absolute; z-index: 4; pointer-events: none;
+  inset: 9px; border: 1px solid rgba(229, 190, 112, .09); border-radius: 3px;
+}
+.shop-header {
+  min-height: 82px; padding: 13px 34px 12px;
+  border-bottom: 1px solid rgba(222, 174, 81, .26);
+  background: linear-gradient(90deg, rgba(73, 35, 56, .35), transparent 33%, transparent 68%, rgba(72, 48, 24, .12));
+}
+.shop-header::after {
+  content: '◆'; position: absolute; left: 50%; bottom: -8px; z-index: 5;
+  padding: 0 10px; transform: translateX(-50%); color: #d6a849;
+  background: #110c15; font-size: 12px; text-shadow: 0 0 12px rgba(224, 170, 65, .75);
+}
+.shop-heading { text-align: left; }
+.shop-title { margin: 1px 0 0; line-height: .92; text-shadow: 0 3px 16px rgba(0,0,0,.5); }
+.shop-heading-subtitle {
+  display: block; margin-top: 6px; color: #897b69;
+  font: 700 9px Arial, sans-serif; letter-spacing: .1em; text-transform: uppercase;
+}
+.shop-wallet {
+  padding: 8px 14px; border-radius: 5px;
+  border-color: rgba(218, 171, 77, .3);
+  background: linear-gradient(180deg, rgba(25, 18, 28, .92), rgba(10, 8, 14, .92));
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.025), 0 8px 22px rgba(0,0,0,.22);
+}
+.shop-wallet-item strong { color: #f0bd4d; text-shadow: 0 0 15px rgba(240, 174, 45, .26); }
+.shop-pack-icon { transform: rotate(45deg); border-radius: 2px !important; }
+.shop-back-btn { border-radius: 4px; background: rgba(30, 21, 32, .72); }
+
+.shop-layout { gap: 16px; padding: 18px; }
+.shop-preview-card {
+  border-radius: 5px; padding: 21px 25px 20px;
+  border-color: rgba(226, 181, 91, .38);
+  background:
+    linear-gradient(90deg, transparent 49.7%, rgba(224,177,87,.09) 50%, transparent 50.3%),
+    radial-gradient(ellipse at 50% 34%, rgba(176, 106, 44, .22), transparent 44%),
+    linear-gradient(155deg, rgba(54, 30, 49, .92), rgba(16, 12, 21, .97));
+  box-shadow: inset 0 0 0 7px rgba(7,5,10,.28), inset 0 0 0 8px rgba(230,184,96,.07);
+}
+.shop-preview-card::after {
+  content: ''; position: absolute; inset: 12px; pointer-events: none;
+  border: 1px solid rgba(233, 192, 111, .11);
+  clip-path: polygon(0 0, 34px 0, 34px 1px, calc(100% - 34px) 1px, calc(100% - 34px) 0, 100% 0, 100% 34px, calc(100% - 1px) 34px, calc(100% - 1px) calc(100% - 34px), 100% calc(100% - 34px), 100% 100%, calc(100% - 34px) 100%, calc(100% - 34px) calc(100% - 1px), 34px calc(100% - 1px), 34px 100%, 0 100%);
+}
+.preview-kicker { color: #d8a94c; letter-spacing: .16em; }
+.preview-image-container { max-height: 385px; }
+.preview-spotlight {
+  width: 76%; border-color: rgba(229, 182, 91, .18);
+  background: radial-gradient(circle, rgba(244,190,84,.19), rgba(128,68,131,.07) 47%, transparent 70%);
+  box-shadow: inset 0 0 42px rgba(226,161,54,.06), 0 0 35px rgba(100,49,104,.1);
+}
+.preview-spotlight::after {
+  content: ''; position: absolute; left: 8%; right: 8%; bottom: 5%; height: 14px;
+  border-radius: 50%; background: rgba(0,0,0,.62); filter: blur(8px);
+}
+.preview-product-info { border-top: 1px solid rgba(229,185,99,.16); padding-top: 14px; }
+.preview-product-name { font-size: clamp(24px, 1.55vw, 30px); }
+.preview-benefits span { border-radius: 3px; }
+.preview-purchase-row { margin-top: 2px; border-bottom: 1px solid rgba(241,202,126,.1); }
+.purchase-button {
+  border-radius: 4px; border-color: rgba(245, 202, 111, .56);
+  background: linear-gradient(110deg, #6f421c, #b47724 48%, #81501e);
+  box-shadow: 0 12px 27px rgba(105,61,19,.3), inset 0 1px rgba(255,238,186,.25);
+  color: #fff1ca;
+}
+.purchase-button:not(.disabled):hover {
+  background: linear-gradient(110deg, #805021, #ce9133 48%, #935e22);
+  box-shadow: 0 16px 32px rgba(130,78,23,.4), inset 0 1px rgba(255,245,207,.3);
+}
+.purchase-button.success { background: linear-gradient(110deg, #17613d, #29945e, #17613d); }
+
+.shop-products-column { border-radius: 5px; }
+.shop-catalog-header {
+  position: relative; padding: 17px 24px 16px;
+  background: linear-gradient(90deg, rgba(66,37,69,.22), transparent 52%);
+}
+.shop-catalog-header::after {
+  content: ''; position: absolute; left: 24px; bottom: -1px; width: 105px; height: 2px;
+  background: linear-gradient(90deg, #d9a644, transparent); box-shadow: 0 0 9px rgba(217,166,68,.45);
+}
+.shop-offer-count { border-radius: 3px; letter-spacing: .05em; }
+.shop-products-grid { gap: 12px; padding: 16px; }
+.product-card {
+  min-height: 238px; padding: 0; border-radius: 5px;
+  border-color: rgba(197, 169, 124, .3);
+  background: linear-gradient(155deg, rgba(43,29,48,.97), rgba(15,12,20,.99));
+}
+.product-card::before {
+  content: ''; position: absolute; z-index: 2; pointer-events: none; inset: 7px;
+  border: 1px solid rgba(236,208,157,.055);
+}
+.product-card-index {
+  position: absolute; z-index: 3; top: 11px; right: 12px; color: rgba(213,190,151,.28);
+  font: 800 10px Arial, sans-serif; letter-spacing: .12em;
+}
+.product-card-image {
+  position: relative; height: 148px; margin: 0; padding: 12px 12px 7px;
+  border-bottom: 1px solid rgba(221,181,103,.13);
+  background: radial-gradient(circle at 50% 55%, rgba(139,84,137,.13), transparent 58%);
+}
+.product-card-info { height: auto; min-height: 80px; padding: 10px 14px 12px; box-sizing: border-box; }
+.product-card-type { color: #a79372; letter-spacing: .13em; }
+.product-card-name { font-family: Georgia, serif; font-size: 16px; }
+.product-card-price { display: flex; align-items: center; gap: 7px; }
+.product-card.cannot-afford .product-card-price { color: #9f7b48; }
+.product-card.cannot-afford:not(.selected) { filter: saturate(.82); }
+.product-card.selected {
+  border-color: #e8b548 !important;
+  box-shadow: inset 0 0 0 1px rgba(232,181,72,.75), 0 0 28px rgba(231,165,43,.17);
+}
+.product-card.selected::before { border-color: rgba(248,212,137,.16); }
+.product-selected-mark { top: 10px; left: 10px; border-radius: 2px; }
+.product-discount-badge { top: 10px; right: 10px; border-radius: 2px; }
+.product-card:hover { transform: translateY(-5px); box-shadow: 0 18px 32px rgba(0,0,0,.45); }
+
+@media (max-width: 1500px) {
+  .product-card { min-height: 224px; }
+  .product-card-image { height: 132px; }
+  .shop-heading-subtitle { display: none; }
 }

@@ -8,6 +8,7 @@ module.exports = {
   type: { pt: 'Sombria', en: 'Shadow' },
   element: 'agua',
   img: require('../../img/creatures/sunburst_bio.webp'),
+  altImg: require('../../img/creatures/alternative/sunburst-alternative.png'),
   color: 'water',
   hp: 5,
   abilities: [

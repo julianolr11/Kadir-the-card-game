@@ -8,6 +8,7 @@ module.exports = {
   type: { pt: 'Monstro', en: 'Monster' },
   element: 'agua',
   img: require('../../img/creatures/mawthorn_bio.webp'),
+  altImg: require('../../img/creatures/alternative/mawthorn_alternative.png'),
   color: 'water',
   hp: 8,
   abilities: [

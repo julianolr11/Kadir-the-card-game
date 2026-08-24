@@ -9,6 +9,7 @@ module.exports = {
   type: { pt: 'Mística', en: 'Mystic' },
   element: 'fogo',
   img: require('../../img/creatures/digitama_bio.webp'),
+  altImg: require('../../img/creatures/alternative/digitama_alternative.png'),
   color: 'fire',
   hp: 4,
   abilities: [

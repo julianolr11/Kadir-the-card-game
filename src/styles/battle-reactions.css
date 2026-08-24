@@ -1,0 +1,291 @@
+/* Cartões de jogador (canto inferior esquerdo = você, canto superior esquerdo = adversário no
+   PvP) - fora de .board (que tem overflow:hidden e só ~20px de folga abaixo da vida), por isso
+   renderizados como irmãos de .board dentro de .battle-root. Mesma coluna esquerda em ambos
+   (25px de margem do board + 20px do offset da vida/opponent-essence em battle.css). */
+.battle-player-hud {
+  position: absolute;
+  left: 45px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  background: rgba(20, 10, 30, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(10px);
+  z-index: 200;
+}
+
+.battle-player-hud-own {
+  bottom: 12px;
+}
+
+.battle-player-hud-opponent {
+  top: 20px;
+}
+
+.battle-player-hud-avatar {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.battle-player-hud-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.battle-player-hud-avatar-fallback {
+  font-family: Georgia, serif;
+  font-weight: 700;
+  font-size: 1rem;
+  color: rgba(255, 230, 176, 0.75);
+}
+
+.battle-player-hud-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 3px;
+}
+
+.battle-player-hud-name,
+.battle-player-hud-opponent .battle-player-hud-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #ffe6b0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
+}
+
+.battle-player-hud-badges {
+  display: flex;
+  gap: 4px;
+}
+
+.battle-player-hud-badges img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 3px rgba(255, 215, 0, 0.4));
+}
+
+/* Reação animada FLUTUANDO acima do cartão (própria ou do adversário) - nunca no mesmo lugar do
+   nome/insígnias. position:absolute tira do fluxo do flex (não empurra o resto do cartão) e
+   ancora pelo centro, subindo e sumindo em fade-out (ver battle-reaction-float-up). Seletor
+   composto (.battle-reaction-bubble.battle-player-hud-reaction) pra vencer a especificidade da
+   animação padrão de .battle-reaction-bubble sozinha. */
+.battle-reaction-bubble.battle-player-hud-reaction {
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  margin-bottom: 10px;
+  width: 44px;
+  height: 44px;
+  transform: translateX(-50%);
+  animation: battle-reaction-float-up 2.5s ease forwards;
+}
+
+.battle-player-hud-reaction img {
+  width: 30px;
+  height: 30px;
+}
+
+/* Botão + popover de reações, agora aninhado dentro de .battle-player-hud-own. */
+.battle-reaction-picker {
+  position: relative;
+  display: inline-flex;
+}
+
+/* Fora de .battle-topbar (que estiliza ".battle-topbar button" globalmente) - replica o mesmo
+   visual de botão usado no resto da battle-topbar/custom-btn (ver battle.css) pra não destoar. */
+.battle-reaction-trigger {
+  background: #2f1e3f;
+  color: #ffe6b0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-family: "Poppins", Arial, sans-serif;
+  font-weight: 600;
+  box-shadow: 0 6px 32px 0 rgba(30, 22, 40, 0.18);
+  backdrop-filter: blur(14px);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4666666667);
+  letter-spacing: 0.5px;
+  outline: none;
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+}
+
+.battle-reaction-trigger:hover {
+  background: #3a2850;
+  color: #fffbe0;
+  box-shadow: 0 12px 28px #000c;
+}
+
+.battle-reaction-trigger:focus-visible {
+  outline: 2px solid #ffd700;
+  outline-offset: 2px;
+}
+
+.battle-reaction-popover {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  background: rgba(20, 10, 30, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(10px);
+  z-index: 50040;
+}
+
+.battle-reaction-option {
+  width: 44px;
+  height: 44px;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.battle-reaction-option:hover,
+.battle-reaction-option:focus-visible {
+  background: rgba(255, 255, 255, 0.18);
+  transform: translateY(-2px) scale(1.06);
+  outline: 2px solid #ffd700;
+  outline-offset: 2px;
+}
+
+.battle-reaction-option img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+/* Bolha de reação efêmera (entrada, leve flutuação, saída - ~2.5s). Reaproveitada em três
+   lugares: cartão do adversário no PvP (.battle-player-hud-reaction, flutua acima do nome via
+   battle-reaction-float-up), cada linha da timeline de turnos na Calamidade
+   (.calamity-turn-reaction, fica inline do lado do nome, ver abaixo) e como base de
+   tamanho/animação padrão. */
+.battle-reaction-bubble {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 10, 30, 0.85);
+  border: 2px solid rgba(255, 215, 0, 0.55);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+  animation: battle-reaction-pop 2.5s ease forwards;
+  pointer-events: none;
+}
+
+.battle-reaction-bubble img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+/* Ancorada do lado de fora da borda direita da linha (e da própria box .calamity-turn-timeline,
+   que agora usa overflow:visible - ver calamity.css) em vez de inline, pra não ficar espremida
+   dentro do painel. .calamity-turn-entry precisa de position:relative (já tem, ver
+   calamity.css). Halo pulsante (calamity-reaction-glow-pulse) chama atenção sem competir com o
+   glow da linha ativa. calamity-reaction-pop-side já embute o translateY(-50%) de centralização
+   em cada frame porque a animação substitui o transform da regra base inteiro. */
+.battle-reaction-bubble.calamity-turn-reaction {
+  position: absolute;
+  top: 50%;
+  right: -32px;
+  width: 46px;
+  height: 46px;
+  transform: translateY(-50%);
+  animation: calamity-reaction-pop-side 2.5s ease forwards, calamity-reaction-glow-pulse 0.85s ease-in-out 2;
+}
+
+.calamity-turn-reaction img {
+  position: relative;
+  z-index: 1;
+  width: 32px;
+  height: 32px;
+}
+
+@keyframes calamity-reaction-pop-side {
+  0% { opacity: 0; transform: translateY(-50%) scale(0.6) translateX(8px); }
+  10% { opacity: 1; transform: translateY(-50%) scale(1.08) translateX(0); }
+  16% { transform: translateY(-50%) scale(1) translateX(0); }
+  84% { opacity: 1; transform: translateY(-50%) scale(1) translateX(0); }
+  100% { opacity: 0; transform: translateY(-50%) scale(0.85) translateX(6px); }
+}
+
+@keyframes calamity-reaction-glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.35);
+    border-color: rgba(255, 215, 0, 0.55);
+  }
+  50% {
+    box-shadow: 0 0 18px 6px rgba(255, 215, 0, 0.65);
+    border-color: rgba(255, 235, 150, 0.95);
+  }
+}
+
+@keyframes battle-reaction-pop {
+  0% { opacity: 0; transform: scale(0.6) translateY(10px); }
+  10% { opacity: 1; transform: scale(1.08) translateY(0); }
+  16% { transform: scale(1) translateY(0); }
+  50% { transform: translateY(-4px); }
+  84% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: scale(0.85) translateY(-6px); }
+}
+
+/* Reação "flutuando e subindo, depois sumindo em fade-out" - usada só no cartão de jogador do
+   PvP (.battle-player-hud-reaction). Sobe mais que battle-reaction-pop porque aqui ela precisa
+   se destacar claramente da posição do nome/rótulo, não só balançar. */
+@keyframes battle-reaction-float-up {
+  0% { opacity: 0; transform: translateX(-50%) scale(0.7) translateY(6px); }
+  12% { opacity: 1; transform: translateX(-50%) scale(1) translateY(0); }
+  70% { opacity: 1; transform: translateX(-50%) translateY(-30px); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-48px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .battle-reaction-bubble,
+  .battle-reaction-bubble.calamity-turn-reaction,
+  .battle-reaction-bubble.battle-player-hud-reaction {
+    animation: battle-reaction-fade 2.5s ease forwards;
+  }
+
+  .battle-reaction-option:hover,
+  .battle-reaction-option:focus-visible {
+    transform: none;
+  }
+}
+
+@keyframes battle-reaction-fade {
+  0% { opacity: 0; }
+  10% { opacity: 1; }
+  84% { opacity: 1; }
+  100% { opacity: 0; }
+}

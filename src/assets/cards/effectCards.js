@@ -47,6 +47,8 @@ const effectCards = [
     element: 'puro',
     cost: 0,
     img: require('../img/effect-cards/essence-fluid_resultado.webp'),
+    // Mantém o "x2" da arte dentro do recorte horizontal usado nos previews.
+    imgPosition: 'center 40%',
     description: {
       pt: 'Dá +2 de essência ao usuário',
       en: 'Grants +2 essence to the user'
@@ -58,7 +60,7 @@ const effectCards = [
     color: 'pure',
     // Peso de sorteio em booster: 1 = chance normal (padrão quando ausente). Reduzido porque
     // essência grátis sem custo é forte demais pra ter a mesma chance que os outros efeitos.
-    dropWeight: 0.3
+    dropWeight: 0.1
   },
 
   {
@@ -248,11 +250,11 @@ const effectCards = [
     cost: 0,
     img: require('../img/effect-cards/essence_ritual_resultado.webp'),
     description: {
-      pt: 'Sacrifique uma carta da sua mao para obter +1 de essencia',
-      en: 'Sacrifice one card from your hand to gain +1 essence'
+      pt: 'Sacrifique uma carta da sua mao para obter +2 de essencia',
+      en: 'Sacrifice one card from your hand to gain +2 essence'
     },
     effectType: 'essenceSacrifice',
-    effectValue: 1,
+    effectValue: 2,
     targetType: 'handSacrifice',
     duration: 0,
     color: 'pure'

@@ -311,6 +311,7 @@ function Shop({ onBack }) {
         <div className="shop-heading">
           <span className="shop-eyebrow">{isEn ? 'Kingdom market' : 'Mercado do reino'}</span>
           <h1 className="shop-title">{isEn ? 'Shop' : 'Loja'}</h1>
+          <span className="shop-heading-subtitle">{isEn ? 'Relics, cards & provisions' : 'Relíquias, cartas e provisões'}</span>
         </div>
         <div className="shop-wallet">
           <div className="shop-wallet-item">
@@ -405,10 +406,10 @@ function Shop({ onBack }) {
             <span className="shop-offer-count">{SHOP_PRODUCTS.length} {isEn ? 'offers' : 'ofertas'}</span>
           </div>
           <div className="shop-products-grid">
-            {SHOP_PRODUCTS.map((product) => (
+            {SHOP_PRODUCTS.map((product, index) => (
               <div
                 key={product.id}
-                className={`product-card ${selectedProduct?.id === product.id ? 'selected' : ''} ${product.rarityColor ? 'rarity-card' : ''}`}
+                className={`product-card ${selectedProduct?.id === product.id ? 'selected' : ''} ${product.rarityColor ? 'rarity-card' : ''} ${coins >= product.price ? 'can-afford' : 'cannot-afford'}`}
                 onClick={() => handleProductClick(product)}
                 role="button"
                 tabIndex={0}
@@ -420,9 +421,10 @@ function Shop({ onBack }) {
                   }
                 }}
                 style={product.rarityColor ? {
-                  borderColor: product.rarityColor
+                  '--rarity-color': product.rarityColor
                 } : {}}
               >
+                <span className="product-card-index" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
                 {selectedProduct?.id === product.id && (
                   <span className="product-selected-mark">{isEn ? 'Selected' : 'Selecionado'}</span>
                 )}

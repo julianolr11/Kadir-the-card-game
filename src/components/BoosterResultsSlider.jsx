@@ -8,6 +8,7 @@ import flipCardSound from '../assets/sounds/effects/flipcard.MP3';
 import holoEffectSound from '../assets/sounds/effects/holo-effect.mp3';
 import { AppContext } from '../context/AppContext';
 import CreatureCardPreview from './CreatureCardPreview';
+import { FullArtCard } from './KadirFullArtPreview.jsx';
 import StatusText from './StatusText';
 
 const getElementImage = (element) => {
@@ -317,6 +318,24 @@ function BoosterResultsSlider({ cards, lang, onClose }) {
                   );
                 }
                 */
+                // Exibição especial para full art (e full art alternativa) puxada direto do
+                // booster de Calamidade — ver fullArtChance/altArtChance em HomeScreen.jsx.
+                if (card?.isFullArt) {
+                  return (
+                    <div key={`${card?.id || idx}-${idx}`} className={wrapperClass}>
+                      {isNewCard(card) && (
+                        <div className="card-badge-new">
+                          {lang === 'en' ? 'NEW' : 'NOVA'}
+                        </div>
+                      )}
+                      <div className="card-badge-new" style={{ background: card.isAltArt ? '#9b59b6' : '#f39c12', top: isNewCard(card) ? 44 : undefined }}>
+                        {card.isAltArt ? (lang === 'en' ? 'ALT ART' : 'ARTE ALT.') : 'FULL ART'}
+                      </div>
+                      <FullArtCard card={card} lang={lang} isAltArt={Boolean(card?.isAltArt)} />
+                    </div>
+                  );
+                }
+
                 // ...exibição padrão para outras cartas...
                 return (
                   <div
@@ -366,6 +385,7 @@ function BoosterResultsSlider({ cards, lang, onClose }) {
                             src={typeof card.img === 'string' ? card.img : (card.img?.default || '')}
                             alt={getLocalizedText(card?.name, lang)}
                             className="card-preview-art"
+                            style={card.imgPosition ? { objectPosition: card.imgPosition } : undefined}
                           />
                         )}
                       </div>

@@ -459,31 +459,67 @@
   left: 32px;
   display: flex;
   align-items: center;
-  gap: 11px;
-  min-width: 124px;
-  padding: 12px 18px;
-  border: 1px solid rgba(239, 208, 146, 0.42);
-  border-radius: 11px;
-  background: linear-gradient(180deg, rgba(38, 27, 42, 0.94), rgba(16, 11, 21, 0.96));
+  gap: 14px;
+  min-width: 178px;
+  min-height: 58px;
+  padding: 12px 24px 12px 18px;
+  overflow: visible;
+  border: 1px solid rgba(229, 188, 104, 0.58);
+  border-radius: 5px;
+  background:
+    radial-gradient(circle at 15% 50%, rgba(132, 71, 143, .18), transparent 36%),
+    linear-gradient(155deg, rgba(45, 28, 52, 0.97), rgba(14, 8, 19, 0.98));
   color: #f7e8c2;
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 0.95rem;
+  font-size: 1.02rem;
   font-weight: 600;
   cursor: pointer;
   transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
   z-index: 100;
-  box-shadow: 0 9px 22px rgba(0, 0, 0, 0.38), inset 0 1px rgba(255, 238, 201, 0.08);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.44), 0 0 0 4px rgba(10,6,13,.34), inset 0 1px rgba(255, 238, 201, 0.09);
+}
+
+.bestiary-back-btn::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 1px solid rgba(229,188,104,.1);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+.bestiary-back-btn::after {
+  content: '◆';
+  position: absolute;
+  top: 50%;
+  right: -7px;
+  width: 14px;
+  height: 14px;
+  transform: translateY(-50%) rotate(45deg);
+  border: 1px solid rgba(229,188,104,.55);
+  background: #1b0f20;
+  color: #d6ab50;
+  font-size: 5px;
+  line-height: 13px;
+  text-align: center;
 }
 
 .bestiary-back-btn:hover {
-  transform: translateX(-3px);
-  border-color: rgba(239, 204, 137, 0.74);
-  background: linear-gradient(180deg, rgba(58, 39, 48, 0.98), rgba(23, 15, 27, 0.98));
-  box-shadow: 0 12px 27px rgba(0, 0, 0, 0.44), 0 0 16px rgba(205, 153, 65, 0.1);
+  transform: translateX(-4px);
+  border-color: rgba(239, 204, 137, 0.86);
+  background: radial-gradient(circle at 15% 50%, rgba(151,82,161,.25), transparent 38%), linear-gradient(155deg, rgba(60, 36, 67, 0.99), rgba(19, 10, 25, 0.99));
+  box-shadow: 0 17px 34px rgba(0, 0, 0, 0.48), 0 0 20px rgba(205, 153, 65, 0.13), 0 0 0 4px rgba(10,6,13,.38);
 }
 
 .bestiary-back-arrow {
-  font-size: 21px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgba(229,188,104,.28);
+  border-radius: 50%;
+  background: rgba(8,5,12,.3);
+  font-size: 17px;
   color: #e2af48;
   font-weight: normal;
   transition: transform 180ms ease;

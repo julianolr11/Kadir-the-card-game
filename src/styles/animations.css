@@ -515,7 +515,7 @@
   position: fixed;
   inset: 0;
   z-index: 100000001;
-  background: #000;
+  background: #050307;
   pointer-events: all;
   display: flex;
   align-items: center;
@@ -534,16 +534,16 @@
 .route-black-curtain.covering::before {
   content: '';
   position: absolute;
-  width: min(48vw, 440px);
+  width: min(56vw, 520px);
   aspect-ratio: 1;
   border-radius: 50%;
   background:
-    repeating-conic-gradient(from 8deg, transparent 0deg 42deg, rgba(240, 207, 137, 0.7) 43deg 44deg, transparent 45deg 89deg),
-    radial-gradient(circle, transparent 0 54%, rgba(218, 178, 100, 0.5) 54.3% 54.8%, transparent 55.2%);
-  mask: radial-gradient(circle, transparent 0 47%, #000 48% 62%, transparent 63%);
+    repeating-conic-gradient(from 8deg, transparent 0deg 34deg, rgba(240, 207, 137, 0.72) 35deg 35.8deg, transparent 36.5deg 71deg),
+    radial-gradient(circle, transparent 0 54%, rgba(218, 178, 100, 0.56) 54.2% 54.7%, transparent 55.2%);
+  mask: radial-gradient(circle, transparent 0 46%, #000 47% 63%, transparent 64%);
   filter: drop-shadow(0 0 18px rgba(179, 118, 217, 0.32));
   opacity: 0;
-  animation: routeCurtainRuneSpin 4.8s linear infinite, routeCurtainRuneAppear 3000ms ease forwards;
+  animation: routeCurtainRuneSpin 5.6s linear infinite, routeCurtainRuneAppear 3000ms ease forwards;
 }
 
 .route-black-curtain.covering::after {
@@ -551,9 +551,10 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 50% 45%, rgba(111, 47, 156, 0.3), rgba(49, 20, 70, 0.13) 25%, transparent 48%),
+    radial-gradient(circle at 50% 44%, rgba(111, 47, 156, 0.38), rgba(49, 20, 70, 0.16) 27%, transparent 52%),
     radial-gradient(ellipse at 50% 60%, rgba(218, 165, 67, 0.1), transparent 30%),
-    linear-gradient(115deg, transparent 0 42%, rgba(255, 255, 255, 0.018) 42.2% 42.5%, transparent 42.7% 100%);
+    linear-gradient(115deg, transparent 0 42%, rgba(255, 255, 255, 0.025) 42.2% 42.45%, transparent 42.7% 100%),
+    repeating-radial-gradient(circle at 50% 46%, transparent 0 48px, rgba(220,180,104,.018) 49px 50px, transparent 51px 82px);
   opacity: 0;
   animation: routeCurtainAura 3000ms ease forwards;
 }
@@ -562,7 +563,7 @@
   position: relative;
   z-index: 2;
   width: min(88vw, 460px);
-  height: 430px;
+  height: 500px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -571,10 +572,10 @@
 
 .route-curtain-rune {
   position: absolute;
-  width: min(58vw, 300px);
+  width: min(60vw, 340px);
   aspect-ratio: 1;
   border-radius: 50%;
-  border: 1px solid rgba(228, 194, 125, 0.24);
+  border: 1px solid rgba(228, 194, 125, 0.32);
   box-shadow:
     0 0 48px rgba(130, 55, 181, 0.2),
     inset 0 0 32px rgba(255, 218, 132, 0.07);
@@ -582,34 +583,100 @@
   animation: routeCurtainInnerRune 3000ms ease forwards;
 }
 
-.route-curtain-card {
+.route-curtain-rune::before,
+.route-curtain-rune::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.route-curtain-rune::before {
+  inset: 18px;
+  border: 1px dashed rgba(186, 133, 218, .28);
+  animation: routeCurtainOrbitReverse 7s linear infinite;
+}
+
+.route-curtain-rune::after {
+  inset: 54px;
+  border: 1px solid rgba(228,194,125,.12);
+  box-shadow: inset 0 0 36px rgba(111,47,156,.14);
+}
+
+.route-curtain-rune > i {
+  position: absolute;
+  z-index: 2;
+  width: 9px;
+  height: 9px;
+  border: 1px solid rgba(239,207,139,.7);
+  transform: rotate(45deg);
+  background: #1b0c22;
+  box-shadow: 0 0 12px rgba(218,178,100,.32);
+}
+.route-curtain-rune > i:nth-child(1) { top: -5px; left: calc(50% - 5px); }
+.route-curtain-rune > i:nth-child(2) { top: calc(50% - 5px); right: -5px; }
+.route-curtain-rune > i:nth-child(3) { bottom: -5px; left: calc(50% - 5px); }
+.route-curtain-rune > i:nth-child(4) { top: calc(50% - 5px); left: -5px; }
+
+.route-curtain-card-aura {
   position: absolute;
   top: 104px;
+  width: 150px;
+  height: 190px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(178,91,222,.28), rgba(218,178,100,.08) 42%, transparent 70%);
+  filter: blur(12px);
+  opacity: 0;
+  animation: routeCurtainCardAura 3000ms ease forwards;
+}
+
+.route-curtain-card {
+  position: absolute;
+  top: 112px;
   z-index: 2;
-  width: 92px;
-  height: 132px;
-  border-radius: 8px;
+  width: 106px;
+  height: 152px;
+  overflow: hidden;
+  border-radius: 7px;
   background:
     linear-gradient(135deg, rgba(255, 230, 176, 0.38), transparent 26%),
     url('../assets/img/card/verso.png') center/cover no-repeat;
   box-shadow:
     0 24px 50px rgba(0, 0, 0, 0.66),
     0 0 0 1px rgba(255, 220, 143, 0.25),
-    0 0 38px rgba(143, 69, 195, 0.32);
+    0 0 38px rgba(143, 69, 195, 0.42),
+    inset 0 0 18px rgba(255,235,188,.08);
   opacity: 0;
   animation: routeCurtainCardFloat 3000ms cubic-bezier(.18,.72,.2,1) forwards;
 }
 
+.route-curtain-card::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 1px solid rgba(241,210,145,.18);
+  border-radius: 3px;
+  pointer-events: none;
+}
+
+.route-curtain-card > span {
+  position: absolute;
+  inset: -40% -100%;
+  transform: rotate(22deg) translateX(-55%);
+  background: linear-gradient(90deg, transparent 42%, rgba(255,245,211,.58) 49%, rgba(255,245,211,.12) 55%, transparent 62%);
+  animation: routeCurtainCardGlint 1800ms ease-in-out 520ms both;
+}
+
 .route-curtain-copy {
   position: absolute;
-  top: 265px;
+  top: 296px;
   left: 0;
   right: 0;
   z-index: 3;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
   text-align: center;
   opacity: 0;
   animation: routeCurtainTextPulse 3000ms ease forwards;
@@ -617,7 +684,7 @@
 
 .route-curtain-kicker {
   color: rgba(205, 163, 82, 0.8);
-  font-size: 0.58rem;
+  font-size: 0.55rem;
   font-weight: 800;
   letter-spacing: 0.42em;
   padding-left: 0.42em;
@@ -627,36 +694,45 @@
   position: relative;
   color: #f2dfb0;
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 1.12rem;
+  font-size: 1.2rem;
   font-weight: 600;
   letter-spacing: 0.025em;
   text-shadow: 0 2px 14px rgba(0, 0, 0, 0.86), 0 0 20px rgba(208, 161, 75, 0.14);
 }
 
+.route-curtain-status {
+  color: rgba(210,194,218,.48);
+  font-size: .58rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
 .route-curtain-progress {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  height: 12px;
-  margin-top: 5px;
+  position: relative;
+  width: 190px;
+  height: 3px;
+  margin-top: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(225,198,142,.11);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,.65);
 }
 
-.route-curtain-progress i {
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: #d9b66d;
-  box-shadow: 0 0 8px rgba(222, 177, 93, 0.55);
-  animation: routeCurtainDot 1.15s ease-in-out infinite;
+.route-curtain-progress span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #765095, #d9b66d 76%, #fff0c9);
+  box-shadow: 0 0 10px rgba(222,177,93,.6);
+  animation: routeCurtainProgressFill 2700ms cubic-bezier(.18,.7,.2,1) 160ms forwards;
 }
 
-.route-curtain-progress i:nth-child(2) { animation-delay: 140ms; }
-.route-curtain-progress i:nth-child(3) { animation-delay: 280ms; }
-
-@keyframes routeCurtainDot {
-  0%, 70%, 100% { opacity: .28; transform: translateY(0) scale(.8); }
-  35% { opacity: 1; transform: translateY(-3px) scale(1); }
-}
+@keyframes routeCurtainProgressFill { 0% { width: 0; } 25% { width: 24%; } 62% { width: 69%; } 100% { width: 100%; } }
+@keyframes routeCurtainOrbitReverse { to { transform: rotate(-360deg); } }
+@keyframes routeCurtainCardAura { 0%, 100% { opacity: 0; transform: scale(.7); } 25% { opacity: .85; transform: scale(1); } 72% { opacity: .56; transform: scale(1.08); } }
+@keyframes routeCurtainCardGlint { 0% { transform: rotate(22deg) translateX(-55%); opacity: 0; } 22% { opacity: 1; } 65%, 100% { transform: rotate(22deg) translateX(58%); opacity: 0; } }
 
 @keyframes continueBlackoutIn {
   0% { opacity: 0; }

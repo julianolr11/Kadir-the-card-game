@@ -29,6 +29,7 @@ import { AppContext } from '../context/AppContext';
 import CreatureCardPreview from './CreatureCardPreview';
 import CardInstanceSelector from './CardInstanceSelector';
 import { FullArtCard } from './KadirFullArtPreview';
+import StatusText from './StatusText';
 import sphereMenuSound from '../assets/sounds/effects/sphereMenuSound.js';
 import packageSound from '../assets/sounds/effects/packageSound.js';
 
@@ -57,24 +58,26 @@ function DeckLibraryGrid({
   handleDragEnd = () => {},
   openCardLoadout = () => {},
   addCardToDeck = () => {},
+  onOpenInstanceSelector = () => {},
   isDeckFull = false,
   isEn = false,
+  lang = 'ptbr',
 }) {
   // Parâmetros do grid
   // Garante que cards é sempre array
   const safeCards = Array.isArray(cards) ? cards : [];
-  const [renderCount, setRenderCount] = useState(() => Math.min(24, safeCards.length));
+  const [renderCount, setRenderCount] = useState(() => Math.min(16, safeCards.length));
 
   useEffect(() => {
-    setRenderCount(Math.min(24, safeCards.length));
-    if (safeCards.length <= 24) return undefined;
+    setRenderCount(Math.min(16, safeCards.length));
+    if (safeCards.length <= 16) return undefined;
 
     let cancelled = false;
     let idleId;
-    let revealed = 24;
+    let revealed = 16;
     const revealNextBatch = () => {
       if (cancelled) return;
-      revealed = Math.min(revealed + 12, safeCards.length);
+      revealed = Math.min(revealed + 8, safeCards.length);
       setRenderCount(revealed);
       if (revealed < safeCards.length) {
         idleId = window.requestIdleCallback
@@ -135,9 +138,17 @@ function DeckLibraryGrid({
       <div
         key={card.id}
         className={`deck-library-card ${isDisabled || unavailable ? 'disabled' : ''} ${draggedCardId === card.id ? 'dragging' : ''} ${hasMultipleInstances ? 'has-multiple-instances' : ''} ${countInDeck > 0 ? 'selected' : ''}`}
-        draggable={!isDisabled && !unavailable}
-        onDragStart={(e) => !isDisabled && !unavailable && handleDragStart(e, card.id, false)}
-        onDragEnd={handleDragEnd}
+        draggable={false}
+        role="button"
+        tabIndex={isDisabled || unavailable ? -1 : 0}
+        aria-label={`${disabledReasonLabel}: ${getName(card.data.name, isEn ? 'en' : 'ptbr')}`}
+        onClick={() => { if (!isDisabled && !unavailable) addCardToDeck(card.id); }}
+        onKeyDown={(e) => {
+          if ((e.key === 'Enter' || e.key === ' ') && !isDisabled && !unavailable) {
+            e.preventDefault();
+            addCardToDeck(card.id);
+          }
+        }}
         style={{ ...style, animationDelay: `${Math.min(idx, 6) * 20}ms`, position: 'relative', width: cardWidth, height: cardHeight, margin: 8, opacity: unavailable ? 0.5 : 1 }}
       >
         {card.data.id === 'f001' ? (
@@ -168,14 +179,28 @@ function DeckLibraryGrid({
               </div>
             </div>
           </div>
+        ) : bestAvailableInstance?.isFullArt ? (
+          <div style={{ transform: 'scale(0.319)', transformOrigin: 'top left', pointerEvents: 'none' }}>
+            <FullArtCard card={card.data} lang={lang} level={displayLevel} isAltArt={Boolean(bestAvailableInstance?.isAltArt)} />
+          </div>
         ) : (
           <div style={{ transform: 'scale(0.319)', transformOrigin: 'top left', pointerEvents: 'none' }}>
             <CreatureCardPreview creature={card.data} onClose={null} level={displayLevel} isHolo={false} allowFlip={false} />
           </div>
         )}
+        {bestAvailableInstance?.isHolo && !bestAvailableInstance?.isFullArt && (
+          <span className="deck-card-holo-badge" title={isEn ? 'Holo' : 'Holográfica'}>✨</span>
+        )}
         <div className="deck-library-card-count">{countInDeck}/{availableCount + countInDeck}</div>
         {hasMultipleInstances && availableCount > 0 && (<div className="multiple-instances-indicator" title={isEn ? 'Multiple copies available' : 'Múltiplas cópias disponíveis'}>{availableCount}x</div>)}
         <div className="deck-library-actions">
+          <button
+            className="deck-action-btn deck-action-edit"
+            onClick={(e) => { e.stopPropagation(); onOpenInstanceSelector(card.id); }}
+            title={isEn ? 'View copies (holo, full art...)' : 'Ver cópias (holo, full art...)'}
+          >
+            ✎
+          </button>
           <button
             className="deck-action-btn deck-action-add"
             disabled={isDisabled || unavailable}
@@ -343,7 +368,7 @@ const getName = (nameObj, lang = 'ptbr') => {
   return nameObj[key] || nameObj.pt || nameObj.en || '';
 };
 
-function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCards = [], onClose, onSave }) {
+function DeckEditor({ deckId, deckName: initialDeckName, deckType = 'standard', guardianId, initialCards = [], onClose, onSave }) {
   const { lang = 'ptbr', getCardInstances, cardCollection, setCardCollection, saveGuardianLoadout, loadGuardianLoadout, addCoins, removeCardInstance } = React.useContext(AppContext) || {};
   const langKey = lang === 'en' ? 'en' : 'pt';
   const isEn = langKey === 'en';
@@ -354,12 +379,14 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
   const [selectedGuardian, setSelectedGuardian] = useState(guardianId);
   const [guardianCardId, setGuardianCardId] = useState(guardianId || null);
   const [searchTerm, setSearchTerm] = useState('');
+  const deferredSearchTerm = React.useDeferredValue(searchTerm);
   const [elementFilter, setElementFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [sortBy, setSortBy] = useState('name-asc');
   const [draggedCardId, setDraggedCardId] = useState(null);
   const [dragOverSlot, setDragOverSlot] = useState(null);
   const [showSavedToast, setShowSavedToast] = useState(false);
+  const [autoBuildMessage, setAutoBuildMessage] = useState('');
   const [showDeckIncompleteWarning, setShowDeckIncompleteWarning] = useState(false);
   const [showInstanceSelector, setShowInstanceSelector] = useState(false);
   const [selectedCardForInstance, setSelectedCardForInstance] = useState(null);
@@ -445,14 +472,9 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
       }
       return false;
     }
-    const instances = getCardInstances(cardId);
-    if (instances && instances.length > 0) {
-      setSelectedCardForInstance(cardId);
-      setInstanceSlotIndex(slotIndex);
-      setShowInstanceSelector(true);
-      return false;
-    }
-    return false;
+    const bestAvailableInstance = getBestAvailableInstance(cardId);
+    if (!bestAvailableInstance?.instanceId) return false;
+    return finishAddingCardToDeck(bestAvailableInstance.instanceId, slotIndex);
   };
 
   const finishAddingCardToDeck = (instanceId, slotIndex = null) => {
@@ -620,6 +642,16 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
     return normalizeType(raw);
   };
 
+  const isCardAllowedForDeck = (cardId, data) => {
+    if (deckType !== 'calamity') return true;
+    const id = String(cardId || '').toLowerCase();
+    const typeNorm = normalizeType(resolveType(data));
+    const categoryNorm = normalizeType(data?.category);
+    const isEffect = data?.type === 'effect' || id.startsWith('effect_') || categoryNorm === 'efeito' || categoryNorm === 'effect';
+    const isField = /^f\d{3}$/i.test(cardId) || id.startsWith('field_') || typeNorm === 'campo' || typeNorm === 'field' || categoryNorm === 'campo' || categoryNorm === 'field';
+    return !isEffect && !isField;
+  };
+
   const libraryCards = useMemo(() => {
     const ownedCardIds = (cardCollection && typeof cardCollection === 'object') ? Object.keys(cardCollection) : [];
     const isFieldCardById = (id) => {
@@ -635,10 +667,11 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
         return { id, data };
       })
       .filter((c) => c && c.id && c.data);
-    if (searchTerm) {
+    if (deckType === 'calamity') cards = cards.filter((c) => isCardAllowedForDeck(c.id, c.data));
+    if (deferredSearchTerm) {
       cards = cards.filter((c) => {
         const name = typeof c.data.name === 'object' ? c.data.name[langKey] : c.data.name;
-        return name && name.toLowerCase().includes(searchTerm.toLowerCase());
+        return name && name.toLowerCase().includes(deferredSearchTerm.toLowerCase());
       });
     }
     if (elementFilter !== 'all') {
@@ -670,7 +703,7 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
       }
     });
     return Array.isArray(cards) ? cards : [];
-  }, [cardCollection, searchTerm, elementFilter, typeFilter, sortBy, langKey, guardianCardId]);
+  }, [cardCollection, deferredSearchTerm, elementFilter, typeFilter, sortBy, langKey, guardianCardId, deckType]);
 
   const openCardLoadout = (cardId, instanceId = null) => {
     const data = getCardData(cardId);
@@ -716,14 +749,14 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
     if (!hasChanges) return;
     const timer = setTimeout(() => {
       if (onSave) {
-        onSave({ id: deckId, name: deckName, guardianId: guardianCardId, cards: deckCards });
+        onSave({ id: deckId, name: deckName, deckType, guardianId: guardianCardId, cards: deckCards });
         lastSavedRef.current = { name: deckName, cards: deckCards, guardianId: guardianCardId };
         setShowSavedToast(true);
         setTimeout(() => setShowSavedToast(false), 2000);
       }
     }, 1500);
     return () => clearTimeout(timer);
-  }, [deckCards, deckName, deckId, guardianCardId, onSave]);
+  }, [deckCards, deckName, deckId, deckType, guardianCardId, onSave]);
 
   // Sincroniza guardianId quando a prop mudar (ex: ao abrir deck diferente)
   useEffect(() => {
@@ -779,6 +812,56 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
 
   const cardCount = deckCards.filter((id) => id).length;
 
+  const autoBuildDeck = (replaceExisting = false) => {
+    const nextDeck = replaceExisting ? Array(20).fill(null) : [...deckCards, ...Array(20).fill(null)].slice(0, 20);
+    const usedInstances = new Set(nextDeck.filter(Boolean));
+    const countsByCard = new Map();
+    nextDeck.filter(Boolean).forEach((instanceId) => {
+      const instance = getInstanceById(instanceId);
+      if (instance?.cardId) countsByCard.set(instance.cardId, (countsByCard.get(instance.cardId) || 0) + 1);
+    });
+
+    // Both actions keep the chosen guardian as the anchor of the deck.
+    if (guardianCardId && (countsByCard.get(guardianCardId) || 0) === 0) {
+      const guardianInstance = getBestInstance(guardianCardId);
+      if (guardianInstance?.instanceId) {
+        const guardianSlot = replaceExisting ? 0 : nextDeck.findIndex((value) => !value);
+        if (guardianSlot !== -1) nextDeck[guardianSlot] = guardianInstance.instanceId;
+        usedInstances.add(guardianInstance.instanceId);
+        countsByCard.set(guardianCardId, 1);
+      }
+    }
+
+    const candidateGroups = Object.keys(cardCollection || {})
+      .map((cardId) => ({ cardId, data: getCardData(cardId), instances: getCardInstances(cardId) || [] }))
+      .filter(({ cardId, data, instances }) => data && instances.length > 0 && isCardAllowedForDeck(cardId, data))
+      .sort(() => Math.random() - 0.5);
+
+    // First copies are considered before second copies, producing more varied automatic decks.
+    const candidatePool = [0, 1].flatMap((copyIndex) => candidateGroups
+      .map(({ cardId, instances }) => {
+        const ordered = [...instances].sort((a, b) => Number(Boolean(b.isFullArt)) - Number(Boolean(a.isFullArt)) || Number(Boolean(b.isHolo)) - Number(Boolean(a.isHolo)) || (b.level || 0) - (a.level || 0));
+        return { cardId, instance: ordered.filter((instance) => !usedInstances.has(instance.instanceId))[copyIndex] };
+      })
+      .filter(({ instance }) => instance));
+
+    candidatePool.forEach(({ cardId, instance }) => {
+      const emptyIndex = nextDeck.findIndex((value) => !value);
+      if (emptyIndex === -1) return;
+      if ((countsByCard.get(cardId) || 0) >= 2 || usedInstances.has(instance.instanceId)) return;
+      nextDeck[emptyIndex] = instance.instanceId;
+      usedInstances.add(instance.instanceId);
+      countsByCard.set(cardId, (countsByCard.get(cardId) || 0) + 1);
+    });
+
+    setDeckCards(nextDeck);
+    const filledCount = nextDeck.filter(Boolean).length;
+    setAutoBuildMessage(filledCount === 20
+      ? (replaceExisting ? (isEn ? 'Deck rebuilt' : 'Deck redefinido') : (isEn ? 'Deck completed' : 'Deck completado'))
+      : (isEn ? `Only ${filledCount}/20 eligible cards available` : `Apenas ${filledCount}/20 cartas elegíveis disponíveis`));
+    setTimeout(() => setAutoBuildMessage(''), 2200);
+  };
+
   useEffect(() => {
     if (editingName && nameInputRef.current) {
       nameInputRef.current.focus();
@@ -797,7 +880,7 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
   const handleSaveName = () => {
     setEditingName(false);
     if (onSave) {
-      onSave({ id: deckId, name: deckName, guardianId: guardianCardId, cards: deckCards });
+      onSave({ id: deckId, name: deckName, deckType, guardianId: guardianCardId, cards: deckCards });
       lastSavedRef.current = { name: deckName, cards: deckCards };
       setShowSavedToast(true);
       setTimeout(() => setShowSavedToast(false), 1500);
@@ -810,6 +893,13 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
         <audio ref={successSoundRef} src={sphereMenuSound} preload="auto" />
         <audio ref={errorSoundRef} src={packageSound} preload="auto" />
         <div className="deck-editor-header">
+          <div className="deck-editor-heading-copy">
+            <span className="deck-editor-eyebrow">{isEn ? 'Deck workshop' : 'Oficina de deck'}</span>
+            <span className="deck-editor-helper">{isEn ? 'Build a 20-card formation' : 'Monte uma formação com 20 cartas'}</span>
+            <span className={`deck-editor-mode-badge ${deckType === 'calamity' ? 'calamity' : ''}`}>
+              {deckType === 'calamity' ? (isEn ? 'Calamity · creatures only' : 'Calamidade · somente criaturas') : (isEn ? 'Other modes' : 'Demais modos')}
+            </span>
+          </div>
           <div className="deck-editor-title-group">
             <input
               ref={nameInputRef}
@@ -827,7 +917,11 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
               <button className="deck-editor-append-btn deck-editor-save" onClick={handleSaveName}>{isEn ? 'Save' : 'Salvar'}</button>
             )}
           </div>
-          <div className="deck-editor-counter">{cardCount}/20 {isEn ? 'cards' : 'cartas'}</div>
+          <div className={`deck-editor-counter ${cardCount === 20 ? 'complete' : ''}`}>
+            <span><strong>{cardCount}</strong>/20</span>
+            <div className="deck-editor-progress" aria-hidden="true"><i style={{ width: `${cardCount * 5}%` }} /></div>
+            <small>{cardCount === 20 ? (isEn ? 'Ready' : 'Pronto') : (isEn ? `${20 - cardCount} remaining` : `Faltam ${20 - cardCount}`)}</small>
+          </div>
           <button className="deck-editor-close" onClick={() => {
             if (cardCount < 20) {
               setShowDeckIncompleteWarning(true);
@@ -835,6 +929,17 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
               onClose?.();
             }
           }}>✕</button>
+        </div>
+        <div className="deck-editor-section-heading">
+          <div><span>01</span><strong>{isEn ? 'Your deck' : 'Seu deck'}</strong></div>
+          <div className="deck-editor-auto-tools">
+            <p>{isEn ? 'Drag to reorder' : 'Arraste para ordenar'}</p>
+            {cardCount < 20 ? (
+              <button type="button" className="deck-auto-build-btn" onClick={() => autoBuildDeck(false)}><span aria-hidden>✦</span>{isEn ? 'Auto fill' : 'Completar automático'}</button>
+            ) : (
+              <button type="button" className="deck-auto-build-btn rebuild" onClick={() => autoBuildDeck(true)}><span aria-hidden>↻</span>{isEn ? 'Rebuild' : 'Redefinir deck'}</button>
+            )}
+          </div>
         </div>
         <div className="deck-editor-slots-container">
           <div className="deck-editor-slots-grid">
@@ -877,12 +982,19 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
                             </div>
                           </div>
                         </div>
+                      ) : instance.isFullArt ? (
+                        <div style={{ transform: 'scale(0.33)', transformOrigin: 'center', pointerEvents: 'none' }}>
+                          <FullArtCard card={cardData} lang={lang} level={instance.level || 0} isAltArt={Boolean(instance.isAltArt)} />
+                        </div>
                       ) : (
                         <div style={{ transform: 'scale(0.33)', transformOrigin: 'center', pointerEvents: 'none' }}>
                           <CreatureCardPreview creature={cardData} onClose={null} level={instance.level || 1} isHolo={false} allowFlip={false} />
                         </div>
                       )}
                     </div>
+                    {instance.isHolo && !instance.isFullArt && (
+                      <span className="deck-card-holo-badge" title={isEn ? 'Holo' : 'Holográfica'}>✨</span>
+                    )}
                     {/* Ações: ícones Coroa + Editar + Remover lado a lado (visíveis apenas no hover) */}
                     <div className="card-slot-actions">
                       {(() => {
@@ -927,12 +1039,16 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
                     </div>
                     </>
                   ) : (
-                    <div className="card-slot-placeholder"><span className="card-slot-plus">+</span></div>
+                    <div className="card-slot-placeholder"><span className="card-slot-number">{String(idx + 1).padStart(2, '0')}</span><span className="card-slot-plus">+</span></div>
                   )}
                 </div>
               );
             })}
           </div>
+        </div>
+        <div className="deck-editor-library-heading deck-editor-section-heading">
+          <div><span>02</span><strong>{isEn ? 'Your collection' : 'Sua coleção'}</strong></div>
+          <p>{isEn ? 'Click a card to add it' : 'Clique em uma carta para adicionar'}</p>
         </div>
         <div className="deck-library-filters">
           <input type="text" className="deck-library-search" placeholder={isEn ? 'Search card...' : 'Buscar carta...'} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
@@ -946,8 +1062,8 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
           </div>
           <select className="deck-library-sort" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
             <option value="all">{isEn ? 'Type' : 'Tipo'}</option>
-            <option value="effect">{isEn ? 'Effect' : 'Efeito'}</option>
-            <option value="campo">{isEn ? 'Field' : 'Campo'}</option>
+            {deckType !== 'calamity' && <option value="effect">{isEn ? 'Effect' : 'Efeito'}</option>}
+            {deckType !== 'calamity' && <option value="campo">{isEn ? 'Field' : 'Campo'}</option>}
             <option value="mistica">{isEn ? 'Mystic' : 'Mística'}</option>
             <option value="sombria">{isEn ? 'Shadow' : 'Sombria'}</option>
             <option value="draconideo">{isEn ? 'Draconid' : 'Draconídeo'}</option>
@@ -963,6 +1079,14 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
             <option value="hp-desc">{isEn ? 'HP Descending' : 'HP Decrescente'}</option>
             <option value="element">{isEn ? 'Element' : 'Elemento'}</option>
           </select>
+          {(searchTerm || elementFilter !== 'all' || typeFilter !== 'all' || sortBy !== 'name-asc') && (
+            <button
+              className="deck-filter-clear"
+              onClick={() => { setSearchTerm(''); setElementFilter('all'); setTypeFilter('all'); setSortBy('name-asc'); }}
+            >
+              {isEn ? 'Clear' : 'Limpar'}
+            </button>
+          )}
         </div>
         {(deckCards || []).filter(Boolean).length >= 20 && (
           <div style={{ margin: '0 0 10px', padding: '8px 14px', borderRadius: 8, background: 'rgba(217, 119, 6, 0.18)', border: '1px solid rgba(255, 198, 88, 0.5)', color: '#ffdca0', fontSize: 13, fontWeight: 600, textAlign: 'center' }}>
@@ -980,11 +1104,18 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
           handleDragEnd={handleDragEnd}
           openCardLoadout={openCardLoadout}
           addCardToDeck={addCardToDeck}
+          onOpenInstanceSelector={(cardId) => {
+            setSelectedCardForInstance(cardId);
+            setInstanceSlotIndex(null);
+            setShowInstanceSelector(true);
+          }}
           isDeckFull={(deckCards || []).filter(Boolean).length >= 20}
           isEn={isEn}
+          lang={lang}
         />
         {/* Ghost/hover preview removido para não atrapalhar o fluxo no deckbuilder */}
         {showSavedToast && <div className="deck-saved-toast">{isEn ? '✓ Saved' : '✓ Salvo'}</div>}
+        {autoBuildMessage && <div className="deck-auto-build-toast"><span aria-hidden>✦</span>{autoBuildMessage}</div>}
         {showDeckIncompleteWarning && (
           <div
             className="loadout-modal-overlay"
@@ -1136,7 +1267,7 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
                         };
                         const editingInstance = editingInstanceId ? getInstanceById(editingInstanceId) : null;
                         return editingInstance?.isFullArt
-                          ? <FullArtCard card={creaturePreviewData} lang={lang} level={editingInstance.level || 0} />
+                          ? <FullArtCard card={creaturePreviewData} lang={lang} level={editingInstance.level || 0} isAltArt={Boolean(editingInstance?.isAltArt)} />
                           : <CreatureCardPreview creature={creaturePreviewData} onClose={null} level={editingInstance?.level || 1} isHolo={Boolean(editingInstance?.isHolo)} allowFlip />;
                       })()}
                     </div>
@@ -1234,7 +1365,7 @@ function DeckEditor({ deckId, deckName: initialDeckName, guardianId, initialCard
                                     {isPerk && (<span className="loadout-perk-badge"> [PERK]</span>)}
                                   </div>
                                   <div className="loadout-skill-desc">
-                                    {unlock.displayText ? renderDisplayText(unlock.displayText, langKey) : getName(unlock.desc, lang)}
+                                    {unlock.displayText ? renderDisplayText(unlock.displayText, langKey) : <StatusText text={getName(unlock.desc, lang)} />}
                                   </div>
                                   {isSkill && unlock.cost && (
                                     <div className="loadout-skill-cost">

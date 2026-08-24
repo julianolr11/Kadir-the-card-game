@@ -8,6 +8,7 @@ module.exports = {
   type: { pt: 'Mística', en: 'Mystic' },
   element: 'terra',
   img: require('../../img/creatures/virideer_bio.webp'),
+  altImg: require('../../img/creatures/alternative/virideer_alternative.png'),
   color: 'earth',
   hp: 5,
   abilities: [
